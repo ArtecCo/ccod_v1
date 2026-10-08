@@ -11,28 +11,42 @@ class AzureSubscriptionInfolist
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Subscription')
+            Section::make()
                 ->columns(3)
                 ->schema([
-                    TextEntry::make('display_name')->label('Subscription Name'),
-                    TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
-                    TextEntry::make('key_vault_reference')->label('Key Vault Reference')->placeholder('—'),
-                    TextEntry::make('teams.name')->label('Teams')->listWithLineBreaks()->columnSpanFull(),
+                    TextEntry::make('display_name')
+                        ->label('Subscription Name'),
+                    TextEntry::make('subscription_id')
+                        ->label('Subscription ID')
+                        ->copyable(),
+                    TextEntry::make('last_synced')
+                        ->label('Last Synced')
+                        ->dateTime('d M Y, H:i')
+                        ->placeholder('—'),
                 ]),
-            Section::make('Operational Overview')
-                ->columns(4)
-                ->schema([
-                    TextEntry::make('health_status')->badge()->placeholder('—'),
-                    TextEntry::make('security_score')->numeric()->suffix('%')->placeholder('—'),
-                    TextEntry::make('mtd_spend_eur')->money('EUR')->placeholder('—'),
-                    TextEntry::make('last_synced')->dateTime()->placeholder('—'),
-                ]),
-            Section::make('Cost & Resources')
+
+            Section::make()
                 ->columns(3)
                 ->schema([
-                    TextEntry::make('budgets_count')->label('Budgets')->state(fn ($record): int => $record->budgets()->count()),
-                    TextEntry::make('billing_resources_count')->label('Resources')->state(fn ($record): int => $record->billingResources()->count()),
-                    TextEntry::make('costForecast.forecast_amount')->label('Forecast')->money(fn ($record) => $record->costForecast?->currency ?: 'EUR')->placeholder('—'),
+                    TextEntry::make('security_score')
+                        ->label('Security Score')
+                        ->numeric(decimalPlaces: 2)
+                        ->suffix('%')
+                        ->placeholder('—'),
+                    TextEntry::make('health_status')
+                        ->label('Health')
+                        ->color(fn (?string $state): string => match (strtolower($state ?? '')) {
+                            'healthy' => 'success',
+                            'warning' => 'warning',
+                            'critical', 'unhealthy' => 'danger',
+                            default => 'gray',
+                        })
+                        ->weight('bold')
+                        ->placeholder('—'),
+                    TextEntry::make('mtd_spend_eur')
+                        ->label('Month-to-Date Cost')
+                        ->money('EUR')
+                        ->placeholder('—'),
                 ]),
         ]);
     }
