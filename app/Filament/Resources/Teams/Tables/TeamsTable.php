@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Teams\Tables;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 
 class TeamsTable
@@ -18,14 +19,21 @@ class TeamsTable
                     ->sortable(),
                 TextColumn::make('users_count')
                     ->counts('users')
-                    ->label('Users'),
+                    ->label('Users')
+                    ->sortable(),
                 TextColumn::make('subscriptions_count')
                     ->counts('subscriptions')
-                    ->label('Subscriptions'),
+                    ->label('Subscriptions')
+                    ->sortable(),
                 TextColumn::make('updated_at')
                     ->dateTime()
                     ->sortable(),
             ])
+            ->groups([
+                Group::make('name')
+                    ->label('Team'),
+            ])
+            ->striped(false)
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
