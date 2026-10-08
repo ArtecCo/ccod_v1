@@ -37,9 +37,11 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->topbar(false)
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->sidebarWidth('16rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
