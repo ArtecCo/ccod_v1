@@ -182,12 +182,12 @@ aside.fi-sidebar div::-webkit-scrollbar {
 }
 
 /* Keep the sidebar divider visible. */
-aside.fi-sidebar {
-    border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+.fi-sidebar {
+    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.18) !important;
 }
 
-.dark aside.fi-sidebar {
-    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
+.dark .fi-sidebar {
+    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.18) !important;
 }
 
 .dark .fi-sidebar::after {
@@ -224,7 +224,7 @@ aside.fi-sidebar {
                                 padding-bottom: 0.2rem !important;
                                 margin-bottom: 0px !important;
                             }
-                            .fi-sidebar-nav { gap: 0.15rem !important; }
+                            .fi-sidebar-nav-groups { gap: 1rem !important; }
                             .grid { gap: 0.6rem !important; }
                             .fi-fo-field-wrp { margin-bottom: 0.4rem !important; }
                             .fi-ta-table th { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
