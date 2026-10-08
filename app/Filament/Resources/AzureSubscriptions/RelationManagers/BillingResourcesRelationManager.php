@@ -62,7 +62,6 @@ class BillingResourcesRelationManager extends RelationManager
                 Group::make('region')
                     ->label('Location'),
             ])
-            ->defaultGroup('resource_type')
             ->defaultSort('name')
             ->striped(false)
             ->recordActions([])
