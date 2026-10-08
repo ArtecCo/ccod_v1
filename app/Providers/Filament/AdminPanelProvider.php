@@ -4,6 +4,8 @@ namespace App\Providers\Filament;
 
 use App\Enums\UserRole;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Filament\Resources\Teams\TeamResource;
+use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -86,12 +88,20 @@ class AdminPanelProvider extends PanelProvider
                     ->values()
                     ->all();
 
-                $managementItems = [];
-
                 if ($user?->role === UserRole::GlobalOwner) {
-                    $managementItems[] = NavigationItem::make('Subscriptions')
-                        ->icon(Heroicon::OutlinedCog6Tooth)
-                        ->url(AzureSubscriptionResource::getUrl());
+                    $managementItems = [
+                        NavigationItem::make('Users')
+                            ->icon(Heroicon::OutlinedUsers)
+                            ->url(UserResource::getUrl()),
+                        NavigationItem::make('Teams')
+                            ->icon(Heroicon::OutlinedUserGroup)
+                            ->url(TeamResource::getUrl()),
+                        NavigationItem::make('Subscriptions')
+                            ->icon(Heroicon::OutlinedCloud)
+                            ->url(AzureSubscriptionResource::getUrl()),
+                    ];
+                } else {
+                    $managementItems = [];
                 }
 
                 return $builder->groups([
