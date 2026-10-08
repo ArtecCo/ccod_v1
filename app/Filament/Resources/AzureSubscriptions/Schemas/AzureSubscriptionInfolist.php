@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AzureSubscriptions\Schemas;
 
 use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -25,28 +26,36 @@ class AzureSubscriptionInfolist
                         ->placeholder('—'),
                 ]),
 
-            Section::make()
-                ->columns(3)
+            Grid::make(3)
                 ->schema([
-                    TextEntry::make('security_score')
-                        ->label('Security Score')
-                        ->numeric(decimalPlaces: 2)
-                        ->suffix('%')
-                        ->placeholder('—'),
-                    TextEntry::make('health_status')
-                        ->label('Health')
-                        ->color(fn (?string $state): string => match (strtolower($state ?? '')) {
-                            'healthy' => 'success',
-                            'warning' => 'warning',
-                            'critical', 'unhealthy' => 'danger',
-                            default => 'gray',
-                        })
-                        ->weight('bold')
-                        ->placeholder('—'),
-                    TextEntry::make('mtd_spend_eur')
-                        ->label('Month-to-Date Cost')
-                        ->money('EUR')
-                        ->placeholder('—'),
+                    Section::make()
+                        ->schema([
+                            TextEntry::make('security_score')
+                                ->label('Security Score')
+                                ->numeric(decimalPlaces: 2)
+                                ->suffix('%')
+                                ->placeholder('—'),
+                        ]),
+                    Section::make()
+                        ->schema([
+                            TextEntry::make('health_status')
+                                ->label('Health')
+                                ->color(fn (?string $state): string => match (strtolower($state ?? '')) {
+                                    'healthy' => 'success',
+                                    'warning' => 'warning',
+                                    'critical', 'unhealthy' => 'danger',
+                                    default => 'gray',
+                                })
+                                ->weight('bold')
+                                ->placeholder('—'),
+                        ]),
+                    Section::make()
+                        ->schema([
+                            TextEntry::make('mtd_spend_eur')
+                                ->label('Month-to-Date Cost')
+                                ->money('EUR')
+                                ->placeholder('—'),
+                        ]),
                 ]),
         ]);
     }
