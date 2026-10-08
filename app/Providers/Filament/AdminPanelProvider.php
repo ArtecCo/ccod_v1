@@ -227,7 +227,7 @@ aside.fi-sidebar div::-webkit-scrollbar {
                             .fi-sidebar-nav-groups { gap: 1rem !important; }
                             .grid { gap: 0.6rem !important; }
                             .fi-fo-field-wrp { margin-bottom: 0.4rem !important; }
-                            .fi-ta-table th { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+                            .fi-ta-table th { padding-top: 1rem !important; padding-bottom: 1rem !important; }
                             .fi-ta-table td { padding-top: 0.2rem !important; padding-bottom: 0.2rem !important; }
                         </style>
                     ')
