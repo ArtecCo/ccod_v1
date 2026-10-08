@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AzureSubscription extends Model
 {
@@ -20,6 +22,7 @@ class AzureSubscription extends Model
     protected $fillable = [
         'subscription_id',
         'display_name',
+        'key_vault_reference',
         'health_status',
         'security_score',
         'mtd_spend_eur',
@@ -32,30 +35,30 @@ class AzureSubscription extends Model
         'last_synced' => 'datetime',
     ];
 
-    public function budgets(): HasMany
+    public function teams(): BelongsToMany
     {
-        return $this->hasMany(
-            AzureBudget::class,
+        return $this->belongsToMany(
+            Team::class,
+            'team_subscription',
             'subscription_id',
-            'subscription_id'
-        );
+            'team_id',
+            'subscription_id',
+            'id',
+        )->withTimestamps();
     }
 
-    public function costForecast(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function budgets(): HasMany
     {
-        return $this->hasOne(
-            AzureCostForecast::class,
-            'subscription_id',
-            'subscription_id'
-        );
+        return $this->hasMany(AzureBudget::class, 'subscription_id', 'subscription_id');
+    }
+
+    public function costForecast(): HasOne
+    {
+        return $this->hasOne(AzureCostForecast::class, 'subscription_id', 'subscription_id');
     }
 
     public function billingResources(): HasMany
     {
-        return $this->hasMany(
-            BillingResource::class,
-            'subscription_id',
-            'subscription_id'
-        );
+        return $this->hasMany(BillingResource::class, 'subscription_id', 'subscription_id');
     }
 }
