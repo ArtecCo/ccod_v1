@@ -40,6 +40,26 @@ class AzureSubscriptionResource extends Resource
         return auth()->user()?->role === UserRole::GlobalOwner;
     }
 
+    public static function getGloballySearchableAttributes(): array
+    {
+        return [
+            'display_name',
+            'subscription_id',
+        ];
+    }
+
+    public static function getGlobalSearchResultDetails($record): array
+    {
+        return [
+            'Subscription ID' => $record->subscription_id,
+        ];
+    }
+
+    public static function getGlobalSearchResultUrl($record): string
+    {
+        return static::getUrl('view', ['record' => $record]);
+    }
+
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
         $query = parent::getEloquentQuery();
