@@ -36,7 +36,9 @@ class User extends Authenticatable implements FilamentUser
 
     public function roleEnum(): UserRole
     {
-        return UserRole::from($this->role);
+        return $this->role instanceof UserRole
+            ? $this->role
+            : UserRole::from($this->role);
     }
 
     public function isGlobal(): bool
@@ -46,7 +48,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function isGlobalOwner(): bool
     {
-        return $this->role === UserRole::GlobalOwner->value;
+        return $this->roleEnum() === UserRole::GlobalOwner;
     }
 
     public function canAccessPanel(Panel $panel): bool
