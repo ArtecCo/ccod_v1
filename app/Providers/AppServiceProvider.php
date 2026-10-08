@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use Filament\Tables\Table;
+use Filament\Forms\Components\Field;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -19,6 +21,18 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // 1. Force all data tables across the app to use compact row layouts
+        Table::configureUsing(function (Table $table): void {
+            $table
+                ->striped()
+                ->extraAttributes([
+                    'class' => 'compact-table [&_td]:py-1 [&_th]:py-1'
+                ]);
+        });
+
+        // 2. Align labels horizontally for ALL field types to save massive vertical space
+        Field::configureUsing(function (Field $field): void {
+            $field->inlineLabel();
+        });
     }
 }

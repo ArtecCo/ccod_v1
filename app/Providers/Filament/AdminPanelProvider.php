@@ -2,6 +2,10 @@
 
 namespace App\Providers\Filament;
 
+use Filament\Support\Facades\FilamentView;
+use Illuminate\Support\HtmlString;
+
+
 use App\Enums\UserRole;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Teams\TeamResource;
@@ -145,6 +149,77 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ]);
+            ])
+                        ->sidebarWidth('18rem')
+            ->sidebarCollapsibleOnDesktop()
+            ->bootUsing(function () {
+                FilamentView::registerRenderHook(
+                    'panels::styles.after',
+                    fn (): string => new HtmlString('
+                        <style>
+                        /* 1. Hide the scrollbar for the sidebar container across all modern browsers */
+/* 1. Base Setup: Apply to Light Mode by default */
+/* Disable scrollbars globally on all sidebar inner structural scroll layers */
+.fi-sidebar-nav,
+.fi-sidebar-nav-groups,
+.fi-sidebar-group,
+aside.fi-sidebar nav,
+aside.fi-sidebar div {
+    scrollbar-width: none !important; /* Firefox */
+    -ms-overflow-style: none !important;  /* IE and Edge */
+}
+
+.fi-sidebar-nav::-webkit-scrollbar,
+.fi-sidebar-nav-groups::-webkit-scrollbar,
+.fi-sidebar-group::-webkit-scrollbar,
+aside.fi-sidebar nav::-webkit-scrollbar,
+aside.fi-sidebar div::-webkit-scrollbar {
+    display: none !important; /* Chrome, Safari, and Opera */
+    width: 0px !important;
+    height: 0px !important;
+    background: transparent !important;
+}
+
+
+/* 2. Target Dark Mode specifically (Triggers when the wrapper has the .dark class) */
+.dark aside.fi-sidebar {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+.dark .fi-sidebar::after {
+    background-color: rgba(255, 255, 255, 0.12) !important; /* Subtle glowing outline layer in black theme views */
+}
+
+
+                            html { font-size: 13px !important; }
+                            .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
+                                padding: 0.6rem !important;
+                                border-radius: 0.375rem !important;
+                            }
+                            .fi-section-header, .fi-ta-header {
+                                padding-bottom: 0.35rem !important;
+                                margin-bottom: 0.35rem !important;
+                            }
+                            .fi-sidebar-item-button {
+                                padding-top: 0.2rem !important;
+                                padding-bottom: 0.2rem !important;
+                                margin-top: 0.05rem !important;
+                                margin-bottom: 0.05rem !important;
+                            }
+                            .fi-sidebar-group-label {
+                                padding-top: 0.2rem !important;
+                                padding-bottom: 0.2rem !important;
+                                margin-bottom: 0px !important;
+                            }
+                            .fi-sidebar-nav { gap: 0.15rem !important; }
+                            .grid { gap: 0.6rem !important; }
+                            .fi-fo-field-wrp { margin-bottom: 0.4rem !important; }
+                            .fi-ta-table th { padding-top: 0.25rem !important; padding-bottom: 0.25rem !important; }
+                            .fi-ta-table td { padding-top: 0.2rem !important; padding-bottom: 0.2rem !important; }
+                        </style>
+                    ')
+                );
+            });
+
     }
 }
