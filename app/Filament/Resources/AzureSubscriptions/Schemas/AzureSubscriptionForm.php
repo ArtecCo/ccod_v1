@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\Schemas;
 
-use App\Models\Team;
-use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Section;
@@ -39,20 +37,6 @@ class AzureSubscriptionForm
                             ->searchable()
                             ->required(),
                     ]),
-                Section::make('System Status')
-                    ->columns(4)
-                    ->schema([
-                        TextInput::make('health_status')
-                            ->default('Healthy'),
-                        TextInput::make('security_score')
-                            ->numeric()
-                            ->default(100.0),
-                        TextInput::make('mtd_spend_eur')
-                            ->numeric()
-                            ->default(0.0),
-                        DateTimePicker::make('last_synced'),
-                    ])
-                    ->collapsed(),
             ]);
     }
 }
