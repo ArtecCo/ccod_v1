@@ -181,10 +181,13 @@ aside.fi-sidebar div::-webkit-scrollbar {
     background: transparent !important;
 }
 
+/* Keep the sidebar divider visible. */
+aside.fi-sidebar {
+    border-right: 1px solid rgba(0, 0, 0, 0.12) !important;
+}
 
-/* 2. Target Dark Mode specifically (Triggers when the wrapper has the .dark class) */
 .dark aside.fi-sidebar {
-    border-color: rgba(255, 255, 255, 0.12) !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.12) !important;
 }
 
 .dark .fi-sidebar::after {
