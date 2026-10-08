@@ -18,7 +18,9 @@ class ViewAzureSubscription extends ViewRecord
         return $schema
             ->components([
                 $this->getInfolistContentComponent(),
-                Livewire::make(SubscriptionStatsOverview::class)
+                Livewire::make(SubscriptionStatsOverview::class, [
+                    'record' => $this->record,
+                ])
                     ->columnSpanFull(),
                 $this->getRelationManagersContentComponent(),
             ]);
