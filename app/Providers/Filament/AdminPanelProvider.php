@@ -191,6 +191,15 @@ aside.fi-sidebar div::-webkit-scrollbar {
     background-color: rgba(255, 255, 255, 0.12) !important; /* Subtle glowing outline layer in black theme views */
 }
 
+/* Keep grouped team subscriptions as independent items, without Filament's connecting guide. */
+.fi-sidebar-item-grouped-border {
+    display: none !important;
+}
+
+.fi-sidebar-group .fi-sidebar-item-icon {
+    display: block !important;
+}
+
 
                             html { font-size: 13px !important; }
                             .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
