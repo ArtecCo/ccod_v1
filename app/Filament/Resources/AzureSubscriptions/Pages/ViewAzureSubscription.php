@@ -6,23 +6,22 @@ use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Schema;
 
 class ViewAzureSubscription extends ViewRecord
 {
     protected static string $resource = AzureSubscriptionResource::class;
 
-    protected function getHeaderWidgets(): array
+    public function content(Schema $schema): Schema
     {
-        return [
-            SubscriptionStatsOverview::class,
-        ];
-    }
-
-    protected function getHeaderWidgetsData(): array
-    {
-        return [
-            'record' => $this->record,
-        ];
+        return $schema
+            ->components([
+                $this->getInfolistContentComponent(),
+                Livewire::make(SubscriptionStatsOverview::class)
+                    ->columnSpanFull(),
+                $this->getRelationManagersContentComponent(),
+            ]);
     }
 
     protected function getHeaderActions(): array
