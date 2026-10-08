@@ -5,6 +5,7 @@ namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 
 class BillingResourcesRelationManager extends RelationManager
@@ -55,7 +56,15 @@ class BillingResourcesRelationManager extends RelationManager
                         ->filter()
                         ->all()),
             ])
+            ->groups([
+                Group::make('resource_type')
+                    ->label('Type'),
+                Group::make('region')
+                    ->label('Location'),
+            ])
+            ->defaultGroup('resource_type')
             ->defaultSort('name')
+            ->striped(false)
             ->recordActions([])
             ->toolbarActions([]);
     }
