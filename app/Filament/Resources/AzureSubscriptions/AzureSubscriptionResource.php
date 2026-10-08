@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AzureSubscriptions;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\AzureSubscriptions\Pages\CreateAzureSubscription;
 use App\Filament\Resources\AzureSubscriptions\Pages\EditAzureSubscription;
 use App\Filament\Resources\AzureSubscriptions\Pages\ListAzureSubscriptions;
@@ -24,6 +25,33 @@ class AzureSubscriptionResource extends Resource
 
     protected static ?string $recordTitleAttribute = 'display_name';
 
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->role === UserRole::GlobalOwner;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return auth()->user()?->role === UserRole::GlobalOwner;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->role === UserRole::GlobalOwner;
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if (! $user || $user->isGlobal()) {
+            return $query;
+        }
+
+        return $query->whereHas('teams.users', fn ($teamUsers) => $teamUsers->whereKey($user->getKey()));
+    }
+
     public static function form(Schema $schema): Schema
     {
         return AzureSubscriptionForm::configure($schema);
@@ -41,9 +69,7 @@ class AzureSubscriptionResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
