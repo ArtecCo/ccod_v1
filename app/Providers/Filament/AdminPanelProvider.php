@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use App\Enums\UserRole;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Models\AzureSubscription;
 use Filament\Http\Middleware\Authenticate;
@@ -85,6 +86,14 @@ class AdminPanelProvider extends PanelProvider
                     ->values()
                     ->all();
 
+                $managementItems = [];
+
+                if ($user?->role === UserRole::GlobalOwner) {
+                    $managementItems[] = NavigationItem::make('Subscriptions')
+                        ->icon(Heroicon::OutlinedCog6Tooth)
+                        ->url(AzureSubscriptionResource::getUrl());
+                }
+
                 return $builder->groups([
                     NavigationGroup::make()
                         ->items([
@@ -94,6 +103,11 @@ class AdminPanelProvider extends PanelProvider
                                 ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard')),
                         ]),
                     ...$teamGroups,
+                    ...($managementItems === [] ? [] : [
+                        NavigationGroup::make('Administration')
+                            ->icon(Heroicon::OutlinedCog6Tooth)
+                            ->items($managementItems),
+                    ]),
                 ]);
             })
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
