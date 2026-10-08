@@ -25,7 +25,7 @@ class TeamResource extends Resource
 
     protected static ?string $navigationLabel = 'Teams';
 
-    protected static ?string $navigationGroup = 'Administration';
+    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
 
     public static function canViewAny(): bool
     {
