@@ -194,7 +194,7 @@ aside.fi-sidebar {
     background-color: rgba(255, 255, 255, 0.12) !important; /* Subtle glowing outline layer in black theme views */
 }
 
-/* Keep grouped team subscriptions as independent items, without Filament's connecting guide. */
+/* Keep grouped team subscriptions as independent items, without Filament\'s connecting guide. */
 .fi-sidebar-item-grouped-border {
     display: none !important;
 }
