@@ -10,6 +10,8 @@ class SubscriptionCostSummary extends BaseWidget
 {
     public AzureSubscription $record;
 
+    protected static bool $isLazy = true;
+
     protected ?string $pollingInterval = null;
 
     protected function getStats(): array
