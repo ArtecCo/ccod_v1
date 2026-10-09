@@ -10,6 +10,7 @@ use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
+use CarlJanzell\FilamentPageBuilder\FilamentPageBuilderPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -47,6 +48,9 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('16rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
+            ->plugins([
+                FilamentPageBuilderPlugin::make(),
+            ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->user();
 
