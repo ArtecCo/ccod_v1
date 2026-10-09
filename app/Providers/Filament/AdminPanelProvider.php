@@ -9,8 +9,9 @@ use App\Enums\UserRole;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Models\AzureSubscription;
-use App\Models\SubscriptionDocumentation;
+use App\Models\Documentation;
 use CarlJanzell\FilamentPageBuilder\FilamentPageBuilderPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -26,9 +27,9 @@ use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
+use Filament\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
@@ -51,7 +52,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
             ->plugins([
                 FilamentPageBuilderPlugin::make()
-                    ->recordModel(SubscriptionDocumentation::class)
+                    ->recordModel(Documentation::class)
                     ->blocksAttribute('blocks'),
             ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
@@ -101,6 +102,11 @@ class AdminPanelProvider extends PanelProvider
                     ->values()
                     ->all();
 
+                $documentationItem = NavigationItem::make('Documentation')
+                    ->icon(Heroicon::OutlinedDocumentText)
+                    ->url(DocumentationResource::getUrl())
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.documentations.*'));
+
                 if ($user?->role === UserRole::GlobalOwner) {
                     $managementItems = [
                         NavigationItem::make('Users')
@@ -124,6 +130,7 @@ class AdminPanelProvider extends PanelProvider
                                 ->icon(Heroicon::OutlinedHome)
                                 ->url(Dashboard::getUrl())
                                 ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard')),
+                            $documentationItem,
                         ]),
                     ...$teamGroups,
                     ...($managementItems === [] ? [] : [
