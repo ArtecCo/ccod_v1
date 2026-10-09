@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Models\Documentation;
 use App\Models\SubscriptionDocumentation;
+use App\Policies\DocumentationPolicy;
 use App\Policies\SubscriptionDocumentationPolicy;
-use Filament\Tables\Table;
 use Filament\Forms\Components\Field;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 
@@ -24,6 +26,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Gate::policy(Documentation::class, DocumentationPolicy::class);
         Gate::policy(SubscriptionDocumentation::class, SubscriptionDocumentationPolicy::class);
 
         // 1. Force all data tables across the app to use compact row layouts
