@@ -8,9 +8,4 @@ use Filament\Resources\Pages\EditRecord;
 class EditDocumentation extends EditRecord
 {
     protected static string $resource = DocumentationResource::class;
-
-    protected function getRedirectUrl(): string
-    {
-        return DocumentationResource::getUrl('design', ['record' => $this->record]);
-    }
 }
