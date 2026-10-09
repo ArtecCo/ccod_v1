@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Filament\Resources\Documentations\Pages;
+
+use App\Filament\Resources\Documentations\DocumentationResource;
+use Filament\Resources\Pages\CreateRecord;
+
+class CreateDocumentation extends CreateRecord
+{
+    protected static string $resource = DocumentationResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['author_id'] = auth()->id();
+
+        return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return DocumentationResource::getUrl('design', ['record' => $this->record]);
+    }
+}
