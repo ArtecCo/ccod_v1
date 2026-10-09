@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\AzureSubscriptions\Pages;
 
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
@@ -11,9 +14,6 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 
 class ViewAzureSubscription extends ViewRecord
 {
@@ -48,7 +48,7 @@ class ViewAzureSubscription extends ViewRecord
                             ->schema([
                                 Section::make('Cost Summary')
                                     ->schema([
-                                        Livewire::make(CostSummary::class, [
+                                        Livewire::make(SubscriptionCostSummary::class, [
                                             'record' => $this->record,
                                         ])
                                             ->columnSpanFull(),
@@ -57,46 +57,16 @@ class ViewAzureSubscription extends ViewRecord
 
                                 Section::make('Budget Details')
                                     ->schema([
-                                        Table::make('Budget Details')
-                                            ->query(fn (): Builder => $this->record->budgets())
-                                            ->columns([
-                                                TextColumn::make('budget_name')
-                                                    ->label('Budget')
-                                                    ->searchable()
-                                                    ->sortable(),
-                                                TextColumn::make('amount')
-                                                    ->label('Budget Amount')
-                                                    ->money(fn ($record): string => $record->currency ?? 'EUR')
-                                                    ->sortable(),
-                                                TextColumn::make('current_spend')
-                                                    ->label('Actual Spend')
-                                                    ->money(fn ($record): string => $record->currency ?? 'EUR')
-                                                    ->sortable(),
-                                                TextColumn::make('forecast_spend')
-                                                    ->label('Forecast')
-                                                    ->money(fn ($record): string => $record->currency ?? 'EUR')
-                                                    ->sortable(),
-                                                TextColumn::make('time_grain')
-                                                    ->label('Period')
-                                                    ->sortable(),
-                                                TextColumn::make('start_date')
-                                                    ->date()
-                                                    ->sortable(),
-                                                TextColumn::make('end_date')
-                                                    ->date()
-                                                    ->sortable(),
-                                            ])
-                                            ->paginated([10, 25, 50])
-                                            ->defaultSort('budget_name')
-                                            ->striped(false)
-                                            ->recordActions([])
-                                            ->toolbarActions([]),
+                                        Livewire::make(SubscriptionBudgetDetails::class, [
+                                            'record' => $this->record,
+                                        ])
+                                            ->columnSpanFull(),
                                     ])
                                     ->columnSpanFull(),
 
                                 Section::make('Resource Cost Breakdown')
                                     ->schema([
-                                        Livewire::make(CostResourceBreakdown::class, [
+                                        Livewire::make(SubscriptionResourceCostBreakdown::class, [
                                             'record' => $this->record,
                                         ])
                                             ->columnSpanFull(),
@@ -121,7 +91,7 @@ class ViewAzureSubscription extends ViewRecord
                     ->persistTabInQueryString()
                     ->contained(false)
                     ->extraAttributes([
-                        'class' => '!bg-transparent !border-0 !shadow-none !ring-0 !shadow-none !rounded-none',
+                        'class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none',
                     ])
                     ->columnSpanFull(),
             ]);
