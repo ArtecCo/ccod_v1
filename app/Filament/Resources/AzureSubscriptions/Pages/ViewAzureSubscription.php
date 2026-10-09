@@ -7,6 +7,8 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 class ViewAzureSubscription extends ViewRecord
@@ -17,13 +19,40 @@ class ViewAzureSubscription extends ViewRecord
     {
         return $schema
             ->components([
-                $this->getInfolistContentComponent()
-                    ->columnSpanFull(),
-                Livewire::make(SubscriptionStatsOverview::class, [
-                    'record' => $this->record,
-                ])
-                    ->columnSpanFull(),
-                $this->getRelationManagersContentComponent()
+                Tabs::make('Subscription Navigation')
+                    ->tabs([
+                        Tab::make('Overview')
+                            ->schema([
+                                $this->getInfolistContentComponent()
+                                    ->columnSpanFull(),
+                                Livewire::make(SubscriptionStatsOverview::class, [
+                                    'record' => $this->record,
+                                ])
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(1),
+
+                        Tab::make('Security')
+                            ->schema([]),
+
+                        Tab::make('Cost')
+                            ->schema([]),
+
+                        Tab::make('Resources')
+                            ->schema([
+                                $this->getRelationManagersContentComponent()
+                                    ->columnSpanFull(),
+                            ])
+                            ->columns(1),
+
+                        Tab::make('Tickets')
+                            ->schema([]),
+
+                        Tab::make('Alerts')
+                            ->schema([]),
+                    ])
+                    ->persistTabInQueryString()
+                    ->contained(false)
                     ->columnSpanFull(),
             ]);
     }
