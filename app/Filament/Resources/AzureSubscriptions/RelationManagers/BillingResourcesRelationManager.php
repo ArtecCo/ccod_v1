@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -76,6 +77,8 @@ class BillingResourcesRelationManager extends RelationManager
             ->defaultSort('name')
             ->striped(false)
             ->recordActions([])
-            ->toolbarActions([]);
+            ->toolbarActions([
+                XlsxExportAction::make(),
+            ]);
     }
 }
