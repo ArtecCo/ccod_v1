@@ -11,6 +11,8 @@ class SubscriptionStatsOverview extends BaseWidget
 {
     public AzureSubscription $record;
 
+    protected ?string $pollingInterval = null;
+
     protected function getStats(): array
     {
         $health = $this->record->health_status ?: '—';
