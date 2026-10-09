@@ -2,6 +2,9 @@
 
 namespace App\Filament\Resources\Documentations\Tables;
 
+use App\Filament\Resources\Documentations\DocumentationResource;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -24,7 +27,11 @@ class DocumentationsTable
                     ->dateTime()
                     ->sortable(),
             ])
-            ->recordActions([])
+            ->recordActions([
+                EditAction::make()
+                    ->url(fn ($record): string => DocumentationResource::getUrl('design', ['record' => $record])),
+                DeleteAction::make(),
+            ])
             ->toolbarActions([]);
     }
 }
