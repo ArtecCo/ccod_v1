@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -22,6 +23,8 @@ class AzureSubscription extends Model
     protected $fillable = [
         'subscription_id',
         'display_name',
+        'application_id',
+        'environment',
         'key_vault_reference',
         'health_status',
         'security_score',
@@ -34,6 +37,11 @@ class AzureSubscription extends Model
         'mtd_spend_eur' => 'decimal:2',
         'last_synced' => 'datetime',
     ];
+
+    public function application(): BelongsTo
+    {
+        return $this->belongsTo(Application::class);
+    }
 
     public function teams(): BelongsToMany
     {
