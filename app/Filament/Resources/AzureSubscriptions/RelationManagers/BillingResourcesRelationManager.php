@@ -7,6 +7,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class BillingResourcesRelationManager extends RelationManager
 {
@@ -14,9 +15,19 @@ class BillingResourcesRelationManager extends RelationManager
 
     protected static ?string $title = 'Resources';
 
+    protected static bool $isLazy = true;
+
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->select([
+                'resource_id',
+                'subscription_id',
+                'name',
+                'resource_type',
+                'region',
+                'cost_eur',
+            ]))
             ->columns([
                 TextColumn::make('name')
                     ->label('Resource Name')
