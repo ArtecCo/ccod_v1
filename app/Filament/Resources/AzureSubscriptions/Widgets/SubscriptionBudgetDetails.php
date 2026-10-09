@@ -6,6 +6,7 @@ use App\Models\AzureSubscription;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionBudgetDetails extends BaseWidget
 {
@@ -15,9 +16,9 @@ class SubscriptionBudgetDetails extends BaseWidget
 
     protected static ?string $heading = 'Budget Details';
 
-    protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
+    protected function getTableQuery(): Builder
     {
-        return $this->record->budgets();
+        return $this->record->budgets()->getQuery();
     }
 
     public function table(Table $table): Table
