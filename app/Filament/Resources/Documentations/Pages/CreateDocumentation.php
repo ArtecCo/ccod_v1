@@ -15,4 +15,9 @@ class CreateDocumentation extends CreateRecord
 
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return DocumentationResource::getUrl('index');
+    }
 }
