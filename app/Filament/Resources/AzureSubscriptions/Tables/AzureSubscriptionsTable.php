@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\Tables;
 
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -56,6 +57,8 @@ class AzureSubscriptionsTable
                 EditAction::make(),
             ])
             ->striped(false)
-            ->toolbarActions([]);
+            ->toolbarActions([
+                XlsxExportAction::make(),
+            ]);
     }
 }
