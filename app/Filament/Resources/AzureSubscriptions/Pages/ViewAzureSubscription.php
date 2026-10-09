@@ -91,21 +91,29 @@ class ViewAzureSubscription extends ViewRecord
                                                     $user = auth()->user();
                                                     $documentation = $this->record->documentation;
 
-                                                    return ! $user || ($documentation
+                                                    if (! $user) {
+                                                        return true;
+                                                    }
+
+                                                    return $documentation
                                                         ? ! $user->can('update', $documentation)
-                                                        : ! $user->can('createForSubscription', $this->record));
+                                                        : ! $user->can('createForSubscription', $this->record);
                                                 })
                                                 ->tooltip(function (): ?string {
                                                     $user = auth()->user();
                                                     $documentation = $this->record->documentation;
 
-                                                    if (! $user || ($documentation
-                                                        ? ! $user->can('update', $documentation)
-                                                        : ! $user->can('createForSubscription', $this->record))) {
+                                                    if (! $user) {
                                                         return 'You are not permitted to edit this documentation.';
                                                     }
 
-                                                    return null;
+                                                    $allowed = $documentation
+                                                        ? $user->can('update', $documentation)
+                                                        : $user->can('createForSubscription', $this->record);
+
+                                                    return $allowed
+                                                        ? null
+                                                        : 'You are not permitted to edit this documentation.';
                                                 })
                                                 ->url(function (): ?string {
                                                     $documentation = $this->record->documentation;
