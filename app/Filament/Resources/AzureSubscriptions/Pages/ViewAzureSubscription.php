@@ -46,31 +46,19 @@ class ViewAzureSubscription extends ViewRecord
 
                         Tab::make('Cost')
                             ->schema([
-                                Section::make('Cost Summary')
-                                    ->schema([
-                                        Livewire::make(SubscriptionCostSummary::class, [
-                                            'record' => $this->record,
-                                        ])
-                                            ->columnSpanFull(),
-                                    ])
+                                Livewire::make(SubscriptionCostSummary::class, [
+                                    'record' => $this->record,
+                                ])
                                     ->columnSpanFull(),
 
-                                Section::make('Budget Details')
-                                    ->schema([
-                                        Livewire::make(SubscriptionBudgetDetails::class, [
-                                            'record' => $this->record,
-                                        ])
-                                            ->columnSpanFull(),
-                                    ])
+                                Livewire::make(SubscriptionBudgetDetails::class, [
+                                    'record' => $this->record,
+                                ])
                                     ->columnSpanFull(),
 
-                                Section::make('Resource Cost Breakdown')
-                                    ->schema([
-                                        Livewire::make(SubscriptionResourceCostBreakdown::class, [
-                                            'record' => $this->record,
-                                        ])
-                                            ->columnSpanFull(),
-                                    ])
+                                Livewire::make(SubscriptionResourceCostBreakdown::class, [
+                                    'record' => $this->record,
+                                ])
                                     ->columnSpanFull(),
                             ])
                             ->columns(1),
