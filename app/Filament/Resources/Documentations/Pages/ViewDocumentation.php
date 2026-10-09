@@ -4,9 +4,9 @@ namespace App\Filament\Resources\Documentations\Pages;
 
 use App\Filament\Resources\Documentations\DocumentationResource;
 use Filament\Actions\EditAction;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\TextEntry;
+use Filament\Schemas\Schema;
 
 class ViewDocumentation extends ViewRecord
 {
@@ -24,9 +24,9 @@ class ViewDocumentation extends ViewRecord
         ];
     }
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
-        return $infolist->schema([
+        return $schema->components([
             TextEntry::make('title')
                 ->label('')
                 ->size('xl')
