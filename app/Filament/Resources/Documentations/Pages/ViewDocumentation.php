@@ -65,7 +65,7 @@ class ViewDocumentation extends ViewRecord
                 ->schema([
                     TextEntry::make('content')
                         ->label('')
-                        ->html()
+                        ->markdown()
                         ->columnSpanFull()
                         ->extraAttributes([
                             'class' => implode(' ', [
@@ -74,6 +74,7 @@ class ViewDocumentation extends ViewRecord
                                 '[&_p:last-child]:mb-0',
                                 '[&_strong]:font-semibold [&_b]:font-semibold',
                                 '[&_em]:italic [&_i]:italic',
+                                '[&_u]:underline',
                                 '[&_h1]:mb-5 [&_h1]:mt-8 [&_h1]:text-3xl [&_h1]:font-bold [&_h1]:leading-tight',
                                 '[&_h2]:mb-4 [&_h2]:mt-8 [&_h2]:text-2xl [&_h2]:font-bold [&_h2]:leading-tight',
                                 '[&_h3]:mb-3 [&_h3]:mt-6 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:leading-tight',
