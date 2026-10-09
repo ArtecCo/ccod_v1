@@ -10,6 +10,7 @@ use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
+use App\Models\SubscriptionDocumentation;
 use CarlJanzell\FilamentPageBuilder\FilamentPageBuilderPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -49,7 +50,9 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
             ->plugins([
-                FilamentPageBuilderPlugin::make(),
+                FilamentPageBuilderPlugin::make()
+                    ->recordModel(SubscriptionDocumentation::class)
+                    ->blocksAttribute('blocks'),
             ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->user();
