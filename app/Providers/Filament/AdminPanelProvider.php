@@ -2,17 +2,13 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Support\Facades\FilamentView;
-use Illuminate\Support\HtmlString;
-
 use App\Enums\UserRole;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
-use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Models\AzureSubscription;
-use App\Models\Documentation;
-use CarlJanzell\FilamentPageBuilder\FilamentPageBuilderPlugin;
+use Filament\Support\Facades\FilamentView;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -32,6 +28,7 @@ use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
@@ -50,11 +47,6 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarWidth('16rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
-            ->plugins([
-                FilamentPageBuilderPlugin::make()
-                    ->recordModel(Documentation::class)
-                    ->blocksAttribute('blocks'),
-            ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->user();
 
@@ -253,6 +245,5 @@ html { font-size: 13px !important; }
                     ')
                 );
             });
-
     }
 }
