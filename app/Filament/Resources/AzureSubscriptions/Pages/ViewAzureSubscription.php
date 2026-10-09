@@ -7,6 +7,7 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
@@ -23,8 +24,13 @@ class ViewAzureSubscription extends ViewRecord
                     ->tabs([
                         Tab::make('Overview')
                             ->schema([
-                                $this->getInfolistContentComponent()
+                                Section::make('Subscription Details')
+                                    ->schema([
+                                        $this->getInfolistContentComponent()
+                                            ->columnSpanFull(),
+                                    ])
                                     ->columnSpanFull(),
+
                                 Livewire::make(SubscriptionStatsOverview::class, [
                                     'record' => $this->record,
                                 ])
@@ -53,6 +59,9 @@ class ViewAzureSubscription extends ViewRecord
                     ])
                     ->persistTabInQueryString()
                     ->contained(false)
+                    ->extraAttributes([
+                        'class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none',
+                    ])
                     ->columnSpanFull(),
             ]);
     }
