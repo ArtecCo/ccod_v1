@@ -29,8 +29,9 @@ return new class extends Migration
     {
         Schema::table('azure_subscriptions', function (Blueprint $table): void {
             $table->dropUnique('azure_subscriptions_application_environment_unique');
+            $table->dropForeign(['application_id']);
             $table->dropIndex('azure_subscriptions_application_environment_index');
-            $table->dropConstrainedForeignId('application_id');
+            $table->dropColumn('application_id');
             $table->dropColumn('environment');
         });
     }
