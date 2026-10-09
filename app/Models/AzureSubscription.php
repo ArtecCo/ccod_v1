@@ -55,6 +55,11 @@ class AzureSubscription extends Model
         )->withTimestamps();
     }
 
+    public function documentation(): HasOne
+    {
+        return $this->hasOne(SubscriptionDocumentation::class, 'subscription_id', 'subscription_id');
+    }
+
     public function budgets(): HasMany
     {
         return $this->hasMany(AzureBudget::class, 'subscription_id', 'subscription_id');
