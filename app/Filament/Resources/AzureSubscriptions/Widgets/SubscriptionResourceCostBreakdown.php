@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -56,6 +57,8 @@ class SubscriptionResourceCostBreakdown extends BaseWidget
             ->defaultSort('name')
             ->striped(false)
             ->recordActions([])
-            ->toolbarActions([]);
+            ->toolbarActions([
+                XlsxExportAction::make(),
+            ]);
     }
 }
