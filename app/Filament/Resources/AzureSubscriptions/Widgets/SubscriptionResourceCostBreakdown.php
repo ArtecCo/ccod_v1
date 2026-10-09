@@ -11,6 +11,8 @@ class SubscriptionResourceCostBreakdown extends BaseWidget
 {
     public AzureSubscription $record;
 
+    protected static bool $isLazy = true;
+
     protected static ?string $heading = 'Resource Cost Breakdown';
 
     protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
