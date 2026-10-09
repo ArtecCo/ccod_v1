@@ -81,7 +81,7 @@ class AdminPanelProvider extends PanelProvider
                                     ->map(
                                         fn (array $item) => NavigationItem::make($item['subscription']->display_name)
                                             ->icon(Heroicon::OutlinedCloud)
-                                            ->url(AzureSubscriptionResource::getUrl('view', [
+                                            ->url(fn () => AzureSubscriptionResource::getUrl('view', [
                                                 'record' => $item['subscription'],
                                             ]))
                                             ->isActiveWhen(fn (): bool => request()->routeIs(
@@ -98,13 +98,13 @@ class AdminPanelProvider extends PanelProvider
                     $managementItems = [
                         NavigationItem::make('Users')
                             ->icon(Heroicon::OutlinedUsers)
-                            ->url(UserResource::getUrl()),
+                            ->url(fn () => UserResource::getUrl()),
                         NavigationItem::make('Teams')
                             ->icon(Heroicon::OutlinedUserGroup)
-                            ->url(TeamResource::getUrl()),
+                            ->url(fn () => TeamResource::getUrl()),
                         NavigationItem::make('Subscriptions')
                             ->icon(Heroicon::OutlinedCloud)
-                            ->url(AzureSubscriptionResource::getUrl()),
+                            ->url(fn () => AzureSubscriptionResource::getUrl()),
                     ];
                 } else {
                     $managementItems = [];
@@ -126,12 +126,12 @@ class AdminPanelProvider extends PanelProvider
                     ]),
                 ]);
             })
-            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament/Resources')
-            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament/Pages')
+            ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
+            ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament/Widgets')
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
                 AccountWidget::class,
                 FilamentInfoWidget::class,
