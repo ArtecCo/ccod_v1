@@ -9,8 +9,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('subscription_documentations', function (Blueprint $table): void {
+    $table->collation('utf8mb4_general_ci');
             $table->id();
-            $table->string('subscription_id')->unique();
+            $table->string('subscription_id', 100)->unique();
             $table->json('blocks')->nullable();
             $table->timestamps();
 

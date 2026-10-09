@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f1485731be75fd021cacbb59d45dc047",
+    "content-hash": "08d252506d4a2f72cdddbb0b43035755",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -422,6 +422,72 @@
                 }
             ],
             "time": "2026-09-06T14:11:38+00:00"
+        },
+        {
+            "name": "carljanzell/filament-page-builder",
+            "version": "v0.4.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Darkify19/filament-page-builder.git",
+                "reference": "d93391f2e1478295648396224a4ad6a65e846701"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Darkify19/filament-page-builder/zipball/d93391f2e1478295648396224a4ad6a65e846701",
+                "reference": "d93391f2e1478295648396224a4ad6a65e846701",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^4.12.6|^5.0",
+                "php": "^8.3"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.27",
+                "livewire/livewire": "^3.6|^4.0",
+                "orchestra/testbench": "^10.0|^11.0",
+                "pestphp/pest": "^4.0",
+                "pestphp/pest-plugin-laravel": "^4.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "CarlJanzell\\FilamentPageBuilder\\PageBuilderServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "CarlJanzell\\FilamentPageBuilder\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Carl Janzell",
+                    "email": "carl.oropesa11@gmail.com"
+                }
+            ],
+            "description": "A drag-and-drop visual page builder for Filament, storing content as ordered typed blocks.",
+            "homepage": "https://darkify19.github.io/filament-page-builder/",
+            "keywords": [
+                "drag-and-drop",
+                "filament",
+                "filament-plugin",
+                "laravel",
+                "livewire",
+                "page-builder"
+            ],
+            "support": {
+                "docs": "https://darkify19.github.io/filament-page-builder/",
+                "email": "carl.oropesa11@gmail.com",
+                "issues": "https://github.com/Darkify19/filament-page-builder/issues",
+                "source": "https://github.com/Darkify19/filament-page-builder"
+            },
+            "time": "2026-10-01T02:07:00+00:00"
         },
         {
             "name": "chillerlan/php-qrcode",
