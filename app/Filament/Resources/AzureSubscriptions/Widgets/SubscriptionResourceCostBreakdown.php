@@ -6,6 +6,7 @@ use App\Models\AzureSubscription;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionResourceCostBreakdown extends BaseWidget
 {
@@ -15,10 +16,11 @@ class SubscriptionResourceCostBreakdown extends BaseWidget
 
     protected static ?string $heading = 'Resource Cost Breakdown';
 
-    protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
+    protected function getTableQuery(): Builder
     {
         return $this->record
             ->billingResources()
+            ->getQuery()
             ->select([
                 'resource_id',
                 'subscription_id',
