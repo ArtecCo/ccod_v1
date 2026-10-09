@@ -2,18 +2,15 @@
 
 namespace App\Models;
 
-use CarlJanzell\FilamentPageBuilder\Concerns\HasBlocks;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Documentation extends Model
 {
-    use HasBlocks;
-
     protected $fillable = [
         'title',
         'slug',
-        'blocks',
+        'content',
         'author_id',
     ];
 
