@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 08, 2026 at 05:40 PM
+-- Generation Time: Oct 09, 2026 at 08:25 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -148,6 +148,7 @@ INSERT INTO `azure_security_summary` (`summary_id`, `weighted_score`, `total_wei
 CREATE TABLE `azure_subscriptions` (
   `subscription_id` varchar(100) NOT NULL,
   `display_name` varchar(255) NOT NULL,
+  `key_vault_reference` varchar(255) DEFAULT NULL,
   `health_status` varchar(50) DEFAULT 'Healthy',
   `security_score` decimal(5,2) DEFAULT 100.00,
   `mtd_spend_eur` decimal(10,2) DEFAULT 0.00,
@@ -158,35 +159,35 @@ CREATE TABLE `azure_subscriptions` (
 -- Dumping data for table `azure_subscriptions`
 --
 
-INSERT INTO `azure_subscriptions` (`subscription_id`, `display_name`, `health_status`, `security_score`, `mtd_spend_eur`, `last_synced`) VALUES
-('02ab4266-3406-48d4-bfbc-76605dde11d7', 'RBIN-BDO-web-mobile-PROD', 'Degraded', 53.35, 972.31, '2026-09-26 15:38:20'),
-('0e6dc52f-1c64-4d5a-9396-29e37fa41079', 'AA-AS-EIT2-Prod', 'Healthy', 91.07, 23014.95, '2026-09-26 15:36:48'),
-('12db631f-5ab4-4237-9fa6-6d92de7a53e8', 'OT-RBIN-BCS1-InsiderLens-Prod', 'Warning', 80.00, 290.37, '2026-09-26 15:38:09'),
-('19fb36f7-0105-4d68-be29-02c3934a2abc', 'AA-GPM-BoschCloudPrinting-QA', 'Healthy', 89.63, 1511.27, '2026-09-26 15:37:45'),
-('1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'MA-SKX-eXtra-Production-Stage-Prod', 'Warning', 84.92, 5863.72, '2026-09-26 15:39:00'),
-('1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', 'AA-ICO-IN-Azure-QA', 'Warning', 80.43, 261.75, '2026-09-26 15:37:01'),
-('219ccbf6-e35b-4758-961a-ede690403d86', 'Hamro-Bosch', 'Healthy', 86.96, 132.08, '2026-09-26 15:39:07'),
-('2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'AA-SMS3-NA-PBAP-Prod', 'Warning', 80.95, 1694.31, '2026-09-26 15:37:59'),
-('4172676b-8a9c-44e0-b2ab-727057b691b7', 'OT-RBIN-PJ-DIGS-MICONIC-Prod', 'Healthy', 92.00, 567.71, '2026-09-26 15:38:31'),
-('50d41c25-8668-4497-8925-766161f0cddb', 'OT-RBIN-PJ-DIGS-MICONIC-QA', 'Healthy', 85.19, 400.71, '2026-09-26 15:38:15'),
-('5784d84d-05ea-4a9c-b625-7d0183e9240b', 'AA-BDO-IN-BoschRewards-QA', 'Healthy', 99.67, 372.00, '2026-09-26 15:38:36'),
-('5b46ccc6-604b-4c5c-81c2-96b133061773', 'AA-SMS3-NA-BAP5.0-Dev', 'Healthy', 87.29, 503.93, '2026-09-26 15:37:52'),
-('6b8e63a8-5397-4d83-9b49-164067a4e892', 'XC_Production_XC/ENG-Bp_866512', 'Degraded', 0.00, 0.00, '2026-09-26 15:36:35'),
-('6c389f01-77d0-4c2c-b846-8dfa36987531', 'EAP Sandbox', 'Healthy', 90.51, 148.75, '2026-09-26 15:39:20'),
-('7498780e-1785-465f-9d50-c8ac1e929376', 'AA-ICO-IN-eFOCuS-QA', 'Healthy', 91.47, 426.17, '2026-09-26 15:37:12'),
-('77839ff3-b3aa-42b0-b490-55830c14bd3a', 'MA-SKX-eXtra-Dev-Stage-Dev', 'Warning', 78.57, 1167.13, '2026-09-26 15:38:49'),
-('8a8c77f4-cb44-47ad-b56a-6682d97b36bb', 'AA-ICO-IN-AA-Dashboard-Prod', 'Healthy', 87.12, 1494.64, '2026-09-26 15:37:32'),
-('8c9dacf9-577b-4129-b900-2c6c9e39c3dd', 'Hamro Bosch Prod', 'Warning', 82.61, 323.00, '2026-09-26 15:39:13'),
-('a77eebf3-17a1-4378-90bf-2c96b1028137', 'AA-SMS3-NA-QA', 'Healthy', 90.48, 1370.51, '2026-09-26 15:38:03'),
-('c080fc5b-797d-45db-b089-01cc05f9a758', 'MA-SKX-eXtra-Promo-Stage-QA', 'Healthy', 87.57, 3900.99, '2026-09-26 15:38:54'),
-('c12d79d2-0655-4caa-839e-fc47e019271c', 'OT-RBIN-GS-EXIMPortal-Prod', 'Degraded', 69.05, 465.59, '2026-09-26 15:38:42'),
-('c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'AA-ICO-IN-eFOCuS-Prod', 'Healthy', 92.26, 2391.48, '2026-09-26 15:37:27'),
-('d26dd531-2174-4c45-a240-032e0d05dfa0', 'AA-GPM-BoschCloudPrinting-Prod', 'Warning', 75.85, 4243.84, '2026-09-26 15:37:39'),
-('d357b6e3-c707-4e36-8681-ba7ef9e30e8a', 'BD-PIP1-HardenedImages-Prod', 'Degraded', 0.00, 0.00, '2026-09-26 15:36:41'),
-('dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'AA-ICO-IN-BoschRewards-Prod', 'Healthy', 94.94, 3325.95, '2026-09-26 15:37:19'),
-('e6800a5e-47c7-47df-8bf8-fc2c616e1442', 'CI-DAE1.5-ASCWorkShop-QA', 'Degraded', 0.00, 0.00, '2026-09-26 15:36:54'),
-('fc152cdb-dc60-44e7-bbee-412c719cb49a', 'AA-SWS-IN-MICONIC-Dev', 'Healthy', 100.00, 0.03, '2026-09-26 15:38:26'),
-('fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', 'AA-ICO-IN-Claims-Management-Prod', 'Healthy', 91.70, 370.96, '2026-09-26 15:37:07');
+INSERT INTO `azure_subscriptions` (`subscription_id`, `display_name`, `key_vault_reference`, `health_status`, `security_score`, `mtd_spend_eur`, `last_synced`) VALUES
+('02ab4266-3406-48d4-bfbc-76605dde11d7', 'RBIN-BDO-web-mobile-PROD', NULL, 'Degraded', 53.35, 972.31, '2026-09-26 15:38:20'),
+('0e6dc52f-1c64-4d5a-9396-29e37fa41079', 'AA-AS-EIT2-Prod', NULL, 'Healthy', 91.07, 23014.95, '2026-09-26 15:36:48'),
+('12db631f-5ab4-4237-9fa6-6d92de7a53e8', 'OT-RBIN-BCS1-InsiderLens-Prod', NULL, 'Warning', 80.00, 290.37, '2026-09-26 15:38:09'),
+('19fb36f7-0105-4d68-be29-02c3934a2abc', 'AA-GPM-BoschCloudPrinting-QA', NULL, 'Healthy', 89.63, 1511.27, '2026-09-26 15:37:45'),
+('1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'MA-SKX-eXtra-Production-Stage-Prod', NULL, 'Warning', 84.92, 5863.72, '2026-09-26 15:39:00'),
+('1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', 'AA-ICO-IN-Azure-QA', NULL, 'Warning', 80.43, 261.75, '2026-09-26 15:37:01'),
+('219ccbf6-e35b-4758-961a-ede690403d86', 'Hamro-Bosch', NULL, 'Healthy', 86.96, 132.08, '2026-09-26 15:39:07'),
+('2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'AA-SMS3-NA-PBAP-Prod', NULL, 'Warning', 80.95, 1694.31, '2026-09-26 15:37:59'),
+('4172676b-8a9c-44e0-b2ab-727057b691b7', 'OT-RBIN-PJ-DIGS-MICONIC-Prod', NULL, 'Healthy', 92.00, 567.71, '2026-09-26 15:38:31'),
+('50d41c25-8668-4497-8925-766161f0cddb', 'OT-RBIN-PJ-DIGS-MICONIC-QA', NULL, 'Healthy', 85.19, 400.71, '2026-09-26 15:38:15'),
+('5784d84d-05ea-4a9c-b625-7d0183e9240b', 'AA-BDO-IN-BoschRewards-QA', NULL, 'Healthy', 99.67, 372.00, '2026-09-26 15:38:36'),
+('5b46ccc6-604b-4c5c-81c2-96b133061773', 'AA-SMS3-NA-BAP5.0-Dev', NULL, 'Healthy', 87.29, 503.93, '2026-09-26 15:37:52'),
+('6b8e63a8-5397-4d83-9b49-164067a4e892', 'XC_Production_XC/ENG-Bp_866512', NULL, 'Degraded', 0.00, 0.00, '2026-09-26 15:36:35'),
+('6c389f01-77d0-4c2c-b846-8dfa36987531', 'EAP Sandbox', NULL, 'Healthy', 90.51, 148.75, '2026-09-26 15:39:20'),
+('7498780e-1785-465f-9d50-c8ac1e929376', 'AA-ICO-IN-eFOCuS-QA', NULL, 'Healthy', 91.47, 426.17, '2026-09-26 15:37:12'),
+('77839ff3-b3aa-42b0-b490-55830c14bd3a', 'MA-SKX-eXtra-Dev-Stage-Dev', NULL, 'Warning', 78.57, 1167.13, '2026-09-26 15:38:49'),
+('8a8c77f4-cb44-47ad-b56a-6682d97b36bb', 'AA-ICO-IN-AA-Dashboard-Prod', NULL, 'Healthy', 87.12, 1494.64, '2026-09-26 15:37:32'),
+('8c9dacf9-577b-4129-b900-2c6c9e39c3dd', 'Hamro Bosch Prod', NULL, 'Warning', 82.61, 323.00, '2026-09-26 15:39:13'),
+('a77eebf3-17a1-4378-90bf-2c96b1028137', 'AA-SMS3-NA-QA', NULL, 'Healthy', 90.48, 1370.51, '2026-09-26 15:38:03'),
+('c080fc5b-797d-45db-b089-01cc05f9a758', 'MA-SKX-eXtra-Promo-Stage-QA', NULL, 'Healthy', 87.57, 3900.99, '2026-09-26 15:38:54'),
+('c12d79d2-0655-4caa-839e-fc47e019271c', 'OT-RBIN-GS-EXIMPortal-Prod', NULL, 'Degraded', 69.05, 465.59, '2026-09-26 15:38:42'),
+('c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'AA-ICO-IN-eFOCuS-Prod', NULL, 'Healthy', 92.26, 2391.48, '2026-09-26 15:37:27'),
+('d26dd531-2174-4c45-a240-032e0d05dfa0', 'AA-GPM-BoschCloudPrinting-Prod', NULL, 'Warning', 75.85, 4243.84, '2026-09-26 15:37:39'),
+('d357b6e3-c707-4e36-8681-ba7ef9e30e8a', 'BD-PIP1-HardenedImages-Prod', NULL, 'Degraded', 0.00, 0.00, '2026-09-26 15:36:41'),
+('dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'AA-ICO-IN-BoschRewards-Prod', NULL, 'Healthy', 94.94, 3325.95, '2026-09-26 15:37:19'),
+('e6800a5e-47c7-47df-8bf8-fc2c616e1442', 'CI-DAE1.5-ASCWorkShop-QA', NULL, 'Degraded', 0.00, 0.00, '2026-09-26 15:36:54'),
+('fc152cdb-dc60-44e7-bbee-412c719cb49a', 'AA-SWS-IN-MICONIC-Dev', NULL, 'Healthy', 100.00, 0.03, '2026-09-26 15:38:26'),
+('fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', 'AA-ICO-IN-Claims-Management-Prod', NULL, 'Healthy', 91.70, 370.96, '2026-09-26 15:37:07');
 
 -- --------------------------------------------------------
 
@@ -898,8 +899,10 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('laravel-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6', 'i:1;', 1791469279),
-('laravel-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6:timer', 'i:1791469279;', 1791469279);
+('ccod-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6', 'i:1;', 1791520127),
+('ccod-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6:timer', 'i:1791520127;', 1791520127),
+('laravel-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6', 'i:1;', 1791476729),
+('laravel-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6:timer', 'i:1791476729;', 1791476729);
 
 -- --------------------------------------------------------
 
@@ -983,7 +986,12 @@ CREATE TABLE `migrations` (
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (1, '0001_01_01_000000_create_users_table', 1),
 (2, '0001_01_01_000001_create_cache_table', 1),
-(3, '0001_01_01_000002_create_jobs_table', 1);
+(3, '0001_01_01_000002_create_jobs_table', 1),
+(4, '2026_10_08_000001_add_ccod_access_fields_to_users_table', 2),
+(5, '2026_10_08_000002_create_teams_table', 2),
+(6, '2026_10_08_000003_create_team_user_table', 2),
+(7, '2026_10_08_000004_create_team_subscription_table', 2),
+(8, '2026_10_08_000005_add_key_vault_reference_to_azure_subscriptions', 3);
 
 -- --------------------------------------------------------
 
@@ -1017,7 +1025,90 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('OvvukXb2QOzhsCHHiADZTZu8Gh9C2y48nfTEINz1', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', 'YTo3OntzOjY6Il90b2tlbiI7czo0MDoiUktWVDljSVN2NE1Qa2hJQjB2OFB0UUk0ZVJFVlVZa2hXa09KVXBTciI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDc6Imh0dHA6Ly8xMjcuMC4wLjE6ODAwMC9hZG1pbi9henVyZS1zdWJzY3JpcHRpb25zIjtzOjU6InJvdXRlIjtzOjUwOiJmaWxhbWVudC5hZG1pbi5yZXNvdXJjZXMuYXp1cmUtc3Vic2NyaXB0aW9ucy5pbmRleCI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fXM6MzoidXJsIjthOjA6e31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjY0OiJlZWYxYzNlNzcxZmUwYjA5NTk1YTZlZjVhNmUxNDEzMWQ1NWVjYmJlOWU1MzgyNDliMjNmYmJlNTRmY2Q1M2RmIjtzOjY6InRhYmxlcyI7YToxOntzOjQwOiJjNGM3YWZiY2Y1ZjBkMWZmZjZkNTcxNDgwODJiOTU1ZF9jb2x1bW5zIjthOjY6e2k6MDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMjoiZGlzcGxheV9uYW1lIjtzOjU6ImxhYmVsIjtzOjEyOiJTdWJzY3JpcHRpb24iO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE1OiJzdWJzY3JpcHRpb25faWQiO3M6NToibGFiZWwiO3M6MTU6IlN1YnNjcmlwdGlvbiBJRCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjI7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTM6ImhlYWx0aF9zdGF0dXMiO3M6NToibGFiZWwiO3M6NjoiSGVhbHRoIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MzthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxNDoic2VjdXJpdHlfc2NvcmUiO3M6NToibGFiZWwiO3M6MTQ6IlNlY3VyaXR5IFNjb3JlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMzoibXRkX3NwZW5kX2V1ciI7czo1OiJsYWJlbCI7czo5OiJNVEQgU3BlbmQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTo1O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjExOiJsYXN0X3N5bmNlZCI7czo1OiJsYWJlbCI7czoxMToiTGFzdCBTeW5jZWQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fX19', 1791469600);
+('f3puvLebHDVeGBKNmH2YCDTnOmqIalvcRajohFDD', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', 'YTo3OntzOjY6Il90b2tlbiI7czo0MDoiblpwOW52YXFMY2hhMzBZbjNBN0pyM2JINXpkR1NYVU93Tk9yaHBJUCI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjg0OiJodHRwOi8vMTI3LjAuMC4xOjgwMDAvYWRtaW4vYXp1cmUtc3Vic2NyaXB0aW9ucy81Nzg0ZDg0ZC0wNWVhLTRhOWMtYjYyNS03ZDAxODNlOTI0MGIiO3M6NToicm91dGUiO3M6NDk6ImZpbGFtZW50LmFkbWluLnJlc291cmNlcy5henVyZS1zdWJzY3JpcHRpb25zLnZpZXciO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjY0OiJlZWYxYzNlNzcxZmUwYjA5NTk1YTZlZjVhNmUxNDEzMWQ1NWVjYmJlOWU1MzgyNDliMjNmYmJlNTRmY2Q1M2RmIjtzOjY6InRhYmxlcyI7YToxOntzOjQwOiI0NmEwMzFiZTk2NjU4ZTljMjJkZmMxMjUzN2EzYzdjMF9jb2x1bW5zIjthOjQ6e2k6MDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo0OiJuYW1lIjtzOjU6ImxhYmVsIjtzOjEzOiJSZXNvdXJjZSBOYW1lIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMzoicmVzb3VyY2VfdHlwZSI7czo1OiJsYWJlbCI7czo0OiJUeXBlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MjthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo2OiJyZWdpb24iO3M6NToibGFiZWwiO3M6ODoiTG9jYXRpb24iO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTozO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjg6ImNvc3RfZXVyIjtzOjU6ImxhYmVsIjtzOjQ6IkNvc3QiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fX19', 1791523866);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `teams`
+--
+
+CREATE TABLE `teams` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `teams`
+--
+
+INSERT INTO `teams` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'MA-BDO', 'MA-BDO Team - Business, App & Security', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(2, 'RBIN', 'RBIN Projects', '2026-10-08 10:55:55', '2026-10-08 10:55:55'),
+(3, 'Others', 'Other Subscriptions', '2026-10-08 14:02:58', '2026-10-08 14:02:58');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `team_subscription`
+--
+
+CREATE TABLE `team_subscription` (
+  `team_id` bigint(20) UNSIGNED NOT NULL,
+  `subscription_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `team_subscription`
+--
+
+INSERT INTO `team_subscription` (`team_id`, `subscription_id`, `created_at`, `updated_at`) VALUES
+(1, '1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '219ccbf6-e35b-4758-961a-ede690403d86', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '4172676b-8a9c-44e0-b2ab-727057b691b7', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '50d41c25-8668-4497-8925-766161f0cddb', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '5784d84d-05ea-4a9c-b625-7d0183e9240b', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '7498780e-1785-465f-9d50-c8ac1e929376', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '8a8c77f4-cb44-47ad-b56a-6682d97b36bb', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, '8c9dacf9-577b-4129-b900-2c6c9e39c3dd', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, 'fc152cdb-dc60-44e7-bbee-412c719cb49a', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(1, 'fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(2, '02ab4266-3406-48d4-bfbc-76605dde11d7', '2026-10-08 10:55:55', '2026-10-08 10:55:55'),
+(2, '12db631f-5ab4-4237-9fa6-6d92de7a53e8', '2026-10-08 10:55:55', '2026-10-08 10:55:55'),
+(2, 'c12d79d2-0655-4caa-839e-fc47e019271c', '2026-10-08 10:55:55', '2026-10-08 10:55:55'),
+(3, '0e6dc52f-1c64-4d5a-9396-29e37fa41079', '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
+(3, '6b8e63a8-5397-4d83-9b49-164067a4e892', '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
+(3, '6c389f01-77d0-4c2c-b846-8dfa36987531', '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
+(3, 'd357b6e3-c707-4e36-8681-ba7ef9e30e8a', '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
+(3, 'e6800a5e-47c7-47df-8bf8-fc2c616e1442', '2026-10-08 14:02:58', '2026-10-08 14:02:58');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `team_user`
+--
+
+CREATE TABLE `team_user` (
+  `team_id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `team_user`
+--
+
+INSERT INTO `team_user` (`team_id`, `user_id`, `created_at`, `updated_at`) VALUES
+(1, 2, '2026-10-08 10:50:52', '2026-10-08 10:50:52'),
+(3, 1, '2026-10-08 14:02:58', '2026-10-08 14:02:58');
 
 -- --------------------------------------------------------
 
@@ -1031,6 +1122,8 @@ CREATE TABLE `users` (
   `email` varchar(255) NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) NOT NULL,
+  `role` varchar(255) NOT NULL DEFAULT 'restricted_reader',
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -1040,8 +1133,9 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'jra9cob', 'jra9cob@bosch.com', NULL, '$2y$12$gvrkcj5.HqEO.vMZyYvLFej075vWSkG.DOyfDfY2utnExYWjvFsyW', NULL, '2026-10-08 08:48:28', '2026-10-08 08:48:28');
+INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `role`, `is_active`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'jra9cob', 'jra9cob@bosch.com', NULL, '$2y$12$gvrkcj5.HqEO.vMZyYvLFej075vWSkG.DOyfDfY2utnExYWjvFsyW', 'global_owner', 1, NULL, '2026-10-08 08:48:28', '2026-10-08 08:48:28'),
+(2, 'MA-BDO User', 'mabdo@bosch.com', NULL, '$2y$12$y7faO2LpXyjPMp5k5WdNO.OF4obRM1nNzFe9iHrA6Yjy6wnbt.1na', 'restricted_owner', 1, NULL, '2026-10-08 10:50:52', '2026-10-08 13:20:09');
 
 --
 -- Indexes for dumped tables
@@ -1135,6 +1229,27 @@ ALTER TABLE `sessions`
   ADD KEY `sessions_last_activity_index` (`last_activity`);
 
 --
+-- Indexes for table `teams`
+--
+ALTER TABLE `teams`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `teams_name_unique` (`name`);
+
+--
+-- Indexes for table `team_subscription`
+--
+ALTER TABLE `team_subscription`
+  ADD PRIMARY KEY (`team_id`,`subscription_id`),
+  ADD KEY `team_subscription_subscription_id_foreign` (`subscription_id`);
+
+--
+-- Indexes for table `team_user`
+--
+ALTER TABLE `team_user`
+  ADD PRIMARY KEY (`team_id`,`user_id`),
+  ADD KEY `team_user_user_id_foreign` (`user_id`);
+
+--
 -- Indexes for table `users`
 --
 ALTER TABLE `users`
@@ -1167,13 +1282,19 @@ ALTER TABLE `jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+
+--
+-- AUTO_INCREMENT for table `teams`
+--
+ALTER TABLE `teams`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
 
 --
 -- Constraints for dumped tables
@@ -1196,6 +1317,20 @@ ALTER TABLE `azure_cost_forecasts`
 --
 ALTER TABLE `billing_resources`
   ADD CONSTRAINT `billing_resources_ibfk_1` FOREIGN KEY (`subscription_id`) REFERENCES `azure_subscriptions` (`subscription_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `team_subscription`
+--
+ALTER TABLE `team_subscription`
+  ADD CONSTRAINT `team_subscription_subscription_id_foreign` FOREIGN KEY (`subscription_id`) REFERENCES `azure_subscriptions` (`subscription_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `team_subscription_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `team_user`
+--
+ALTER TABLE `team_user`
+  ADD CONSTRAINT `team_user_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `team_user_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
