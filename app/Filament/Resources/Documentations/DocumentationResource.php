@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Documentations;
 use App\Filament\Resources\Documentations\Pages\CreateDocumentation;
 use App\Filament\Resources\Documentations\Pages\EditDocumentation;
 use App\Filament\Resources\Documentations\Pages\ListDocumentations;
+use App\Filament\Resources\Documentations\Pages\ViewDocumentation;
 use App\Filament\Resources\Documentations\Schemas\DocumentationForm;
 use App\Filament\Resources\Documentations\Tables\DocumentationsTable;
 use App\Models\Documentation;
@@ -59,6 +60,7 @@ class DocumentationResource extends Resource
         return [
             'index' => ListDocumentations::route('/'),
             'create' => CreateDocumentation::route('/create'),
+            'view' => ViewDocumentation::route('/{record}'),
             'edit' => EditDocumentation::route('/{record}/edit'),
         ];
     }
