@@ -11,6 +11,8 @@ class SubscriptionBudgetDetails extends BaseWidget
 {
     public AzureSubscription $record;
 
+    protected static bool $isLazy = true;
+
     protected static ?string $heading = 'Budget Details';
 
     protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
