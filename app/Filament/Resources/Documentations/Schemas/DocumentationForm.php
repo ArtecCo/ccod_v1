@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Documentations\Schemas;
 
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
 
@@ -24,6 +25,10 @@ class DocumentationForm
                 ->required()
                 ->unique(ignoreRecord: true)
                 ->maxLength(255),
+
+            MarkdownEditor::make('content')
+                ->required()
+                ->columnSpanFull(),
         ]);
     }
 }
