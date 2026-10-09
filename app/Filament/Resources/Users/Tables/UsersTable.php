@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
@@ -46,6 +47,9 @@ class UsersTable
             ->recordActions([
                 ViewAction::make(),
                 EditAction::make(),
+            ])
+            ->toolbarActions([
+                XlsxExportAction::make(),
             ]);
     }
 }
