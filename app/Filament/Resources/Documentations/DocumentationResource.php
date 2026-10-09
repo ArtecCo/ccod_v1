@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Documentations;
 
 use App\Filament\Resources\Documentations\Pages\CreateDocumentation;
-use App\Filament\Resources\Documentations\Pages\DesignDocumentation;
 use App\Filament\Resources\Documentations\Pages\EditDocumentation;
 use App\Filament\Resources\Documentations\Pages\ListDocumentations;
 use App\Filament\Resources\Documentations\Schemas\DocumentationForm;
@@ -61,7 +60,6 @@ class DocumentationResource extends Resource
             'index' => ListDocumentations::route('/'),
             'create' => CreateDocumentation::route('/create'),
             'edit' => EditDocumentation::route('/{record}/edit'),
-            'design' => DesignDocumentation::route('/{record}/design'),
         ];
     }
 }
