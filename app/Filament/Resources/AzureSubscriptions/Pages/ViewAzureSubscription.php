@@ -96,8 +96,8 @@ class ViewAzureSubscription extends ViewRecord
                                                     }
 
                                                     return $documentation
-                                                        ? ! $user->can('update', $documentation)
-                                                        : ! $user->can('createForSubscription', $this->record);
+                                                        ? ! ($user->isGlobal() || $user->can('update', $documentation))
+                                                        : ! ($user->isGlobal() || $user->can('createForSubscription', $this->record));
                                                 })
                                                 ->tooltip(function (): ?string {
                                                     $user = auth()->user();
@@ -108,8 +108,8 @@ class ViewAzureSubscription extends ViewRecord
                                                     }
 
                                                     $allowed = $documentation
-                                                        ? $user->can('update', $documentation)
-                                                        : $user->can('createForSubscription', $this->record);
+                                                        ? ($user->isGlobal() || $user->can('update', $documentation))
+                                                        : ($user->isGlobal() || $user->can('createForSubscription', $this->record));
 
                                                     return $allowed
                                                         ? null
@@ -126,7 +126,7 @@ class ViewAzureSubscription extends ViewRecord
                                                     $user = auth()->user();
 
                                                     abort_unless(
-                                                        $user?->can('createForSubscription', $this->record),
+                                                        $user && ($user->isGlobal() || $user->can('createForSubscription', $this->record)),
                                                         403
                                                     );
 
