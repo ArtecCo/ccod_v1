@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('subscription_documentations', function (Blueprint $table): void {
             $table->id();
-            $table->string('subscription_id', 100)->unique();
+            $table->string('subscription_id')->unique();
             $table->json('blocks')->nullable();
             $table->timestamps();
 
