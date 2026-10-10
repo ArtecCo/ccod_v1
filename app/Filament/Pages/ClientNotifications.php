@@ -13,9 +13,4 @@ class ClientNotifications extends Page
     protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.client-notifications';
-
-    public static function shouldRegisterNavigation(): bool
-    {
-        return auth()->check();
-    }
 }
