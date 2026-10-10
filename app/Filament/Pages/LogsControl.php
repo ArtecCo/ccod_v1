@@ -27,7 +27,7 @@ class LogsControl extends Page implements HasForms
     public function mount(LogSettings $settings): void
     {
         $this->form->fill([
-            'categories' => array_keys(array_filter($settings->all())),
+            'actions' => array_keys(array_filter($settings->all())),
         ]);
     }
 
@@ -36,15 +36,11 @@ class LogsControl extends Page implements HasForms
         return $schema
             ->components([
                 Section::make('Audit logging controls')
-                    ->description('Choose which categories of activity CCOD should record. Changes apply immediately to new activity; existing audit records are not deleted.')
+                    ->description('Each action can be enabled or disabled independently. Changes apply to new audit activity; existing audit records are not deleted.')
                     ->schema([
-                        CheckboxList::make('categories')
-                            ->label('Log these categories')
-                            ->options([
-                                LogSettings::AUTHENTICATION => 'Authentication — login, logout and failed authentication',
-                                LogSettings::REQUESTS => 'Requests — page and application requests',
-                                LogSettings::MODEL_ACTIONS => 'Model actions — create, update, delete, restore and force-delete',
-                            ])
+                        CheckboxList::make('actions')
+                            ->label('Log these actions')
+                            ->options(LogSettings::GROUPS)
                             ->columns(1)
                             ->live(),
                     ]),
@@ -54,13 +50,12 @@ class LogsControl extends Page implements HasForms
 
     public function save(LogSettings $settings): void
     {
-        $selected = $this->data['categories'] ?? [];
+        $selected = $this->data['actions'] ?? [];
 
-        $settings->save([
-            LogSettings::AUTHENTICATION => in_array(LogSettings::AUTHENTICATION, $selected, true),
-            LogSettings::REQUESTS => in_array(LogSettings::REQUESTS, $selected, true),
-            LogSettings::MODEL_ACTIONS => in_array(LogSettings::MODEL_ACTIONS, $selected, true),
-        ]);
+        $settings->save(array_fill_keys(
+            LogSettings::KEYS,
+            false,
+        ) + array_fill_keys($selected, true));
 
         Notification::make()
             ->title('Logging settings saved')
