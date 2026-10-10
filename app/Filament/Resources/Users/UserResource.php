@@ -10,6 +10,7 @@ use App\Filament\Resources\Users\Pages\ViewUser;
 use App\Filament\Resources\Users\Schemas\UserForm;
 use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
+use App\Models\Developer;
 use App\Models\User;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -29,22 +30,27 @@ class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->role === UserRole::GlobalOwner;
+        $developer = auth()->guard('developers')->user();
+        $user = auth()->guard('web')->user();
+
+        return $developer instanceof Developer
+            || $user?->isGlobalOwner()
+            || $user?->roleEnum() === UserRole::RestrictedOwner;
     }
 
     public static function canCreate(): bool
     {
-        return static::canViewAny();
+        return auth()->guard('web')->user()?->isGlobalOwner() === true;
     }
 
     public static function canEdit($record): bool
     {
-        return static::canViewAny();
+        return auth()->guard('web')->user()?->isGlobalOwner() === true;
     }
 
     public static function canDelete($record): bool
     {
-        return static::canViewAny();
+        return auth()->guard('web')->user()?->isGlobalOwner() === true;
     }
 
     public static function form(Schema $schema): Schema
