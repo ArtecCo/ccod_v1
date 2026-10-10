@@ -241,6 +241,41 @@ html { font-size: 13px !important; }
         font-size: 0.95rem !important;
     }
 }
+
+/* Smooth desktop sidebar collapse / expansion */
+@media (min-width: 1024px) {
+    .fi-sidebar {
+        transition:
+            width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 220ms ease !important;
+    }
+
+    /* Let the main area visually follow the sidebar movement. */
+    .fi-main-ctn {
+        transition:
+            transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 180ms ease !important;
+    }
+
+    /* Small coordinated movement of navigation controls. */
+    .fi-sidebar-item-button,
+    .fi-sidebar-group-btn {
+        transition:
+            background-color 160ms ease,
+            color 160ms ease,
+            transform 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+    }
+
+    .fi-sidebar-item-button:hover {
+        transform: translateX(2px);
+    }
+
+    .fi-sidebar-group-btn:hover {
+        transform: translateX(1px);
+    }
+
+    /* Smooth rotation of the group collapse indicator. 
                         </style>
                     ')
                 );
