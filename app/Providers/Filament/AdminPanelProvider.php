@@ -103,9 +103,15 @@ class AdminPanelProvider extends PanelProvider
                 $notificationItem = NavigationItem::make('Notifications')
                     ->icon(Heroicon::OutlinedBell)
                     ->url(ClientNotifications::getUrl())
-                    ->badge(fn (): ?string => $user?->unreadNotifications()->count() > 0
-                        ? (string) $user->unreadNotifications()->count()
-                        : null)
+                    ->badge(function () use ($user): ?string {
+                        if (! $user) {
+                            return null;
+                        }
+
+                        $count = $user->unreadNotifications()->count();
+
+                        return $count > 0 ? (string) $count : null;
+                    })
                     ->badgeColor('primary')
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.notifications'));
 
