@@ -6,6 +6,7 @@ use App\Filament\Pages\LogsControl;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
+use App\Filament\Resources\DatabaseTables\DatabaseTableResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -46,12 +47,14 @@ class DeveloperPanelProvider extends PanelProvider
                 NavigationGroup::make('Notifications'),
                 NavigationGroup::make('Logging'),
                 NavigationGroup::make('Administration'),
+                NavigationGroup::make('Database'),
                 NavigationGroup::make('Maintenance'),
             ])
             ->resources([
                 AuditLogResource::class,
                 NotificationRuleResource::class,
                 AccessRequestResource::class,
+                DatabaseTableResource::class,
             ])
             ->pages([
                 Dashboard::class,
