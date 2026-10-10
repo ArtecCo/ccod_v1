@@ -9,6 +9,8 @@ use App\Services\AuditLogger;
 use Filament\Forms\Components\Field;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -37,6 +39,33 @@ class AppServiceProvider extends ServiceProvider
 
         Field::configureUsing(function (Field $field): void {
             $field->inlineLabel();
+        });
+
+        Event::listen(Login::class, function (Login $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Login',
+                description: 'Authentication succeeded.',
+                success: true,
+                properties: [
+                    'guard' => $event->guard,
+                    'remember' => $event->remember,
+                ],
+                logName: 'Access',
+                tags: ['authentication', 'login'],
+            );
+        });
+
+        Event::listen(Logout::class, function (Logout $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Logout',
+                description: 'Authentication session ended.',
+                success: true,
+                properties: [
+                    'guard' => $event->guard,
+                ],
+                logName: 'Access',
+                tags: ['authentication', 'logout'],
+            );
         });
 
         Event::listen(Failed::class, function (Failed $event): void {
