@@ -6,6 +6,7 @@ use App\Enums\NotificationEvent;
 use App\Models\NotificationRule;
 use App\Models\Team;
 use App\Models\User;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -78,13 +79,21 @@ class NotificationRuleResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('event_key')->columns([
-            TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (NotificationEvent|string $state): string => $state instanceof NotificationEvent ? $state->label() : (NotificationEvent::tryFrom($state)?->label() ?? $state))->searchable(),
-            IconColumn::make('enabled')->label('Enabled')->boolean(),
-            TextColumn::make('recipient_type')->label('Audience')->badge()->formatStateUsing(fn (string $state): string => match ($state) {'all' => 'All users', 'teams' => 'Teams', 'users' => 'Selected users', default => $state}),
-            TextColumn::make('severity')->badge(),
-            TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
-        ])->filters([SelectFilter::make('enabled')->options(['1' => 'Enabled', '0' => 'Disabled'])]);
+        return $table
+            ->defaultSort('event_key')
+            ->columns([
+                TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (NotificationEvent|string $state): string => $state instanceof NotificationEvent ? $state->label() : (NotificationEvent::tryFrom($state)?->label() ?? $state))->searchable(),
+                IconColumn::make('enabled')->label('Enabled')->boolean(),
+                TextColumn::make('recipient_type')->label('Audience')->badge()->formatStateUsing(fn (string $state): string => match ($state) {'all' => 'All users', 'teams' => 'Teams', 'users' => 'Selected users', default => $state}),
+                TextColumn::make('severity')->badge(),
+                TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('enabled')->options(['1' => 'Enabled', '0' => 'Disabled']),
+            ])
+            ->headerActions([
+                XlsxExportAction::make()->title('Export Notification Rules')->fileName(fn (): string => 'notification-rules-'.now()->format('Y-m-d-His')),
+            ]);
     }
 
     public static function getPages(): array
