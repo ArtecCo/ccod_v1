@@ -9,10 +9,17 @@ return new class extends Migration
 {
     public function up(): void
     {
+        // This table may already exist in installations created from the earlier
+        // access-grants migration. In that case, leave the existing table intact
+        // and let subsequent migrations normalize its schema.
+        if (Schema::hasTable('user_access_grants')) {
+            return;
+        }
+
         Schema::create('user_access_grants', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained('users')->cascadeOnDelete();
-            $table->string('target_type');
+            $table->string('target_type')->default(AccessRequestTargetType::Subscription->value);
             $table->foreignId('team_id')->nullable()->constrained('teams')->cascadeOnDelete();
             $table->string('subscription_id')->nullable();
             $table->string('target_name');
