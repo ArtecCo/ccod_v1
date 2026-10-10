@@ -48,7 +48,7 @@ class Profile extends Page
 
     public function getSubscriptions(): Collection
     {
-        return AzureSubscription::query()->orderBy('display_name')->get();
+        return app(AccessAuthorizationService::class)->accessibleSubscriptions($this->getUser());
     }
 
     public function getGrants(): Collection
@@ -82,6 +82,8 @@ class Profile extends Page
         $user = $this->getUser();
         $teams = $this->getTeams();
         $grants = $this->getGrants();
+        $accessibleSubscriptions = $this->getSubscriptions();
+        $accessibleSubscriptionIds = $accessibleSubscriptions->pluck('subscription_id')->all();
 
         return $schema->components([
             Section::make('Account overview')
@@ -111,7 +113,7 @@ class Profile extends Page
                 ->description('Effective access combines your base role, team membership and active grants.')
                 ->schema($teams->isEmpty()
                     ? [TextEntry::make('no_teams')->hiddenLabel()->state('You are not currently assigned to a team.')]
-                    : $teams->flatMap(function (Team $team): array {
+                    : $teams->flatMap(function (Team $team) use ($accessibleSubscriptionIds): array {
                         $teamRows = [
                             Grid::make(2)->schema([
                                 TextEntry::make("team_{$team->id}_name")
@@ -125,7 +127,7 @@ class Profile extends Page
                             ]),
                         ];
 
-                        foreach ($team->subscriptions as $subscription) {
+                        foreach ($team->subscriptions->whereIn('subscription_id', $accessibleSubscriptionIds) as $subscription) {
                             $teamRows[] = Grid::make(2)->schema([
                                 TextEntry::make("team_{$team->id}_subscription_{$subscription->subscription_id}")
                                     ->label('Subscription')
@@ -145,6 +147,27 @@ class Profile extends Page
                                 ->collapsed(),
                         ];
                     })->all())
+                ->columnSpanFull(),
+
+            Section::make('Accessible subscriptions')
+                ->description('Subscriptions you can currently access. Revoked subscription access is removed from this list immediately.')
+                ->schema($accessibleSubscriptions->isEmpty()
+                    ? [TextEntry::make('no_subscriptions')->hiddenLabel()->state('You do not currently have access to any Azure subscriptions.')]
+                    : $accessibleSubscriptions->map(fn (AzureSubscription $subscription): Grid => Grid::make(3)->schema([
+                        TextEntry::make("accessible_subscription_{$subscription->subscription_id}_name")
+                            ->label('Subscription')
+                            ->state($subscription->display_name),
+                        TextEntry::make("accessible_subscription_{$subscription->subscription_id}_id")
+                            ->label('Subscription ID')
+                            ->state($subscription->subscription_id),
+                        TextEntry::make("accessible_subscription_{$subscription->subscription_id}_role")
+                            ->label('Effective role')
+                            ->state($subscription->access_role?->label() ?? 'No access')
+                            ->badge()
+                            ->color('gray'),
+                    ]))->all())
+                ->collapsible()
+                ->collapsed()
                 ->columnSpanFull(),
 
             Section::make('Access exemptions and additional grants')
@@ -183,7 +206,7 @@ class Profile extends Page
                         AccessRequestTargetType::Subscription->value => 'Azure subscription',
                     ])->default(AccessRequestTargetType::Subscription->value)->live()->required(),
                     Select::make('team_id')->label('Team')->options(fn (): array => $this->getTeams()->pluck('name', 'id')->all())->searchable()->preload()->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value)->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value),
-                    Select::make('subscription_id')->label('Azure subscription')->options(fn (): array => $this->getSubscriptions()->pluck('display_name', 'subscription_id')->all())->searchable()->preload()->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
+                    Select::make('subscription_id')->label('Azure subscription')->options(fn (): array => AzureSubscription::query()->orderBy('display_name')->pluck('display_name', 'subscription_id')->all())->searchable()->preload()->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
                     Select::make('requested_role')->label('Requested role')->options(collect(UserRole::cases())->filter(fn (UserRole $role): bool => $role->isRestricted())->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->label()])->all())->required(),
                     Textarea::make('reason')->label('Reason')->placeholder('Explain why this access is required.')->required()->rows(4)->columnSpanFull(),
                     Select::make('duration')->label('Access duration')->options([
