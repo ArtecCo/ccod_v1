@@ -152,10 +152,12 @@ class AccessRequestService
             $requestedUntil = null;
         }
 
-        UserSubscriptionAccessOverride::query()
-            ->where('user_id', $request->user_id)
-            ->when($request->target_type === AccessRequestTargetType::Subscription, fn ($query) => $query->where('subscription_id', $request->subscription_id))
-            ->delete();
+        if ($request->target_type === AccessRequestTargetType::Subscription) {
+            UserSubscriptionAccessOverride::query()
+                ->where('user_id', $request->user_id)
+                ->where('subscription_id', $request->subscription_id)
+                ->delete();
+        }
 
         $grant = UserAccessGrant::create([
             'user_id' => $request->user_id,
