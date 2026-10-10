@@ -3,10 +3,10 @@
 namespace App\Filament\Resources\AuditLogs;
 
 use App\Filament\Resources\AuditLogs\Pages\ListAuditLogs;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
@@ -124,7 +124,7 @@ class AuditLogResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\ViewAction::make()
+                ViewAction::make()
                     ->modalHeading('Audit Log Entry')
                     ->modalSubmitAction(false)
                     ->form([
