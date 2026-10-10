@@ -3,11 +3,11 @@
 namespace App\Filament\Pages;
 
 use App\Services\LogSettings;
-use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\Checkbox;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
-use Filament\Pages\Page;
 use Filament\Notifications\Notification;
+use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -26,23 +26,34 @@ class LogsControl extends Page implements HasForms
 
     public function mount(LogSettings $settings): void
     {
-        $this->form->fill([
-            'actions' => array_keys(array_filter($settings->all())),
-        ]);
+        $this->form->fill($settings->all());
     }
 
     public function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-                Section::make('Audit logging controls')
-                    ->description('Each action can be enabled or disabled independently. Changes apply to new audit activity; existing audit records are not deleted.')
+                Section::make('Authentication')
+                    ->description('Control each authentication event independently.')
                     ->schema([
-                        CheckboxList::make('actions')
-                            ->label('Log these actions')
-                            ->options(LogSettings::GROUPS)
-                            ->columns(1)
-                            ->live(),
+                        Checkbox::make(LogSettings::LOGIN)->label('Login'),
+                        Checkbox::make(LogSettings::LOGOUT)->label('Logout'),
+                        Checkbox::make(LogSettings::FAILED_AUTHENTICATION)->label('Failed authentication'),
+                    ]),
+                Section::make('Requests')
+                    ->description('Control request logging independently by request type.')
+                    ->schema([
+                        Checkbox::make(LogSettings::PAGE_REQUESTS)->label('Page requests (GET)'),
+                        Checkbox::make(LogSettings::APPLICATION_REQUESTS)->label('Application requests (non-GET)'),
+                    ]),
+                Section::make('Model Actions')
+                    ->description('Control every model lifecycle action independently.')
+                    ->schema([
+                        Checkbox::make(LogSettings::CREATED)->label('Create'),
+                        Checkbox::make(LogSettings::UPDATED)->label('Update'),
+                        Checkbox::make(LogSettings::DELETED)->label('Delete'),
+                        Checkbox::make(LogSettings::RESTORED)->label('Restore'),
+                        Checkbox::make(LogSettings::FORCE_DELETED)->label('Force delete'),
                     ]),
             ])
             ->statePath('data');
@@ -50,12 +61,7 @@ class LogsControl extends Page implements HasForms
 
     public function save(LogSettings $settings): void
     {
-        $selected = $this->data['actions'] ?? [];
-
-        $settings->save(array_fill_keys(
-            LogSettings::KEYS,
-            false,
-        ) + array_fill_keys($selected, true));
+        $settings->save($this->data ?? []);
 
         Notification::make()
             ->title('Logging settings saved')
