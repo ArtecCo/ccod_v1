@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class DatabaseTableResource extends Resource
 {
     protected static ?string $model = DatabaseTable::class;
-    protected static ?string $navigationLabel = 'Database';
+    protected static ?string $navigationLabel = 'Tables';
     protected static ?string $modelLabel = 'Table';
     protected static ?string $pluralModelLabel = 'Tables';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-circle-stack';
@@ -31,6 +31,11 @@ class DatabaseTableResource extends Resource
         $developer = auth()->guard('developers')->user();
 
         return $developer !== null && $developer->is_active;
+    }
+
+    public static function getNavigationUrl(): string
+    {
+        return static::getUrl('index');
     }
 
     public static function getGloballySearchableAttributes(): array
@@ -81,30 +86,12 @@ class DatabaseTableResource extends Resource
         return $table
             ->defaultSort('table_name')
             ->columns([
-                TextColumn::make('table_name')
-                    ->label('Table')
-                    ->searchable()
-                    ->sortable(),
-                TextColumn::make('table_rows')
-                    ->label('Rows')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('size_mb')
-                    ->label('Size')
-                    ->numeric(decimalPlaces: 2)
-                    ->suffix(' MB')
-                    ->sortable(),
-                TextColumn::make('engine')
-                    ->label('Engine')
-                    ->sortable(),
-                TextColumn::make('table_collation')
-                    ->label('Collation')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('table_comment')
-                    ->label('Comment')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('table_name')->label('Table')->searchable()->sortable(),
+                TextColumn::make('table_rows')->label('Rows')->numeric()->sortable(),
+                TextColumn::make('size_mb')->label('Size')->numeric(decimalPlaces: 2)->suffix(' MB')->sortable(),
+                TextColumn::make('engine')->label('Engine')->sortable(),
+                TextColumn::make('table_collation')->label('Collation')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('table_comment')->label('Comment')->searchable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('engine')
