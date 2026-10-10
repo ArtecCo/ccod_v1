@@ -90,22 +90,18 @@ class Profile extends Page
                     Grid::make(4)->schema([
                         TextEntry::make('account_name')
                             ->label('Account')
-                            ->state($user->name)
-                            ->description($user->email),
+                            ->state($user->name),
                         TextEntry::make('base_role')
                             ->label('Base role')
                             ->state($user->roleEnum()->label())
                             ->badge()
-                            ->color('primary')
-                            ->description('Unchanged by access grants.'),
+                            ->color('primary'),
                         TextEntry::make('team_count')
                             ->label('Teams')
-                            ->state((string) $teams->count())
-                            ->description('Current team memberships.'),
+                            ->state((string) $teams->count()),
                         TextEntry::make('grant_count')
                             ->label('Active grants')
-                            ->state((string) $grants->count())
-                            ->description('Additional access exemptions.'),
+                            ->state((string) $grants->count()),
                     ]),
                 ])
                 ->columnSpanFull(),
@@ -124,7 +120,7 @@ class Profile extends Page
             Section::make('Teams and effective access')
                 ->description('Effective access combines your base role, team membership and active grants.')
                 ->schema($teams->isEmpty()
-                    ? [TextEntry::make('no_teams')->label('')->state('You are not currently assigned to a team.')]
+                    ? [TextEntry::make('no_teams')->hiddenLabel()->state('You are not currently assigned to a team.')]
                     : $teams->flatMap(function (Team $team): array {
                         $subscriptionSummary = $team->subscriptions->map(function (AzureSubscription $subscription): string {
                             $role = $this->effectiveRoleForSubscription($subscription->subscription_id) ?? 'No access';
@@ -153,7 +149,7 @@ class Profile extends Page
             Section::make('Access exemptions and additional grants')
                 ->description('Active grants are exceptions to your base role and can be permanent or time-bound.')
                 ->schema($grants->isEmpty()
-                    ? [TextEntry::make('no_grants')->label('')->state('No active access exemptions or additional grants.')]
+                    ? [TextEntry::make('no_grants')->hiddenLabel()->state('No active access exemptions or additional grants.')]
                     : $grants->flatMap(function (UserAccessGrant $grant): array {
                         return [
                             Grid::make(3)->schema([
@@ -169,8 +165,7 @@ class Profile extends Page
                                     ->label('Duration')
                                     ->state($grant->expires_at ? 'Time-bound' : 'Permanent')
                                     ->badge()
-                                    ->color($grant->expires_at ? 'warning' : 'success')
-                                    ->description($grant->expires_at ? 'Expires ' . $grant->expires_at->format('d M Y, H:i') : 'No expiry.'),
+                                    ->color($grant->expires_at ? 'warning' : 'success'),
                             ]),
                         ];
                     })->all())
