@@ -119,8 +119,8 @@ class AccessRequestResource extends Resource
                 TextColumn::make('user.name')->label('Requester')->searchable()->sortable(),
                 TextColumn::make('target_name')->label('Target')->searchable()->sortable(),
                 TextColumn::make('target_type')->label('Type')->badge(),
-                TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn (string $state): string => UserRole::tryFrom($state)?->label() ?? $state),
-                TextColumn::make('duration')->label('Duration')->formatStateUsing(fn (string $state): string => AccessRequestDuration::tryFrom($state)?->label() ?? $state),
+                TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state)),
+                TextColumn::make('duration')->label('Duration')->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state)),
                 TextColumn::make('status')->badge(),
                 TextColumn::make('created_at')->label('Requested')->dateTime('Y-m-d H:i:s')->sortable(),
             ])
