@@ -1,6 +1,10 @@
 <?php
 
+use MrAdder\FilamentLogger\Resources\ActivityResource;
+
 return [
+    'activity_resource' => ActivityResource::class,
+
     'authorization' => [
         'strict' => true,
         'sensitive_ability' => 'viewSensitiveData',
