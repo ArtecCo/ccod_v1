@@ -115,8 +115,13 @@ class AccessRequestService
         return $request;
     }
 
-    public function approve(AccessRequest $request, User|\App\Models\Developer $actor, ?string $reason = null): UserAccessGrant
-    {
+    public function approve(
+        AccessRequest $request,
+        User|\App\Models\Developer $actor,
+        ?string $reason = null,
+        ?AccessRequestDuration $duration = null,
+        ?\DateTimeInterface $requestedUntil = null,
+    ): UserAccessGrant {
         if ($request->status !== AccessRequestStatus::Pending) {
             throw ValidationException::withMessages(['request' => 'Only pending requests can be approved.']);
         }
@@ -131,8 +136,14 @@ class AccessRequestService
             throw ValidationException::withMessages(['request' => 'The requested role is invalid.']);
         }
 
-        if ($request->duration === AccessRequestDuration::TimeBound && $request->requested_until?->isPast()) {
-            throw ValidationException::withMessages(['request' => 'The requested access period has already expired.']);
+        $duration ??= $request->duration;
+
+        if ($duration === AccessRequestDuration::TimeBound) {
+            if ($requestedUntil === null || $requestedUntil <= now()) {
+                throw ValidationException::withMessages(['requested_until' => 'A future expiry date is required for time-bound access.']);
+            }
+        } else {
+            $requestedUntil = null;
         }
 
         $grant = UserAccessGrant::create([
@@ -146,19 +157,30 @@ class AccessRequestService
             'granted_by_id' => $actor->getKey(),
             'source_request_id' => $request->getKey(),
             'starts_at' => now(),
-            'expires_at' => $request->duration === AccessRequestDuration::TimeBound ? $request->requested_until : null,
+            'expires_at' => $duration === AccessRequestDuration::TimeBound ? $requestedUntil : null,
         ]);
 
         $request->forceFill([
             'status' => AccessRequestStatus::Approved,
+            'duration' => $duration,
+            'requested_until' => $requestedUntil,
             'decided_by_type' => $actor instanceof User ? User::class : get_class($actor),
             'decided_by_id' => $actor->getKey(),
             'decided_at' => now(),
             'decision_reason' => $reason,
         ])->save();
 
-        $this->notifyRequester($request, 'Access request approved', sprintf('Your request for %s access to %s was approved.', $role->label(), $request->target_name), 'success');
-        $this->auditDecision($request, $actor, true, $reason);
+        $accessPeriod = $duration === AccessRequestDuration::Permanent
+            ? 'permanent access'
+            : sprintf('access until %s', $requestedUntil->format('Y-m-d H:i:s'));
+
+        $this->notifyRequester(
+            $request,
+            'Access request approved',
+            sprintf('Your request for %s access to %s was approved with %s.', $role->label(), $request->target_name, $accessPeriod),
+            'success',
+        );
+        $this->auditDecision($request, $actor, true, $reason, $duration, $requestedUntil);
 
         return $grant;
     }
@@ -206,8 +228,14 @@ class AccessRequestService
         );
     }
 
-    private function auditDecision(AccessRequest $request, User|\App\Models\Developer $actor, bool $approved, ?string $reason): void
-    {
+    private function auditDecision(
+        AccessRequest $request,
+        User|\App\Models\Developer $actor,
+        bool $approved,
+        ?string $reason,
+        ?AccessRequestDuration $duration = null,
+        ?\DateTimeInterface $requestedUntil = null,
+    ): void {
         $this->auditLogger->log(
             event: $approved ? 'Access Request Approved' : 'Access Request Rejected',
             description: sprintf('%s was %s.', $request->getAuditLabel(), $approved ? 'approved' : 'rejected'),
@@ -218,6 +246,8 @@ class AccessRequestService
                 'requested_role' => $request->requested_role,
                 'target_type' => $request->target_type->value,
                 'target_id' => $request->team_id ?? $request->subscription_id,
+                'approved_duration' => $duration?->value,
+                'approved_until' => $requestedUntil?->format(DATE_ATOM),
             ],
             logName: 'Access Requests',
             tags: ['access_request', $approved ? 'approved' : 'rejected'],
