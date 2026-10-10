@@ -9,7 +9,6 @@ use App\Enums\UserRole;
 use App\Filament\Resources\AccessRequests\Pages\ListAccessRequests;
 use App\Filament\Resources\AccessRequests\Pages\ViewAccessRequest;
 use App\Models\AccessRequest;
-use App\Services\AccessAuthorizationService;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -90,9 +89,16 @@ class AccessRequestResource extends Resource
                     TextEntry::make('user.name')->label('Requester'),
                     TextEntry::make('user.email')->label('Email'),
                     TextEntry::make('target_name')->label('Target'),
-                    TextEntry::make('target_type')->label('Target type')->badge(),
-                    TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn (string $state): string => UserRole::tryFrom($state)?->label() ?? $state),
-                    TextEntry::make('duration')->label('Duration')->formatStateUsing(fn (string $state): string => AccessRequestDuration::tryFrom($state)?->label() ?? $state),
+                    TextEntry::make('target_type')
+                        ->label('Target type')
+                        ->formatStateUsing(fn (AccessRequestTargetType|string $state): string => $state instanceof AccessRequestTargetType ? $state->label() : (AccessRequestTargetType::tryFrom($state)?->label() ?? $state))
+                        ->badge(),
+                    TextEntry::make('requested_role')
+                        ->label('Requested role')
+                        ->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state)),
+                    TextEntry::make('duration')
+                        ->label('Duration')
+                        ->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state)),
                     TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
                     TextEntry::make('status')->badge(),
                     TextEntry::make('reason')->columnSpanFull(),
