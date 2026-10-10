@@ -50,7 +50,7 @@
         @media (max-width:640px) { .ccod-notifications__header { align-items:stretch; flex-direction:column; } .ccod-notifications__mark-read { align-self:flex-start; } .ccod-notifications__top { flex-direction:column; gap:.15rem; } }
     </style>
 
-    <div x-data="clientNotificationCenter()" x-init="init()" class="ccod-notifications">
+    <div x-data="clientNotificationCenter" x-init="init()" class="ccod-notifications">
         <div class="ccod-notifications__header">
             <div>
                 <p class="ccod-notifications__eyebrow">
@@ -106,96 +106,112 @@
         </div>
     </div>
 
+    @script
     <script>
-        function clientNotificationCenter() {
-            return {
-                notifications: [], unreadCount: 0, loading: true, initialized: false, timer: null, cleanupBound: false,
+        Alpine.data('clientNotificationCenter', () => ({
+            notifications: [],
+            unreadCount: 0,
+            loading: true,
+            initialized: false,
+            timer: null,
+            cleanupBound: false,
 
-                async init() {
-                    if (this.initialized) return;
-                    this.initialized = true;
-                    await this.refresh();
-                    this.timer = window.setInterval(() => this.refresh(), 45000);
-                    this.bindCleanup();
-                },
+            async init() {
+                if (this.initialized) return;
+                this.initialized = true;
+                await this.refresh();
+                this.timer = window.setInterval(() => this.refresh(), 45000);
+                this.bindCleanup();
+            },
 
-                destroy() {
-                    if (this.timer !== null) {
-                        window.clearInterval(this.timer);
-                        this.timer = null;
-                    }
-                },
+            destroy() {
+                if (this.timer !== null) {
+                    window.clearInterval(this.timer);
+                    this.timer = null;
+                }
+            },
 
-                bindCleanup() {
-                    if (this.cleanupBound) return;
-                    this.cleanupBound = true;
-                    this.handleNavigation = () => this.destroy();
-                    this.handlePageHide = () => this.destroy();
-                    document.addEventListener('livewire:navigating', this.handleNavigation, { once: true });
-                    window.addEventListener('pagehide', this.handlePageHide, { once: true });
-                },
+            bindCleanup() {
+                if (this.cleanupBound) return;
+                this.cleanupBound = true;
+                this.handleNavigation = () => this.destroy();
+                this.handlePageHide = () => this.destroy();
+                document.addEventListener('livewire:navigating', this.handleNavigation, { once: true });
+                window.addEventListener('pagehide', this.handlePageHide, { once: true });
+            },
 
-                async refresh() {
+            async refresh() {
+                try {
+                    const response = await fetch('{{ route('notifications.index') }}', {
+                        headers: { 'Accept': 'application/json' },
+                        credentials: 'same-origin',
+                    });
+                    if (!response.ok) throw new Error('Notification request failed.');
+                    const payload = await response.json();
+                    const incoming = payload.notifications || [];
+                    const currentRead = this.notifications.filter(notification => notification.read_at);
+                    const incomingIds = new Set(incoming.map(notification => notification.id));
+                    this.notifications = [...incoming, ...currentRead.filter(notification => !incomingIds.has(notification.id))]
+                        .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                    this.unreadCount = payload.unread_count || 0;
+                } catch (error) {
+                    console.error(error);
+                } finally {
+                    this.loading = false;
+                }
+            },
+
+            async openNotification(notification) {
+                if (notification.read_at === null) {
                     try {
-                        const response = await fetch('{{ route('notifications.index') }}', {
-                            headers: { 'Accept': 'application/json' }, credentials: 'same-origin',
-                        });
-                        if (!response.ok) throw new Error('Notification request failed.');
-                        const payload = await response.json();
-                        const incoming = payload.notifications || [];
-                        const currentRead = this.notifications.filter(notification => notification.read_at);
-                        const incomingIds = new Set(incoming.map(notification => notification.id));
-                        this.notifications = [...incoming, ...currentRead.filter(notification => !incomingIds.has(notification.id))]
-                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-                        this.unreadCount = payload.unread_count || 0;
-                    } catch (error) {
-                        console.error(error);
-                    } finally {
-                        this.loading = false;
-                    }
-                },
-
-                async openNotification(notification) {
-                    if (notification.read_at === null) {
-                        try {
-                            const response = await fetch(`{{ url('/notifications') }}/${notification.id}/read`, {
-                                method: 'POST',
-                                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                                credentials: 'same-origin',
-                            });
-                            if (response.ok) {
-                                notification.read_at = new Date().toISOString();
-                                this.unreadCount = Math.max(0, this.unreadCount - 1);
-                            }
-                        } catch (error) { console.error(error); }
-                    }
-                    if (notification.data.action_url) window.location.href = notification.data.action_url;
-                },
-
-                async markAllRead() {
-                    if (this.unreadCount === 0) return;
-                    try {
-                        const response = await fetch('{{ route('notifications.read-all') }}', {
+                        const response = await fetch(`{{ url('/notifications') }}/${notification.id}/read`, {
                             method: 'POST',
-                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                            headers: {
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            },
                             credentials: 'same-origin',
                         });
-                        if (!response.ok) throw new Error('Unable to mark notifications as read.');
-                        const readAt = new Date().toISOString();
-                        this.notifications.forEach(notification => notification.read_at = notification.read_at || readAt);
-                        this.unreadCount = 0;
-                    } catch (error) { console.error(error); }
-                },
+                        if (response.ok) {
+                            notification.read_at = new Date().toISOString();
+                            this.unreadCount = Math.max(0, this.unreadCount - 1);
+                        }
+                    } catch (error) {
+                        console.error(error);
+                    }
+                }
+                if (notification.data.action_url) window.location.href = notification.data.action_url;
+            },
 
-                formatType(type) {
-                    return (type || 'general').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
-                },
+            async markAllRead() {
+                if (this.unreadCount === 0) return;
+                try {
+                    const response = await fetch('{{ route('notifications.read-all') }}', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    if (!response.ok) throw new Error('Unable to mark notifications as read.');
+                    const readAt = new Date().toISOString();
+                    this.notifications.forEach(notification => notification.read_at = notification.read_at || readAt);
+                    this.unreadCount = 0;
+                } catch (error) {
+                    console.error(error);
+                }
+            },
 
-                formatDate(value) {
-                    if (!value) return '';
-                    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-                },
-            };
-        }
+            formatType(type) {
+                return (type || 'general').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+            },
+
+            formatDate(value) {
+                if (!value) return '';
+                return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
+            },
+        }));
     </script>
+    @endscript
 </x-filament-panels::page>
