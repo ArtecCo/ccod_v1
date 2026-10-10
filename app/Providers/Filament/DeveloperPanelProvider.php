@@ -35,9 +35,7 @@ class DeveloperPanelProvider extends PanelProvider
             ->authGuard('developers')
             ->login()
             ->topbar(false)
-            ->colors([
-                'primary' => Color::Amber,
-            ])
+            ->colors(['primary' => Color::Amber])
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
@@ -63,13 +61,8 @@ class DeveloperPanelProvider extends PanelProvider
                         ]),
                 ]);
             })
-            ->resources([
-                AuditLogResource::class,
-            ])
-            ->pages([
-                Dashboard::class,
-                LogsControl::class,
-            ])
+            ->resources([AuditLogResource::class])
+            ->pages([Dashboard::class, LogsControl::class])
             ->widgets([])
             ->middleware([
                 EncryptCookies::class,
@@ -82,13 +75,25 @@ class DeveloperPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([
-                Authenticate::class,
-            ])
+            ->authMiddleware([Authenticate::class])
             ->bootUsing(function (): void {
                 FilamentView::registerRenderHook(
                     'panels::styles.after',
-                    fn (): HtmlString => new HtmlString('...same CSS...')
+                    fn (): HtmlString => new HtmlString(''
+                        <style>
+                            .fi-sidebar-nav,.fi-sidebar-nav-groups,.fi-sidebar-group,aside.fi-sidebar nav,aside.fi-sidebar div{scrollbar-width:none!important;-ms-overflow-style:none!important}
+                            .fi-sidebar-nav::-webkit-scrollbar,.fi-sidebar-nav-groups::-webkit-scrollbar,.fi-sidebar-group::-webkit-scrollbar,aside.fi-sidebar nav::-webkit-scrollbar,aside.fi-sidebar div::-webkit-scrollbar{display:none!important;width:0!important;height:0!important}
+                            .fi-sidebar{box-shadow:inset -1px 0 0 rgba(0,0,0,.18)!important}.dark .fi-sidebar{box-shadow:inset -1px 0 0 rgba(255,255,255,.18)!important}
+                            .fi-sidebar-item-grouped-border{display:none!important}.fi-sidebar-group .fi-sidebar-item-icon{display:block!important}
+                            html{font-size:13px!important}.fi-section,.fi-ta-ctn,.fi-wi-widget,.fi-card,.fi-modal-window{padding:.6rem!important;border-radius:.375rem!important}
+                            .fi-section-header,.fi-ta-header{padding-bottom:.35rem!important;margin-bottom:.35rem!important}
+                            .fi-sidebar-item-button{padding-top:.2rem!important;padding-bottom:.2rem!important;margin-top:.05rem!important;margin-bottom:.05rem!important}
+                            .fi-sidebar-group-label{padding-top:.2rem!important;padding-bottom:.2rem!important;margin-bottom:0!important}.fi-sidebar-nav-groups{gap:1rem!important}.grid{gap:.6rem!important}.fi-fo-field-wrp{margin-bottom:.4rem!important}
+                            .fi-ta-table th{padding-top:1rem!important;padding-bottom:1rem!important}.fi-ta-table td{padding-top:.2rem!important;padding-bottom:.2rem!important}
+                            @media (min-width:1280px){.fi-ta-text-item,.fi-in-text{font-size:.95rem!important}}
+                            @media (min-width:1024px){.fi-sidebar{transition:width 280ms cubic-bezier(.22,1,.36,1),transform 280ms cubic-bezier(.22,1,.36,1),box-shadow 220ms ease!important}.fi-main-ctn{transition:transform 280ms cubic-bezier(.22,1,.36,1),opacity 180ms ease!important}.fi-sidebar-item-button,.fi-sidebar-group-btn{transition:background-color 160ms ease,color 160ms ease,transform 180ms cubic-bezier(.22,1,.36,1)!important}.fi-sidebar-item-button:hover{transform:translateX(2px)}.fi-sidebar-group-btn:hover{transform:translateX(1px)}}
+                        </style>
+                    '')
                 );
             });
     }
