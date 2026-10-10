@@ -3,8 +3,10 @@
 namespace App\Filament\Resources\DatabaseTables;
 
 use App\Filament\Resources\DatabaseTables\Pages\ListDatabaseTables;
+use App\Filament\Resources\DatabaseTables\Pages\ViewDatabaseTable;
 use App\Models\DatabaseTable;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
+use Filament\Actions\Action;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
@@ -13,6 +15,7 @@ use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DatabaseTableResource extends Resource
 {
@@ -28,6 +31,7 @@ class DatabaseTableResource extends Resource
     public static function canViewAny(): bool
     {
         $developer = auth()->guard('developers')->user();
+
         return $developer !== null && $developer->is_active;
     }
 
@@ -46,14 +50,26 @@ class DatabaseTableResource extends Resource
 
     public static function getGlobalSearchResultUrl($record): string
     {
-        return static::getUrl();
+        return static::getUrl('view', ['table' => $record->table_name]);
     }
 
     public static function getEloquentQuery(): Builder
     {
         $database = DB::connection()->getDatabaseName();
+
         return parent::getEloquentQuery()
-            ->select(['TABLE_NAME as table_name','TABLE_TYPE as table_type','ENGINE as engine','TABLE_COLLATION as table_collation','TABLE_COMMENT as table_comment','TABLE_ROWS as table_rows','DATA_LENGTH as data_length','INDEX_LENGTH as index_length','CREATE_TIME as create_time','UPDATE_TIME as update_time'])
+            ->select([
+                'TABLE_NAME as table_name',
+                'TABLE_TYPE as table_type',
+                'ENGINE as engine',
+                'TABLE_COLLATION as table_collation',
+                'TABLE_COMMENT as table_comment',
+                'TABLE_ROWS as table_rows',
+                'DATA_LENGTH as data_length',
+                'INDEX_LENGTH as index_length',
+                'CREATE_TIME as create_time',
+                'UPDATE_TIME as update_time',
+            ])
             ->selectRaw('ROUND((COALESCE(DATA_LENGTH, 0) + COALESCE(INDEX_LENGTH, 0)) / 1024 / 1024, 2) AS size_mb')
             ->selectRaw(<<<'SQL'
                 CASE
@@ -71,14 +87,22 @@ class DatabaseTableResource extends Resource
             ->where('TABLE_SCHEMA', $database);
     }
 
-    public static function form(Schema $schema): Schema { return $schema->components([]); }
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([]);
+    }
 
     public static function table(Table $table): Table
     {
         return $table
             ->defaultSort('table_name')
-            ->groups([Group::make('table_group')->label('Table group')->collapsible(), Group::make('engine')->label('Storage engine')->collapsible()])
-            ->defaultGroup('table_group')->collapsedGroupsByDefault()->persistGroupInSession()
+            ->groups([
+                Group::make('table_group')->label('Table group')->collapsible(),
+                Group::make('engine')->label('Storage engine')->collapsible(),
+            ])
+            ->defaultGroup('table_group')
+            ->collapsedGroupsByDefault()
+            ->persistGroupInSession()
             ->columns([
                 TextColumn::make('table_name')->label('Table')->searchable()->sortable(),
                 TextColumn::make('table_group')->label('Group')->badge()->searchable()->sortable(),
@@ -92,15 +116,39 @@ class DatabaseTableResource extends Resource
                 TextColumn::make('update_time')->label('Updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                SelectFilter::make('engine')->label('Engine')->options(fn (): array => DatabaseTable::query()->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())->whereNotNull('ENGINE')->distinct()->orderBy('ENGINE')->pluck('ENGINE', 'ENGINE')->all()),
-                SelectFilter::make('table_type')->label('Type')->options(['BASE TABLE' => 'Base table', 'VIEW' => 'View']),
+                SelectFilter::make('engine')
+                    ->label('Engine')
+                    ->options(fn (): array => DatabaseTable::query()
+                        ->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())
+                        ->whereNotNull('ENGINE')
+                        ->distinct()
+                        ->orderBy('ENGINE')
+                        ->pluck('ENGINE', 'ENGINE')
+                        ->all()),
+                SelectFilter::make('table_type')->label('Type')->options([
+                    'BASE TABLE' => 'Base table',
+                    'VIEW' => 'View',
+                ]),
             ])
-            ->headerActions([XlsxExportAction::make()->title('Database Tables')->fileName(fn (): string => 'database-tables-' . now()->format('Y-m-d-His'))])
-            ->recordActions([])->toolbarActions([]);
+            ->recordActions([
+                Action::make('viewContents')
+                    ->label('Open')
+                    ->icon('heroicon-o-table-cells')
+                    ->url(fn (DatabaseTable $record): string => static::getUrl('view', ['table' => $record->table_name])),
+            ])
+            ->headerActions([
+                XlsxExportAction::make()
+                    ->title('Export Tables')
+                    ->fileName(fn (): string => 'database-tables-'.now()->format('Y-m-d-His')),
+            ])
+            ->toolbarActions([]);
     }
 
     public static function getPages(): array
     {
-        return ['index' => ListDatabaseTables::route('/')];
+        return [
+            'index' => ListDatabaseTables::route('/'),
+            'view' => ViewDatabaseTable::route('/table/{table}'),
+        ];
     }
 }
