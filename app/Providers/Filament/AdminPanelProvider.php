@@ -62,7 +62,15 @@ class AdminPanelProvider extends PanelProvider
                         ),
                     )
                     ->orderBy('display_name')
-                    ->get();
+                    ->get()
+                    ->when(
+                        $user && ! $user->isGlobal(),
+                        fn ($items) => $items->filter(
+                            fn (AzureSubscription $subscription): bool => app(\App\Services\AccessAuthorizationService::class)
+                                ->effectiveRole($user, \App\Enums\AccessRequestTargetType::Subscription, $subscription) !== null,
+                        ),
+                    )
+                    ->values();
 
                 $teamGroups = $subscriptions
                     ->flatMap(fn (AzureSubscription $subscription) => $subscription->teams->map(
@@ -126,13 +134,6 @@ class AdminPanelProvider extends PanelProvider
                         NavigationItem::make('Subscriptions')
                             ->icon(Heroicon::OutlinedCloud)
                             ->url(AzureSubscriptionResource::getUrl()),
-                        NavigationItem::make('Access Requests')
-                            ->icon(Heroicon::OutlinedKey)
-                            ->url(AccessRequestResource::getUrl())
-                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*')),
-                    ];
-                } elseif ($user?->roleEnum() === UserRole::RestrictedOwner) {
-                    $managementItems = [
                         NavigationItem::make('Access Requests')
                             ->icon(Heroicon::OutlinedKey)
                             ->url(AccessRequestResource::getUrl())
