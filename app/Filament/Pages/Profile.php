@@ -142,7 +142,7 @@ class Profile extends Page
                             Section::make($team->name)
                                 ->schema($teamRows)
                                 ->collapsible()
-                                ->collapsed(false),
+                                ->collapsed(),
                         ];
                     })->all())
                 ->columnSpanFull(),
