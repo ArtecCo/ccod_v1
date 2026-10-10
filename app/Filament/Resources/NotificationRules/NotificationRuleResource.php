@@ -82,11 +82,11 @@ class NotificationRuleResource extends Resource
         return $table
             ->defaultSort('event_key')
             ->columns([
-                TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (NotificationEvent|string $state): string => $state instanceof NotificationEvent ? $state->label() : (NotificationEvent::tryFrom($state)?->label() ?? $state))->searchable(),
-                IconColumn::make('enabled')->label('Enabled')->boolean(),
-                TextColumn::make('recipient_type')->label('Audience')->badge()->formatStateUsing(fn (string $state): string => match ($state) {'all' => 'All users', 'teams' => 'Teams', 'users' => 'Selected users', default => $state}),
-                TextColumn::make('severity')->badge(),
-                TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
+                TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (NotificationEvent|string $state): string => $state instanceof NotificationEvent ? $state->label() : (NotificationEvent::tryFrom($state)?->label() ?? $state))->searchable()->toggleable(),
+                IconColumn::make('enabled')->label('Enabled')->boolean()->toggleable(),
+                TextColumn::make('recipient_type')->label('Audience')->badge()->formatStateUsing(fn (string $state): string => match ($state) {'all' => 'All users', 'teams' => 'Teams', 'users' => 'Selected users', default => $state})->toggleable(),
+                TextColumn::make('severity')->badge()->toggleable(),
+                TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('enabled')->options(['1' => 'Enabled', '0' => 'Disabled']),
