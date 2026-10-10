@@ -19,7 +19,7 @@ return new class extends Migration
             $table->text('reason')->nullable();
             $table->timestamps();
 
-            $table->unique(['user_id', 'subscription_id']);
+            $table->unique(['user_id', 'subscription_id'], 'user_sub_access_overrides_unique');
             $table->index(['subscription_id', 'override']);
             $table->index(['revoked_by_type', 'revoked_by_id']);
         });
