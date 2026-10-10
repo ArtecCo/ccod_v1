@@ -10,6 +10,8 @@ use Throwable;
 
 class AuditLogger
 {
+    public function __construct(private readonly LogSettings $settings) {}
+
     public function log(
         string $event,
         string $description,
@@ -19,7 +21,19 @@ class AuditLogger
         array $properties = [],
         string $logName = 'CCOD',
         array $tags = [],
+        ?string $category = null,
     ): void {
+        $category ??= match ($logName) {
+            'Access' => LogSettings::AUTHENTICATION,
+            'Requests' => LogSettings::REQUESTS,
+            'Models' => LogSettings::MODEL_ACTIONS,
+            default => LogSettings::REQUESTS,
+        };
+
+        if (! $this->settings->enabled($category)) {
+            return;
+        }
+
         try {
             $properties = array_merge([
                 'success' => $success,
@@ -34,10 +48,6 @@ class AuditLogger
 
             $causer = $this->causer();
 
-            // Write directly to Spatie Activitylog instead of going through the
-            // Filament Logger event layer. This keeps audit persistence independent
-            // from package listeners and guarantees that no old/new model values are
-            // written by this application-level audit logger.
             Activity::query()->create([
                 'log_name' => $logName,
                 'event' => $event,
@@ -53,7 +63,6 @@ class AuditLogger
                 ]),
             ]);
         } catch (Throwable $exception) {
-            // Auditing must never turn a successful application operation into a 500.
             report($exception);
         }
     }
@@ -70,8 +79,8 @@ class AuditLogger
 
         $status = $exception !== null ? 500 : $response?->getStatusCode();
         $success = $status !== null && $status < 400;
-
         $reason = $exception?->getMessage();
+
         if ($reason === null && $status !== null && $status >= 400) {
             $reason = Response::$statusTexts[$status] ?? 'Request failed';
         }
@@ -90,6 +99,7 @@ class AuditLogger
             ],
             logName: 'Requests',
             tags: $success ? ['request'] : ['request', 'failure'],
+            category: LogSettings::REQUESTS,
         );
     }
 
