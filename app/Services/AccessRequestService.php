@@ -12,10 +12,7 @@ use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
 use App\Notifications\ClientPortalNotification;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 class AccessRequestService
 {
@@ -132,6 +129,10 @@ class AccessRequestService
 
         if (! $role || $role->isGlobal()) {
             throw ValidationException::withMessages(['request' => 'The requested role is invalid.']);
+        }
+
+        if ($request->duration === AccessRequestDuration::TimeBound && $request->requested_until?->isPast()) {
+            throw ValidationException::withMessages(['request' => 'The requested access period has already expired.']);
         }
 
         $grant = UserAccessGrant::create([
