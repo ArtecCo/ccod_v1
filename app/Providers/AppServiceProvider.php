@@ -18,6 +18,11 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Models\Activity;
+use TomaszBoloz\LaravelUpdater\Events\PackagesUpdateFailed;
+use TomaszBoloz\LaravelUpdater\Events\PackagesUpdated;
+use TomaszBoloz\LaravelUpdater\Events\UpdateFailed;
+use TomaszBoloz\LaravelUpdater\Events\UpdatesAvailable;
+use TomaszBoloz\LaravelUpdater\Events\UpdateSucceeded;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -130,6 +135,65 @@ class AppServiceProvider extends ServiceProvider
                 logName: 'Models',
                 tags: ['model', strtolower(str_replace(' ', '_', $event))],
                 category: $category,
+            );
+        });
+
+        Event::listen(UpdatesAvailable::class, function (UpdatesAvailable $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Updates Available',
+                description: 'The updater detected available application or dependency updates.',
+                properties: [
+                    'package_count' => count($event->packages ?? []),
+                ],
+                logName: 'Maintenance',
+                tags: ['updater', 'updates_available'],
+                category: LogSettings::UPDATES_AVAILABLE,
+            );
+        });
+
+        Event::listen(UpdateSucceeded::class, function (UpdateSucceeded $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Update Succeeded',
+                description: 'The application update completed successfully.',
+                logName: 'Maintenance',
+                tags: ['updater', 'application_update', 'success'],
+                category: LogSettings::UPDATE_SUCCEEDED,
+            );
+        });
+
+        Event::listen(UpdateFailed::class, function (UpdateFailed $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Update Failed',
+                description: 'The application update failed.',
+                success: false,
+                failureReason: $event->exception->getMessage(),
+                logName: 'Maintenance',
+                tags: ['updater', 'application_update', 'failure'],
+                category: LogSettings::UPDATE_FAILED,
+            );
+        });
+
+        Event::listen(PackagesUpdated::class, function (PackagesUpdated $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Packages Updated',
+                description: sprintf('Composer package update completed%s.', $event->package ? ' for '.$event->package : ''),
+                properties: ['package' => $event->package],
+                logName: 'Maintenance',
+                tags: ['updater', 'packages', 'success'],
+                category: LogSettings::PACKAGES_UPDATED,
+            );
+        });
+
+        Event::listen(PackagesUpdateFailed::class, function (PackagesUpdateFailed $event): void {
+            app(AuditLogger::class)->log(
+                event: 'Package Update Failed',
+                description: sprintf('Composer package update failed%s.', $event->package ? ' for '.$event->package : ''),
+                success: false,
+                failureReason: $event->exception->getMessage(),
+                properties: ['package' => $event->package],
+                logName: 'Maintenance',
+                tags: ['updater', 'packages', 'failure'],
+                category: LogSettings::PACKAGES_UPDATE_FAILED,
             );
         });
     }
