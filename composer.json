@@ -13,7 +13,8 @@
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "mradder/filament-logger": "^1.6",
-        "tomaszboloz/laravel-updater": "^3.0"
+        "tomaszboloz/laravel-updater": "^3.0",
+        "ysfkaya/filament-shiplog": "^0.2"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",
