@@ -59,13 +59,13 @@ class AppServiceProvider extends ServiceProvider
             };
 
             $panel->userMenuItems([
-                'logout' => fn (Action $action): Action => $action->sort(100),
-                Action::make('notifications')
-                    ->label('Notifications')
-                    ->icon(Heroicon::OutlinedBell)
-                    ->url(fn (): string => \App\Filament\Pages\ClientNotifications::getUrl())
-                    ->visible(fn (): bool => $panel->getId() === 'admin' && auth()->check())
+                Action::make('account')
+                    ->label('Account')
+                    ->icon(Heroicon::OutlinedUserCircle)
+                    ->url(fn (): string => \App\Filament\Pages\Profile::getUrl())
+                    ->visible(fn (): bool => $panel->getId() === 'admin' && auth()->guard('web')->check())
                     ->sort(90),
+                'logout' => fn (Action $action): Action => $action->sort(100),
                 Action::make('changelog')
                     ->label('Changelog')
                     ->icon(Heroicon::OutlinedMegaphone)
