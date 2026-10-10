@@ -55,6 +55,15 @@ class LogsControl extends Page implements HasForms
                         Checkbox::make(LogSettings::RESTORED)->label('Restore'),
                         Checkbox::make(LogSettings::FORCE_DELETED)->label('Force delete'),
                     ]),
+                Section::make('Maintenance')
+                    ->description('Control audit logging for application and dependency update activity.')
+                    ->schema([
+                        Checkbox::make(LogSettings::UPDATES_AVAILABLE)->label('Updates available'),
+                        Checkbox::make(LogSettings::UPDATE_SUCCEEDED)->label('Application update succeeded'),
+                        Checkbox::make(LogSettings::UPDATE_FAILED)->label('Application update failed'),
+                        Checkbox::make(LogSettings::PACKAGES_UPDATED)->label('Packages updated'),
+                        Checkbox::make(LogSettings::PACKAGES_UPDATE_FAILED)->label('Package update failed'),
+                    ]),
             ])
             ->statePath('data');
     }
