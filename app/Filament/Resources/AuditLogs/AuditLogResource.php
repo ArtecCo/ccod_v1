@@ -14,6 +14,7 @@ use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Spatie\Activitylog\Models\Activity;
+use UnitEnum;
 
 class AuditLogResource extends Resource
 {
@@ -23,6 +24,8 @@ class AuditLogResource extends Resource
     protected static ?string $pluralModelLabel = 'Audit Logs';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
     protected static ?string $slug = 'audit-logs';
+    protected static UnitEnum|string|null $navigationGroup = 'Logging';
+    protected static ?int $navigationSort = 10;
 
     public static function canViewAny(): bool
     {
