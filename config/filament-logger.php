@@ -10,8 +10,9 @@ return [
         'sensitive_ability' => 'viewSensitiveData',
     ],
 
-    // CCOD stores action metadata only. Model/resource diff logging is disabled
-    // so old/new attribute values are never written by Filament Logger.
+    // CCOD uses its own developer-only audit resource. Package resource/model
+    // lifecycle logging is disabled so audit records are created centrally by
+    // App\Services\AuditLogger without recording old/new model values.
     'resources' => [
         'enabled' => false,
     ],
@@ -20,19 +21,21 @@ return [
         'register' => [],
     ],
 
+    // Authentication events are handled by AppServiceProvider so that both
+    // application guards are logged consistently without package listeners.
     'access' => [
-        'enabled' => true,
+        'enabled' => false,
         'guards' => ['web', 'developers'],
         'store_ip' => true,
         'anonymize_ip' => false,
         'store_user_agent' => true,
         'events' => [
-            'login' => true,
-            'logout' => true,
+            'login' => false,
+            'logout' => false,
             'failed' => false,
-            'lockout' => true,
-            'password_reset' => true,
-            'two_factor_recovery' => true,
+            'lockout' => false,
+            'password_reset' => false,
+            'two_factor_recovery' => false,
         ],
     ],
 
@@ -41,13 +44,13 @@ return [
     ],
 
     'dashboard' => [
-        'enabled' => true,
+        'enabled' => false,
         'lookback_days' => 30,
         'top_limit' => 10,
     ],
 
     'exports' => [
-        'enabled' => true,
+        'enabled' => false,
         'ability' => 'exportActivity',
         'manage_ability' => 'manageExportPresets',
         'columns' => [
