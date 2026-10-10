@@ -1,5 +1,3 @@
 <x-filament-panels::page>
-    <div class="fi-ta-ctn">
-        {{ $this->table }}
-    </div>
+    {{ $this->table }}
 </x-filament-panels::page>
