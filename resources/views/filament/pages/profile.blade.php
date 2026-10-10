@@ -69,11 +69,5 @@
                 <p class="text-sm text-gray-500">No active access exemptions or additional grants.</p>
             @endforelse
         </x-filament::section>
-
-        <div class="flex justify-end">
-            <x-filament::button tag="a" href="{{ \App\Filament\Resources\AccessRequests\AccessRequestResource::getUrl('create') }}" icon="heroicon-o-key">
-                Request access upgrade
-            </x-filament::button>
-        </div>
     </div>
 </x-filament-panels::page>
