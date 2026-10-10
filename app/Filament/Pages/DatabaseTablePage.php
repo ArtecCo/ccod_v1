@@ -10,6 +10,7 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -66,16 +67,18 @@ class DatabaseTablePage extends Page implements HasTable
     {
         return $table
             ->query($this->getTableQuery())
+            ->heading($this->tableName)
             ->columns($this->getTableColumns())
+            ->groups($this->getTableGroups())
+            ->defaultSort($this->getDefaultSortColumn())
             ->paginated([25, 50, 100, 250])
             ->searchable()
-            ->headerActions([
+            ->toolbarActions([
                 XlsxExportAction::make()
                     ->title('Export Table')
                     ->fileName(fn (): string => $this->tableName.'-'.now()->format('Y-m-d-His')),
             ])
-            ->recordActions([])
-            ->toolbarActions([]);
+            ->recordActions([]);
     }
 
     private function getTableQuery(): Builder
@@ -98,6 +101,10 @@ class DatabaseTablePage extends Page implements HasTable
                     ->placeholder('—')
                     ->wrap();
 
+                if ($this->isSortableType($type)) {
+                    $text->sortable();
+                }
+
                 if (in_array($type, ['tinyint', 'smallint', 'mediumint', 'int', 'integer', 'bigint', 'decimal', 'numeric', 'float', 'double', 'real'], true)) {
                     $text->numeric();
                 }
@@ -111,6 +118,27 @@ class DatabaseTablePage extends Page implements HasTable
             ->all();
     }
 
+    private function getTableGroups(): array
+    {
+        return collect($this->getTableColumnMetadata())
+            ->filter(fn (array $column): bool => $this->isGroupableType(strtolower((string) $column['DATA_TYPE'])))
+            ->map(fn (array $column): Group => Group::make($column['COLUMN_NAME'])
+                ->label(Str::headline($column['COLUMN_NAME'])))
+            ->values()
+            ->all();
+    }
+
+    private function getDefaultSortColumn(): ?string
+    {
+        foreach ($this->getTableColumnMetadata() as $column) {
+            if (($column['COLUMN_KEY'] ?? '') === 'PRI') {
+                return $column['COLUMN_NAME'];
+            }
+        }
+
+        return null;
+    }
+
     private function getTableColumnMetadata(): array
     {
         return DB::table('information_schema.columns')
@@ -120,6 +148,21 @@ class DatabaseTablePage extends Page implements HasTable
             ->get()
             ->map(fn ($column): array => (array) $column)
             ->all();
+    }
+
+    private function isSortableType(string $type): bool
+    {
+        return ! in_array($type, [
+            'blob', 'tinyblob', 'mediumblob', 'longblob', 'binary', 'varbinary',
+            'text', 'tinytext', 'mediumtext', 'longtext', 'json',
+            'geometry', 'point', 'linestring', 'polygon', 'multipoint',
+            'multilinestring', 'multipolygon', 'geometrycollection',
+        ], true);
+    }
+
+    private function isGroupableType(string $type): bool
+    {
+        return $this->isSortableType($type);
     }
 
     private function resolveTableName(string $table): string
