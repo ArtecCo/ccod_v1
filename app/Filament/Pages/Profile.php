@@ -31,8 +31,6 @@ class Profile extends Page
     protected static ?string $slug = 'profile';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-circle';
 
-    protected string $view = 'filament.pages.profile';
-
     public static function shouldRegisterNavigation(): bool
     {
         return false;
