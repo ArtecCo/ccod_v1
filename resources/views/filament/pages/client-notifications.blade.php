@@ -1,9 +1,9 @@
 <x-filament-panels::page>
     <style>
-        .ccod-notifications { color: rgb(17 24 39); }
+        .ccod-notifications { color: rgb(17 24 39); font-family: inherit; font-size: 1rem; line-height: 1.5rem; }
         .dark .ccod-notifications { color: rgb(243 244 246); }
         .ccod-notifications__header { display:flex; align-items:flex-end; justify-content:space-between; gap:1.5rem; margin-bottom:1.25rem; }
-        .ccod-notifications__eyebrow { margin:0; font-size:.875rem; font-weight:600; line-height:1.25rem; }
+        .ccod-notifications__eyebrow { margin:0; font-size:1rem; font-weight:600; line-height:1.5rem; }
         .ccod-notifications__description { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.875rem; line-height:1.25rem; }
         .dark .ccod-notifications__description { color:rgb(156 163 175); }
         .ccod-notifications__count { display:inline-flex; min-width:1.5rem; height:1.5rem; align-items:center; justify-content:center; margin-left:.4rem; padding:0 .4rem; border-radius:9999px; background:rgb(245 158 11); color:white; font-size:.75rem; font-weight:700; line-height:1; vertical-align:middle; }
@@ -37,15 +37,15 @@
         .ccod-notifications__top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
         .ccod-notifications__title-wrap { display:flex; min-width:0; align-items:center; gap:.45rem; }
         .ccod-notifications__unread-dot { width:.4rem; height:.4rem; flex:0 0 .4rem; border-radius:9999px; background:rgb(245 158 11); }
-        .ccod-notifications__title { overflow:hidden; margin:0; font-size:.875rem; font-weight:700; line-height:1.25rem; text-overflow:ellipsis; white-space:nowrap; }
+        .ccod-notifications__title { overflow:hidden; margin:0; font-size:1rem; font-weight:700; line-height:1.5rem; text-overflow:ellipsis; white-space:nowrap; }
         .ccod-notifications__date { flex:0 0 auto; color:rgb(107 114 128); font-size:.75rem; line-height:1.25rem; }
         .dark .ccod-notifications__date { color:rgb(156 163 175); }
-        .ccod-notifications__message { margin:.25rem 0 0; color:rgb(75 85 99); font-size:.875rem; line-height:1.25rem; }
+        .ccod-notifications__message { margin:.25rem 0 0; color:rgb(75 85 99); font-size:.875rem; line-height:1.5rem; }
         .dark .ccod-notifications__message { color:rgb(209 213 219); }
         .ccod-notifications__meta { display:flex; align-items:center; gap:.5rem; margin-top:.625rem; }
         .ccod-notifications__type { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; background:rgb(243 244 246); color:rgb(75 85 99); font-size:.75rem; font-weight:700; line-height:1rem; }
         .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 213 219); }
-        .ccod-notifications__action { color:rgb(217 119 6); font-size:.75rem; font-weight:700; }
+        .ccod-notifications__action { color:rgb(217 119 6); font-size:.875rem; font-weight:700; }
         .dark .ccod-notifications__action { color:rgb(251 191 36); }
         .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.75rem; }
         .dark .ccod-notifications__footer { color:rgb(156 163 175); }
