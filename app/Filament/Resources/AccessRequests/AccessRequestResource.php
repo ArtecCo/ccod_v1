@@ -6,12 +6,9 @@ use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestStatus;
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
-use App\Filament\Resources\AccessRequests\Pages\CreateAccessRequest;
 use App\Filament\Resources\AccessRequests\Pages\ListAccessRequests;
 use App\Filament\Resources\AccessRequests\Pages\ViewAccessRequest;
 use App\Models\AccessRequest;
-use App\Models\Team;
-use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -33,68 +30,55 @@ class AccessRequestResource extends Resource
     protected static ?int $navigationSort = 40;
     protected static ?string $slug = 'access-requests';
 
+    public static function canViewAny(): bool
+    {
+        $user = auth()->guard('web')->user();
+
+        return $user !== null && ($user->isGlobalOwner() || $user->roleEnum() === UserRole::RestrictedOwner);
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $user = auth()->guard('web')->user();
 
-        if (! $user) {
+        if (! $user || ! static::canViewAny()) {
             return parent::getEloquentQuery()->whereKey(0);
         }
 
-        return parent::getEloquentQuery()
-            ->with(['user', 'team', 'subscription']);
-    }
+        if ($user->isGlobalOwner()) {
+            return parent::getEloquentQuery()->with(['user', 'team', 'subscription']);
+        }
 
-    public static function canViewAny(): bool
-    {
-        return auth()->guard('web')->user()?->isGlobal() === true;
+        $subscriptionIds = $user->teams()
+            ->with('subscriptions')
+            ->get()
+            ->flatMap(fn ($team) => $team->subscriptions->pluck('subscription_id'))
+            ->unique()
+            ->values();
+
+        return parent::getEloquentQuery()
+            ->with(['user', 'team', 'subscription'])
+            ->where('status', AccessRequestStatus::Pending->value)
+            ->where(function (Builder $query) use ($user, $subscriptionIds): void {
+                $query->where(function (Builder $teamQuery) use ($user): void {
+                    $teamQuery
+                        ->where('target_type', AccessRequestTargetType::Team->value)
+                        ->whereIn('team_id', $user->teams()->select('teams.id'));
+                });
+
+                if ($subscriptionIds->isNotEmpty()) {
+                    $query->orWhere(function (Builder $subscriptionQuery) use ($subscriptionIds): void {
+                        $subscriptionQuery
+                            ->where('target_type', AccessRequestTargetType::Subscription->value)
+                            ->whereIn('subscription_id', $subscriptionIds);
+                    });
+                }
+            });
     }
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([
-            \Filament\Schemas\Components\Section::make('Access request')
-                ->schema([
-                    \Filament\Forms\Components\Select::make('target_type')
-                        ->options([
-                            AccessRequestTargetType::Team->value => 'Team',
-                            AccessRequestTargetType::Subscription->value => 'Subscription',
-                        ])
-                        ->live()
-                        ->required(),
-                    \Filament\Forms\Components\Select::make('team_id')
-                        ->label('Team')
-                        ->options(fn () => Team::query()->orderBy('name')->pluck('name', 'id'))
-                        ->searchable()
-                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value)
-                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value),
-                    \Filament\Forms\Components\Select::make('subscription_id')
-                        ->label('Subscription')
-                        ->options(fn () => \App\Models\AzureSubscription::query()->orderBy('display_name')->pluck('display_name', 'subscription_id'))
-                        ->searchable()
-                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)
-                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
-                    \Filament\Forms\Components\Select::make('requested_role')
-                        ->options(collect(UserRole::cases())->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->label()])->all())
-                        ->required(),
-                    \Filament\Forms\Components\Textarea::make('reason')
-                        ->required()
-                        ->columnSpanFull(),
-                    \Filament\Forms\Components\Select::make('duration')
-                        ->options([
-                            AccessRequestDuration::Permanent->value => 'Permanent',
-                            AccessRequestDuration::TimeBound->value => 'Time-bound',
-                        ])
-                        ->default(AccessRequestDuration::Permanent->value)
-                        ->live()
-                        ->required(),
-                    \Filament\Forms\Components\DateTimePicker::make('requested_until')
-                        ->label('Requested expiry')
-                        ->minDate(now())
-                        ->visible(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value)
-                        ->required(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value),
-                ])->columns(2),
-        ]);
+        return $schema->components([]);
     }
 
     public static function infolist(Schema $schema): Schema
@@ -149,7 +133,6 @@ class AccessRequestResource extends Resource
     {
         return [
             'index' => ListAccessRequests::route('/'),
-            'create' => CreateAccessRequest::route('/create'),
             'view' => ViewAccessRequest::route('/{record}'),
         ];
     }
