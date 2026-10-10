@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
+use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
 use App\Models\Team;
 use App\Models\User;
@@ -63,6 +64,14 @@ class Profile extends Page
             ->get();
     }
 
+    public function getAccessRequests(): Collection
+    {
+        return AccessRequest::query()
+            ->where('user_id', $this->getUser()->getKey())
+            ->latest()
+            ->get();
+    }
+
     public function effectiveRoleForTeam(int $teamId): ?string
     {
         return app(AccessAuthorizationService::class)
@@ -82,26 +91,17 @@ class Profile extends Page
         $user = $this->getUser();
         $teams = $this->getTeams();
         $grants = $this->getGrants();
+        $requests = $this->getAccessRequests();
 
         return $schema->components([
             Section::make('Account overview')
                 ->description('Your identity, base role and current access summary.')
                 ->schema([
                     Grid::make(4)->schema([
-                        TextEntry::make('account_name')
-                            ->label('Account')
-                            ->state($user->name),
-                        TextEntry::make('base_role')
-                            ->label('Base role')
-                            ->state($user->roleEnum()->label())
-                            ->badge()
-                            ->color('primary'),
-                        TextEntry::make('team_count')
-                            ->label('Teams')
-                            ->state((string) $teams->count()),
-                        TextEntry::make('grant_count')
-                            ->label('Active grants')
-                            ->state((string) $grants->count()),
+                        TextEntry::make('account_name')->label('Account')->state($user->name),
+                        TextEntry::make('base_role')->label('Base role')->state($user->roleEnum()->label())->badge()->color('primary'),
+                        TextEntry::make('team_count')->label('Teams')->state((string) $teams->count()),
+                        TextEntry::make('grant_count')->label('Active grants')->state((string) $grants->count()),
                     ]),
                 ])
                 ->columnSpanFull(),
@@ -130,17 +130,9 @@ class Profile extends Page
 
                         return [
                             Grid::make(3)->schema([
-                                TextEntry::make("team_{$team->id}_name")
-                                    ->label('Team')
-                                    ->state($team->name),
-                                TextEntry::make("team_{$team->id}_role")
-                                    ->label('Effective team role')
-                                    ->state($this->effectiveRoleForTeam($team->id) ?? 'No access')
-                                    ->badge()
-                                    ->color('gray'),
-                                TextEntry::make("team_{$team->id}_subscriptions")
-                                    ->label('Subscriptions')
-                                    ->state($subscriptionSummary !== '' ? $subscriptionSummary : 'No subscriptions assigned.'),
+                                TextEntry::make("team_{$team->id}_name")->label('Team')->state($team->name),
+                                TextEntry::make("team_{$team->id}_role")->label('Effective team role')->state($this->effectiveRoleForTeam($team->id) ?? 'No access')->badge()->color('gray'),
+                                TextEntry::make("team_{$team->id}_subscriptions")->label('Subscriptions')->state($subscriptionSummary !== '' ? $subscriptionSummary : 'No subscriptions assigned.'),
                             ]),
                         ];
                     })->all())
@@ -153,19 +145,38 @@ class Profile extends Page
                     : $grants->flatMap(function (UserAccessGrant $grant): array {
                         return [
                             Grid::make(3)->schema([
-                                TextEntry::make("grant_{$grant->id}_target")
-                                    ->label('Target')
-                                    ->state($grant->target_name),
-                                TextEntry::make("grant_{$grant->id}_role")
-                                    ->label('Role')
-                                    ->state(UserRole::tryFrom($grant->role)?->label() ?? $grant->role)
-                                    ->badge()
-                                    ->color('gray'),
-                                TextEntry::make("grant_{$grant->id}_duration")
-                                    ->label('Duration')
-                                    ->state($grant->expires_at ? 'Time-bound' : 'Permanent')
-                                    ->badge()
-                                    ->color($grant->expires_at ? 'warning' : 'success'),
+                                TextEntry::make("grant_{$grant->id}_target")->label('Target')->state($grant->target_name),
+                                TextEntry::make("grant_{$grant->id}_role")->label('Role')->state(UserRole::tryFrom($grant->role)?->label() ?? $grant->role)->badge()->color('gray'),
+                                TextEntry::make("grant_{$grant->id}_duration")->label('Duration')->state($grant->expires_at ? 'Time-bound' : 'Permanent')->badge()->color($grant->expires_at ? 'warning' : 'success'),
+                            ]),
+                        ];
+                    })->all())
+                ->columnSpanFull(),
+
+            Section::make('Access requests')
+                ->description('Track requests you have submitted, their approvers, decision status and approved access period.')
+                ->schema($requests->isEmpty()
+                    ? [TextEntry::make('no_requests')->hiddenLabel()->state('You have not submitted any access requests.')]
+                    : $requests->take(10)->flatMap(function (AccessRequest $request): array {
+                        $approvers = app(AccessAuthorizationService::class)->approvers($request);
+                        $approverNames = $approvers->isEmpty()
+                            ? 'No active approvers found'
+                            : $approvers->map(fn (User $approver): string => $approver->name)->implode(', ');
+
+                        $duration = $request->duration instanceof AccessRequestDuration
+                            ? $request->duration->label()
+                            : (AccessRequestDuration::tryFrom($request->duration)?->label() ?? (string) $request->duration);
+
+                        return [
+                            Grid::make(4)->schema([
+                                TextEntry::make("request_{$request->id}_target")->label('Target')->state($request->target_name),
+                                TextEntry::make("request_{$request->id}_role")->label('Requested role')->state(UserRole::tryFrom($request->requested_role)?->label() ?? $request->requested_role)->badge()->color('primary'),
+                                TextEntry::make("request_{$request->id}_status")->label('Status')->state($request->status->label())->badge(),
+                                TextEntry::make("request_{$request->id}_duration")->label('Access period')->state($request->status === \App\Enums\AccessRequestStatus::Approved ? $duration : 'Requested: '.$duration),
+                                TextEntry::make("request_{$request->id}_approvers")->label('Approvers')->state($approverNames)->columnSpan(2),
+                                TextEntry::make("request_{$request->id}_expiry")->label('Expiry')->state($request->requested_until?->format('d M Y, H:i') ?? 'No expiry')->placeholder('No expiry'),
+                                TextEntry::make("request_{$request->id}_requested")->label('Submitted')->state($request->created_at?->format('d M Y, H:i')),
+                                TextEntry::make("request_{$request->id}_decision")->label('Decision')->state($request->decision_reason ?: ($request->status === \App\Enums\AccessRequestStatus::Pending ? 'Awaiting approval' : 'No decision note'))->columnSpanFull(),
                             ]),
                         ];
                     })->all())
@@ -176,6 +187,10 @@ class Profile extends Page
     public function getHeaderActions(): array
     {
         return [
+            Action::make('viewRequests')
+                ->label('My access requests')
+                ->icon('heroicon-o-clipboard-document-list')
+                ->url(fn (): string => \App\Filament\Resources\AccessRequests\AccessRequestResource::getUrl('index')),
             Action::make('requestAccess')
                 ->label('Request access')
                 ->icon('heroicon-o-key')
@@ -183,56 +198,19 @@ class Profile extends Page
                 ->modalHeading('Request access')
                 ->modalDescription('Request a higher level of access to a team or Azure subscription. Your request will be routed to the appropriate approvers.')
                 ->form([
-                    Select::make('target_type')
-                        ->label('Access to')
-                        ->options([
-                            AccessRequestTargetType::Team->value => 'Team',
-                            AccessRequestTargetType::Subscription->value => 'Azure subscription',
-                        ])
-                        ->default(AccessRequestTargetType::Subscription->value)
-                        ->live()
-                        ->required(),
-                    Select::make('team_id')
-                        ->label('Team')
-                        ->options(fn (): array => $this->getTeams()->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->preload()
-                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value)
-                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value),
-                    Select::make('subscription_id')
-                        ->label('Azure subscription')
-                        ->options(fn (): array => $this->getSubscriptions()->pluck('display_name', 'subscription_id')->all())
-                        ->searchable()
-                        ->preload()
-                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)
-                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
-                    Select::make('requested_role')
-                        ->label('Requested role')
-                        ->options(collect(UserRole::cases())
-                            ->filter(fn (UserRole $role): bool => $role->isRestricted())
-                            ->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->label()])
-                            ->all())
-                        ->required(),
-                    Textarea::make('reason')
-                        ->label('Reason')
-                        ->placeholder('Explain why this access is required.')
-                        ->required()
-                        ->rows(4)
-                        ->columnSpanFull(),
-                    Select::make('duration')
-                        ->label('Access duration')
-                        ->options([
-                            AccessRequestDuration::Permanent->value => 'Permanent',
-                            AccessRequestDuration::TimeBound->value => 'Time-bound',
-                        ])
-                        ->default(AccessRequestDuration::Permanent->value)
-                        ->live()
-                        ->required(),
-                    DateTimePicker::make('requested_until')
-                        ->label('Requested expiry')
-                        ->minDate(now())
-                        ->visible(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value)
-                        ->required(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value),
+                    Select::make('target_type')->label('Access to')->options([
+                        AccessRequestTargetType::Team->value => 'Team',
+                        AccessRequestTargetType::Subscription->value => 'Azure subscription',
+                    ])->default(AccessRequestTargetType::Subscription->value)->live()->required(),
+                    Select::make('team_id')->label('Team')->options(fn (): array => $this->getTeams()->pluck('name', 'id')->all())->searchable()->preload()->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value)->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value),
+                    Select::make('subscription_id')->label('Azure subscription')->options(fn (): array => $this->getSubscriptions()->pluck('display_name', 'subscription_id')->all())->searchable()->preload()->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
+                    Select::make('requested_role')->label('Requested role')->options(collect(UserRole::cases())->filter(fn (UserRole $role): bool => $role->isRestricted())->mapWithKeys(fn (UserRole $role): array => [$role->value => $role->label()])->all())->required(),
+                    Textarea::make('reason')->label('Reason')->placeholder('Explain why this access is required.')->required()->rows(4)->columnSpanFull(),
+                    Select::make('duration')->label('Access duration')->options([
+                        AccessRequestDuration::Permanent->value => 'Permanent',
+                        AccessRequestDuration::TimeBound->value => 'Time-bound',
+                    ])->default(AccessRequestDuration::Permanent->value)->live()->required(),
+                    DateTimePicker::make('requested_until')->label('Requested expiry')->minDate(now())->visible(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value)->required(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value),
                 ])
                 ->action(function (array $data): void {
                     $targetType = AccessRequestTargetType::from($data['target_type']);
@@ -240,9 +218,7 @@ class Profile extends Page
                         ? Team::query()->findOrFail($data['team_id'])
                         : AzureSubscription::query()->whereKey($data['subscription_id'])->firstOrFail();
 
-                    $requestedUntil = isset($data['requested_until']) && $data['requested_until'] !== ''
-                        ? Carbon::parse($data['requested_until'])
-                        : null;
+                    $requestedUntil = isset($data['requested_until']) && $data['requested_until'] !== '' ? Carbon::parse($data['requested_until']) : null;
 
                     app(AccessRequestService::class)->create(
                         user: $this->getUser(),
@@ -254,11 +230,7 @@ class Profile extends Page
                         requestedUntil: $requestedUntil,
                     );
 
-                    Notification::make()
-                        ->title('Access request submitted')
-                        ->body('Your request has been sent to the appropriate approvers.')
-                        ->success()
-                        ->send();
+                    Notification::make()->title('Access request submitted')->body('Your request has been sent to the appropriate approvers.')->success()->send();
                 })
                 ->modalSubmitActionLabel('Submit request')
                 ->modalCancelActionLabel('Cancel'),
