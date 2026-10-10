@@ -4,10 +4,10 @@
         .dark .ccod-notifications { color: rgb(243 244 246); }
         .ccod-notifications__header { display:flex; align-items:flex-end; justify-content:space-between; gap:1.5rem; margin-bottom:1.25rem; }
         .ccod-notifications__eyebrow { margin:0; font-size:.875rem; font-weight:600; line-height:1.25rem; }
-        .ccod-notifications__description { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.8125rem; line-height:1.25rem; }
+        .ccod-notifications__description { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.875rem; line-height:1.25rem; }
         .dark .ccod-notifications__description { color:rgb(156 163 175); }
-        .ccod-notifications__count { display:inline-flex; min-width:1.5rem; height:1.5rem; align-items:center; justify-content:center; margin-left:.4rem; padding:0 .4rem; border-radius:9999px; background:rgb(245 158 11); color:white; font-size:.6875rem; font-weight:700; line-height:1; vertical-align:middle; }
-        .ccod-notifications__mark-read { border:1px solid rgb(209 213 219); border-radius:.5rem; background:white; padding:.5rem .75rem; color:rgb(55 65 81); font-size:.75rem; font-weight:600; line-height:1rem; cursor:pointer; transition:background 120ms ease,border-color 120ms ease; }
+        .ccod-notifications__count { display:inline-flex; min-width:1.5rem; height:1.5rem; align-items:center; justify-content:center; margin-left:.4rem; padding:0 .4rem; border-radius:9999px; background:rgb(245 158 11); color:white; font-size:.75rem; font-weight:700; line-height:1; vertical-align:middle; }
+        .ccod-notifications__mark-read { border:1px solid rgb(209 213 219); border-radius:.5rem; background:white; padding:.5rem .75rem; color:rgb(55 65 81); font-size:.875rem; font-weight:600; line-height:1.25rem; cursor:pointer; transition:background 120ms ease,border-color 120ms ease; }
         .ccod-notifications__mark-read:hover:not(:disabled) { background:rgb(249 250 251); border-color:rgb(156 163 175); }
         .ccod-notifications__mark-read:disabled { cursor:not-allowed; opacity:.5; }
         .dark .ccod-notifications__mark-read { border-color:rgb(55 65 81); background:rgb(31 41 55); color:rgb(229 231 235); }
@@ -18,7 +18,7 @@
         .ccod-notifications__empty-icon { display:flex; width:3rem; height:3rem; align-items:center; justify-content:center; margin:0 auto .875rem; border-radius:9999px; background:rgb(243 244 246); color:rgb(107 114 128); }
         .dark .ccod-notifications__empty-icon { background:rgb(31 41 55); color:rgb(156 163 175); }
         .ccod-notifications__empty-title { margin:0; font-size:.875rem; font-weight:700; }
-        .ccod-notifications__empty-text { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.8125rem; }
+        .ccod-notifications__empty-text { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.875rem; }
         .dark .ccod-notifications__empty-text { color:rgb(156 163 175); }
         .ccod-notifications__row { display:flex; width:100%; gap:.875rem; padding:1rem 1.125rem; border:0; border-bottom:1px solid rgb(229 231 235); background:transparent; color:inherit; text-align:left; cursor:pointer; transition:background 120ms ease; }
         .ccod-notifications__row:last-child { border-bottom:0; }
@@ -37,19 +37,19 @@
         .ccod-notifications__top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
         .ccod-notifications__title-wrap { display:flex; min-width:0; align-items:center; gap:.45rem; }
         .ccod-notifications__unread-dot { width:.4rem; height:.4rem; flex:0 0 .4rem; border-radius:9999px; background:rgb(245 158 11); }
-        .ccod-notifications__title { overflow:hidden; margin:0; font-size:.8125rem; font-weight:700; line-height:1.25rem; text-overflow:ellipsis; white-space:nowrap; }
-        .ccod-notifications__date { flex:0 0 auto; color:rgb(107 114 128); font-size:.6875rem; line-height:1.25rem; }
+        .ccod-notifications__title { overflow:hidden; margin:0; font-size:.875rem; font-weight:700; line-height:1.25rem; text-overflow:ellipsis; white-space:nowrap; }
+        .ccod-notifications__date { flex:0 0 auto; color:rgb(107 114 128); font-size:.75rem; line-height:1.25rem; }
         .dark .ccod-notifications__date { color:rgb(156 163 175); }
-        .ccod-notifications__message { margin:.25rem 0 0; color:rgb(75 85 99); font-size:.75rem; line-height:1.25rem; }
+        .ccod-notifications__message { margin:.25rem 0 0; color:rgb(75 85 99); font-size:.875rem; line-height:1.25rem; }
         .dark .ccod-notifications__message { color:rgb(209 213 219); }
         .ccod-notifications__meta { display:flex; align-items:center; gap:.5rem; margin-top:.625rem; }
-        .ccod-notifications__type { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; background:rgb(243 244 246); color:rgb(75 85 99); font-size:.625rem; font-weight:700; line-height:.875rem; }
+        .ccod-notifications__type { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; background:rgb(243 244 246); color:rgb(75 85 99); font-size:.75rem; font-weight:700; line-height:1rem; }
         .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 213 219); }
-        .ccod-notifications__action { color:rgb(217 119 6); font-size:.6875rem; font-weight:700; }
+        .ccod-notifications__action { color:rgb(217 119 6); font-size:.75rem; font-weight:700; }
         .dark .ccod-notifications__action { color:rgb(251 191 36); }
-        .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.6875rem; }
+        .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.75rem; }
         .dark .ccod-notifications__footer { color:rgb(156 163 175); }
-        .ccod-notifications__toast { position:fixed; right:1.25rem; bottom:1.25rem; z-index:50; border-radius:.5rem; background:rgb(17 24 39); padding:.7rem .9rem; color:white; font-size:.75rem; font-weight:600; box-shadow:0 10px 25px rgba(0,0,0,.2); }
+        .ccod-notifications__toast { position:fixed; right:1.25rem; bottom:1.25rem; z-index:50; border-radius:.5rem; background:rgb(17 24 39); padding:.7rem .9rem; color:white; font-size:.875rem; font-weight:600; box-shadow:0 10px 25px rgba(0,0,0,.2); }
         @media (max-width:640px) { .ccod-notifications__header { align-items:stretch; flex-direction:column; } .ccod-notifications__mark-read { align-self:flex-start; } .ccod-notifications__top { flex-direction:column; gap:.15rem; } }
     </style>
 
