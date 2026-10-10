@@ -11,11 +11,9 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
-use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 
 class DatabaseTableResource extends Resource
 {
@@ -37,13 +35,13 @@ class DatabaseTableResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['table_name', 'table_comment', 'table_collation', 'table_group'];
+        return ['table_name', 'table_comment', 'table_collation'];
     }
 
     public static function getGlobalSearchResultDetails($record): array
     {
         return [
-            'Group' => $record->table_group,
+            'Rows' => $record->table_rows ?? 0,
             'Engine' => $record->engine ?? '—',
         ];
     }
@@ -67,24 +65,10 @@ class DatabaseTableResource extends Resource
                 'TABLE_ROWS as table_rows',
                 'DATA_LENGTH as data_length',
                 'INDEX_LENGTH as index_length',
-                'CREATE_TIME as create_time',
-                'UPDATE_TIME as update_time',
             ])
             ->selectRaw('ROUND((COALESCE(DATA_LENGTH, 0) + COALESCE(INDEX_LENGTH, 0)) / 1024 / 1024, 2) AS size_mb')
-            ->selectRaw(<<<'SQL'
-                CASE
-                    WHEN TABLE_NAME LIKE 'azure_%' THEN 'Azure'
-                    WHEN TABLE_NAME LIKE 'team_%' THEN 'Teams & Access'
-                    WHEN TABLE_NAME LIKE 'user_%' THEN 'Users & Access'
-                    WHEN TABLE_NAME LIKE 'access_%' THEN 'Users & Access'
-                    WHEN TABLE_NAME LIKE 'notification%' THEN 'Notifications'
-                    WHEN TABLE_NAME LIKE 'log_%' THEN 'Logging'
-                    WHEN TABLE_NAME LIKE 'shiplog_%' THEN 'Maintenance'
-                    WHEN TABLE_NAME IN ('migrations', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'password_reset_tokens', 'sessions') THEN 'Laravel'
-                    ELSE 'Application'
-                END AS table_group
-            SQL)
-            ->where('TABLE_SCHEMA', $database);
+            ->where('TABLE_SCHEMA', $database)
+            ->where('TABLE_TYPE', 'BASE TABLE');
     }
 
     public static function form(Schema $schema): Schema
@@ -96,39 +80,43 @@ class DatabaseTableResource extends Resource
     {
         return $table
             ->defaultSort('table_name')
-            ->groups([
-                Group::make('table_group')->label('Table group')->collapsible(),
-                Group::make('engine')->label('Storage engine')->collapsible(),
-            ])
-            ->defaultGroup('table_group')
-            ->collapsedGroupsByDefault()
-            ->persistGroupInSession()
             ->columns([
-                TextColumn::make('table_name')->label('Table')->searchable()->sortable(),
-                TextColumn::make('table_group')->label('Group')->badge()->searchable()->sortable(),
-                TextColumn::make('table_type')->label('Type')->badge()->sortable(),
-                TextColumn::make('engine')->label('Engine')->sortable(),
-                TextColumn::make('table_rows')->label('Rows')->numeric()->sortable(),
-                TextColumn::make('size_mb')->label('Size')->numeric(decimalPlaces: 2)->suffix(' MB')->sortable(),
-                TextColumn::make('table_collation')->label('Collation')->searchable()->sortable(),
-                TextColumn::make('table_comment')->label('Comment')->searchable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('create_time')->label('Created')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('update_time')->label('Updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('table_name')
+                    ->label('Table')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('table_rows')
+                    ->label('Rows')
+                    ->numeric()
+                    ->sortable(),
+                TextColumn::make('size_mb')
+                    ->label('Size')
+                    ->numeric(decimalPlaces: 2)
+                    ->suffix(' MB')
+                    ->sortable(),
+                TextColumn::make('engine')
+                    ->label('Engine')
+                    ->sortable(),
+                TextColumn::make('table_collation')
+                    ->label('Collation')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('table_comment')
+                    ->label('Comment')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('engine')
                     ->label('Engine')
                     ->options(fn (): array => DatabaseTable::query()
                         ->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())
+                        ->where('TABLE_TYPE', 'BASE TABLE')
                         ->whereNotNull('ENGINE')
                         ->distinct()
                         ->orderBy('ENGINE')
                         ->pluck('ENGINE', 'ENGINE')
                         ->all()),
-                SelectFilter::make('table_type')->label('Type')->options([
-                    'BASE TABLE' => 'Base table',
-                    'VIEW' => 'View',
-                ]),
             ])
             ->recordActions([
                 Action::make('viewContents')
@@ -138,7 +126,7 @@ class DatabaseTableResource extends Resource
             ])
             ->headerActions([
                 XlsxExportAction::make()
-                    ->title('Export Tables')
+                    ->title('Export Table List')
                     ->fileName(fn (): string => 'database-tables-'.now()->format('Y-m-d-His')),
             ])
             ->toolbarActions([]);
