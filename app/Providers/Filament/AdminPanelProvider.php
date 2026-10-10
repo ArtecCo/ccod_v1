@@ -10,6 +10,7 @@ use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
+use App\Services\AccessAuthorizationService;
 use Filament\Support\Facades\FilamentView;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -52,10 +53,9 @@ class AdminPanelProvider extends PanelProvider
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->guard('web')->user();
 
-                $subscriptions = AzureSubscriptionResource::getEloquentQuery()
-                    ->with('teams')
-                    ->orderBy('display_name')
-                    ->get();
+                $subscriptions = $user
+                    ? app(AccessAuthorizationService::class)->accessibleSubscriptions($user)
+                    : collect();
 
                 $teamGroups = $subscriptions
                     ->flatMap(fn (AzureSubscription $subscription) => $subscription->teams->map(
