@@ -36,6 +36,44 @@
             }
         };
 
+        const updateSidebarBadge = (unreadCount) => {
+            const notificationUrl = new URL('{{ \App\Filament\Pages\ClientNotifications::getUrl() }}', window.location.origin);
+            const links = document.querySelectorAll('a[href]');
+            const notificationLink = Array.from(links).find(link => {
+                try {
+                    return new URL(link.href, window.location.origin).pathname === notificationUrl.pathname;
+                } catch (error) {
+                    return false;
+                }
+            });
+
+            if (! notificationLink) {
+                return;
+            }
+
+            const sidebarItem = notificationLink.closest('.fi-sidebar-item') || notificationLink;
+            let badge = sidebarItem.querySelector('[data-ccod-notification-badge]');
+
+            if (! badge) {
+                badge = sidebarItem.querySelector('.fi-sidebar-item-badge');
+            }
+
+            if (! badge && unreadCount > 0) {
+                badge = document.createElement('span');
+                badge.className = 'fi-sidebar-item-badge';
+                badge.dataset.ccodNotificationBadge = 'true';
+                notificationLink.appendChild(badge);
+            }
+
+            if (! badge) {
+                return;
+            }
+
+            badge.dataset.ccodNotificationBadge = 'true';
+            badge.textContent = unreadCount > 0 ? String(unreadCount) : '';
+            badge.hidden = unreadCount <= 0;
+        };
+
         const refresh = async () => {
             if (requestInFlight || document.visibilityState === 'hidden') {
                 return;
@@ -56,6 +94,7 @@
 
                 const payload = await response.json();
                 applyToNotificationsPage(payload);
+                updateSidebarBadge(payload.unread_count || 0);
 
                 window.dispatchEvent(new CustomEvent('ccod:notifications-updated', {
                     detail: payload,
