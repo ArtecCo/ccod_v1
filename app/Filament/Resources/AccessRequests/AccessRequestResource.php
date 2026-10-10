@@ -10,6 +10,7 @@ use App\Filament\Resources\AccessRequests\Pages\ListAccessRequests;
 use App\Filament\Resources\AccessRequests\Pages\ViewAccessRequest;
 use App\Models\AccessRequest;
 use App\Models\User;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
@@ -33,19 +34,26 @@ class AccessRequestResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->guard('web')->user() !== null;
+        return auth()->guard('web')->user() !== null || (auth()->guard('developers')->user()?->is_active === true);
     }
 
     public static function shouldRegisterNavigation(): bool
     {
         $user = auth()->guard('web')->user();
+        $developer = auth()->guard('developers')->user();
 
-        return $user !== null && ($user->isGlobalOwner() || $user->roleEnum() === UserRole::RestrictedOwner);
+        return $developer?->is_active === true
+            || ($user !== null && ($user->isGlobalOwner() || $user->roleEnum() === UserRole::RestrictedOwner));
     }
 
     public static function getEloquentQuery(): Builder
     {
+        $developer = auth()->guard('developers')->user();
         $user = auth()->guard('web')->user();
+
+        if ($developer?->is_active === true) {
+            return parent::getEloquentQuery()->with(['user', 'team', 'subscription']);
+        }
 
         if (! $user) {
             return parent::getEloquentQuery()->whereKey(0);
@@ -70,7 +78,6 @@ class AccessRequestResource extends Resource
 
         return $query->where(function (Builder $requestQuery) use ($user, $subscriptionIds): void {
             $requestQuery->where('user_id', $user->getKey());
-
             $requestQuery->orWhere(function (Builder $approvalQuery) use ($user, $subscriptionIds): void {
                 $approvalQuery->where(function (Builder $teamQuery) use ($user): void {
                     $teamQuery
@@ -97,54 +104,32 @@ class AccessRequestResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Request')
-                ->schema([
-                    TextEntry::make('user.name')->label('Requester'),
-                    TextEntry::make('user.email')->label('Email'),
-                    TextEntry::make('target_name')->label('Target'),
-                    TextEntry::make('target_type')
-                        ->label('Target type')
-                        ->formatStateUsing(fn (AccessRequestTargetType|string $state): string => $state instanceof AccessRequestTargetType ? $state->label() : (AccessRequestTargetType::tryFrom($state)?->label() ?? $state))
-                        ->badge(),
-                    TextEntry::make('requested_role')
-                        ->label('Requested role')
-                        ->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state)),
-                    TextEntry::make('duration')
-                        ->label('Requested duration')
-                        ->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state)),
-                    TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
-                    TextEntry::make('status')->badge(),
-                    TextEntry::make('reason')->columnSpanFull(),
-                ])->columns(2),
-            Section::make('Approvers')
-                ->schema([
-                    TextEntry::make('approvers')
-                        ->label('Approvers')
-                        ->state(function (AccessRequest $record): string {
-                            $approvers = app(\App\Services\AccessAuthorizationService::class)->approvers($record);
-
-                            return $approvers->isEmpty()
-                                ? 'No active approvers found'
-                                : $approvers->map(fn (User $approver): string => $approver->name.' ('.$approver->email.')')->implode(', ');
-                        })
-                        ->columnSpanFull(),
-                ]),
-            Section::make('Decision')
-                ->schema([
-                    TextEntry::make('decided_by')
-                        ->label('Decided by')
-                        ->state(function (AccessRequest $record): string {
-                            if (! $record->decided_by_id || ! $record->decided_by_type) {
-                                return 'Pending';
-                            }
-
-                            $actor = $record->decided_by_type::query()->find($record->decided_by_id);
-
-                            return $actor?->name ?? $actor?->email ?? 'Unknown';
-                        }),
-                    TextEntry::make('decided_at')->label('Decided at')->dateTime('Y-m-d H:i:s')->placeholder('Pending'),
-                    TextEntry::make('decision_reason')->label('Decision reason')->placeholder('No reason provided')->columnSpanFull(),
-                ])->columns(2),
+            Section::make('Request')->schema([
+                TextEntry::make('user.name')->label('Requester'),
+                TextEntry::make('user.email')->label('Email'),
+                TextEntry::make('target_name')->label('Target'),
+                TextEntry::make('target_type')->label('Target type')->formatStateUsing(fn (AccessRequestTargetType|string $state): string => $state instanceof AccessRequestTargetType ? $state->label() : (AccessRequestTargetType::tryFrom($state)?->label() ?? $state))->badge(),
+                TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state)),
+                TextEntry::make('duration')->label('Requested duration')->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state)),
+                TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
+                TextEntry::make('status')->badge(),
+                TextEntry::make('reason')->columnSpanFull(),
+            ])->columns(2),
+            Section::make('Approvers')->schema([
+                TextEntry::make('approvers')->label('Approvers')->state(function (AccessRequest $record): string {
+                    $approvers = app(\App\Services\AccessAuthorizationService::class)->approvers($record);
+                    return $approvers->isEmpty() ? 'No active approvers found' : $approvers->map(fn (User $approver): string => $approver->name.' ('.$approver->email.')')->implode(', ');
+                })->columnSpanFull(),
+            ]),
+            Section::make('Decision')->schema([
+                TextEntry::make('decided_by')->label('Decided by')->state(function (AccessRequest $record): string {
+                    if (! $record->decided_by_id || ! $record->decided_by_type) return 'Pending';
+                    $actor = $record->decided_by_type::query()->find($record->decided_by_id);
+                    return $actor?->name ?? $actor?->email ?? 'Unknown';
+                }),
+                TextEntry::make('decided_at')->label('Decided at')->dateTime('Y-m-d H:i:s')->placeholder('Pending'),
+                TextEntry::make('decision_reason')->label('Decision reason')->placeholder('No reason provided')->columnSpanFull(),
+            ])->columns(2),
         ]);
     }
 
@@ -168,8 +153,9 @@ class AccessRequestResource extends Resource
                     AccessRequestTargetType::Subscription->value => 'Subscription',
                 ]),
             ])
-            ->actions([
-                ViewAction::make(),
+            ->actions([ViewAction::make()])
+            ->headerActions([
+                XlsxExportAction::make()->title('Export Access Requests')->fileName(fn (): string => 'access-requests-'.now()->format('Y-m-d-His')),
             ]);
     }
 
