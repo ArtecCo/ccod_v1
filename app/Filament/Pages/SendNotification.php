@@ -10,6 +10,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
+use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
@@ -90,15 +91,15 @@ class SendNotification extends Page implements HasForms
                             ->multiple()
                             ->searchable()
                             ->options(fn (): array => Team::query()->orderBy('name')->pluck('name', 'id')->all())
-                            ->visible(fn ($get): bool => $get('audience') === 'teams')
-                            ->required(fn ($get): bool => $get('audience') === 'teams'),
+                            ->visible(fn (Get $get): bool => $get('audience') === 'teams')
+                            ->required(fn (Get $get): bool => $get('audience') === 'teams'),
                         Select::make('user_ids')
                             ->label('Users')
                             ->multiple()
                             ->searchable()
                             ->options(fn (): array => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
-                            ->visible(fn ($get): bool => $get('audience') === 'users')
-                            ->required(fn ($get): bool => $get('audience') === 'users'),
+                            ->visible(fn (Get $get): bool => $get('audience') === 'users')
+                            ->required(fn (Get $get): bool => $get('audience') === 'users'),
                     ])
                     ->columns(2),
             ])
