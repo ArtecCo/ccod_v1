@@ -38,7 +38,6 @@ class DeveloperPanelProvider extends PanelProvider
             ->authGuard('developers')
             ->login()
             ->topbar(false)
-            ->globalSearchKeyBindings(['ctrl+k', 'command+k'])
             ->colors(['primary' => Color::Amber])
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
