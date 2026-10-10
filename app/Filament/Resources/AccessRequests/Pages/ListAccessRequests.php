@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AccessRequests\Pages;
 
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
-use Filament\Actions\CreateAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListAccessRequests extends ListRecords
@@ -12,8 +11,6 @@ class ListAccessRequests extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [
-            CreateAction::make()->label('Request access'),
-        ];
+        return [];
     }
 }
