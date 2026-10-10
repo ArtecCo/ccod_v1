@@ -5,7 +5,6 @@ namespace App\Filament\Pages;
 use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
-use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
 use App\Models\Team;
 use App\Models\User;
@@ -64,14 +63,6 @@ class Profile extends Page
             ->get();
     }
 
-    public function getAccessRequests(): Collection
-    {
-        return AccessRequest::query()
-            ->where('user_id', $this->getUser()->getKey())
-            ->latest()
-            ->get();
-    }
-
     public function effectiveRoleForTeam(int $teamId): ?string
     {
         return app(AccessAuthorizationService::class)
@@ -91,7 +82,6 @@ class Profile extends Page
         $user = $this->getUser();
         $teams = $this->getTeams();
         $grants = $this->getGrants();
-        $requests = $this->getAccessRequests();
 
         return $schema->components([
             Section::make('Account overview')
@@ -167,35 +157,6 @@ class Profile extends Page
                                 TextEntry::make("grant_{$grant->id}_target")->label('Target')->state($grant->target_name),
                                 TextEntry::make("grant_{$grant->id}_role")->label('Role')->state(UserRole::tryFrom($grant->role)?->label() ?? $grant->role)->badge()->color('gray'),
                                 TextEntry::make("grant_{$grant->id}_duration")->label('Duration')->state($grant->expires_at ? 'Time-bound' : 'Permanent')->badge()->color($grant->expires_at ? 'warning' : 'success'),
-                            ]),
-                        ];
-                    })->all())
-                ->columnSpanFull(),
-
-            Section::make('Access requests')
-                ->description('Track requests you have submitted, their approvers, decision status and approved access period.')
-                ->schema($requests->isEmpty()
-                    ? [TextEntry::make('no_requests')->hiddenLabel()->state('You have not submitted any access requests.')]
-                    : $requests->take(10)->flatMap(function (AccessRequest $request): array {
-                        $approvers = app(AccessAuthorizationService::class)->approvers($request);
-                        $approverNames = $approvers->isEmpty()
-                            ? 'No active approvers found'
-                            : $approvers->map(fn (User $approver): string => $approver->name)->implode(', ');
-
-                        $duration = $request->duration instanceof AccessRequestDuration
-                            ? $request->duration->label()
-                            : (AccessRequestDuration::tryFrom($request->duration)?->label() ?? (string) $request->duration);
-
-                        return [
-                            Grid::make(4)->schema([
-                                TextEntry::make("request_{$request->id}_target")->label('Target')->state($request->target_name),
-                                TextEntry::make("request_{$request->id}_role")->label('Requested role')->state(UserRole::tryFrom($request->requested_role)?->label() ?? $request->requested_role)->badge()->color('primary'),
-                                TextEntry::make("request_{$request->id}_status")->label('Status')->state($request->status->label())->badge(),
-                                TextEntry::make("request_{$request->id}_duration")->label('Access period')->state($request->status === \App\Enums\AccessRequestStatus::Approved ? $duration : 'Requested: '.$duration),
-                                TextEntry::make("request_{$request->id}_approvers")->label('Approvers')->state($approverNames)->columnSpan(2),
-                                TextEntry::make("request_{$request->id}_expiry")->label('Expiry')->state($request->requested_until?->format('d M Y, H:i') ?? 'No expiry')->placeholder('No expiry'),
-                                TextEntry::make("request_{$request->id}_requested")->label('Submitted')->state($request->created_at?->format('d M Y, H:i')),
-                                TextEntry::make("request_{$request->id}_decision")->label('Decision')->state($request->decision_reason ?: ($request->status === \App\Enums\AccessRequestStatus::Pending ? 'Awaiting approval' : 'No decision note'))->columnSpanFull(),
                             ]),
                         ];
                     })->all())
