@@ -14,18 +14,6 @@ class NotificationService
         private readonly AuditLogger $auditLogger,
     ) {}
 
-    /**
-     * Send a client-portal database notification to a resolved audience.
-     *
-     * Supported audiences:
-     * - all active users
-     * - every member of one or more teams
-     * - selected user IDs
-     * - one individual user
-     *
-     * Recipients are de-duplicated by user ID so a user who belongs to multiple
-     * selected teams receives the notification only once.
-     */
     public function send(
         string $title,
         string $message,
@@ -41,9 +29,7 @@ class NotificationService
         $recipients = collect();
 
         if ($allUsers) {
-            $recipients = $recipients->merge(
-                User::query()->where('is_active', true)->get(),
-            );
+            $recipients = $recipients->merge(User::query()->where('is_active', true)->get());
         }
 
         if ($teamIds !== []) {
@@ -105,7 +91,7 @@ class NotificationService
                 ],
                 logName: 'Notifications',
                 tags: ['notification', 'client_portal', 'sent'],
-                category: LogSettings::APPLICATION_REQUESTS,
+                category: LogSettings::NOTIFICATIONS,
             );
         } catch (Throwable $exception) {
             $this->auditLogger->log(
@@ -124,7 +110,7 @@ class NotificationService
                 ],
                 logName: 'Notifications',
                 tags: ['notification', 'client_portal', 'failure'],
-                category: LogSettings::APPLICATION_REQUESTS,
+                category: LogSettings::NOTIFICATIONS,
             );
 
             throw $exception;
@@ -143,7 +129,6 @@ class NotificationService
     public function sendToTeam(Team $team, ClientPortalNotification $notification): int
     {
         $users = $team->users()->where('is_active', true)->get();
-
         $users->each(fn (User $user): mixed => $user->notify($notification));
 
         return $users->count();
