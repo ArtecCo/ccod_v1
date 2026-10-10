@@ -6,6 +6,7 @@ use App\Filament\Resources\DatabaseTables\Pages\ListDatabaseTables;
 use App\Models\DatabaseTable;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
@@ -55,6 +56,7 @@ class DatabaseTableResource extends Resource
                 'CREATE_TIME as create_time',
                 'UPDATE_TIME as update_time',
             ])
+            ->selectRaw('ROUND((COALESCE(DATA_LENGTH, 0) + COALESCE(INDEX_LENGTH, 0)) / 1024 / 1024, 2) AS size_mb')
             ->selectRaw(<<<'SQL'
                 CASE
                     WHEN TABLE_NAME LIKE 'azure_%' THEN 'Azure'
@@ -64,19 +66,14 @@ class DatabaseTableResource extends Resource
                     WHEN TABLE_NAME LIKE 'notification%' THEN 'Notifications'
                     WHEN TABLE_NAME LIKE 'log_%' THEN 'Logging'
                     WHEN TABLE_NAME LIKE 'shiplog_%' THEN 'Maintenance'
-                    WHEN TABLE_NAME LIKE 'migrations' THEN 'Laravel'
-                    WHEN TABLE_NAME LIKE 'cache%' THEN 'Laravel'
-                    WHEN TABLE_NAME LIKE 'jobs%' THEN 'Laravel'
-                    WHEN TABLE_NAME LIKE 'failed_jobs' THEN 'Laravel'
-                    WHEN TABLE_NAME LIKE 'password_reset_tokens' THEN 'Laravel'
-                    WHEN TABLE_NAME LIKE 'sessions' THEN 'Laravel'
+                    WHEN TABLE_NAME IN ('migrations', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs', 'password_reset_tokens', 'sessions') THEN 'Laravel'
                     ELSE 'Application'
                 END AS table_group
             SQL)
             ->where('TABLE_SCHEMA', $database);
     }
 
-    public static function form(\Filament\Schemas\Schema $schema): \Filament\Schemas\Schema
+    public static function form(Schema $schema): Schema
     {
         return $schema->components([]);
     }
@@ -119,10 +116,9 @@ class DatabaseTableResource extends Resource
                     ->sortable(),
                 TextColumn::make('size_mb')
                     ->label('Size')
-                    ->state(fn (DatabaseTable $record): float => ((float) ($record->data_length ?? 0) + (float) ($record->index_length ?? 0)) / 1024 / 1024)
                     ->numeric(decimalPlaces: 2)
                     ->suffix(' MB')
-                    ->sortable(false),
+                    ->sortable(),
                 TextColumn::make('table_collation')
                     ->label('Collation')
                     ->searchable()
@@ -146,10 +142,11 @@ class DatabaseTableResource extends Resource
                 SelectFilter::make('engine')
                     ->label('Engine')
                     ->options(fn (): array => DatabaseTable::query()
-                        ->whereNotNull('engine')
+                        ->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())
+                        ->whereNotNull('ENGINE')
                         ->distinct()
-                        ->orderBy('engine')
-                        ->pluck('engine', 'engine')
+                        ->orderBy('ENGINE')
+                        ->pluck('ENGINE', 'ENGINE')
                         ->all()),
                 SelectFilter::make('table_type')
                     ->label('Type')
