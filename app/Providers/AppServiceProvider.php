@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Filament\Plugins\ShipLogPlugin;
 use App\Models\Developer;
 use App\Models\Documentation;
 use App\Policies\ActivityPolicy;
@@ -26,7 +27,6 @@ use TomaszBoloz\LaravelUpdater\Events\PackagesUpdated;
 use TomaszBoloz\LaravelUpdater\Events\UpdateFailed;
 use TomaszBoloz\LaravelUpdater\Events\UpdatesAvailable;
 use TomaszBoloz\LaravelUpdater\Events\UpdateSucceeded;
-use Ysfkaya\ShipLog\ShipLogPlugin;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -190,9 +190,7 @@ class AppServiceProvider extends ServiceProvider
             app(AuditLogger::class)->log(
                 event: 'Updates Available',
                 description: 'The updater detected available application or dependency updates.',
-                properties: [
-                    'package_count' => count($event->packages ?? []),
-                ],
+                properties: ['package_count' => count($event->packages ?? [])],
                 logName: 'Maintenance',
                 tags: ['updater', 'updates_available'],
                 category: LogSettings::UPDATES_AVAILABLE,
