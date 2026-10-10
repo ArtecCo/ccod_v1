@@ -24,6 +24,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\HtmlString;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use TomaszBoloz\LaravelUpdater\Filament\UpdaterPlugin;
 
 class DeveloperPanelProvider extends PanelProvider
 {
@@ -41,6 +42,11 @@ class DeveloperPanelProvider extends PanelProvider
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
+            ->plugin(
+                UpdaterPlugin::make()
+                    ->navigationGroup('Maintenance')
+                    ->navigationSort(10),
+            )
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 return $builder->groups([
                     NavigationGroup::make()
