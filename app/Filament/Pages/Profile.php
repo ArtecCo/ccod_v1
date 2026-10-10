@@ -122,18 +122,37 @@ class Profile extends Page
                 ->schema($teams->isEmpty()
                     ? [TextEntry::make('no_teams')->hiddenLabel()->state('You are not currently assigned to a team.')]
                     : $teams->flatMap(function (Team $team): array {
-                        $subscriptionSummary = $team->subscriptions->map(function (AzureSubscription $subscription): string {
-                            $role = $this->effectiveRoleForSubscription($subscription->subscription_id) ?? 'No access';
+                        $teamRows = [
+                            Grid::make(2)->schema([
+                                TextEntry::make("team_{$team->id}_name")
+                                    ->label('Team')
+                                    ->state($team->name),
+                                TextEntry::make("team_{$team->id}_role")
+                                    ->label('Effective team role')
+                                    ->state($this->effectiveRoleForTeam($team->id) ?? 'No access')
+                                    ->badge()
+                                    ->color('gray'),
+                            ]),
+                        ];
 
-                            return $subscription->display_name . ' — ' . $role;
-                        })->implode(' · ');
+                        foreach ($team->subscriptions as $subscription) {
+                            $teamRows[] = Grid::make(2)->schema([
+                                TextEntry::make("team_{$team->id}_subscription_{$subscription->subscription_id}")
+                                    ->label('Subscription')
+                                    ->state($subscription->display_name),
+                                TextEntry::make("team_{$team->id}_subscription_role_{$subscription->subscription_id}")
+                                    ->label('Effective role')
+                                    ->state($this->effectiveRoleForSubscription($subscription->subscription_id) ?? 'No access')
+                                    ->badge()
+                                    ->color('gray'),
+                            ]);
+                        }
 
                         return [
-                            Grid::make(3)->schema([
-                                TextEntry::make("team_{$team->id}_name")->label('Team')->state($team->name),
-                                TextEntry::make("team_{$team->id}_role")->label('Effective team role')->state($this->effectiveRoleForTeam($team->id) ?? 'No access')->badge()->color('gray'),
-                                TextEntry::make("team_{$team->id}_subscriptions")->label('Subscriptions')->state($subscriptionSummary !== '' ? $subscriptionSummary : 'No subscriptions assigned.'),
-                            ]),
+                            Section::make($team->name)
+                                ->schema($teamRows)
+                                ->collapsible()
+                                ->collapsed(false),
                         ];
                     })->all())
                 ->columnSpanFull(),
