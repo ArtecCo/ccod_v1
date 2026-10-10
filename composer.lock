@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "08d252506d4a2f72cdddbb0b43035755",
+    "content-hash": "aacccf4f614a448c12717ed66e6a768c",
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -3701,6 +3701,98 @@
             "time": "2026-09-29T19:21:12+00:00"
         },
         {
+            "name": "mradder/filament-logger",
+            "version": "v1.6.3",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/MrAdder/filament-logger.git",
+                "reference": "9dabd195201e23d5337e67e19687d4f1aae00f42"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/MrAdder/filament-logger/zipball/9dabd195201e23d5337e67e19687d4f1aae00f42",
+                "reference": "9dabd195201e23d5337e67e19687d4f1aae00f42",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^3.0 || ^4.3.1 || ^5.0",
+                "illuminate/contracts": "^11.0 | ^12.0 | ^13.0",
+                "php": "^8.2",
+                "spatie/laravel-activitylog": "^4.5 || ^5.0",
+                "spatie/laravel-package-tools": "^1.13.5"
+            },
+            "require-dev": {
+                "larastan/larastan": "^3.9",
+                "laravel/pint": "1.30.4",
+                "nunomaduro/collision": "^8.0 | ^9.0 | ^10.0",
+                "orchestra/testbench": "^9.0 | ^10.0 | ^11.0",
+                "pestphp/pest": "^3.7 | ^4.0",
+                "pestphp/pest-plugin-laravel": "^3.1 | ^4.0",
+                "phpstan/extension-installer": "^1.1",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "phpunit/phpunit": "^11.5 | ^12.5.22",
+                "spatie/laravel-ray": "^1.26"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "FilamentLogger": "MrAdder\\FilamentLogger\\Facades\\FilamentLogger"
+                    },
+                    "providers": [
+                        "MrAdder\\FilamentLogger\\FilamentLoggerServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "MrAdder\\FilamentLogger\\": "src",
+                    "MrAdder\\FilamentLogger\\Database\\Factories\\": "database/factories"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Ziyaan Hassan",
+                    "email": "ziyaan2010@gmail.com",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Daniel Green",
+                    "email": "dgreen03@gmail.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Audit logging, activity tracking, exports, alerts, and dashboards for Filament admin panels.",
+            "homepage": "https://mradder.github.io/filament-logger/",
+            "keywords": [
+                "activity-log",
+                "activity-tracking",
+                "admin-panel",
+                "alerts",
+                "audit-log",
+                "compliance",
+                "exports",
+                "filament",
+                "filament-logger",
+                "filamentphp",
+                "laravel",
+                "laravel-activitylog",
+                "security",
+                "spatie-activitylog"
+            ],
+            "support": {
+                "docs": "https://mradder.github.io/filament-logger/",
+                "issues": "https://github.com/MrAdder/filament-logger/issues",
+                "source": "https://github.com/MrAdder/filament-logger"
+            },
+            "time": "2026-09-26T16:04:08+00:00"
+        },
+        {
             "name": "nesbot/carbon",
             "version": "3.14.2",
             "source": {
@@ -5453,6 +5545,99 @@
                 }
             ],
             "time": "2026-08-24T12:39:05+00:00"
+        },
+        {
+            "name": "spatie/laravel-activitylog",
+            "version": "5.1.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/spatie/laravel-activitylog.git",
+                "reference": "8ce56d3b9d72f4e4551f4449d236a5ed06e71667"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/spatie/laravel-activitylog/zipball/8ce56d3b9d72f4e4551f4449d236a5ed06e71667",
+                "reference": "8ce56d3b9d72f4e4551f4449d236a5ed06e71667",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/config": "^12.0 || ^13.0",
+                "illuminate/database": "^12.0 || ^13.0",
+                "illuminate/support": "^12.0 || ^13.0",
+                "php": "^8.4",
+                "spatie/laravel-package-tools": "^1.6.3"
+            },
+            "require-dev": {
+                "ext-json": "*",
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.29",
+                "orchestra/testbench": "^10.0 || ^11.0",
+                "pestphp/pest": "^4.0 || ^5.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Spatie\\Activitylog\\ActivitylogServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "files": [
+                    "src/helpers.php"
+                ],
+                "psr-4": {
+                    "Spatie\\Activitylog\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Freek Van der Herten",
+                    "email": "freek@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Sebastian De Deyne",
+                    "email": "sebastian@spatie.be",
+                    "homepage": "https://spatie.be",
+                    "role": "Developer"
+                },
+                {
+                    "name": "Tom Witkowski",
+                    "email": "dev.gummibeer@gmail.com",
+                    "homepage": "https://gummibeer.de",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A very simple activity logger to monitor the users of your website or application",
+            "homepage": "https://github.com/spatie/laravel-activitylog",
+            "keywords": [
+                "activity",
+                "laravel",
+                "log",
+                "spatie",
+                "user"
+            ],
+            "support": {
+                "issues": "https://github.com/spatie/laravel-activitylog/issues",
+                "source": "https://github.com/spatie/laravel-activitylog/tree/5.1.1"
+            },
+            "funding": [
+                {
+                    "url": "https://spatie.be/open-source/support-us",
+                    "type": "custom"
+                },
+                {
+                    "url": "https://github.com/spatie",
+                    "type": "github"
+                }
+            ],
+            "time": "2026-09-08T12:16:25+00:00"
         },
         {
             "name": "spatie/laravel-package-tools",
@@ -8209,6 +8394,90 @@
             "time": "2025-12-02T11:56:42+00:00"
         },
         {
+            "name": "tomaszboloz/laravel-updater",
+            "version": "v3.3.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/tomaszboloz/Laravel-Updater.git",
+                "reference": "bc55aa238a95298f1efe6dda596bbce20fe246ec"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/tomaszboloz/Laravel-Updater/zipball/bc55aa238a95298f1efe6dda596bbce20fe246ec",
+                "reference": "bc55aa238a95298f1efe6dda596bbce20fe246ec",
+                "shasum": ""
+            },
+            "require": {
+                "illuminate/cache": "^12.0|^13.0",
+                "illuminate/console": "^12.0|^13.0",
+                "illuminate/contracts": "^12.0|^13.0",
+                "illuminate/http": "^12.0|^13.0",
+                "illuminate/process": "^12.0|^13.0",
+                "illuminate/queue": "^12.0|^13.0",
+                "illuminate/support": "^12.0|^13.0",
+                "php": "^8.3",
+                "spatie/laravel-package-tools": "^1.92",
+                "symfony/process": "^7.2|^8.0"
+            },
+            "require-dev": {
+                "bezhansalleh/filament-shield": "^4.0",
+                "filament/filament": "^4.0|^5.0",
+                "larastan/larastan": "^3.4",
+                "laravel/pint": "^1.20",
+                "orchestra/testbench": "^10.0|^11.0",
+                "phpunit/phpunit": "^11.5|^12.0|^13.0"
+            },
+            "suggest": {
+                "bezhansalleh/filament-shield": "Grants access to the \"Updates\" page per role through Shield's role editor.",
+                "ext-zip": "Required by the \"archive\" strategy (hosts without git).",
+                "filament/filament": "Adds the \"Updates\" page to your Filament (v4/v5) admin panel."
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "TomaszBoloz\\LaravelUpdater\\UpdaterServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "TomaszBoloz\\LaravelUpdater\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Tomasz Bołoz",
+                    "homepage": "https://www.damtox.pl",
+                    "role": "Developer"
+                }
+            ],
+            "description": "Self-update Laravel applications from GitHub releases (public and private repositories): code, Composer, migrations, npm build and cache clearing - from the Filament admin panel or Artisan.",
+            "homepage": "https://github.com/tomaszboloz/Laravel-Updater",
+            "keywords": [
+                "auto-update",
+                "deployment",
+                "filament",
+                "filament-plugin",
+                "github",
+                "github-releases",
+                "laravel",
+                "migrations",
+                "self-update",
+                "updater"
+            ],
+            "support": {
+                "issues": "https://github.com/tomaszboloz/Laravel-Updater/issues",
+                "security": "https://github.com/tomaszboloz/Laravel-Updater/security/policy",
+                "source": "https://github.com/tomaszboloz/Laravel-Updater"
+            },
+            "time": "2026-10-02T07:19:51+00:00"
+        },
+        {
             "name": "ueberdosis/tiptap-php",
             "version": "2.2.0",
             "source": {
@@ -8434,6 +8703,85 @@
                 }
             ],
             "time": "2026-04-26T05:33:54+00:00"
+        },
+        {
+            "name": "ysfkaya/filament-shiplog",
+            "version": "v0.2.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/ysfkaya/filament-shiplog.git",
+                "reference": "feadf3ea633079f21b5ac96ca9adedd433053491"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/ysfkaya/filament-shiplog/zipball/feadf3ea633079f21b5ac96ca9adedd433053491",
+                "reference": "feadf3ea633079f21b5ac96ca9adedd433053491",
+                "shasum": ""
+            },
+            "require": {
+                "filament/filament": "^5.0",
+                "league/commonmark": "^2.8",
+                "php": "^8.3",
+                "spatie/laravel-package-tools": "^1.92"
+            },
+            "require-dev": {
+                "inertiajs/inertia-laravel": "^2.0",
+                "larastan/larastan": "^3.0",
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^8.1",
+                "orchestra/testbench": "^10.0",
+                "pestphp/pest": "^4.0",
+                "pestphp/pest-plugin-arch": "^4.0",
+                "pestphp/pest-plugin-laravel": "^4.0",
+                "pestphp/pest-plugin-livewire": "^4.0",
+                "phpstan/extension-installer": "^1.4",
+                "phpstan/phpstan-deprecation-rules": "^2.0",
+                "phpstan/phpstan-phpunit": "^2.0",
+                "rector/rector": "^2.0"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "ShipLog": "Ysfkaya\\ShipLog\\Facades\\ShipLog"
+                    },
+                    "providers": [
+                        "Ysfkaya\\ShipLog\\ShipLogServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Ysfkaya\\ShipLog\\": "src/",
+                    "Ysfkaya\\ShipLog\\Database\\Factories\\": "database/factories/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Yusuf Kaya",
+                    "email": "yusuf.kaya.x0@gmail.com"
+                }
+            ],
+            "description": "Ship Log — a beautiful, animated changelog & release notes timeline for Laravel Filament v5",
+            "homepage": "https://github.com/ysfkaya/filament-shiplog",
+            "keywords": [
+                "changelog",
+                "filament",
+                "filamentphp",
+                "laravel",
+                "release-notes",
+                "timeline",
+                "whats-new"
+            ],
+            "support": {
+                "issues": "https://github.com/ysfkaya/filament-shiplog/issues",
+                "source": "https://github.com/ysfkaya/filament-shiplog/tree/v0.2.0"
+            },
+            "time": "2026-09-23T09:47:16+00:00"
         }
     ],
     "packages-dev": [

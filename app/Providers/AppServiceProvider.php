@@ -39,7 +39,6 @@ class AppServiceProvider extends ServiceProvider
                 'admin' => $panel->plugin(
                     ShipLogPlugin::make()
                         ->usingDatabase()
-                        ->usingPage(\App\Filament\Pages\Changelog::class)
                         ->fab(enabled: false)
                         ->navigationLabel('Changelog')
                         ->pageTitle('Changelog')
@@ -48,7 +47,6 @@ class AppServiceProvider extends ServiceProvider
                 'developer' => $panel->plugin(
                     ShipLogPlugin::make()
                         ->usingDatabase()
-                        ->usingPage(\App\Filament\Pages\Changelog::class)
                         ->fab(enabled: false)
                         ->navigationLabel('Changelog')
                         ->pageTitle('Changelog')
