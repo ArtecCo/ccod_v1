@@ -114,13 +114,14 @@
     <script>
         function clientNotificationCenter() {
             return {
-                notifications: [], unreadCount: 0, loading: true, toast: '', timer: null, initialized: false,
+                notifications: [], unreadCount: 0, loading: true, toast: '', timer: null, initialized: false, cleanupBound: false,
 
                 async init() {
                     if (this.initialized) return;
                     this.initialized = true;
                     await this.refresh();
                     this.timer = window.setInterval(() => this.refresh(), 45000);
+                    this.bindCleanup();
                 },
 
                 destroy() {
@@ -128,6 +129,17 @@
                         window.clearInterval(this.timer);
                         this.timer = null;
                     }
+                },
+
+                bindCleanup() {
+                    if (this.cleanupBound) return;
+                    this.cleanupBound = true;
+
+                    this.handleNavigation = () => this.clearRead();
+                    this.handlePageHide = () => this.clearRead();
+
+                    document.addEventListener('livewire:navigating', this.handleNavigation, { once: true });
+                    window.addEventListener('pagehide', this.handlePageHide, { once: true });
                 },
 
                 async refresh() {
@@ -184,10 +196,12 @@
                             method: 'POST',
                             headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
                             credentials: 'same-origin',
+                            keepalive: true,
                         });
                         if (!response.ok) throw new Error('Unable to clear read notifications.');
-                        this.notifications = this.notifications.filter(notification => !notification.read_at);
-                    } catch (error) { console.error(error); }
+                    } catch (error) {
+                        console.error(error);
+                    }
                 },
 
                 formatType(type) {
