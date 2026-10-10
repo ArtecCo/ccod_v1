@@ -5,6 +5,7 @@ namespace App\Providers\Filament;
 use App\Filament\Pages\LogsControl;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
+use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -35,17 +36,11 @@ class DeveloperPanelProvider extends PanelProvider
             ->authGuard('developers')
             ->login()
             ->topbar(false)
-            ->colors([
-                'primary' => Color::Amber,
-            ])
+            ->colors(['primary' => Color::Amber])
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
-            ->plugin(
-                UpdaterPlugin::make()
-                    ->navigationGroup('Maintenance')
-                    ->navigationSort(10),
-            )
+            ->plugin(UpdaterPlugin::make()->navigationGroup('Maintenance')->navigationSort(10))
             ->navigationGroups([
                 NavigationGroup::make('Notifications'),
                 NavigationGroup::make('Logging'),
@@ -53,6 +48,7 @@ class DeveloperPanelProvider extends PanelProvider
             ])
             ->resources([
                 AuditLogResource::class,
+                NotificationRuleResource::class,
             ])
             ->pages([
                 Dashboard::class,
@@ -71,9 +67,7 @@ class DeveloperPanelProvider extends PanelProvider
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])
-            ->authMiddleware([
-                Authenticate::class,
-            ])
+            ->authMiddleware([Authenticate::class])
             ->bootUsing(function (): void {
                 FilamentView::registerRenderHook(
                     'panels::styles.after',
