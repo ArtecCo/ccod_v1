@@ -9,6 +9,7 @@ use App\Policies\DocumentationPolicy;
 use App\Services\AuditLogger;
 use App\Services\LogSettings;
 use Filament\Forms\Components\Field;
+use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
 use Illuminate\Auth\Events\Login;
@@ -42,6 +43,21 @@ class AppServiceProvider extends ServiceProvider
                 && $user->is_active === true
                 && auth()->guard('developers')->id() === $user->getAuthIdentifier();
         });
+
+        Gate::define('shiplog.view', function (mixed $user): bool {
+            return $user !== null;
+        });
+
+        Gate::define('shiplog.manage', function (mixed $user): bool {
+            return $user instanceof Developer
+                && $user->is_active === true
+                && auth()->guard('developers')->id() === $user->getAuthIdentifier();
+        });
+
+        FilamentView::registerRenderHook(
+            'panels::sidebar.footer',
+            fn (): mixed => view('filament.components.changelog-link'),
+        );
 
         Table::configureUsing(function (Table $table): void {
             $table
