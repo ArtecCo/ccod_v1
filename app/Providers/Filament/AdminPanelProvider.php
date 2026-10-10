@@ -100,6 +100,15 @@ class AdminPanelProvider extends PanelProvider
                     ->url(DocumentationResource::getUrl())
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.documentations.*'));
 
+                $notificationItem = NavigationItem::make('Notifications')
+                    ->icon(Heroicon::OutlinedBell)
+                    ->url(ClientNotifications::getUrl())
+                    ->badge(fn (): ?string => $user?->unreadNotifications()->count() > 0
+                        ? (string) $user->unreadNotifications()->count()
+                        : null)
+                    ->badgeColor('primary')
+                    ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.notifications'));
+
                 if ($user?->role === UserRole::GlobalOwner) {
                     $managementItems = [
                         NavigationItem::make('Users')
@@ -123,6 +132,7 @@ class AdminPanelProvider extends PanelProvider
                                 ->icon(Heroicon::OutlinedHome)
                                 ->url(Dashboard::getUrl())
                                 ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard')),
+                            $notificationItem,
                             $documentationItem,
                         ]),
                     ...$teamGroups,
