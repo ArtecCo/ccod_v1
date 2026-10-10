@@ -25,7 +25,7 @@ return [
         'events' => [
             'login' => true,
             'logout' => true,
-            'failed' => true,
+            'failed' => false,
             'lockout' => true,
             'password_reset' => true,
             'two_factor_recovery' => true,
