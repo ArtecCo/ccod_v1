@@ -15,10 +15,14 @@ use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Collection;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 
 class Profile extends Page
 {
@@ -73,6 +77,107 @@ class Profile extends Page
         return app(AccessAuthorizationService::class)
             ->effectiveRole($this->getUser(), AccessRequestTargetType::Subscription, $subscriptionId)
             ?->label();
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        $user = $this->getUser();
+        $teams = $this->getTeams();
+        $grants = $this->getGrants();
+
+        return $schema->components([
+            Section::make('Account overview')
+                ->description('Your identity, base role and current access summary.')
+                ->schema([
+                    Grid::make(4)->schema([
+                        TextEntry::make('account_name')
+                            ->label('Account')
+                            ->state($user->name)
+                            ->description($user->email),
+                        TextEntry::make('base_role')
+                            ->label('Base role')
+                            ->state($user->roleEnum()->label())
+                            ->badge()
+                            ->color('primary')
+                            ->description('Unchanged by access grants.'),
+                        TextEntry::make('team_count')
+                            ->label('Teams')
+                            ->state((string) $teams->count())
+                            ->description('Current team memberships.'),
+                        TextEntry::make('grant_count')
+                            ->label('Active grants')
+                            ->state((string) $grants->count())
+                            ->description('Additional access exemptions.'),
+                    ]),
+                ])
+                ->columnSpanFull(),
+
+            Section::make('Personal information')
+                ->description('Account details associated with your CCOD identity.')
+                ->schema([
+                    Grid::make(3)->schema([
+                        TextEntry::make('name')->label('Name')->state($user->name),
+                        TextEntry::make('email')->label('Email')->state($user->email),
+                        TextEntry::make('joined')->label('Date joined')->state($user->created_at?->format('d M Y, H:i')),
+                    ]),
+                ])
+                ->columnSpanFull(),
+
+            Section::make('Teams and effective access')
+                ->description('Effective access combines your base role, team membership and active grants.')
+                ->schema($teams->isEmpty()
+                    ? [TextEntry::make('no_teams')->label('')->state('You are not currently assigned to a team.')]
+                    : $teams->flatMap(function (Team $team): array {
+                        $subscriptionSummary = $team->subscriptions->map(function (AzureSubscription $subscription): string {
+                            $role = $this->effectiveRoleForSubscription($subscription->subscription_id) ?? 'No access';
+
+                            return $subscription->display_name . ' — ' . $role;
+                        })->implode(' · ');
+
+                        return [
+                            Grid::make(3)->schema([
+                                TextEntry::make("team_{$team->id}_name")
+                                    ->label('Team')
+                                    ->state($team->name),
+                                TextEntry::make("team_{$team->id}_role")
+                                    ->label('Effective team role')
+                                    ->state($this->effectiveRoleForTeam($team->id) ?? 'No access')
+                                    ->badge()
+                                    ->color('gray'),
+                                TextEntry::make("team_{$team->id}_subscriptions")
+                                    ->label('Subscriptions')
+                                    ->state($subscriptionSummary !== '' ? $subscriptionSummary : 'No subscriptions assigned.'),
+                            ]),
+                        ];
+                    })->all())
+                ->columnSpanFull(),
+
+            Section::make('Access exemptions and additional grants')
+                ->description('Active grants are exceptions to your base role and can be permanent or time-bound.')
+                ->schema($grants->isEmpty()
+                    ? [TextEntry::make('no_grants')->label('')->state('No active access exemptions or additional grants.')]
+                    : $grants->flatMap(function (UserAccessGrant $grant): array {
+                        return [
+                            Grid::make(3)->schema([
+                                TextEntry::make("grant_{$grant->id}_target")
+                                    ->label('Target')
+                                    ->state($grant->target_name),
+                                TextEntry::make("grant_{$grant->id}_role")
+                                    ->label('Role')
+                                    ->state(UserRole::tryFrom($grant->role)?->label() ?? $grant->role)
+                                    ->badge()
+                                    ->color('gray'),
+                                TextEntry::make("grant_{$grant->id}_duration")
+                                    ->label('Duration')
+                                    ->state($grant->expires_at ? 'Time-bound' : 'Permanent')
+                                    ->badge()
+                                    ->color($grant->expires_at ? 'warning' : 'success')
+                                    ->description($grant->expires_at ? 'Expires ' . $grant->expires_at->format('d M Y, H:i') : 'No expiry.'),
+                            ]),
+                        ];
+                    })->all())
+                ->columnSpanFull(),
+        ]);
     }
 
     public function getHeaderActions(): array
