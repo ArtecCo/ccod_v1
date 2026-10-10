@@ -73,34 +73,47 @@ class AzureSubscriptionResource extends Resource
             return $query;
         }
 
-        return $query->where(function (Builder $builder) use ($user): void {
-            $builder->whereHas('teams.users', fn ($teamUsers) => $teamUsers->whereKey($user->getKey()))
-                ->orWhereExists(function ($grantQuery) use ($user): void {
-                    $grantQuery->selectRaw('1')
-                        ->from('user_access_grants')
-                        ->whereColumn('user_access_grants.subscription_id', 'azure_subscriptions.subscription_id')
-                        ->where('user_access_grants.user_id', $user->getKey())
-                        ->where('user_access_grants.target_type', AccessRequestTargetType::Subscription->value)
-                        ->where('user_access_grants.starts_at', '<=', now())
-                        ->where(function ($expiry): void {
-                            $expiry->whereNull('user_access_grants.expires_at')
-                                ->orWhere('user_access_grants.expires_at', '>', now());
-                        });
-                })
-                ->orWhereExists(function ($grantQuery) use ($user): void {
-                    $grantQuery->selectRaw('1')
-                        ->from('user_access_grants')
-                        ->join('team_subscription', 'team_subscription.team_id', '=', 'user_access_grants.team_id')
-                        ->whereColumn('team_subscription.subscription_id', 'azure_subscriptions.subscription_id')
-                        ->where('user_access_grants.user_id', $user->getKey())
-                        ->where('user_access_grants.target_type', AccessRequestTargetType::Team->value)
-                        ->where('user_access_grants.starts_at', '<=', now())
-                        ->where(function ($expiry): void {
-                            $expiry->whereNull('user_access_grants.expires_at')
-                                ->orWhere('user_access_grants.expires_at', '>', now());
-                        });
-                });
-        });
+        return $query
+            ->where(function (Builder $builder) use ($user): void {
+                $builder->whereHas('teams.users', fn ($teamUsers) => $teamUsers->whereKey($user->getKey()))
+                    ->orWhereExists(function ($grantQuery) use ($user): void {
+                        $grantQuery->selectRaw('1')
+                            ->from('user_access_grants')
+                            ->whereColumn('user_access_grants.subscription_id', 'azure_subscriptions.subscription_id')
+                            ->where('user_access_grants.user_id', $user->getKey())
+                            ->where('user_access_grants.target_type', AccessRequestTargetType::Subscription->value)
+                            ->where('user_access_grants.starts_at', '<=', now())
+                            ->where(function ($expiry): void {
+                                $expiry->whereNull('user_access_grants.expires_at')
+                                    ->orWhere('user_access_grants.expires_at', '>', now());
+                            });
+                    })
+                    ->orWhereExists(function ($grantQuery) use ($user): void {
+                        $grantQuery->selectRaw('1')
+                            ->from('user_access_grants')
+                            ->join('team_subscription', 'team_subscription.team_id', '=', 'user_access_grants.team_id')
+                            ->whereColumn('team_subscription.subscription_id', 'azure_subscriptions.subscription_id')
+                            ->where('user_access_grants.user_id', $user->getKey())
+                            ->where('user_access_grants.target_type', AccessRequestTargetType::Team->value)
+                            ->where('user_access_grants.starts_at', '<=', now())
+                            ->where(function ($expiry): void {
+                                $expiry->whereNull('user_access_grants.expires_at')
+                                    ->orWhere('user_access_grants.expires_at', '>', now());
+                            });
+                    });
+            })
+            // A revocation is an explicit per-user override. It must win over
+            // both team membership and direct/team grants, including direct URLs.
+            ->whereNotExists(function ($overrideQuery) use ($user): void {
+                $overrideQuery->selectRaw('1')
+                    ->from('user_subscription_access_overrides')
+                    ->whereColumn(
+                        'user_subscription_access_overrides.subscription_id',
+                        'azure_subscriptions.subscription_id',
+                    )
+                    ->where('user_subscription_access_overrides.user_id', $user->getKey())
+                    ->where('user_subscription_access_overrides.override', 'revoked');
+            });
     }
 
     public static function form(Schema $schema): Schema
