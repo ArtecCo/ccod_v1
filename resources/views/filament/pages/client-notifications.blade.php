@@ -70,10 +70,7 @@
                                 class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
                                 x-bind:class="notification.read_at ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' : severityBackground(notification.data.severity)"
                             >
-                                <x-filament::icon
-                                    icon="heroicon-o-bell"
-                                    class="h-5 w-5"
-                                />
+                                <x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" />
                             </div>
 
                             <div class="min-w-0 flex-1">
@@ -85,21 +82,12 @@
                                                 class="h-2 w-2 shrink-0 rounded-full"
                                                 x-bind:class="severityClass(notification.data.severity)"
                                             ></span>
-                                            <p
-                                                class="truncate text-sm font-semibold text-gray-950 dark:text-white"
-                                                x-text="notification.data.title"
-                                            ></p>
+                                            <p class="truncate text-sm font-semibold text-gray-950 dark:text-white" x-text="notification.data.title"></p>
                                         </div>
-                                        <p
-                                            class="mt-1.5 text-sm leading-6 text-gray-600 dark:text-gray-300"
-                                            x-text="notification.data.message"
-                                        ></p>
+                                        <p class="mt-1.5 text-sm leading-6 text-gray-600 dark:text-gray-300" x-text="notification.data.message"></p>
                                     </div>
 
-                                    <span
-                                        class="shrink-0 text-xs text-gray-500 dark:text-gray-400 sm:pt-0.5"
-                                        x-text="formatDate(notification.created_at)"
-                                    ></span>
+                                    <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400 sm:pt-0.5" x-text="formatDate(notification.created_at)"></span>
                                 </div>
 
                                 <div class="mt-3 flex flex-wrap items-center gap-2">
@@ -129,13 +117,7 @@
             <span>Notifications refresh automatically every 45 seconds.</span>
         </div>
 
-        <div
-            x-show="toast"
-            x-transition
-            x-cloak
-            class="fixed bottom-5 right-5 z-50 rounded-lg bg-gray-950 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-white dark:text-gray-950"
-            x-text="toast"
-        ></div>
+        <div x-show="toast" x-transition x-cloak class="fixed bottom-5 right-5 z-50 rounded-lg bg-gray-950 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-white dark:text-gray-950" x-text="toast"></div>
     </div>
 
     <script>
@@ -146,10 +128,21 @@
                 loading: true,
                 toast: '',
                 timer: null,
+                initialized: false,
 
                 async init() {
+                    if (this.initialized) return;
+                    this.initialized = true;
+
                     await this.refresh();
                     this.timer = window.setInterval(() => this.refresh(), 45000);
+                },
+
+                destroy() {
+                    if (this.timer !== null) {
+                        window.clearInterval(this.timer);
+                        this.timer = null;
+                    }
                 },
 
                 async refresh() {
