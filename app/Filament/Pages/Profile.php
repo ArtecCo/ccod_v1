@@ -9,6 +9,7 @@ use App\Models\AzureSubscription;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
+use App\Models\UserSubscriptionAccessOverride;
 use App\Services\AccessAuthorizationService;
 use App\Services\AccessRequestService;
 use Filament\Actions\Action;
@@ -53,11 +54,33 @@ class Profile extends Page
 
     public function getGrants(): Collection
     {
+        $user = $this->getUser();
+
         return UserAccessGrant::query()
-            ->where('user_id', $this->getUser()->getKey())
+            ->where('user_id', $user->getKey())
             ->where('starts_at', '<=', now())
             ->where(function ($query): void {
                 $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
+            })
+            ->where(function ($query) use ($user): void {
+                $query->where(function ($subscriptionGrantQuery): void {
+                    $subscriptionGrantQuery
+                        ->where('target_type', '<>', AccessRequestTargetType::Subscription->value)
+                        ->orWhereNull('subscription_id');
+                })->orWhere(function ($subscriptionGrantQuery) use ($user): void {
+                    $subscriptionGrantQuery
+                        ->where('target_type', AccessRequestTargetType::Subscription->value)
+                        ->whereNotExists(function ($overrideQuery) use ($user): void {
+                            $overrideQuery->selectRaw('1')
+                                ->from('user_subscription_access_overrides')
+                                ->whereColumn(
+                                    'user_subscription_access_overrides.subscription_id',
+                                    'user_access_grants.subscription_id',
+                                )
+                                ->where('user_subscription_access_overrides.user_id', $user->getKey())
+                                ->where('user_subscription_access_overrides.override', 'revoked');
+                        });
+                });
             })
             ->orderByDesc('starts_at')
             ->get();
