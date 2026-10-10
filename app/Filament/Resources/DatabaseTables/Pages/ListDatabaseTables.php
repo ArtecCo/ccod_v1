@@ -13,4 +13,11 @@ class ListDatabaseTables extends ListRecords
     {
         return 'Database Tables';
     }
+
+    public function getTableRecordUrl($record): ?string
+    {
+        return DatabaseTableResource::getUrl('view', [
+            'table' => $record->table_name,
+        ]);
+    }
 }
