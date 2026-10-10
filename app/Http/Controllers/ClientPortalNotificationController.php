@@ -20,7 +20,7 @@ class ClientPortalNotificationController extends Controller
         }
 
         $notifications = $query
-            ->limit(50)
+            ->limit(20)
             ->get()
             ->map(fn (DatabaseNotification $notification): array => [
                 'id' => $notification->id,
@@ -62,6 +62,19 @@ class ClientPortalNotificationController extends Controller
         return response()->json([
             'success' => true,
             'unread_count' => 0,
+        ]);
+    }
+
+    public function clearRead(Request $request): JsonResponse
+    {
+        $deleted = $request->user()
+            ->notifications()
+            ->whereNotNull('read_at')
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'deleted_count' => $deleted,
         ]);
     }
 }
