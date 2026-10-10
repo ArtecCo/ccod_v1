@@ -7,11 +7,9 @@
         .ccod-notifications__description { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.875rem; line-height:1.25rem; }
         .dark .ccod-notifications__description { color:rgb(156 163 175); }
         .ccod-notifications__count { display:inline-flex; min-width:1.5rem; height:1.5rem; align-items:center; justify-content:center; margin-left:.4rem; padding:0 .4rem; border-radius:9999px; background:rgb(245 158 11); color:white; font-size:.75rem; font-weight:700; line-height:1; vertical-align:middle; }
-        .ccod-notifications__mark-read { border:1px solid rgb(209 213 219); border-radius:.5rem; background:white; padding:.5rem .75rem; color:rgb(55 65 81); font-size:.875rem; font-weight:600; line-height:1.25rem; cursor:pointer; transition:background 120ms ease,border-color 120ms ease; }
-        .ccod-notifications__mark-read:hover:not(:disabled) { background:rgb(249 250 251); border-color:rgb(156 163 175); }
+        .ccod-notifications__mark-read { border:1px solid rgb(209 213 219); border-radius:.5rem; background:white; padding:.5rem .75rem; color:rgb(55 65 81); font-size:.875rem; font-weight:600; line-height:1.25rem; cursor:pointer; }
         .ccod-notifications__mark-read:disabled { cursor:not-allowed; opacity:.5; }
         .dark .ccod-notifications__mark-read { border-color:rgb(55 65 81); background:rgb(31 41 55); color:rgb(229 231 235); }
-        .dark .ccod-notifications__mark-read:hover:not(:disabled) { background:rgb(55 65 81); border-color:rgb(75 85 99); }
         .ccod-notifications__panel { overflow:hidden; border:1px solid rgb(229 231 235); border-radius:.75rem; background:white; box-shadow:0 1px 2px rgba(0,0,0,.04); }
         .dark .ccod-notifications__panel { border-color:rgb(55 65 81); background:rgb(17 24 39); }
         .ccod-notifications__loading,.ccod-notifications__empty { padding:3.5rem 1.5rem; text-align:center; }
@@ -20,7 +18,7 @@
         .ccod-notifications__empty-title { margin:0; font-size:.875rem; font-weight:700; }
         .ccod-notifications__empty-text { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.875rem; }
         .dark .ccod-notifications__empty-text { color:rgb(156 163 175); }
-        .ccod-notifications__row { display:flex; width:100%; gap:.875rem; padding:1rem 1.125rem; border:0; border-bottom:1px solid rgb(229 231 235); background:transparent; color:inherit; text-align:left; cursor:pointer; transition:background 120ms ease; }
+        .ccod-notifications__row { display:flex; width:100%; gap:.875rem; padding:1rem 1.125rem; border:0; border-bottom:1px solid rgb(229 231 235); background:transparent; color:inherit; text-align:left; cursor:pointer; }
         .ccod-notifications__row:last-child { border-bottom:0; }
         .ccod-notifications__row:hover { background:rgb(249 250 251); }
         .dark .ccod-notifications__row { border-color:rgb(55 65 81); }
@@ -28,11 +26,11 @@
         .ccod-notifications__row--unread { background:rgba(245,158,11,.055); }
         .dark .ccod-notifications__row--unread { background:rgba(245,158,11,.07); }
         .ccod-notifications__icon { display:flex; width:2.5rem; height:2.5rem; flex:0 0 2.5rem; align-items:center; justify-content:center; border-radius:.625rem; background:rgb(243 244 246); color:rgb(107 114 128); }
-        .dark .ccod-notifications__icon { background:rgb(31 41 55); color:rgb(156 163 175); }
         .ccod-notifications__icon--info { background:rgb(239 246 255); color:rgb(37 99 235); }
         .ccod-notifications__icon--success { background:rgb(240 253 244); color:rgb(22 163 74); }
         .ccod-notifications__icon--warning { background:rgb(255 251 235); color:rgb(217 119 6); }
         .ccod-notifications__icon--danger { background:rgb(254 242 242); color:rgb(220 38 38); }
+        .dark .ccod-notifications__icon { background:rgb(31 41 55); color:rgb(156 163 175); }
         .ccod-notifications__body { min-width:0; flex:1; }
         .ccod-notifications__top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
         .ccod-notifications__title-wrap { display:flex; min-width:0; align-items:center; gap:.45rem; }
@@ -49,7 +47,6 @@
         .dark .ccod-notifications__action { color:rgb(251 191 36); }
         .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.75rem; }
         .dark .ccod-notifications__footer { color:rgb(156 163 175); }
-        .ccod-notifications__toast { position:fixed; right:1.25rem; bottom:1.25rem; z-index:50; border-radius:.5rem; background:rgb(17 24 39); padding:.7rem .9rem; color:white; font-size:.875rem; font-weight:600; box-shadow:0 10px 25px rgba(0,0,0,.2); }
         @media (max-width:640px) { .ccod-notifications__header { align-items:stretch; flex-direction:column; } .ccod-notifications__mark-read { align-self:flex-start; } .ccod-notifications__top { flex-direction:column; gap:.15rem; } }
     </style>
 
@@ -107,14 +104,12 @@
             <x-filament::icon icon="heroicon-o-arrow-path" class="h-3.5 w-3.5" />
             <span>Notifications refresh automatically every 45 seconds.</span>
         </div>
-
-        <div x-show="toast" x-transition x-cloak class="ccod-notifications__toast" x-text="toast"></div>
     </div>
 
     <script>
         function clientNotificationCenter() {
             return {
-                notifications: [], unreadCount: 0, loading: true, toast: '', timer: null, initialized: false, cleanupBound: false,
+                notifications: [], unreadCount: 0, loading: true, initialized: false, timer: null, cleanupBound: false,
 
                 async init() {
                     if (this.initialized) return;
@@ -134,10 +129,8 @@
                 bindCleanup() {
                     if (this.cleanupBound) return;
                     this.cleanupBound = true;
-
-                    this.handleNavigation = () => this.clearRead();
-                    this.handlePageHide = () => this.clearRead();
-
+                    this.handleNavigation = () => this.destroy();
+                    this.handlePageHide = () => this.destroy();
                     document.addEventListener('livewire:navigating', this.handleNavigation, { once: true });
                     window.addEventListener('pagehide', this.handlePageHide, { once: true });
                 },
@@ -149,7 +142,11 @@
                         });
                         if (!response.ok) throw new Error('Notification request failed.');
                         const payload = await response.json();
-                        this.notifications = payload.notifications || [];
+                        const incoming = payload.notifications || [];
+                        const currentRead = this.notifications.filter(notification => notification.read_at);
+                        const incomingIds = new Set(incoming.map(notification => notification.id));
+                        this.notifications = [...incoming, ...currentRead.filter(notification => !incomingIds.has(notification.id))]
+                            .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                         this.unreadCount = payload.unread_count || 0;
                     } catch (error) {
                         console.error(error);
@@ -184,24 +181,10 @@
                             credentials: 'same-origin',
                         });
                         if (!response.ok) throw new Error('Unable to mark notifications as read.');
-                        this.notifications.forEach(notification => notification.read_at = notification.read_at || new Date().toISOString());
+                        const readAt = new Date().toISOString();
+                        this.notifications.forEach(notification => notification.read_at = notification.read_at || readAt);
                         this.unreadCount = 0;
-                        this.showToast('All notifications marked as read.');
-                    } catch (error) { console.error(error); this.showToast('Unable to update notifications.'); }
-                },
-
-                async clearRead() {
-                    try {
-                        const response = await fetch('{{ route('notifications.clear-read') }}', {
-                            method: 'POST',
-                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
-                            credentials: 'same-origin',
-                            keepalive: true,
-                        });
-                        if (!response.ok) throw new Error('Unable to clear read notifications.');
-                    } catch (error) {
-                        console.error(error);
-                    }
+                    } catch (error) { console.error(error); }
                 },
 
                 formatType(type) {
@@ -211,11 +194,6 @@
                 formatDate(value) {
                     if (!value) return '';
                     return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
-                },
-
-                showToast(message) {
-                    this.toast = message;
-                    window.setTimeout(() => this.toast = '', 2500);
                 },
             };
         }
