@@ -113,7 +113,6 @@
             unreadCount: 0,
             loading: true,
             initialized: false,
-            timer: null,
             cleanupBound: false,
 
             async init() {
@@ -124,10 +123,7 @@
             },
 
             destroy() {
-                if (this.timer !== null) {
-                    window.clearInterval(this.timer);
-                    this.timer = null;
-                }
+                this.unbindCleanup();
             },
 
             bindCleanup() {
@@ -137,6 +133,13 @@
                 this.handlePageHide = () => this.destroy();
                 document.addEventListener('livewire:navigating', this.handleNavigation, { once: true });
                 window.addEventListener('pagehide', this.handlePageHide, { once: true });
+            },
+
+            unbindCleanup() {
+                if (!this.cleanupBound) return;
+                document.removeEventListener('livewire:navigating', this.handleNavigation);
+                window.removeEventListener('pagehide', this.handlePageHide);
+                this.cleanupBound = false;
             },
 
             async refresh() {
