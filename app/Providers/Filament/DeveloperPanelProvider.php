@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\LogsControl;
+use App\Filament\Pages\SendNotification;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -46,6 +47,7 @@ class DeveloperPanelProvider extends PanelProvider
                     ->navigationSort(10),
             )
             ->navigationGroups([
+                NavigationGroup::make('Notifications'),
                 NavigationGroup::make('Logging'),
                 NavigationGroup::make('Maintenance'),
             ])
@@ -54,6 +56,7 @@ class DeveloperPanelProvider extends PanelProvider
             ])
             ->pages([
                 Dashboard::class,
+                SendNotification::class,
                 LogsControl::class,
             ])
             ->widgets([])
