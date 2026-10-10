@@ -10,6 +10,7 @@ use App\Filament\Resources\AccessRequests\Pages\ListAccessRequests;
 use App\Filament\Resources\AccessRequests\Pages\ViewAccessRequest;
 use App\Models\AccessRequest;
 use App\Services\AccessAuthorizationService;
+use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -125,7 +126,7 @@ class AccessRequestResource extends Resource
                 ]),
             ])
             ->actions([
-                \Filament\Tables\Actions\ViewAction::make(),
+                ViewAction::make(),
             ]);
     }
 
