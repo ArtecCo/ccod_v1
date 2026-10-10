@@ -138,13 +138,13 @@ class AccessRequestResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('user.name')->label('Requester')->searchable()->sortable(),
-                TextColumn::make('target_name')->label('Target')->searchable()->sortable(),
-                TextColumn::make('target_type')->label('Type')->badge(),
-                TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state)),
-                TextColumn::make('duration')->label('Duration')->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state)),
-                TextColumn::make('status')->badge(),
-                TextColumn::make('created_at')->label('Requested')->dateTime('Y-m-d H:i:s')->sortable(),
+                TextColumn::make('user.name')->label('Requester')->searchable()->sortable()->toggleable(),
+                TextColumn::make('target_name')->label('Target')->searchable()->sortable()->toggleable(),
+                TextColumn::make('target_type')->label('Type')->badge()->toggleable(),
+                TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state))->toggleable(),
+                TextColumn::make('duration')->label('Duration')->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state))->toggleable(),
+                TextColumn::make('status')->badge()->toggleable(),
+                TextColumn::make('created_at')->label('Requested')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('status')->options(collect(AccessRequestStatus::cases())->mapWithKeys(fn (AccessRequestStatus $status): array => [$status->value => $status->label()])->all()),
