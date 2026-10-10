@@ -6,6 +6,7 @@ use App\Models\Documentation;
 use App\Policies\ActivityPolicy;
 use App\Policies\DocumentationPolicy;
 use App\Services\AuditLogger;
+use App\Services\LogSettings;
 use Filament\Forms\Components\Field;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
@@ -22,6 +23,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->singleton(AuditLogger::class);
+        $this->app->singleton(LogSettings::class);
     }
 
     public function boot(): void
@@ -32,9 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Table::configureUsing(function (Table $table): void {
             $table
                 ->striped()
-                ->extraAttributes([
-                    'class' => 'compact-table [&_td]:py-1 [&_th]:py-1',
-                ]);
+                ->extraAttributes(['class' => 'compact-table [&_td]:py-1 [&_th]:py-1']);
         });
 
         Field::configureUsing(function (Field $field): void {
@@ -46,12 +46,10 @@ class AppServiceProvider extends ServiceProvider
                 event: 'Login',
                 description: 'Authentication succeeded.',
                 success: true,
-                properties: [
-                    'guard' => $event->guard,
-                    'remember' => $event->remember,
-                ],
+                properties: ['guard' => $event->guard, 'remember' => $event->remember],
                 logName: 'Access',
                 tags: ['authentication', 'login'],
+                category: LogSettings::AUTHENTICATION,
             );
         });
 
@@ -60,11 +58,10 @@ class AppServiceProvider extends ServiceProvider
                 event: 'Logout',
                 description: 'Authentication session ended.',
                 success: true,
-                properties: [
-                    'guard' => $event->guard,
-                ],
+                properties: ['guard' => $event->guard],
                 logName: 'Access',
                 tags: ['authentication', 'logout'],
+                category: LogSettings::AUTHENTICATION,
             );
         });
 
@@ -77,12 +74,10 @@ class AppServiceProvider extends ServiceProvider
                 description: 'Authentication failed.',
                 success: false,
                 failureReason: 'Authentication credentials did not authenticate.',
-                properties: [
-                    'guard' => $event->guard,
-                    'identifier_type' => $identifier,
-                ],
+                properties: ['guard' => $event->guard, 'identifier_type' => $identifier],
                 logName: 'Access',
                 tags: ['authentication', 'failure'],
+                category: LogSettings::AUTHENTICATION,
             );
         });
 
@@ -118,6 +113,7 @@ class AppServiceProvider extends ServiceProvider
                 subject: $model,
                 logName: 'Models',
                 tags: ['model', strtolower(str_replace(' ', '_', $event))],
+                category: LogSettings::MODEL_ACTIONS,
             );
         });
     }
