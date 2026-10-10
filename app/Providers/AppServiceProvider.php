@@ -8,6 +8,7 @@ use App\Policies\DocumentationPolicy;
 use App\Services\AuditLogger;
 use Filament\Forms\Components\Field;
 use Filament\Tables\Table;
+use Illuminate\Auth\Events\Failed;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
@@ -36,6 +37,24 @@ class AppServiceProvider extends ServiceProvider
 
         Field::configureUsing(function (Field $field): void {
             $field->inlineLabel();
+        });
+
+        Event::listen(Failed::class, function (Failed $event): void {
+            $identifier = collect(['email', 'username', 'login'])
+                ->first(fn (string $key): bool => array_key_exists($key, $event->credentials));
+
+            app(AuditLogger::class)->log(
+                event: 'Login Failed',
+                description: 'Authentication failed.',
+                success: false,
+                failureReason: 'Authentication credentials did not authenticate.',
+                properties: [
+                    'guard' => $event->guard,
+                    'identifier_type' => $identifier,
+                ],
+                logName: 'Access',
+                tags: ['authentication', 'failure'],
+            );
         });
 
         Event::listen([
