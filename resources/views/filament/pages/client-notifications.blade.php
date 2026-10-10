@@ -42,7 +42,7 @@
         .dark .ccod-notifications__message { color:rgb(209 213 219); }
         .ccod-notifications__meta { display:flex; align-items:center; gap:.5rem; margin-top:.625rem; }
         .ccod-notifications__type { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; background:rgb(243 244 246); color:rgb(75 85 99); font-size:.75rem; font-weight:700; line-height:1rem; }
-        .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 213 219); }
+        .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 231 219); }
         .ccod-notifications__action { color:rgb(217 119 6); font-size:.875rem; font-weight:700; }
         .dark .ccod-notifications__action { color:rgb(251 191 36); }
         .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.75rem; }
@@ -102,7 +102,7 @@
 
         <div class="ccod-notifications__footer">
             <x-filament::icon icon="heroicon-o-arrow-path" class="h-3.5 w-3.5" />
-            <span>Notifications refresh automatically every 45 seconds.</span>
+            <span>Notifications refresh automatically every 10 seconds.</span>
         </div>
     </div>
 
@@ -120,7 +120,6 @@
                 if (this.initialized) return;
                 this.initialized = true;
                 await this.refresh();
-                this.timer = window.setInterval(() => this.refresh(), 45000);
                 this.bindCleanup();
             },
 
