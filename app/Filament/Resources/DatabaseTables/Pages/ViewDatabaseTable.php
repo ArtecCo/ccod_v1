@@ -21,7 +21,7 @@ class ViewDatabaseTable extends Page implements HasTable
 
     protected static string $resource = DatabaseTableResource::class;
 
-    protected static string $view = 'filament.resources.database-tables.pages.view-database-table';
+    protected string $view = 'filament.resources.database-tables.pages.view-database-table';
 
     public string $tableName = '';
 
