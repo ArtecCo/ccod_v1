@@ -14,6 +14,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ViewRecord;
+use Illuminate\Support\Carbon;
 
 class ViewAccessRequest extends ViewRecord
 {
@@ -63,7 +64,7 @@ class ViewAccessRequest extends ViewRecord
                 ->action(function (array $data): void {
                     $duration = AccessRequestDuration::from($data['duration']);
                     $requestedUntil = $duration === AccessRequestDuration::TimeBound
-                        ? $data['requested_until']
+                        ? Carbon::parse($data['requested_until'])
                         : null;
 
                     app(AccessRequestService::class)->approve(
