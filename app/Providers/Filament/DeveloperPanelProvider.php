@@ -2,11 +2,11 @@
 
 namespace App\Providers\Filament;
 
+use App\Filament\Pages\DatabaseTablePage;
 use App\Filament\Pages\LogsControl;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
-use App\Filament\Resources\DatabaseTables\DatabaseTableResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use App\Filament\Resources\Users\UserResource;
 use Filament\Http\Middleware\Authenticate;
@@ -56,12 +56,12 @@ class DeveloperPanelProvider extends PanelProvider
                 NotificationRuleResource::class,
                 AccessRequestResource::class,
                 UserResource::class,
-                DatabaseTableResource::class,
             ])
             ->pages([
                 Dashboard::class,
                 SendNotification::class,
                 LogsControl::class,
+                DatabaseTablePage::class,
             ])
             ->widgets([])
             ->middleware([
