@@ -53,7 +53,10 @@ class DatabaseTableResource extends Resource
 
     public static function getGlobalSearchResultUrl($record): string
     {
-        return static::getUrl('view', ['table' => $record->table_name]);
+        // A global-search result does not have a table route parameter available
+        // at URL-generation time. Open the table index here; the table list then
+        // provides the explicit per-table route through its Open action.
+        return static::getUrl('index');
     }
 
     public static function getEloquentQuery(): Builder
