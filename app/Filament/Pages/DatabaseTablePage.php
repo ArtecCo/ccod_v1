@@ -19,7 +19,7 @@ class DatabaseTablePage extends Page implements HasTable
 {
     use InteractsWithTable;
 
-    protected static string $view = 'filament.pages.database-table';
+    protected string $view = 'filament.pages.database-table';
 
     protected static ?string $slug = 'database/{table}';
 
