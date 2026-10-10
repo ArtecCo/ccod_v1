@@ -108,6 +108,8 @@ class AdminPanelProvider extends PanelProvider
                     })
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.notifications'));
 
+                $managementItems = [];
+
                 if ($user?->role === UserRole::GlobalOwner) {
                     $managementItems = [
                         NavigationItem::make('Users')
@@ -124,7 +126,7 @@ class AdminPanelProvider extends PanelProvider
                             ->url(AccessRequestResource::getUrl())
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*')),
                     ];
-                } else {
+                } elseif ($user?->role === UserRole::RestrictedOwner) {
                     $managementItems = [
                         NavigationItem::make('Access Requests')
                             ->icon(Heroicon::OutlinedKey)
@@ -133,7 +135,7 @@ class AdminPanelProvider extends PanelProvider
                     ];
                 }
 
-                return $builder->groups([
+                $groups = [
                     NavigationGroup::make()
                         ->items([
                             NavigationItem::make('Dashboard')
@@ -144,10 +146,15 @@ class AdminPanelProvider extends PanelProvider
                             $documentationItem,
                         ]),
                     ...$teamGroups,
-                    NavigationGroup::make('Administration')
+                ];
+
+                if ($managementItems !== []) {
+                    $groups[] = NavigationGroup::make('Administration')
                         ->icon(Heroicon::OutlinedCog6Tooth)
-                        ->items($managementItems),
-                ]);
+                        ->items($managementItems);
+                }
+
+                return $builder->groups($groups);
             })
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
