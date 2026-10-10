@@ -178,6 +178,18 @@
                     } catch (error) { console.error(error); this.showToast('Unable to update notifications.'); }
                 },
 
+                async clearRead() {
+                    try {
+                        const response = await fetch('{{ route('notifications.clear-read') }}', {
+                            method: 'POST',
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
+                            credentials: 'same-origin',
+                        });
+                        if (!response.ok) throw new Error('Unable to clear read notifications.');
+                        this.notifications = this.notifications.filter(notification => !notification.read_at);
+                    } catch (error) { console.error(error); }
+                },
+
                 formatType(type) {
                     return (type || 'general').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
                 },
