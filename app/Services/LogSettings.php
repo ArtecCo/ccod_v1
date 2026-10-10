@@ -16,6 +16,7 @@ class LogSettings
     public const DELETED = 'deleted';
     public const RESTORED = 'restored';
     public const FORCE_DELETED = 'force_deleted';
+    public const NOTIFICATIONS = 'notifications';
     public const UPDATES_AVAILABLE = 'updates_available';
     public const UPDATE_SUCCEEDED = 'update_succeeded';
     public const UPDATE_FAILED = 'update_failed';
@@ -39,6 +40,9 @@ class LogSettings
             self::RESTORED => 'Restore',
             self::FORCE_DELETED => 'Force delete',
         ],
+        'Notifications' => [
+            self::NOTIFICATIONS => 'Client portal notifications',
+        ],
         'Maintenance' => [
             self::UPDATES_AVAILABLE => 'Updates available',
             self::UPDATE_SUCCEEDED => 'Application update succeeded',
@@ -59,6 +63,7 @@ class LogSettings
         self::DELETED,
         self::RESTORED,
         self::FORCE_DELETED,
+        self::NOTIFICATIONS,
         self::UPDATES_AVAILABLE,
         self::UPDATE_SUCCEEDED,
         self::UPDATE_FAILED,
