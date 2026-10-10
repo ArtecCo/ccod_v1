@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Enums\UserRole;
 use App\Filament\Pages\ClientNotifications;
+use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Filament\Resources\Teams\TeamResource;
@@ -125,9 +126,25 @@ class AdminPanelProvider extends PanelProvider
                         NavigationItem::make('Subscriptions')
                             ->icon(Heroicon::OutlinedCloud)
                             ->url(AzureSubscriptionResource::getUrl()),
+                        NavigationItem::make('Access Requests')
+                            ->icon(Heroicon::OutlinedKey)
+                            ->url(AccessRequestResource::getUrl())
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*')),
+                    ];
+                } elseif ($user?->roleEnum() === UserRole::RestrictedOwner) {
+                    $managementItems = [
+                        NavigationItem::make('Access Requests')
+                            ->icon(Heroicon::OutlinedKey)
+                            ->url(AccessRequestResource::getUrl())
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*')),
                     ];
                 } else {
-                    $managementItems = [];
+                    $managementItems = [
+                        NavigationItem::make('Access Requests')
+                            ->icon(Heroicon::OutlinedKey)
+                            ->url(AccessRequestResource::getUrl())
+                            ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*')),
+                    ];
                 }
 
                 return $builder->groups([
@@ -141,11 +158,9 @@ class AdminPanelProvider extends PanelProvider
                             $documentationItem,
                         ]),
                     ...$teamGroups,
-                    ...($managementItems === [] ? [] : [
-                        NavigationGroup::make('Administration')
-                            ->icon(Heroicon::OutlinedCog6Tooth)
-                            ->items($managementItems),
-                    ]),
+                    NavigationGroup::make('Administration')
+                        ->icon(Heroicon::OutlinedCog6Tooth)
+                        ->items($managementItems),
                 ]);
             })
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
@@ -153,6 +168,7 @@ class AdminPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 ClientNotifications::class,
+                \App\Filament\Pages\Profile::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
