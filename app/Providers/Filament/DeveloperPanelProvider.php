@@ -2,8 +2,6 @@
 
 namespace App\Providers\Filament;
 
-use App\Http\Middleware\AuditRequestMiddleware;
-use App\Models\Developer;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -25,6 +23,8 @@ class DeveloperPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
+        $activityResource = config('filament-logger.activity_resource');
+
         return $panel
             ->id('developer')
             ->path('developer')
@@ -34,7 +34,7 @@ class DeveloperPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Blue,
             ])
-            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
+            ->navigation(function (NavigationBuilder $builder) use ($activityResource): NavigationBuilder {
                 return $builder->items([
                     NavigationItem::make('Dashboard')
                         ->icon('heroicon-o-home')
@@ -42,12 +42,12 @@ class DeveloperPanelProvider extends PanelProvider
                         ->isActiveWhen(fn (): bool => request()->routeIs('filament.developer.pages.dashboard')),
                     NavigationItem::make('Audit Log')
                         ->icon('heroicon-o-shield-check')
-                        ->url(config('filament-logger.activity_resource')::getUrl())
+                        ->url($activityResource::getUrl())
                         ->isActiveWhen(fn (): bool => request()->routeIs('filament.developer.resources.*')),
                 ]);
             })
             ->resources([
-                config('filament-logger.activity_resource'),
+                $activityResource,
             ])
             ->pages([
                 Dashboard::class,
@@ -63,7 +63,6 @@ class DeveloperPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
-                AuditRequestMiddleware::class,
             ])
             ->authMiddleware([
                 Authenticate::class,
