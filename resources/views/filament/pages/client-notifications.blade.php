@@ -1,110 +1,101 @@
 <x-filament-panels::page>
-    <div
-        x-data="clientNotificationCenter()"
-        x-init="init()"
-        class="space-y-6"
-    >
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-                <div class="flex items-center gap-2">
-                    <h2 class="text-base font-semibold text-gray-950 dark:text-white">Your notifications</h2>
-                    <span
-                        x-show="unreadCount > 0"
-                        x-cloak
-                        class="inline-flex min-w-6 items-center justify-center rounded-full bg-primary-600 px-2 py-0.5 text-xs font-semibold text-white"
-                        x-text="unreadCount"
-                    ></span>
-                </div>
-                <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                    Stay up to date with important portal notifications and alerts.
-                </p>
-            </div>
+    <style>
+        .ccod-notifications { color: rgb(17 24 39); }
+        .dark .ccod-notifications { color: rgb(243 244 246); }
+        .ccod-notifications__header { display:flex; align-items:flex-end; justify-content:space-between; gap:1.5rem; margin-bottom:1.25rem; }
+        .ccod-notifications__eyebrow { margin:0; font-size:.875rem; font-weight:600; line-height:1.25rem; }
+        .ccod-notifications__description { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.8125rem; line-height:1.25rem; }
+        .dark .ccod-notifications__description { color:rgb(156 163 175); }
+        .ccod-notifications__count { display:inline-flex; min-width:1.5rem; height:1.5rem; align-items:center; justify-content:center; margin-left:.4rem; padding:0 .4rem; border-radius:9999px; background:rgb(245 158 11); color:white; font-size:.6875rem; font-weight:700; line-height:1; vertical-align:middle; }
+        .ccod-notifications__mark-read { border:1px solid rgb(209 213 219); border-radius:.5rem; background:white; padding:.5rem .75rem; color:rgb(55 65 81); font-size:.75rem; font-weight:600; line-height:1rem; cursor:pointer; transition:background 120ms ease,border-color 120ms ease; }
+        .ccod-notifications__mark-read:hover:not(:disabled) { background:rgb(249 250 251); border-color:rgb(156 163 175); }
+        .ccod-notifications__mark-read:disabled { cursor:not-allowed; opacity:.5; }
+        .dark .ccod-notifications__mark-read { border-color:rgb(55 65 81); background:rgb(31 41 55); color:rgb(229 231 235); }
+        .dark .ccod-notifications__mark-read:hover:not(:disabled) { background:rgb(55 65 81); border-color:rgb(75 85 99); }
+        .ccod-notifications__panel { overflow:hidden; border:1px solid rgb(229 231 235); border-radius:.75rem; background:white; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+        .dark .ccod-notifications__panel { border-color:rgb(55 65 81); background:rgb(17 24 39); }
+        .ccod-notifications__loading,.ccod-notifications__empty { padding:3.5rem 1.5rem; text-align:center; }
+        .ccod-notifications__empty-icon { display:flex; width:3rem; height:3rem; align-items:center; justify-content:center; margin:0 auto .875rem; border-radius:9999px; background:rgb(243 244 246); color:rgb(107 114 128); }
+        .dark .ccod-notifications__empty-icon { background:rgb(31 41 55); color:rgb(156 163 175); }
+        .ccod-notifications__empty-title { margin:0; font-size:.875rem; font-weight:700; }
+        .ccod-notifications__empty-text { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.8125rem; }
+        .dark .ccod-notifications__empty-text { color:rgb(156 163 175); }
+        .ccod-notifications__row { display:flex; width:100%; gap:.875rem; padding:1rem 1.125rem; border:0; border-bottom:1px solid rgb(229 231 235); background:transparent; color:inherit; text-align:left; cursor:pointer; transition:background 120ms ease; }
+        .ccod-notifications__row:last-child { border-bottom:0; }
+        .ccod-notifications__row:hover { background:rgb(249 250 251); }
+        .dark .ccod-notifications__row { border-color:rgb(55 65 81); }
+        .dark .ccod-notifications__row:hover { background:rgba(255,255,255,.035); }
+        .ccod-notifications__row--unread { background:rgba(245,158,11,.055); }
+        .dark .ccod-notifications__row--unread { background:rgba(245,158,11,.07); }
+        .ccod-notifications__icon { display:flex; width:2.5rem; height:2.5rem; flex:0 0 2.5rem; align-items:center; justify-content:center; border-radius:.625rem; background:rgb(243 244 246); color:rgb(107 114 128); }
+        .dark .ccod-notifications__icon { background:rgb(31 41 55); color:rgb(156 163 175); }
+        .ccod-notifications__icon--info { background:rgb(239 246 255); color:rgb(37 99 235); }
+        .ccod-notifications__icon--success { background:rgb(240 253 244); color:rgb(22 163 74); }
+        .ccod-notifications__icon--warning { background:rgb(255 251 235); color:rgb(217 119 6); }
+        .ccod-notifications__icon--danger { background:rgb(254 242 242); color:rgb(220 38 38); }
+        .ccod-notifications__body { min-width:0; flex:1; }
+        .ccod-notifications__top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
+        .ccod-notifications__title-wrap { display:flex; min-width:0; align-items:center; gap:.45rem; }
+        .ccod-notifications__unread-dot { width:.4rem; height:.4rem; flex:0 0 .4rem; border-radius:9999px; background:rgb(245 158 11); }
+        .ccod-notifications__title { overflow:hidden; margin:0; font-size:.8125rem; font-weight:700; line-height:1.25rem; text-overflow:ellipsis; white-space:nowrap; }
+        .ccod-notifications__date { flex:0 0 auto; color:rgb(107 114 128); font-size:.6875rem; line-height:1.25rem; }
+        .dark .ccod-notifications__date { color:rgb(156 163 175); }
+        .ccod-notifications__message { margin:.25rem 0 0; color:rgb(75 85 99); font-size:.75rem; line-height:1.25rem; }
+        .dark .ccod-notifications__message { color:rgb(209 213 219); }
+        .ccod-notifications__meta { display:flex; align-items:center; gap:.5rem; margin-top:.625rem; }
+        .ccod-notifications__type { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; background:rgb(243 244 246); color:rgb(75 85 99); font-size:.625rem; font-weight:700; line-height:.875rem; }
+        .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 213 219); }
+        .ccod-notifications__action { color:rgb(217 119 6); font-size:.6875rem; font-weight:700; }
+        .dark .ccod-notifications__action { color:rgb(251 191 36); }
+        .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.6875rem; }
+        .dark .ccod-notifications__footer { color:rgb(156 163 175); }
+        .ccod-notifications__toast { position:fixed; right:1.25rem; bottom:1.25rem; z-index:50; border-radius:.5rem; background:rgb(17 24 39); padding:.7rem .9rem; color:white; font-size:.75rem; font-weight:600; box-shadow:0 10px 25px rgba(0,0,0,.2); }
+        @media (max-width:640px) { .ccod-notifications__header { align-items:stretch; flex-direction:column; } .ccod-notifications__mark-read { align-self:flex-start; } .ccod-notifications__top { flex-direction:column; gap:.15rem; } }
+    </style>
 
-            <x-filament::button
-                color="gray"
-                size="sm"
-                icon="heroicon-o-check"
-                x-on:click="markAllRead()"
-                x-bind:disabled="unreadCount === 0"
-            >
-                Mark all as read
-            </x-filament::button>
+    <div x-data="clientNotificationCenter()" x-init="init()" class="ccod-notifications">
+        <div class="ccod-notifications__header">
+            <div>
+                <p class="ccod-notifications__eyebrow">
+                    Your notifications
+                    <span x-show="unreadCount > 0" x-cloak class="ccod-notifications__count" x-text="unreadCount"></span>
+                </p>
+                <p class="ccod-notifications__description">Stay up to date with important portal notifications and alerts.</p>
+            </div>
+            <button type="button" class="ccod-notifications__mark-read" x-on:click="markAllRead()" x-bind:disabled="unreadCount === 0">Mark all as read</button>
         </div>
 
-        <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-950/5 dark:bg-gray-900 dark:ring-white/10">
+        <div class="ccod-notifications__panel">
             <template x-if="loading">
-                <div class="divide-y divide-gray-950/5 dark:divide-white/10">
-                    <template x-for="i in 3" :key="i">
-                        <div class="flex gap-4 px-5 py-5">
-                            <div class="mt-1 h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-100 dark:bg-gray-800"></div>
-                            <div class="min-w-0 flex-1 space-y-2">
-                                <div class="h-4 w-2/5 animate-pulse rounded bg-gray-100 dark:bg-gray-800"></div>
-                                <div class="h-4 w-4/5 animate-pulse rounded bg-gray-100 dark:bg-gray-800"></div>
-                                <div class="h-3 w-1/5 animate-pulse rounded bg-gray-100 dark:bg-gray-800"></div>
-                            </div>
-                        </div>
-                    </template>
-                </div>
+                <div class="ccod-notifications__loading"><p class="ccod-notifications__empty-title">Loading notifications…</p></div>
             </template>
 
             <template x-if="!loading && notifications.length === 0">
-                <div class="px-6 py-14 text-center">
-                    <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-                        <x-filament::icon icon="heroicon-o-bell" class="h-6 w-6 text-gray-500 dark:text-gray-400" />
-                    </div>
-                    <p class="mt-4 text-sm font-semibold text-gray-950 dark:text-white">No notifications</p>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">You're all caught up.</p>
+                <div class="ccod-notifications__empty">
+                    <div class="ccod-notifications__empty-icon"><x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" /></div>
+                    <p class="ccod-notifications__empty-title">No notifications</p>
+                    <p class="ccod-notifications__empty-text">You're all caught up.</p>
                 </div>
             </template>
 
-            <div x-show="!loading && notifications.length > 0" class="divide-y divide-gray-950/5 dark:divide-white/10">
+            <div x-show="!loading && notifications.length > 0">
                 <template x-for="notification in notifications" :key="notification.id">
-                    <button
-                        type="button"
-                        class="group relative block w-full text-left transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-600 dark:hover:bg-white/[0.03]"
-                        x-bind:class="notification.read_at ? '' : 'bg-primary-50/50 dark:bg-primary-950/20'"
-                        x-on:click="openNotification(notification)"
-                    >
-                        <div class="flex gap-4 px-5 py-5 sm:px-6">
-                            <div
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full"
-                                x-bind:class="notification.read_at ? 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400' : severityBackground(notification.data.severity)"
-                            >
-                                <x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" />
+                    <button type="button" class="ccod-notifications__row" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="openNotification(notification)">
+                        <div class="ccod-notifications__icon" x-bind:class="notification.read_at ? '' : 'ccod-notifications__icon--' + (notification.data.severity || 'info')">
+                            <x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" />
+                        </div>
+                        <div class="ccod-notifications__body">
+                            <div class="ccod-notifications__top">
+                                <div class="ccod-notifications__title-wrap">
+                                    <span x-show="!notification.read_at" class="ccod-notifications__unread-dot"></span>
+                                    <p class="ccod-notifications__title" x-text="notification.data.title"></p>
+                                </div>
+                                <span class="ccod-notifications__date" x-text="formatDate(notification.created_at)"></span>
                             </div>
-
-                            <div class="min-w-0 flex-1">
-                                <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-                                    <div class="min-w-0">
-                                        <div class="flex items-center gap-2">
-                                            <span
-                                                x-show="!notification.read_at"
-                                                class="h-2 w-2 shrink-0 rounded-full"
-                                                x-bind:class="severityClass(notification.data.severity)"
-                                            ></span>
-                                            <p class="truncate text-sm font-semibold text-gray-950 dark:text-white" x-text="notification.data.title"></p>
-                                        </div>
-                                        <p class="mt-1.5 text-sm leading-6 text-gray-600 dark:text-gray-300" x-text="notification.data.message"></p>
-                                    </div>
-
-                                    <span class="shrink-0 text-xs text-gray-500 dark:text-gray-400 sm:pt-0.5" x-text="formatDate(notification.created_at)"></span>
-                                </div>
-
-                                <div class="mt-3 flex flex-wrap items-center gap-2">
-                                    <span
-                                        class="inline-flex items-center rounded-md px-2 py-1 text-xs font-medium ring-1 ring-inset"
-                                        x-bind:class="typeClass(notification.data.type)"
-                                        x-text="formatType(notification.data.type)"
-                                    ></span>
-
-                                    <span
-                                        x-show="notification.data.action_url"
-                                        class="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 dark:text-primary-400"
-                                    >
-                                        <span x-text="notification.data.action_label || 'Open'">Open</span>
-                                        <x-filament::icon icon="heroicon-m-arrow-right" class="h-3.5 w-3.5" />
-                                    </span>
-                                </div>
+                            <p class="ccod-notifications__message" x-text="notification.data.message"></p>
+                            <div class="ccod-notifications__meta">
+                                <span class="ccod-notifications__type" x-text="formatType(notification.data.type)"></span>
+                                <span x-show="notification.data.action_url" class="ccod-notifications__action" x-text="(notification.data.action_label || 'Open') + ' →'"></span>
                             </div>
                         </div>
                     </button>
@@ -112,28 +103,22 @@
             </div>
         </div>
 
-        <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
+        <div class="ccod-notifications__footer">
             <x-filament::icon icon="heroicon-o-arrow-path" class="h-3.5 w-3.5" />
             <span>Notifications refresh automatically every 45 seconds.</span>
         </div>
 
-        <div x-show="toast" x-transition x-cloak class="fixed bottom-5 right-5 z-50 rounded-lg bg-gray-950 px-4 py-3 text-sm font-medium text-white shadow-lg dark:bg-white dark:text-gray-950" x-text="toast"></div>
+        <div x-show="toast" x-transition x-cloak class="ccod-notifications__toast" x-text="toast"></div>
     </div>
 
     <script>
         function clientNotificationCenter() {
             return {
-                notifications: [],
-                unreadCount: 0,
-                loading: true,
-                toast: '',
-                timer: null,
-                initialized: false,
+                notifications: [], unreadCount: 0, loading: true, toast: '', timer: null, initialized: false,
 
                 async init() {
                     if (this.initialized) return;
                     this.initialized = true;
-
                     await this.refresh();
                     this.timer = window.setInterval(() => this.refresh(), 45000);
                 },
@@ -148,12 +133,9 @@
                 async refresh() {
                     try {
                         const response = await fetch('{{ route('notifications.index') }}', {
-                            headers: { 'Accept': 'application/json' },
-                            credentials: 'same-origin',
+                            headers: { 'Accept': 'application/json' }, credentials: 'same-origin',
                         });
-
                         if (!response.ok) throw new Error('Notification request failed.');
-
                         const payload = await response.json();
                         this.notifications = payload.notifications || [];
                         this.unreadCount = payload.unread_count || 0;
@@ -169,77 +151,31 @@
                         try {
                             const response = await fetch(`{{ url('/notifications') }}/${notification.id}/read`, {
                                 method: 'POST',
-                                headers: {
-                                    'Accept': 'application/json',
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                                },
+                                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
                                 credentials: 'same-origin',
                             });
-
                             if (response.ok) {
                                 notification.read_at = new Date().toISOString();
                                 this.unreadCount = Math.max(0, this.unreadCount - 1);
                             }
-                        } catch (error) {
-                            console.error(error);
-                        }
+                        } catch (error) { console.error(error); }
                     }
-
-                    if (notification.data.action_url) {
-                        window.location.href = notification.data.action_url;
-                    }
+                    if (notification.data.action_url) window.location.href = notification.data.action_url;
                 },
 
                 async markAllRead() {
                     if (this.unreadCount === 0) return;
-
                     try {
                         const response = await fetch('{{ route('notifications.read-all') }}', {
                             method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                            },
+                            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '' },
                             credentials: 'same-origin',
                         });
-
                         if (!response.ok) throw new Error('Unable to mark notifications as read.');
-
                         this.notifications.forEach(notification => notification.read_at = notification.read_at || new Date().toISOString());
                         this.unreadCount = 0;
                         this.showToast('All notifications marked as read.');
-                    } catch (error) {
-                        console.error(error);
-                        this.showToast('Unable to update notifications.');
-                    }
-                },
-
-                severityClass(severity) {
-                    return {
-                        info: 'bg-primary-500',
-                        success: 'bg-success-500',
-                        warning: 'bg-warning-500',
-                        danger: 'bg-danger-500',
-                    }[severity] || 'bg-primary-500';
-                },
-
-                severityBackground(severity) {
-                    return {
-                        info: 'bg-primary-100 text-primary-600 dark:bg-primary-950/60 dark:text-primary-400',
-                        success: 'bg-success-100 text-success-600 dark:bg-success-950/60 dark:text-success-400',
-                        warning: 'bg-warning-100 text-warning-600 dark:bg-warning-950/60 dark:text-warning-400',
-                        danger: 'bg-danger-100 text-danger-600 dark:bg-danger-950/60 dark:text-danger-400',
-                    }[severity] || 'bg-primary-100 text-primary-600 dark:bg-primary-950/60 dark:text-primary-400';
-                },
-
-                typeClass(type) {
-                    return {
-                        general: 'bg-gray-50 text-gray-700 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300 dark:ring-white/10',
-                        announcement: 'bg-primary-50 text-primary-700 ring-primary-600/20 dark:bg-primary-950/40 dark:text-primary-300 dark:ring-primary-400/20',
-                        maintenance: 'bg-warning-50 text-warning-700 ring-warning-600/20 dark:bg-warning-950/40 dark:text-warning-300 dark:ring-warning-400/20',
-                        alert: 'bg-danger-50 text-danger-700 ring-danger-600/20 dark:bg-danger-950/40 dark:text-danger-300 dark:ring-danger-400/20',
-                        action_required: 'bg-success-50 text-success-700 ring-success-600/20 dark:bg-success-950/40 dark:text-success-300 dark:ring-success-400/20',
-                    }[type] || 'bg-gray-50 text-gray-700 ring-gray-600/20 dark:bg-gray-800 dark:text-gray-300 dark:ring-white/10';
+                    } catch (error) { console.error(error); this.showToast('Unable to update notifications.'); }
                 },
 
                 formatType(type) {
@@ -248,10 +184,7 @@
 
                 formatDate(value) {
                     if (!value) return '';
-                    return new Intl.DateTimeFormat(undefined, {
-                        dateStyle: 'medium',
-                        timeStyle: 'short',
-                    }).format(new Date(value));
+                    return new Intl.DateTimeFormat(undefined, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
                 },
 
                 showToast(message) {
