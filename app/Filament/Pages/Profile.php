@@ -6,6 +6,7 @@ use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
 use App\Models\AzureSubscription;
+use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
 use App\Services\AccessAuthorizationService;
@@ -16,8 +17,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Carbon;
 
 class Profile extends Page
 {
@@ -45,9 +46,7 @@ class Profile extends Page
 
     public function getSubscriptions(): Collection
     {
-        return AzureSubscription::query()
-            ->orderBy('display_name')
-            ->get();
+        return AzureSubscription::query()->orderBy('display_name')->get();
     }
 
     public function getGrants(): Collection
@@ -138,20 +137,23 @@ class Profile extends Page
                         ->required(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value),
                 ])
                 ->action(function (array $data): void {
-                    $user = $this->getUser();
                     $targetType = AccessRequestTargetType::from($data['target_type']);
                     $target = $targetType === AccessRequestTargetType::Team
-                        ? \App\Models\Team::query()->findOrFail($data['team_id'])
+                        ? Team::query()->findOrFail($data['team_id'])
                         : AzureSubscription::query()->whereKey($data['subscription_id'])->firstOrFail();
 
+                    $requestedUntil = isset($data['requested_until']) && $data['requested_until'] !== ''
+                        ? Carbon::parse($data['requested_until'])
+                        : null;
+
                     app(AccessRequestService::class)->create(
-                        user: $user,
+                        user: $this->getUser(),
                         targetType: $targetType,
                         target: $target,
                         requestedRole: UserRole::from($data['requested_role']),
                         reason: $data['reason'],
                         duration: AccessRequestDuration::from($data['duration']),
-                        requestedUntil: $data['requested_until'] ?? null,
+                        requestedUntil: $requestedUntil,
                     );
 
                     Notification::make()
