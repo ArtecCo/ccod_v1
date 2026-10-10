@@ -8,9 +8,11 @@ use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
 use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
+use App\Models\Developer;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
+use App\Models\UserSubscriptionAccessOverride;
 use App\Notifications\ClientPortalNotification;
 use Illuminate\Validation\ValidationException;
 
@@ -121,7 +123,7 @@ class AccessRequestService
 
     public function approve(
         AccessRequest $request,
-        User|\App\Models\Developer $actor,
+        User|Developer $actor,
         ?string $reason = null,
         ?AccessRequestDuration $duration = null,
         ?\DateTimeInterface $requestedUntil = null,
@@ -149,6 +151,11 @@ class AccessRequestService
         } else {
             $requestedUntil = null;
         }
+
+        UserSubscriptionAccessOverride::query()
+            ->where('user_id', $request->user_id)
+            ->when($request->target_type === AccessRequestTargetType::Subscription, fn ($query) => $query->where('subscription_id', $request->subscription_id))
+            ->delete();
 
         $grant = UserAccessGrant::create([
             'user_id' => $request->user_id,
@@ -189,7 +196,7 @@ class AccessRequestService
         return $grant;
     }
 
-    public function reject(AccessRequest $request, User|\App\Models\Developer $actor, ?string $reason = null): void
+    public function reject(AccessRequest $request, User|Developer $actor, ?string $reason = null): void
     {
         if ($request->status !== AccessRequestStatus::Pending) {
             throw ValidationException::withMessages(['request' => 'Only pending requests can be rejected.']);
@@ -209,6 +216,60 @@ class AccessRequestService
 
         $this->notifyRequester($request, 'Access request rejected', sprintf('Your request for access to %s was rejected.', $request->target_name), 'danger');
         $this->auditDecision($request, $actor, false, $reason);
+    }
+
+    public function revokeSubscriptionAccess(
+        User $targetUser,
+        AzureSubscription $subscription,
+        User|Developer $actor,
+        ?string $reason = null,
+    ): void {
+        if (! $this->authorization->canRevokeSubscriptionAccess($actor, $targetUser, $subscription)) {
+            throw ValidationException::withMessages(['subscription' => 'You are not authorized to revoke this user\'s subscription access.']);
+        }
+
+        if (! $this->authorization->effectiveRole($targetUser, AccessRequestTargetType::Subscription, $subscription)) {
+            throw ValidationException::withMessages(['subscription' => 'The user does not currently have effective access to this subscription.']);
+        }
+
+        UserSubscriptionAccessOverride::updateOrCreate(
+            [
+                'user_id' => $targetUser->getKey(),
+                'subscription_id' => $subscription->getKey(),
+            ],
+            [
+                'override' => 'revoked',
+                'revoked_by_type' => $actor instanceof User ? User::class : get_class($actor),
+                'revoked_by_id' => $actor->getKey(),
+                'revoked_at' => now(),
+                'reason' => $reason,
+            ],
+        );
+
+        $this->notifications->sendToUser(
+            $targetUser,
+            new ClientPortalNotification(
+                title: 'Subscription access revoked',
+                message: sprintf('Your access to %s has been revoked.', $subscription->display_name),
+                type: 'access_revoked',
+                severity: 'danger',
+            ),
+        );
+
+        $this->auditLogger->log(
+            event: 'Subscription Access Revoked',
+            description: sprintf('Access to %s was revoked for %s.', $subscription->display_name, $targetUser->name),
+            subject: $targetUser,
+            success: true,
+            properties: [
+                'subscription_id' => $subscription->getKey(),
+                'subscription_name' => $subscription->display_name,
+                'reason_provided' => $reason !== null && trim($reason) !== '',
+            ],
+            logName: 'Access Requests',
+            tags: ['access', 'subscription', 'revoked'],
+            category: LogSettings::APPLICATION_REQUESTS,
+        );
     }
 
     private function notifyRequester(AccessRequest $request, string $title, string $message, string $severity): void
@@ -238,7 +299,7 @@ class AccessRequestService
 
     private function auditDecision(
         AccessRequest $request,
-        User|\App\Models\Developer $actor,
+        User|Developer $actor,
         bool $approved,
         ?string $reason,
         ?AccessRequestDuration $duration = null,
