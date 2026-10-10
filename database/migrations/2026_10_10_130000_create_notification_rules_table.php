@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -24,6 +25,36 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('developers')->nullOnDelete();
             $table->timestamps();
         });
+
+        $now = now();
+
+        DB::table('notification_rules')->insert(array_map(
+            static fn (string $event): array => [
+                'event_key' => $event,
+                'enabled' => false,
+                'recipient_type' => 'all',
+                'recipient_ids' => null,
+                'type' => 'general',
+                'severity' => 'info',
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            [
+                'azure_subscription_connected',
+                'azure_subscription_disconnected',
+                'azure_sync_succeeded',
+                'azure_sync_failed',
+                'azure_critical_alert_detected',
+                'servicenow_incident_created',
+                'servicenow_incident_resolved',
+                'user_added_to_team',
+                'user_removed_from_team',
+                'subscription_assigned_to_team',
+                'subscription_removed_from_team',
+                'maintenance_scheduled',
+                'maintenance_completed',
+            ],
+        ));
     }
 
     public function down(): void
