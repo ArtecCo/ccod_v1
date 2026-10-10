@@ -99,7 +99,8 @@ class DatabaseTablePage extends Page implements HasTable
                     ->label(Str::headline($name))
                     ->searchable()
                     ->placeholder('—')
-                    ->wrap();
+                    ->wrap()
+                    ->toggleable();
 
                 if ($this->isSortableType($type)) {
                     $text->sortable();
