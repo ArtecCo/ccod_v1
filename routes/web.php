@@ -7,5 +7,4 @@ Route::middleware('auth')->prefix('notifications')->name('notifications.')->grou
     Route::get('/data', [ClientPortalNotificationController::class, 'index'])->name('index');
     Route::post('/{notification}/read', [ClientPortalNotificationController::class, 'read'])->name('read');
     Route::post('/read-all', [ClientPortalNotificationController::class, 'readAll'])->name('read-all');
-    Route::post('/clear-read', [ClientPortalNotificationController::class, 'clearRead'])->name('clear-read');
 });
