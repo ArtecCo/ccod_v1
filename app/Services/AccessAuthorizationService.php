@@ -6,9 +6,11 @@ use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
 use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
+use App\Models\Developer;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
+use App\Models\UserSubscriptionAccessOverride;
 use Illuminate\Support\Collection;
 
 class AccessAuthorizationService
@@ -21,6 +23,16 @@ class AccessAuthorizationService
 
         if ($user->isGlobal()) {
             return $user->roleEnum();
+        }
+
+        if ($targetType === AccessRequestTargetType::Subscription) {
+            $subscription = $target instanceof AzureSubscription
+                ? $target
+                : AzureSubscription::query()->whereKey($target)->firstOrFail();
+
+            if ($this->isSubscriptionRevoked($user, $subscription)) {
+                return null;
+            }
         }
 
         $roles = collect();
@@ -66,6 +78,75 @@ class AccessAuthorizationService
         return $this->highestRole($roles);
     }
 
+    public function accessibleSubscriptions(User $user): Collection
+    {
+        $subscriptions = collect();
+
+        if ($user->isGlobal()) {
+            return AzureSubscription::query()
+                ->orderBy('display_name')
+                ->get()
+                ->map(function (AzureSubscription $subscription) use ($user): AzureSubscription {
+                    $subscription->setAttribute('access_role', $user->roleEnum());
+                    $subscription->setAttribute('access_sources', ['Global role']);
+                    $subscription->setAttribute('access_revoked', false);
+
+                    return $subscription;
+                });
+        }
+
+        $teamSubscriptions = $user->teams()
+            ->with('subscriptions')
+            ->get()
+            ->flatMap(fn (Team $team) => $team->subscriptions->map(fn (AzureSubscription $subscription) => [
+                'subscription' => $subscription,
+                'source' => 'Team: '.$team->name,
+            ]));
+
+        $teamGrants = $this->activeGrants($user, AccessRequestTargetType::Team, null, null)
+            ->load('team.subscriptions')
+            ->flatMap(fn (UserAccessGrant $grant) => $grant->team?->subscriptions->map(fn (AzureSubscription $subscription) => [
+                'subscription' => $subscription,
+                'source' => 'Team grant: '.$grant->team->name,
+                'grant' => $grant,
+            ]) ?? collect());
+
+        $directGrants = $this->activeGrants($user, AccessRequestTargetType::Subscription, null, null)
+            ->load('subscription')
+            ->filter(fn (UserAccessGrant $grant): bool => $grant->subscription !== null)
+            ->map(fn (UserAccessGrant $grant) => [
+                'subscription' => $grant->subscription,
+                'source' => 'Direct grant',
+                'grant' => $grant,
+            ]);
+
+        foreach ($teamSubscriptions->concat($teamGrants)->concat($directGrants) as $entry) {
+            /** @var AzureSubscription $subscription */
+            $subscription = $entry['subscription'];
+            $id = $subscription->getKey();
+
+            if ($this->isSubscriptionRevoked($user, $subscription)) {
+                continue;
+            }
+
+            $existing = $subscriptions->get($id);
+            $sources = $existing?->getAttribute('access_sources') ?? [];
+            $sources[] = $entry['source'];
+
+            $role = $this->effectiveRole($user, AccessRequestTargetType::Subscription, $subscription);
+            if ($role === null) {
+                continue;
+            }
+
+            $subscription->setAttribute('access_role', $role);
+            $subscription->setAttribute('access_sources', array_values(array_unique($sources)));
+            $subscription->setAttribute('access_revoked', false);
+            $subscriptions->put($id, $subscription);
+        }
+
+        return $subscriptions->sortBy('display_name')->values();
+    }
+
     public function canRequestRole(User $user, AccessRequestTargetType|string $targetType, Team|AzureSubscription|int|string $target, UserRole $requestedRole): bool
     {
         if ($user->isGlobal()) {
@@ -97,6 +178,41 @@ class AccessAuthorizationService
 
         return $approver->teams()
             ->whereHas('subscriptions', fn ($query) => $query->whereKey($request->subscription_id))
+            ->exists();
+    }
+
+    public function canRevokeSubscriptionAccess(User|Developer $actor, User $targetUser, AzureSubscription $subscription): bool
+    {
+        if ($actor instanceof Developer) {
+            return true;
+        }
+
+        if ($actor->getKey() === $targetUser->getKey()) {
+            return false;
+        }
+
+        if ($actor->isGlobalOwner()) {
+            return true;
+        }
+
+        if ($actor->roleEnum() !== UserRole::RestrictedOwner) {
+            return false;
+        }
+
+        return $actor->teams()
+            ->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))
+            ->exists()
+            && $targetUser->teams()
+                ->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))
+                ->exists();
+    }
+
+    public function isSubscriptionRevoked(User $user, AzureSubscription $subscription): bool
+    {
+        return UserSubscriptionAccessOverride::query()
+            ->where('user_id', $user->getKey())
+            ->where('subscription_id', $subscription->getKey())
+            ->where('override', 'revoked')
             ->exists();
     }
 
