@@ -8,9 +8,6 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationBuilder;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -47,28 +44,6 @@ class DeveloperPanelProvider extends PanelProvider
                     ->navigationGroup('Maintenance')
                     ->navigationSort(10),
             )
-            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
-                return $builder->groups([
-                    NavigationGroup::make()
-                        ->items([
-                            NavigationItem::make('Dashboard')
-                                ->icon('heroicon-o-home')
-                                ->url(Dashboard::getUrl())
-                                ->isActiveWhen(fn (): bool => request()->routeIs('filament.developer.pages.dashboard')),
-                        ]),
-                    NavigationGroup::make('Logging')
-                        ->items([
-                            NavigationItem::make('Audit Logs')
-                                ->icon('heroicon-o-shield-check')
-                                ->url(AuditLogResource::getUrl())
-                                ->isActiveWhen(fn (): bool => request()->routeIs('filament.developer.resources.audit-logs.*')),
-                            NavigationItem::make('Logs Control')
-                                ->icon('heroicon-o-adjustments-horizontal')
-                                ->url(LogsControl::getUrl())
-                                ->isActiveWhen(fn (): bool => request()->routeIs('filament.developer.pages.logs-control')),
-                        ]),
-                ]);
-            })
             ->resources([
                 AuditLogResource::class,
             ])
