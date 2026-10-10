@@ -10,6 +10,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use UnitEnum;
 
 class LogsControl extends Page implements HasForms
 {
@@ -19,6 +20,8 @@ class LogsControl extends Page implements HasForms
     protected static ?string $title = 'Logs Control';
     protected static ?string $slug = 'logs-control';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
+    protected static UnitEnum|string|null $navigationGroup = 'Logging';
+    protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.logs-control';
 
