@@ -4,9 +4,9 @@ namespace App\Services;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Spatie\Activitylog\Models\Activity;
 use Symfony\Component\HttpFoundation\Response;
 use Throwable;
-use MrAdder\FilamentLogger\Facades\FilamentLogger;
 
 class AuditLogger
 {
@@ -32,18 +32,26 @@ class AuditLogger
                 'user_agent' => request()?->userAgent(),
             ], $properties);
 
-            FilamentLogger::log(
-                event: $event,
-                description: $description,
-                options: [
-                    'logName' => $logName,
-                    'causer' => $this->causer(),
-                    'subject' => $subject,
-                    'properties' => $this->removeNulls($properties),
+            $causer = $this->causer();
+
+            // Write directly to Spatie Activitylog instead of going through the
+            // Filament Logger event layer. This keeps audit persistence independent
+            // from package listeners and guarantees that no old/new model values are
+            // written by this application-level audit logger.
+            Activity::query()->create([
+                'log_name' => $logName,
+                'event' => $event,
+                'description' => $description,
+                'subject_type' => $subject?->getMorphClass(),
+                'subject_id' => $subject?->getKey(),
+                'causer_type' => $causer?->getMorphClass(),
+                'causer_id' => $causer?->getKey(),
+                'properties' => $this->removeNulls([
+                    ...$properties,
                     'tags' => $tags,
                     'risk' => $success ? null : 'high',
-                ],
-            );
+                ]),
+            ]);
         } catch (Throwable $exception) {
             // Auditing must never turn a successful application operation into a 500.
             report($exception);
