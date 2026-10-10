@@ -80,8 +80,6 @@ class AccessAuthorizationService
 
     public function accessibleSubscriptions(User $user): Collection
     {
-        $subscriptions = collect();
-
         if ($user->isGlobal()) {
             return AzureSubscription::query()
                 ->orderBy('display_name')
@@ -94,6 +92,8 @@ class AccessAuthorizationService
                     return $subscription;
                 });
         }
+
+        $subscriptions = collect();
 
         $teamSubscriptions = $user->teams()
             ->with('subscriptions')
@@ -108,7 +108,6 @@ class AccessAuthorizationService
             ->flatMap(fn (UserAccessGrant $grant) => $grant->team?->subscriptions->map(fn (AzureSubscription $subscription) => [
                 'subscription' => $subscription,
                 'source' => 'Team grant: '.$grant->team->name,
-                'grant' => $grant,
             ]) ?? collect());
 
         $directGrants = $this->activeGrants($user, AccessRequestTargetType::Subscription, null, null)
@@ -117,11 +116,9 @@ class AccessAuthorizationService
             ->map(fn (UserAccessGrant $grant) => [
                 'subscription' => $grant->subscription,
                 'source' => 'Direct grant',
-                'grant' => $grant,
             ]);
 
         foreach ($teamSubscriptions->concat($teamGrants)->concat($directGrants) as $entry) {
-            /** @var AzureSubscription $subscription */
             $subscription = $entry['subscription'];
             $id = $subscription->getKey();
 
@@ -183,15 +180,11 @@ class AccessAuthorizationService
 
     public function canRevokeSubscriptionAccess(User|Developer $actor, User $targetUser, AzureSubscription $subscription): bool
     {
-        if ($actor instanceof Developer) {
-            return true;
-        }
-
-        if ($actor->getKey() === $targetUser->getKey()) {
+        if ($targetUser->isGlobal() || ($actor instanceof User && $actor->getKey() === $targetUser->getKey())) {
             return false;
         }
 
-        if ($actor->isGlobalOwner()) {
+        if ($actor instanceof Developer || $actor->isGlobalOwner()) {
             return true;
         }
 
@@ -201,10 +194,7 @@ class AccessAuthorizationService
 
         return $actor->teams()
             ->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))
-            ->exists()
-            && $targetUser->teams()
-                ->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))
-                ->exists();
+            ->exists();
     }
 
     public function isSubscriptionRevoked(User $user, AzureSubscription $subscription): bool
