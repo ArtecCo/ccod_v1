@@ -50,7 +50,7 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
-                $user = auth()->user();
+                $user = auth()->guard('web')->user();
 
                 $subscriptions = AzureSubscriptionResource::getEloquentQuery()
                     ->with('teams')
@@ -109,8 +109,9 @@ class AdminPanelProvider extends PanelProvider
                     ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.notifications'));
 
                 $managementItems = [];
+                $role = $user?->roleEnum();
 
-                if ($user?->role === UserRole::GlobalOwner) {
+                if ($role === UserRole::GlobalOwner) {
                     $managementItems = [
                         NavigationItem::make('Users')
                             ->icon(Heroicon::OutlinedUsers)
@@ -126,7 +127,7 @@ class AdminPanelProvider extends PanelProvider
                             ->url(AccessRequestResource::getUrl())
                             ->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*')),
                     ];
-                } elseif ($user?->role === UserRole::RestrictedOwner) {
+                } elseif ($role === UserRole::RestrictedOwner) {
                     $managementItems = [
                         NavigationItem::make('Access Requests')
                             ->icon(Heroicon::OutlinedKey)
