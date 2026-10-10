@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
+use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
 use App\Models\Team;
 use App\Models\User;
@@ -33,7 +34,7 @@ class AccessAuthorizationService
 
             $roles = $roles->merge(
                 $this->activeGrants($user, $targetType, $team->getKey(), null)->pluck('role')
-                    ->map(fn (string $role): UserRole => UserRole::tryFrom($role))
+                    ->map(fn (string $role): ?UserRole => UserRole::tryFrom($role))
                     ->filter(),
             );
         } else {
@@ -41,26 +42,23 @@ class AccessAuthorizationService
                 ? $target
                 : AzureSubscription::query()->whereKey($target)->firstOrFail();
 
-            $roles = $roles->merge(
-                $user->teams()
-                    ->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))
-                    ->pluck('users.role')
-                    ->map(fn ($role): UserRole => $role instanceof UserRole ? $role : UserRole::tryFrom($role))
-                    ->filter(),
-            );
+            if ($user->teams()->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))->exists()) {
+                $roles->push($user->roleEnum());
+            }
 
             $teamIds = $subscription->teams()->pluck('teams.id');
+
             $roles = $roles->merge(
                 $this->activeGrants($user, AccessRequestTargetType::Team, null, null)
                     ->whereIn('team_id', $teamIds)
                     ->pluck('role')
-                    ->map(fn (string $role): UserRole => UserRole::tryFrom($role))
+                    ->map(fn (string $role): ?UserRole => UserRole::tryFrom($role))
                     ->filter(),
             );
 
             $roles = $roles->merge(
                 $this->activeGrants($user, $targetType, null, $subscription->getKey())->pluck('role')
-                    ->map(fn (string $role): UserRole => UserRole::tryFrom($role))
+                    ->map(fn (string $role): ?UserRole => UserRole::tryFrom($role))
                     ->filter(),
             );
         }
@@ -79,7 +77,7 @@ class AccessAuthorizationService
         return $current === null || $this->rank($requestedRole) > $this->rank($current);
     }
 
-    public function canApprove(User $approver, \App\Models\AccessRequest $request): bool
+    public function canApprove(User $approver, AccessRequest $request): bool
     {
         if ($approver->id === $request->user_id) {
             return false;
@@ -102,10 +100,11 @@ class AccessAuthorizationService
             ->exists();
     }
 
-    public function approvers(\App\Models\AccessRequest $request): Collection
+    public function approvers(AccessRequest $request): Collection
     {
-        $users = User::query()
+        $query = User::query()
             ->where('is_active', true)
+            ->where('id', '<>', $request->user_id)
             ->where(function ($query) use ($request): void {
                 $query->where('role', UserRole::GlobalOwner->value);
 
@@ -130,11 +129,9 @@ class AccessAuthorizationService
                         });
                     }
                 }
-            })
-            ->whereKeyNot($request->user_id)
-            ->get();
+            });
 
-        return $users->unique('id')->values();
+        return $query->get()->unique('id')->values();
     }
 
     public function rank(UserRole $role): int
