@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\Developer;
 use App\Models\Documentation;
 use App\Policies\ActivityPolicy;
 use App\Policies\DocumentationPolicy;
@@ -30,6 +31,12 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Documentation::class, DocumentationPolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
+
+        Gate::define('updater.manage', function (mixed $user): bool {
+            return $user instanceof Developer
+                && $user->is_active === true
+                && auth()->guard('developers')->id() === $user->getAuthIdentifier();
+        });
 
         Table::configureUsing(function (Table $table): void {
             $table
