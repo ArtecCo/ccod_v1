@@ -23,11 +23,19 @@ class AuditLogger
         array $tags = [],
         ?string $category = null,
     ): void {
-        $category ??= match ($logName) {
-            'Access' => LogSettings::AUTHENTICATION,
-            'Requests' => LogSettings::REQUESTS,
-            'Models' => LogSettings::MODEL_ACTIONS,
-            default => LogSettings::REQUESTS,
+        $category ??= match ($event) {
+            'Login' => LogSettings::LOGIN,
+            'Logout' => LogSettings::LOGOUT,
+            'Login Failed' => LogSettings::FAILED_AUTHENTICATION,
+            'Created' => LogSettings::CREATED,
+            'Updated' => LogSettings::UPDATED,
+            'Deleted' => LogSettings::DELETED,
+            'Restored' => LogSettings::RESTORED,
+            'Force Deleted' => LogSettings::FORCE_DELETED,
+            default => match ($logName) {
+                'Requests' => LogSettings::APPLICATION_REQUESTS,
+                default => LogSettings::APPLICATION_REQUESTS,
+            },
         };
 
         if (! $this->settings->enabled($category)) {
@@ -99,7 +107,9 @@ class AuditLogger
             ],
             logName: 'Requests',
             tags: $success ? ['request'] : ['request', 'failure'],
-            category: LogSettings::REQUESTS,
+            category: $request->isMethod('GET')
+                ? LogSettings::PAGE_REQUESTS
+                : LogSettings::APPLICATION_REQUESTS,
         );
     }
 
