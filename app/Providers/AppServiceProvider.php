@@ -9,6 +9,7 @@ use App\Policies\DocumentationPolicy;
 use App\Services\AuditLogger;
 use App\Services\LogSettings;
 use Filament\Forms\Components\Field;
+use Filament\Panel;
 use Filament\Support\Facades\FilamentView;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
@@ -24,6 +25,7 @@ use TomaszBoloz\LaravelUpdater\Events\PackagesUpdated;
 use TomaszBoloz\LaravelUpdater\Events\UpdateFailed;
 use TomaszBoloz\LaravelUpdater\Events\UpdatesAvailable;
 use TomaszBoloz\LaravelUpdater\Events\UpdateSucceeded;
+use Ysfkaya\ShipLog\ShipLogPlugin;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -31,6 +33,32 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AuditLogger::class);
         $this->app->singleton(LogSettings::class);
+
+        Panel::configureUsing(function (Panel $panel): void {
+            match ($panel->getId()) {
+                'admin' => $panel->plugin(
+                    ShipLogPlugin::make()
+                        ->usingDatabase()
+                        ->usingPage(\App\Filament\Pages\Changelog::class)
+                        ->fab(enabled: false)
+                        ->navigationLabel('Changelog')
+                        ->pageTitle('Changelog')
+                        ->resource(false),
+                ),
+                'developer' => $panel->plugin(
+                    ShipLogPlugin::make()
+                        ->usingDatabase()
+                        ->usingPage(\App\Filament\Pages\Changelog::class)
+                        ->fab(enabled: false)
+                        ->navigationLabel('Changelog')
+                        ->pageTitle('Changelog')
+                        ->resource()
+                        ->navigationGroup('Maintenance')
+                        ->navigationSort(20),
+                ),
+                default => null,
+            };
+        });
     }
 
     public function boot(): void
