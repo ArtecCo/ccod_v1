@@ -15,10 +15,12 @@ class DeveloperSeeder extends Seeder
         $password = env('DEVELOPER_ADMIN_PASSWORD');
 
         if (blank($email) || blank($password)) {
-            throw new RuntimeException('DEVELOPER_ADMIN_EMAIL and DEVELOPER_ADMIN_PASSWORD must be set before running DeveloperSeeder.');
+            throw new RuntimeException(
+                'DEVELOPER_ADMIN_EMAIL and DEVELOPER_ADMIN_PASSWORD must be set before running DeveloperSeeder.'
+            );
         }
 
-        Developer::updateOrCreate(
+        Developer::firstOrCreate(
             ['email' => $email],
             [
                 'name' => env('DEVELOPER_ADMIN_NAME', 'CCOD Developer'),
