@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AuditLogs;
 
 use App\Filament\Resources\AuditLogs\Pages\ListAuditLogs;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -84,6 +85,9 @@ class AuditLogResource extends Resource
                     \Filament\Forms\Components\Placeholder::make('request')->label('Request')->content(fn (Activity $record): string => sprintf('%s %s', data_get($record->properties, 'method', '—'), data_get($record->properties, 'url', '—'))),
                     \Filament\Forms\Components\Placeholder::make('timestamp')->content(fn (Activity $record): string => $record->created_at?->format('Y-m-d H:i:s') ?? '—'),
                 ]),
+            ])
+            ->headerActions([
+                XlsxExportAction::make()->title('Export Audit Logs')->fileName(fn (): string => 'audit-logs-'.now()->format('Y-m-d-His')),
             ])
             ->bulkActions([])
             ->recordUrl(null);
