@@ -51,25 +51,13 @@
                 return;
             }
 
-            const sidebarItem = notificationLink.closest('.fi-sidebar-item') || notificationLink;
-            let badge = sidebarItem.querySelector('[data-ccod-notification-badge]');
-
-            if (! badge) {
-                badge = sidebarItem.querySelector('.fi-sidebar-item-badge');
-            }
-
-            if (! badge && unreadCount > 0) {
-                badge = document.createElement('span');
-                badge.className = 'fi-sidebar-item-badge';
-                badge.dataset.ccodNotificationBadge = 'true';
-                notificationLink.appendChild(badge);
-            }
+            // Keep Filament's original badge and only update its value.
+            const badge = notificationLink.querySelector('[class*="badge"]');
 
             if (! badge) {
                 return;
             }
 
-            badge.dataset.ccodNotificationBadge = 'true';
             badge.textContent = unreadCount > 0 ? String(unreadCount) : '';
             badge.hidden = unreadCount <= 0;
         };
