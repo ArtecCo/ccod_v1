@@ -49,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
                 properties: ['guard' => $event->guard, 'remember' => $event->remember],
                 logName: 'Access',
                 tags: ['authentication', 'login'],
-                category: LogSettings::AUTHENTICATION,
+                category: LogSettings::LOGIN,
             );
         });
 
@@ -61,7 +61,7 @@ class AppServiceProvider extends ServiceProvider
                 properties: ['guard' => $event->guard],
                 logName: 'Access',
                 tags: ['authentication', 'logout'],
-                category: LogSettings::AUTHENTICATION,
+                category: LogSettings::LOGOUT,
             );
         });
 
@@ -77,7 +77,7 @@ class AppServiceProvider extends ServiceProvider
                 properties: ['guard' => $event->guard, 'identifier_type' => $identifier],
                 logName: 'Access',
                 tags: ['authentication', 'failure'],
-                category: LogSettings::AUTHENTICATION,
+                category: LogSettings::FAILED_AUTHENTICATION,
             );
         });
 
@@ -103,6 +103,15 @@ class AppServiceProvider extends ServiceProvider
                 default => 'Model Action',
             };
 
+            $category = match ($event) {
+                'Created' => LogSettings::CREATED,
+                'Updated' => LogSettings::UPDATED,
+                'Deleted' => LogSettings::DELETED,
+                'Restored' => LogSettings::RESTORED,
+                'Force Deleted' => LogSettings::FORCE_DELETED,
+                default => LogSettings::APPLICATION_REQUESTS,
+            };
+
             $label = method_exists($model, 'getAuditLabel')
                 ? $model->getAuditLabel()
                 : class_basename($model).' #'.$model->getKey();
@@ -113,7 +122,7 @@ class AppServiceProvider extends ServiceProvider
                 subject: $model,
                 logName: 'Models',
                 tags: ['model', strtolower(str_replace(' ', '_', $event))],
-                category: LogSettings::MODEL_ACTIONS,
+                category: $category,
             );
         });
     }
