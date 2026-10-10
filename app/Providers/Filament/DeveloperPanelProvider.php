@@ -8,6 +8,7 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -44,6 +45,10 @@ class DeveloperPanelProvider extends PanelProvider
                     ->navigationGroup('Maintenance')
                     ->navigationSort(10),
             )
+            ->navigationGroups([
+                NavigationGroup::make('Logging'),
+                NavigationGroup::make('Maintenance'),
+            ])
             ->resources([
                 AuditLogResource::class,
             ])
