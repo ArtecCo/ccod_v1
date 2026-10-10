@@ -185,132 +185,128 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
+            ->sidebarCollapsibleOnDesktop()
             ->bootUsing(function () {
                 FilamentView::registerRenderHook(
                     'panels::styles.after',
-                    fn (): string => new HtmlString('                       <style>
-                        /* 1. Hide the scrollbar for the sidebar container across all modern browsers */
-/* 1. Base Setup: Apply to Light Mode by default */
-/* Disable scrollbars globally on all sidebar inner structural scroll layers */
-.fi-sidebar-nav,
-.fi-sidebar-nav-groups,
-.fi-sidebar-group,
-aside.fi-sidebar nav,
-aside.fi-sidebar div {
-    scrollbar-width: none !important;
-    -ms-overflow-style: none !important;
-}
+                    fn (): HtmlString => new HtmlString('<style>
+                        .fi-sidebar-nav,
+                        .fi-sidebar-nav-groups,
+                        .fi-sidebar-group,
+                        aside.fi-sidebar nav,
+                        aside.fi-sidebar div {
+                            scrollbar-width: none !important;
+                            -ms-overflow-style: none !important;
+                        }
 
-.fi-sidebar-nav::-webkit-scrollbar,
-.fi-sidebar-nav-groups::-webkit-scrollbar,
-.fi-sidebar-group::-webkit-scrollbar,
-aside.fi-sidebar nav::-webkit-scrollbar,
-aside.fi-sidebar div::-webkit-scrollbar {
-    display: none !important;
-    width: 0px !important;
-    height: 0px !important;
-    background: transparent !important;
-}
+                        .fi-sidebar-nav::-webkit-scrollbar,
+                        .fi-sidebar-nav-groups::-webkit-scrollbar,
+                        .fi-sidebar-group::-webkit-scrollbar,
+                        aside.fi-sidebar nav::-webkit-scrollbar,
+                        aside.fi-sidebar div::-webkit-scrollbar {
+                            display: none !important;
+                            width: 0px !important;
+                            height: 0px !important;
+                            background: transparent !important;
+                        }
 
-/* Keep the sidebar divider visible. */
-.fi-sidebar {
-    box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.18) !important;
-}
+                        .fi-sidebar {
+                            box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.18) !important;
+                        }
 
-.dark .fi-sidebar {
-    box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.18) !important;
-}
+                        .dark .fi-sidebar {
+                            box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.18) !important;
+                        }
 
-.dark .fi-sidebar::after {
-    background-color: rgba(255, 255, 255, 0.12) !important;
-}
+                        .dark .fi-sidebar::after {
+                            background-color: rgba(255, 255, 255, 0.12) !important;
+                        }
 
-/* Keep grouped team subscriptions as independent items, without Filament\'s connecting guide. */
-.fi-sidebar-item-grouped-border {
-    display: none !important;
-}
+                        .fi-sidebar-item-grouped-border {
+                            display: none !important;
+                        }
 
-.fi-sidebar-group .fi-sidebar-item-icon {
-    display: block !important;
-}
+                        .fi-sidebar-group .fi-sidebar-item-icon {
+                            display: block !important;
+                        }
 
-html { font-size: 13px !important; }
-.fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
-    padding: 0.6rem !important;
-    border-radius: 0.375rem !important;
-}
-.fi-section-header, .fi-ta-header {
-    padding-bottom: 0.35rem !important;
-    margin-bottom: 0.35rem !important;
-}
-.fi-sidebar-item-button {
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
-    margin-top: 0.05rem !important;
-    margin-bottom: 0.05rem !important;
-}
-.fi-sidebar-group-label {
-    padding-top: 0.2rem !important;
-    padding-bottom: 0.2rem !important;
-    margin-bottom: 0px !important;
-}
-.fi-sidebar-nav-groups { gap: 1rem !important; }
-.grid { gap: 0.6rem !important; }
-.fi-fo-field-wrp { margin-bottom: 0.4rem !important; }
-.fi-ta-table th { padding-top: 1rem !important; padding-bottom: 1rem !important; }
-.fi-ta-table td { padding-top: 0.2rem !important; padding-bottom: 0.2rem !important; }
+                        html { font-size: 13px !important; }
+                        .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
+                            padding: 0.6rem !important;
+                            border-radius: 0.375rem !important;
+                        }
+                        .fi-section-header, .fi-ta-header {
+                            padding-bottom: 0.35rem !important;
+                            margin-bottom: 0.35rem !important;
+                        }
+                        .fi-sidebar-item-button {
+                            padding-top: 0.2rem !important;
+                            padding-bottom: 0.2rem !important;
+                            margin-top: 0.05rem !important;
+                            margin-bottom: 0.05rem !important;
+                        }
+                        .fi-sidebar-group-label {
+                            padding-top: 0.2rem !important;
+                            padding-bottom: 0.2rem !important;
+                            margin-bottom: 0px !important;
+                        }
+                        .fi-sidebar-nav-groups { gap: 1rem !important; }
+                        .grid { gap: 0.6rem !important; }
+                        .fi-fo-field-wrp { margin-bottom: 0.4rem !important; }
+                        .fi-ta-table th { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+                        .fi-ta-table td { padding-top: 0.2rem !important; padding-bottom: 0.2rem !important; }
 
-/* Slightly larger table and infolist text on larger screens only. */
-@media (min-width: 1280px) {
-    .fi-ta-text-item,
-    .fi-in-text {
-        font-size: 0.95rem !important;
-    }
-}
+                        @media (min-width: 1280px) {
+                            .fi-ta-text-item,
+                            .fi-in-text {
+                                font-size: 0.95rem !important;
+                            }
+                        }
 
-/* Smooth desktop sidebar collapse / expansion */
-@media (min-width: 1024px) {
-    .fi-sidebar {
-        transition:
-            width 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 220ms ease !important;
-    }
+                        @media (min-width: 1024px) {
+                            .fi-sidebar {
+                                transition:
+                                    width 280ms cubic-bezier(0.22, 1, 0.36, 1),
+                                    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+                                    box-shadow 220ms ease !important;
+                            }
 
-    /* Let the main area visually follow the sidebar movement. */
-    .fi-main-ctn {
-        transition:
-            transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 180ms ease !important;
-    }
+                            .fi-main-ctn {
+                                transition:
+                                    transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
+                                    opacity 180ms ease !important;
+                            }
 
-    /* Small coordinated movement of navigation controls. */
-    .fi-sidebar-item-button,
-    .fi-sidebar-group-btn {
-        transition:
-            background-color 160ms ease,
-            color 160ms ease,
-            transform 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-    }
+                            .fi-sidebar-item-button,
+                            .fi-sidebar-group-btn {
+                                transition:
+                                    background-color 160ms ease,
+                                    color 160ms ease,
+                                    transform 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+                            }
 
-    .fi-sidebar-item-button:hover {
-        transform: translateX(2px);
-    }
+                            .fi-sidebar-item-button:hover {
+                                transform: translateX(2px);
+                            }
 
-    .fi-sidebar-group-btn:hover {
-        transform: translateX(1px);
-    }
+                            .fi-sidebar-group-btn:hover {
+                                transform: translateX(1px);
+                            }
 
-    /* Smooth rotation of the group collapse indicator. */
-    .fi-sidebar-group-btn svg {
-        transition: transform 180ms ease !important;
-    }
+                            .fi-sidebar-group-btn svg {
+                                transition: transform 180ms ease !important;
+                            }
 
-    .fi-sidebar-group-btn[aria-expanded="false"] svg {
-        transform: rotate(-90deg);
-    }
-}
-                        </style>                   ')
+                            .fi-sidebar-group-btn[aria-expanded="false"] svg {
+                                transform: rotate(-90deg);
+                            }
+                        }
+                    </style>')
+                );
+
+                FilamentView::registerRenderHook(
+                    'panels::body.end',
+                    fn (): string => view('filament.partials.notification-poller')->render(),
                 );
             });
     }
