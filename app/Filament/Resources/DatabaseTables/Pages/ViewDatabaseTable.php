@@ -5,11 +5,11 @@ namespace App\Filament\Resources\DatabaseTables\Pages;
 use App\Filament\Resources\DatabaseTables\DatabaseTableResource;
 use App\Models\DatabaseTableRecord;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\Page;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\DB;
@@ -44,22 +44,18 @@ class ViewDatabaseTable extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        $columns = $this->getTableColumns();
-
         return $table
             ->query($this->getTableQuery())
-            ->columns($columns)
-            ->defaultSort($this->getPrimaryKeyColumn())
+            ->columns($this->getTableColumns())
             ->paginated([25, 50, 100, 250])
             ->searchable()
-            ->filters([
-                Filter::make('all')
-                    ->label('Search all columns')
-                    ->form([]),
-            ])
             ->headerActions([
+                Action::make('back')
+                    ->label('All Tables')
+                    ->icon('heroicon-o-arrow-left')
+                    ->url(DatabaseTableResource::getUrl()),
                 XlsxExportAction::make()
-                    ->title(Str::headline($this->tableName))
+                    ->title('Export Table')
                     ->fileName(fn (): string => $this->tableName.'-'.now()->format('Y-m-d-His')),
             ])
             ->recordActions([])
@@ -79,12 +75,10 @@ class ViewDatabaseTable extends Page implements HasTable
             ->map(function (array $column): TextColumn {
                 $name = $column['COLUMN_NAME'];
                 $type = strtolower((string) $column['DATA_TYPE']);
-                $label = Str::headline($name);
 
                 $text = TextColumn::make($name)
-                    ->label($label)
+                    ->label(Str::headline($name))
                     ->searchable()
-                    ->sortable()
                     ->placeholder('—')
                     ->wrap();
 
@@ -112,21 +106,12 @@ class ViewDatabaseTable extends Page implements HasTable
             ->all();
     }
 
-    private function getPrimaryKeyColumn(): string
-    {
-        return DB::table('information_schema.key_column_usage')
-            ->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())
-            ->where('TABLE_NAME', $this->tableName)
-            ->where('CONSTRAINT_NAME', 'PRIMARY')
-            ->orderBy('ORDINAL_POSITION')
-            ->value('COLUMN_NAME') ?? $this->getTableColumnMetadata()[0]['COLUMN_NAME'];
-    }
-
     private function resolveTableName(string $table): string
     {
         return (string) DB::table('information_schema.tables')
             ->where('TABLE_SCHEMA', DB::connection()->getDatabaseName())
             ->where('TABLE_NAME', $table)
+            ->where('TABLE_TYPE', 'BASE TABLE')
             ->value('TABLE_NAME');
     }
 }
