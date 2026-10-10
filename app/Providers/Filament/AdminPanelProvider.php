@@ -52,25 +52,10 @@ class AdminPanelProvider extends PanelProvider
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->user();
 
-                $subscriptions = AzureSubscription::query()
+                $subscriptions = AzureSubscriptionResource::getEloquentQuery()
                     ->with('teams')
-                    ->when(
-                        $user && ! $user->isGlobal(),
-                        fn ($query) => $query->whereHas(
-                            'teams.users',
-                            fn ($teamUsers) => $teamUsers->whereKey($user->getKey()),
-                        ),
-                    )
                     ->orderBy('display_name')
-                    ->get()
-                    ->when(
-                        $user && ! $user->isGlobal(),
-                        fn ($items) => $items->filter(
-                            fn (AzureSubscription $subscription): bool => app(\App\Services\AccessAuthorizationService::class)
-                                ->effectiveRole($user, \App\Enums\AccessRequestTargetType::Subscription, $subscription) !== null,
-                        ),
-                    )
-                    ->values();
+                    ->get();
 
                 $teamGroups = $subscriptions
                     ->flatMap(fn (AzureSubscription $subscription) => $subscription->teams->map(
