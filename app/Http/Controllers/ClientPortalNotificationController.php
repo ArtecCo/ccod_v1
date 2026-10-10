@@ -13,7 +13,7 @@ class ClientPortalNotificationController extends Controller
         $user = $request->user();
         $since = $request->date('since');
 
-        $query = $user->notifications()->latest();
+        $query = $user->unreadNotifications()->latest();
 
         if ($since !== null) {
             $query->where('created_at', '>', $since);
@@ -62,19 +62,6 @@ class ClientPortalNotificationController extends Controller
         return response()->json([
             'success' => true,
             'unread_count' => 0,
-        ]);
-    }
-
-    public function clearRead(Request $request): JsonResponse
-    {
-        $deleted = $request->user()
-            ->notifications()
-            ->whereNotNull('read_at')
-            ->delete();
-
-        return response()->json([
-            'success' => true,
-            'deleted_count' => $deleted,
         ]);
     }
 }
