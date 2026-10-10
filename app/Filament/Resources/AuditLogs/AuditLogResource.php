@@ -55,15 +55,15 @@ class AuditLogResource extends Resource
         return $table
             ->defaultSort('created_at', 'desc')
             ->columns([
-                TextColumn::make('created_at')->label('Time')->dateTime('Y-m-d H:i:s')->sortable()->searchable(),
-                TextColumn::make('log_name')->label('Category')->badge()->sortable()->searchable(),
-                TextColumn::make('event')->label('Event')->badge()->sortable()->searchable(),
-                TextColumn::make('description')->label('Description')->wrap()->searchable()->limit(90),
-                TextColumn::make('causer.name')->label('Actor')->placeholder('System')->searchable(),
-                TextColumn::make('properties.success')->label('Result')->formatStateUsing(fn (mixed $state): string => $state === false || $state === '0' ? 'Failed' : 'Success')->badge()->color(fn (mixed $state): string => $state === false || $state === '0' ? 'danger' : 'success'),
-                TextColumn::make('properties.failure_reason')->label('Failure Reason')->placeholder('—')->wrap()->limit(80),
-                TextColumn::make('properties.status_code')->label('HTTP')->placeholder('—')->sortable(),
-                TextColumn::make('properties.method')->label('Method')->badge()->placeholder('—'),
+                TextColumn::make('created_at')->label('Time')->dateTime('Y-m-d H:i:s')->sortable()->searchable()->toggleable(),
+                TextColumn::make('log_name')->label('Category')->badge()->sortable()->searchable()->toggleable(),
+                TextColumn::make('event')->label('Event')->badge()->sortable()->searchable()->toggleable(),
+                TextColumn::make('description')->label('Description')->wrap()->searchable()->limit(90)->toggleable(),
+                TextColumn::make('causer.name')->label('Actor')->placeholder('System')->searchable()->toggleable(),
+                TextColumn::make('properties.success')->label('Result')->formatStateUsing(fn (mixed $state): string => $state === false || $state === '0' ? 'Failed' : 'Success')->badge()->color(fn (mixed $state): string => $state === false || $state === '0' ? 'danger' : 'success')->toggleable(),
+                TextColumn::make('properties.failure_reason')->label('Failure Reason')->placeholder('—')->wrap()->limit(80)->toggleable(),
+                TextColumn::make('properties.status_code')->label('HTTP')->placeholder('—')->sortable()->toggleable(),
+                TextColumn::make('properties.method')->label('Method')->badge()->placeholder('—')->toggleable(),
             ])
             ->filters([
                 SelectFilter::make('event')->options(fn (): array => self::distinctOptions('event')),
