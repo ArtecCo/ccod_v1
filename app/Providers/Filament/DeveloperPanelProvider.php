@@ -8,6 +8,7 @@ use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
 use App\Filament\Resources\DatabaseTables\DatabaseTableResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
+use App\Filament\Resources\Users\UserResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -54,6 +55,7 @@ class DeveloperPanelProvider extends PanelProvider
                 AuditLogResource::class,
                 NotificationRuleResource::class,
                 AccessRequestResource::class,
+                UserResource::class,
                 DatabaseTableResource::class,
             ])
             ->pages([
