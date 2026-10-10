@@ -21,7 +21,6 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Schema as DatabaseSchema;
 
 class AccessRequestResource extends Resource
 {
@@ -38,6 +37,13 @@ class AccessRequestResource extends Resource
     {
         return (auth()->guard('developers')->check() && auth()->guard('developers')->user()?->is_active === true)
             || (auth()->guard('web')->check() && auth()->guard('web')->user()?->is_active === true);
+    }
+
+    public static function canCreate(): bool
+    {
+        $user = auth()->guard('web')->user();
+
+        return $user instanceof User && $user->is_active && ! $user->isGlobal();
     }
 
     public static function getEloquentQuery(): Builder
@@ -64,17 +70,16 @@ class AccessRequestResource extends Resource
             return $query->where(function (Builder $builder) use ($user, $teamIds): void {
                 $builder->where('user_id', $user->getKey())
                     ->orWhere(function (Builder $approvals) use ($teamIds): void {
-                        $approvals->where(function (Builder $target): void {
-                            $target->where('target_type', AccessRequestTargetType::Team->value);
-                        })->whereIn('team_id', $teamIds)
-                        ->orWhere(function (Builder $target) use ($teamIds): void {
-                            $target->where('target_type', AccessRequestTargetType::Subscription->value)
-                                ->whereIn('subscription_id', function ($subscriptionQuery) use ($teamIds): void {
-                                    $subscriptionQuery->select('team_subscription.subscription_id')
-                                        ->from('team_subscription')
-                                        ->whereIn('team_subscription.team_id', $teamIds);
-                                });
-                        });
+                        $approvals->where('target_type', AccessRequestTargetType::Team->value)
+                            ->whereIn('team_id', $teamIds)
+                            ->orWhere(function (Builder $target) use ($teamIds): void {
+                                $target->where('target_type', AccessRequestTargetType::Subscription->value)
+                                    ->whereIn('subscription_id', function ($subscriptionQuery) use ($teamIds): void {
+                                        $subscriptionQuery->select('team_subscription.subscription_id')
+                                            ->from('team_subscription')
+                                            ->whereIn('team_subscription.team_id', $teamIds);
+                                    });
+                            });
                     });
             });
         }
