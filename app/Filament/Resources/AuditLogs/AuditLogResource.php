@@ -24,7 +24,7 @@ class AuditLogResource extends Resource
 
     protected static ?string $pluralModelLabel = 'Audit Logs';
 
-    protected static ?string $navigationIcon = 'heroicon-o-shield-check';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-shield-check';
 
     protected static ?string $slug = 'audit-logs';
 
