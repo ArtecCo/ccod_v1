@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\Tables;
 
+use App\Support\PillColorRegistry;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -29,6 +30,7 @@ class AzureSubscriptionsTable
                 TextColumn::make('health_status')
                     ->label('Health')
                     ->badge()
+                    ->color(fn (string $state): string => PillColorRegistry::color($state))
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
