@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Settings\StylingSettings;
 use Filament\Support\Colors\Color;
+use Illuminate\Support\Facades\Schema;
 use Throwable;
 
 class FilamentStyling
@@ -11,6 +12,10 @@ class FilamentStyling
     public static function settings(): ?StylingSettings
     {
         try {
+            if (! Schema::hasTable('settings')) {
+                return null;
+            }
+
             return app(StylingSettings::class);
         } catch (Throwable) {
             return null;
