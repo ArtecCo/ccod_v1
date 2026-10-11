@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Users\Tables;
 
+use App\Support\PillColorRegistry;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
@@ -24,6 +25,7 @@ class UsersTable
                     ->sortable(),
                 TextColumn::make('role')
                     ->badge()
+                    ->color(fn (string $state): string => PillColorRegistry::color($state))
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->boolean()
