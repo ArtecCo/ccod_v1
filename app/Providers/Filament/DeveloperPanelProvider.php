@@ -12,7 +12,6 @@ use App\Filament\Resources\AuditLogs\AuditLogResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Support\FilamentStyling;
-use Filament\FontProviders\SpatieGoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -46,14 +45,13 @@ class DeveloperPanelProvider extends PanelProvider
             ->brandLogo(fn (): ?string => FilamentStyling::logoLight())
             ->darkModeBrandLogo(fn (): ?string => FilamentStyling::logoDark())
             ->favicon(fn (): ?string => FilamentStyling::favicon())
-            ->font(FilamentStyling::fontFamily(), provider: SpatieGoogleFontProvider::class)
             ->colors(FilamentStyling::colors())
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
             ->plugin(UpdaterPlugin::make()->navigationGroup('Maintenance')->navigationSort(10))
             ->navigationGroups([
-                NavigationGroup::make('Developers'),
+                NavigationGroup::make('Styling'),
                 NavigationGroup::make('Notifications'),
                 NavigationGroup::make('Logging'),
                 NavigationGroup::make('Administration'),
@@ -214,6 +212,7 @@ html { font-size: 13px !important; }
 }
                         </style>')
                 );
-            });
+            })
+            ->viteTheme('resources/css/filament/developer/theme.css');
     }
 }
