@@ -29,36 +29,7 @@ class DarkModeThemeServiceProvider extends ServiceProvider
                     $css .= self::paletteCss('html.dark', $darkPalette);
                 }
 
-                if ($darkTheme === 'black') {
-                    $css .= '
-                        html.dark .fi-sidebar,
-                        html.dark .fi-main-ctn,
-                        html.dark .fi-main,
-                        html.dark .fi-page {
-                            background-color: #09090b !important;
-                        }
-
-                        html.dark .fi-section,
-                        html.dark .fi-ta-ctn,
-                        html.dark .fi-wi-widget,
-                        html.dark .fi-card,
-                        html.dark .fi-modal-window {
-                            background-color: #09090b !important;
-                        }
-
-                        html.dark .ccod-notifications__panel,
-                        html.dark .ccod-notifications__row {
-                            background-color: #09090b !important;
-                        }
-
-                        html.dark .ccod-notifications__row--unread {
-                            background-color: #1a1a1d !important;
-                        }
-                    ';
-                }
-
-                $css .= '
-                    html .ccod-notifications__row:has(.ccod-notifications__severity--info) {
+                $css .= '\n                    html .ccod-notifications__row:has(.ccod-notifications__severity--info) {
                         border-left: 4px solid var(--info-500, #3b82f6) !important;
                     }
 
