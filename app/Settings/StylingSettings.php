@@ -18,6 +18,7 @@ class StylingSettings extends Settings
     public string $gray_color = 'gray';
     public array $custom_colors = [];
     public string $corner_radius = '0.375rem';
+    public string $light_mode_theme = 'gray';
     public string $dark_mode_theme = 'black';
 
     public static function group(): string
