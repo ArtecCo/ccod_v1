@@ -51,12 +51,12 @@ class DeveloperPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->plugin(UpdaterPlugin::make()->navigationGroup('Maintenance')->navigationSort(10))
             ->navigationGroups([
-                NavigationGroup::make('Styling'),
-                NavigationGroup::make('Notifications'),
-                NavigationGroup::make('Logging'),
-                NavigationGroup::make('Administration'),
-                NavigationGroup::make('Database'),
-                NavigationGroup::make('Maintenance'),
+                NavigationGroup::make('Styling')->icon('heroicon-o-paint-brush'),
+                NavigationGroup::make('Notifications')->icon('heroicon-o-bell'),
+                NavigationGroup::make('Logging')->icon('heroicon-o-clipboard-document-list'),
+                NavigationGroup::make('Administration')->icon('heroicon-o-cog-6-tooth'),
+                NavigationGroup::make('Database')->icon('heroicon-o-circle-stack'),
+                NavigationGroup::make('Maintenance')->icon('heroicon-o-wrench-screwdriver'),
             ])
             ->resources([
                 AuditLogResource::class,
