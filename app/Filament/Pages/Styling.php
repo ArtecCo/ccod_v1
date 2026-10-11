@@ -11,6 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Pages\SettingsPage;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 class Styling extends SettingsPage
 {
@@ -39,6 +40,7 @@ class Styling extends SettingsPage
                             ->disk('public')
                             ->directory('branding')
                             ->visibility('public')
+                            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): ?string => $file->storePublicly('branding', 'public'))
                             ->nullable(),
                         FileUpload::make('logo_dark')
                             ->label('Dark logo')
@@ -46,6 +48,7 @@ class Styling extends SettingsPage
                             ->disk('public')
                             ->directory('branding')
                             ->visibility('public')
+                            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): ?string => $file->storePublicly('branding', 'public'))
                             ->nullable(),
                         FileUpload::make('favicon')
                             ->label('Favicon')
@@ -53,6 +56,7 @@ class Styling extends SettingsPage
                             ->disk('public')
                             ->directory('branding')
                             ->visibility('public')
+                            ->saveUploadedFileUsing(fn (TemporaryUploadedFile $file): ?string => $file->storePublicly('branding', 'public'))
                             ->nullable(),
                     ])
                     ->columns(2),
