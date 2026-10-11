@@ -92,6 +92,19 @@ class Styling extends SettingsPage
                     ])
                     ->columns(2),
 
+                Section::make('Dark mode')
+                    ->description('Choose the background style used when dark mode is active.')
+                    ->schema([
+                        Select::make('dark_mode_theme')
+                            ->label('Dark mode theme')
+                            ->options([
+                                'black' => 'Pitch black',
+                                'blue' => 'Dark blue',
+                            ])
+                            ->default('black')
+                            ->required(),
+                    ]),
+
                 Section::make('Corner radius')
                     ->description('Control the global corner radius used by the application components.')
                     ->schema([
