@@ -51,12 +51,17 @@
                 return;
             }
 
-            // Keep Filament's native badge markup and styling intact. Only change its text.
-            const badgeContainer = notificationLink.querySelector('.fi-sidebar-item-badge-ctn');
-            const badge = badgeContainer?.querySelector('.fi-badge');
+            let badgeContainer = notificationLink.querySelector('.fi-sidebar-item-badge-ctn');
+            let badge = badgeContainer?.querySelector('.fi-badge');
 
             if (! badge) {
-                return;
+                badgeContainer = document.createElement('div');
+                badgeContainer.className = 'fi-sidebar-item-badge-ctn';
+
+                badge = document.createElement('span');
+                badge.className = 'fi-badge fi-color-primary';
+                badgeContainer.appendChild(badge);
+                notificationLink.appendChild(badgeContainer);
             }
 
             badge.textContent = unreadCount > 0 ? String(unreadCount) : '';
