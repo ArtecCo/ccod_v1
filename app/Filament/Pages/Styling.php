@@ -4,7 +4,6 @@ namespace App\Filament\Pages;
 
 use App\Settings\StylingSettings;
 use Filament\Facades\Filament;
-use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\SettingsPage;
@@ -39,15 +38,12 @@ class Styling extends SettingsPage
                             ->required(),
                         TextInput::make('logo_light')
                             ->label('Light logo')
-                            ->url()
                             ->nullable(),
                         TextInput::make('logo_dark')
                             ->label('Dark logo')
-                            ->url()
                             ->nullable(),
                         TextInput::make('favicon')
                             ->label('Favicon')
-                            ->url()
                             ->nullable(),
                     ])
                     ->columns(2),
