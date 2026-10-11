@@ -4,24 +4,11 @@ namespace App\Filament\Pages;
 
 use App\Models\PillColor;
 use App\Support\PillColorRegistry;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Concerns\InteractsWithForms;
-use Filament\Forms\Contracts\HasForms;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Concerns\InteractsWithTable;
-use Filament\Tables\Contracts\HasTable;
-use Filament\Tables\Table;
-use Illuminate\Support\Facades\DB;
 
-class PillColors extends Page implements HasForms, HasTable
+class PillColors extends Page
 {
-    use InteractsWithForms;
-    use InteractsWithTable;
-
     protected static ?string $navigationLabel = 'Colors';
     protected static ?string $title = 'Pill Colors';
     protected static ?string $slug = 'colors';
@@ -31,71 +18,57 @@ class PillColors extends Page implements HasForms, HasTable
 
     protected string $view = 'filament.pages.pill-colors';
 
-    public ?array $data = [];
+    public array $selectedColors = [];
 
     public function mount(): void
     {
         foreach (PillColorRegistry::all() as $key => $definition) {
-            PillColor::query()->firstOrCreate(
+            $pillColor = PillColor::query()->firstOrCreate(
                 ['key' => $key],
                 ['color' => $definition['default']],
             );
+
+            $this->selectedColors[$key] = $pillColor->color;
         }
     }
 
-    public function form(Schema $schema): Schema
+    public function pillColors(): array
     {
-        return $schema
-            ->components([
-                Section::make('Pill color')
-                    ->description('Choose the Filament color used for this pill throughout the application.')
-                    ->schema([
-                        Select::make('color')
-                            ->label('Color')
-                            ->options([
-                                'gray' => 'Gray',
-                                'danger' => 'Red',
-                                'warning' => 'Amber',
-                                'success' => 'Green',
-                                'info' => 'Blue',
-                            ])
-                            ->required(),
-                    ]),
-            ])
-            ->statePath('data');
+        $registry = PillColorRegistry::all();
+
+        return collect($registry)->map(fn (array $definition, string $key): array => [
+            'key' => $key,
+            'label' => $definition['label'],
+            'default' => $definition['default'],
+        ])->values()->all();
+    }
+
+    public function colorOptions(): array
+    {
+        return [
+            'gray' => 'Gray',
+            'danger' => 'Red',
+            'warning' => 'Amber',
+            'success' => 'Green',
+            'info' => 'Blue',
+        ];
     }
 
     public function saveColor(string $key): void
     {
-        $data = $this->form->getState();
+        abort_unless(array_key_exists($key, PillColorRegistry::all()), 404);
+
+        $color = $this->selectedColors[$key] ?? null;
+        abort_unless(array_key_exists($color, $this->colorOptions()), 422);
 
         PillColor::query()->updateOrCreate(
             ['key' => $key],
-            ['color' => $data['color']],
+            ['color' => $color],
         );
 
         Notification::make()
             ->title('Pill color updated')
             ->success()
             ->send();
-    }
-
-    public function table(Table $table): Table
-    {
-        $registry = PillColorRegistry::all();
-
-        return $table
-            ->query(PillColor::query()->orderBy('key'))
-            ->columns([
-                TextColumn::make('key')
-                    ->label('Pill')
-                    ->formatStateUsing(fn (string $state): string => $registry[$state]['label'] ?? $state)
-                    ->searchable(),
-                TextColumn::make('color')
-                    ->label('Color')
-                    ->badge()
-                    ->color(fn (string $state): string => $state)
-                    ->sortable(),
-            ]);
     }
 }
