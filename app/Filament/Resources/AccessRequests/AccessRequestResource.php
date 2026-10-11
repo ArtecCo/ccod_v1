@@ -10,6 +10,7 @@ use App\Filament\Resources\AccessRequests\Pages\ListAccessRequests;
 use App\Filament\Resources\AccessRequests\Pages\ViewAccessRequest;
 use App\Models\AccessRequest;
 use App\Models\User;
+use App\Support\PillColorRegistry;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
@@ -108,11 +109,11 @@ class AccessRequestResource extends Resource
                 TextEntry::make('user.name')->label('Requester'),
                 TextEntry::make('user.email')->label('Email'),
                 TextEntry::make('target_name')->label('Target'),
-                TextEntry::make('target_type')->label('Target type')->formatStateUsing(fn (AccessRequestTargetType|string $state): string => $state instanceof AccessRequestTargetType ? $state->label() : (AccessRequestTargetType::tryFrom($state)?->label() ?? $state))->badge(),
+                TextEntry::make('target_type')->label('Target type')->formatStateUsing(fn (AccessRequestTargetType|string $state): string => $state instanceof AccessRequestTargetType ? $state->label() : (AccessRequestTargetType::tryFrom($state)?->label() ?? $state))->badge()->color(fn (AccessRequestTargetType|string $state): string => PillColorRegistry::color($state instanceof AccessRequestTargetType ? $state->value : $state)),
                 TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state)),
                 TextEntry::make('duration')->label('Requested duration')->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state)),
                 TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
-                TextEntry::make('status')->badge(),
+                TextEntry::make('status')->badge()->color(fn (AccessRequestStatus|string $state): string => PillColorRegistry::color($state instanceof AccessRequestStatus ? $state->value : $state)),
                 TextEntry::make('reason')->columnSpanFull(),
             ])->columns(2),
             Section::make('Approvers')->schema([
@@ -140,10 +141,10 @@ class AccessRequestResource extends Resource
             ->columns([
                 TextColumn::make('user.name')->label('Requester')->searchable()->sortable()->toggleable(),
                 TextColumn::make('target_name')->label('Target')->searchable()->sortable()->toggleable(),
-                TextColumn::make('target_type')->label('Type')->badge()->toggleable(),
+                TextColumn::make('target_type')->label('Type')->badge()->color(fn (AccessRequestTargetType|string $state): string => PillColorRegistry::color($state instanceof AccessRequestTargetType ? $state->value : $state))->toggleable(),
                 TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn (UserRole|string $state): string => $state instanceof UserRole ? $state->label() : (UserRole::tryFrom($state)?->label() ?? $state))->toggleable(),
                 TextColumn::make('duration')->label('Duration')->formatStateUsing(fn (AccessRequestDuration|string $state): string => $state instanceof AccessRequestDuration ? $state->label() : (AccessRequestDuration::tryFrom($state)?->label() ?? $state))->toggleable(),
-                TextColumn::make('status')->badge()->toggleable(),
+                TextColumn::make('status')->badge()->color(fn (AccessRequestStatus|string $state): string => PillColorRegistry::color($state instanceof AccessRequestStatus ? $state->value : $state))->toggleable(),
                 TextColumn::make('created_at')->label('Requested')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
             ->filters([
