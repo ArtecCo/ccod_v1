@@ -13,7 +13,7 @@ class PillColors extends Page
     protected static ?string $title = 'Pill Colors';
     protected static ?string $slug = 'colors';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-swatch';
-    protected static string|\UnitEnum|null $navigationGroup = 'Developers';
+    protected static string|\UnitEnum|null $navigationGroup = 'Styling';
     protected static ?int $navigationSort = 20;
 
     protected string $view = 'filament.pages.pill-colors';
