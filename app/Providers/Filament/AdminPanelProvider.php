@@ -250,6 +250,12 @@ class AdminPanelProvider extends PanelProvider
                             padding-bottom: 0.2rem !important;
                             margin-bottom: 0px !important;
                         }
+
+                        .fi-badge{
+                        font-size: 0.81rem !important;
+                        text-transform: capitalize !important;
+                        }
+                        
                         .fi-sidebar-nav-groups { gap: 1rem !important; }
                         .grid { gap: 0.6rem !important; }
                         .fi-fo-field-wrp { margin-bottom: 0.4rem !important; }

@@ -194,6 +194,10 @@ html { font-size: 13px !important; }
     .fi-sidebar-group-btn:hover {
         transform: translateX(1px);
     }
+        .fi-badge{
+                        font-size: 0.81rem !important;
+                        text-transform: capitalize !important;
+                        }
 
     /* Smooth rotation of the group collapse indicator. */
     .fi-sidebar-group-btn svg {
