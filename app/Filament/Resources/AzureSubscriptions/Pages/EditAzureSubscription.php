@@ -11,7 +11,7 @@ class EditAzureSubscription extends EditRecord
 {
     protected static string $resource = AzureSubscriptionResource::class;
 
-    protected function getRelationManagers(): array
+    public function getRelationManagers(): array
     {
         return [];
     }
