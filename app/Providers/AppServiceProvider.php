@@ -9,9 +9,11 @@ use App\Policies\ActivityPolicy;
 use App\Policies\DocumentationPolicy;
 use App\Services\AuditLogger;
 use App\Services\LogSettings;
+use App\Support\FilamentStyling;
 use Filament\Actions\Action;
 use Filament\Forms\Components\Field;
 use Filament\Panel;
+use Filament\Support\Facades\FilamentView;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Auth\Events\Failed;
@@ -20,6 +22,7 @@ use Illuminate\Auth\Events\Logout;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\HtmlString;
 use Illuminate\Support\ServiceProvider;
 use Spatie\Activitylog\Models\Activity;
 use TomaszBoloz\LaravelUpdater\Events\PackagesUpdateFailed;
@@ -73,6 +76,13 @@ class AppServiceProvider extends ServiceProvider
                     ->visible(fn (): bool => auth()->check())
                     ->sort(110),
             ]);
+
+            FilamentView::registerRenderHook(
+                'panels::styles.after',
+                fn (): HtmlString => new HtmlString(
+                    '<style>:root { --ccod-corner-radius: '.e(FilamentStyling::cornerRadius()).'; }</style>'
+                ),
+            );
         });
     }
 
