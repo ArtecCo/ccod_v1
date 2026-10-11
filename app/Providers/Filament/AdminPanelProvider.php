@@ -11,7 +11,9 @@ use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
 use App\Services\AccessAuthorizationService;
+use App\Support\FilamentStyling;
 use Filament\Support\Facades\FilamentView;
+use Filament\FontProviders\SpatieGoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -22,7 +24,6 @@ use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
@@ -44,9 +45,12 @@ class AdminPanelProvider extends PanelProvider
             ->path('')
             ->login()
             ->topbar(false)
-            ->colors([
-                'primary' => Color::Amber,
-            ])
+            ->brandName(fn (): string => FilamentStyling::brandName())
+            ->brandLogo(fn (): ?string => FilamentStyling::logoLight())
+            ->darkModeBrandLogo(fn (): ?string => FilamentStyling::logoDark())
+            ->favicon(fn (): ?string => FilamentStyling::favicon())
+            ->font(FilamentStyling::fontFamily(), provider: SpatieGoogleFontProvider::class)
+            ->colors(FilamentStyling::colors())
             ->sidebarWidth('16rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
@@ -233,7 +237,7 @@ class AdminPanelProvider extends PanelProvider
                         html { font-size: 13px !important; }
                         .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
                             padding: 0.6rem !important;
-                            border-radius: 0.375rem !important;
+                            border-radius: var(--ccod-corner-radius, 0.375rem) !important;
                         }
                         .fi-section-header, .fi-ta-header {
                             padding-bottom: 0.35rem !important;
