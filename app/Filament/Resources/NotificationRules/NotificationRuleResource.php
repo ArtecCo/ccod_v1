@@ -70,7 +70,7 @@ class NotificationRuleResource extends Resource
                 TextInput::make('title')->label('Title')->maxLength(150),
                 Textarea::make('message')->label('Message')->rows(4)->maxLength(2000),
                 Select::make('type')->options(['general' => 'General', 'announcement' => 'Announcement', 'maintenance' => 'Maintenance', 'alert' => 'Alert', 'action_required' => 'Action required'])->default('general')->required(),
-                Select::make('severity')->options(['info' => 'Information', 'success' => 'Success', 'warning' => 'Warning', 'danger' => 'Critical'])->default('info')->required(),
+                Select::make('severity')->options(['info' => 'Information', 'success' => 'Success', 'warning' => 'Warning', 'critical' => 'Critical'])->default('info')->required(),
                 TextInput::make('action_label')->label('Action label')->maxLength(80),
                 TextInput::make('action_url')->label('Action URL')->maxLength(2048),
             ])->columns(2),
