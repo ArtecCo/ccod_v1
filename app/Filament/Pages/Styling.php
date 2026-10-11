@@ -48,25 +48,6 @@ class Styling extends SettingsPage
                     ])
                     ->columns(2),
 
-                Section::make('Fonts')
-                    ->description('Choose the Google Font used by Filament.')
-                    ->schema([
-                        Select::make('font_family')
-                            ->label('Font family')
-                            ->options([
-                                'Inter' => 'Inter',
-                                'Roboto' => 'Roboto',
-                                'Open Sans' => 'Open Sans',
-                                'Lato' => 'Lato',
-                                'Poppins' => 'Poppins',
-                                'Nunito Sans' => 'Nunito Sans',
-                                'Source Sans 3' => 'Source Sans 3',
-                                'Manrope' => 'Manrope',
-                            ])
-                            ->searchable()
-                            ->required(),
-                    ]),
-
                 Section::make('Colors')
                     ->description('Configure the global Filament color palette.')
                     ->schema([
