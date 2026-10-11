@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Settings\StylingSettings;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\SettingsPage;
@@ -36,14 +37,26 @@ class Styling extends SettingsPage
                         TextInput::make('brand_name')
                             ->label('Brand name')
                             ->required(),
-                        TextInput::make('logo_light')
+                        FileUpload::make('logo_light')
                             ->label('Light logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('branding')
+                            ->visibility('public')
                             ->nullable(),
-                        TextInput::make('logo_dark')
+                        FileUpload::make('logo_dark')
                             ->label('Dark logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('branding')
+                            ->visibility('public')
                             ->nullable(),
-                        TextInput::make('favicon')
+                        FileUpload::make('favicon')
                             ->label('Favicon')
+                            ->image()
+                            ->disk('public')
+                            ->directory('branding')
+                            ->visibility('public')
                             ->nullable(),
                     ])
                     ->columns(2),
@@ -99,6 +112,7 @@ class Styling extends SettingsPage
     protected static function colorOptions(): array
     {
         return [
+            'black' => 'Black',
             'gray' => 'Gray',
             'red' => 'Red',
             'orange' => 'Orange',
