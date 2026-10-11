@@ -29,7 +29,8 @@ class TeamResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->role === UserRole::GlobalOwner;
+        return auth()->guard('developers')->user()?->is_active === true
+            || auth()->user()?->role === UserRole::GlobalOwner;
     }
 
     public static function canCreate(): bool
