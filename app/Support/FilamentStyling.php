@@ -33,7 +33,7 @@ class FilamentStyling
             'warning' => self::color($settings?->warning_color ?? 'amber'),
             'danger' => self::color($settings?->danger_color ?? 'red'),
             'info' => self::color($settings?->info_color ?? 'blue'),
-            'gray' => self::grayColor($settings),
+            'gray' => self::themePalette($settings?->light_mode_theme ?? 'gray'),
         ];
     }
 
@@ -80,13 +80,20 @@ class FilamentStyling
         return Storage::disk('public')->url($path);
     }
 
-    private static function grayColor(?StylingSettings $settings): array
+    private static function themePalette(string $theme): array
     {
-        if (($settings?->dark_mode_theme ?? 'black') === 'blue') {
-            return Color::Gray;
-        }
-
-        return self::color($settings?->gray_color ?? 'gray');
+        return match ($theme) {
+            'slate' => Color::Slate,
+            'gray' => Color::Gray,
+            'zinc' => Color::Zinc,
+            'neutral' => Color::Neutral,
+            'stone' => Color::Stone,
+            'mauve' => Color::Mauve,
+            'olive' => Color::Olive,
+            'mist' => Color::Mist,
+            'taupe' => Color::Taupe,
+            default => Color::Zinc,
+        };
     }
 
     private static function color(string $color): array
