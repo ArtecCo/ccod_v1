@@ -13,7 +13,6 @@ use App\Models\AzureSubscription;
 use App\Services\AccessAuthorizationService;
 use App\Support\FilamentStyling;
 use Filament\Support\Facades\FilamentView;
-use Filament\FontProviders\SpatieGoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -49,7 +48,6 @@ class AdminPanelProvider extends PanelProvider
             ->brandLogo(fn (): ?string => FilamentStyling::logoLight())
             ->darkModeBrandLogo(fn (): ?string => FilamentStyling::logoDark())
             ->favicon(fn (): ?string => FilamentStyling::favicon())
-            ->font(FilamentStyling::fontFamily(), provider: SpatieGoogleFontProvider::class)
             ->colors(FilamentStyling::colors())
             ->sidebarWidth('16rem')
             ->sidebarCollapsibleOnDesktop()
