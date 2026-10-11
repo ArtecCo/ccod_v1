@@ -172,25 +172,25 @@ html { font-size: 13px !important; }
 @media (min-width: 1024px) {
     .fi-sidebar {
         transition:
-            width 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            box-shadow 220ms ease !important;
+            width 340ms cubic-bezier(0.22, 1, 0.36, 1),
+            transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 280ms ease !important;
     }
 
     /* Let the main area visually follow the sidebar movement. */
     .fi-main-ctn {
         transition:
-            transform 280ms cubic-bezier(0.22, 1, 0.36, 1),
-            opacity 180ms ease !important;
+            transform 340ms cubic-bezier(0.22, 1, 0.36, 1),
+            opacity 220ms ease !important;
     }
 
     /* Small coordinated movement of navigation controls. */
     .fi-sidebar-item-button,
     .fi-sidebar-group-btn {
         transition:
-            background-color 160ms ease,
-            color 160ms ease,
-            transform 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+            background-color 180ms ease,
+            color 180ms ease,
+            transform 220ms cubic-bezier(0.22, 1, 0.36, 1) !important;
     }
 
     .fi-sidebar-item-button:hover {
@@ -203,7 +203,7 @@ html { font-size: 13px !important; }
 
     /* Smooth rotation of the group collapse indicator. */
     .fi-sidebar-group-btn svg {
-        transition: transform 180ms ease !important;
+        transition: transform 220ms ease !important;
     }
 
     .fi-sidebar-group-btn[aria-expanded="false"] svg {
