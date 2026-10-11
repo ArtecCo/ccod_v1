@@ -77,6 +77,14 @@ class FilamentStyling
 
     private static function color(string $color): array
     {
+        if (str_starts_with($color, 'custom:')) {
+            $hex = substr($color, 7);
+
+            if (preg_match('/^#[0-9A-Fa-f]{6}$/', $hex)) {
+                return Color::hex($hex);
+            }
+        }
+
         return match ($color) {
             'black' => Color::hex('#000000'),
             'gray' => Color::Zinc,
