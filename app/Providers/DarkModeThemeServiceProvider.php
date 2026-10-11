@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Support\FilamentStyling;
+use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\ServiceProvider;
@@ -14,37 +15,49 @@ class DarkModeThemeServiceProvider extends ServiceProvider
         FilamentView::registerRenderHook(
             'panels::styles.after',
             function (): HtmlString {
-                $theme = FilamentStyling::settings()?->dark_mode_theme ?? 'black';
+                $settings = FilamentStyling::settings();
+                $lightTheme = $settings?->light_mode_theme ?? 'gray';
+                $darkTheme = $settings?->dark_mode_theme ?? 'black';
 
-                if ($theme === 'blue') {
-                    return new HtmlString('');
+                $lightPalette = self::themePalette($lightTheme);
+                $darkPalette = self::themePalette($darkTheme);
+
+                $css = '<style>';
+                $css .= self::paletteCss('html:not(.dark)', $lightPalette);
+
+                if ($darkTheme !== 'black') {
+                    $css .= self::paletteCss('html.dark', $darkPalette);
                 }
 
-                return new HtmlString('<style>
-                    html.dark .fi-sidebar,
-                    html.dark .fi-main-ctn,
-                    html.dark .fi-main,
-                    html.dark .fi-page {
-                        background-color: #09090b !important;
-                    }
+                if ($darkTheme === 'black') {
+                    $css .= '
+                        html.dark .fi-sidebar,
+                        html.dark .fi-main-ctn,
+                        html.dark .fi-main,
+                        html.dark .fi-page {
+                            background-color: #09090b !important;
+                        }
 
-                    html.dark .fi-section,
-                    html.dark .fi-ta-ctn,
-                    html.dark .fi-wi-widget,
-                    html.dark .fi-card,
-                    html.dark .fi-modal-window {
-                        background-color: #09090b !important;
-                    }
+                        html.dark .fi-section,
+                        html.dark .fi-ta-ctn,
+                        html.dark .fi-wi-widget,
+                        html.dark .fi-card,
+                        html.dark .fi-modal-window {
+                            background-color: #09090b !important;
+                        }
 
-                    html.dark .ccod-notifications__panel,
-                    html.dark .ccod-notifications__row {
-                        background-color: #09090b !important;
-                    }
+                        html.dark .ccod-notifications__panel,
+                        html.dark .ccod-notifications__row {
+                            background-color: #09090b !important;
+                        }
 
-                    html.dark .ccod-notifications__row--unread {
-                        background-color: #1a1a1d !important;
-                    }
+                        html.dark .ccod-notifications__row--unread {
+                            background-color: #1a1a1d !important;
+                        }
+                    ';
+                }
 
+                $css .= '
                     html .ccod-notifications__row:has(.ccod-notifications__severity--info) {
                         border-left: 4px solid var(--info-500, #3b82f6) !important;
                     }
@@ -61,8 +74,37 @@ class DarkModeThemeServiceProvider extends ServiceProvider
                     html .ccod-notifications__row:has(.ccod-notifications__severity--danger) {
                         border-left: 4px solid var(--danger-500, #ef4444) !important;
                     }
-                </style>');
+                </style>';
+
+                return new HtmlString($css);
             },
         );
+    }
+
+    private static function themePalette(string $theme): array
+    {
+        return match ($theme) {
+            'slate' => Color::Slate,
+            'gray', 'blue' => Color::Gray,
+            'zinc', 'black' => Color::Zinc,
+            'neutral' => Color::Neutral,
+            'stone' => Color::Stone,
+            'mauve' => Color::Mauve,
+            'olive' => Color::Olive,
+            'mist' => Color::Mist,
+            'taupe' => Color::Taupe,
+            default => Color::Gray,
+        };
+    }
+
+    private static function paletteCss(string $selector, array $palette): string
+    {
+        $variables = '';
+
+        foreach ($palette as $shade => $value) {
+            $variables .= "--gray-{$shade}: {$value};";
+        }
+
+        return "{$selector}{{$variables}}";
     }
 }
