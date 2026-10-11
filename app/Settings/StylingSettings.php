@@ -10,7 +10,6 @@ class StylingSettings extends Settings
     public ?string $logo_light = null;
     public ?string $logo_dark = null;
     public ?string $favicon = null;
-    public string $font_family = 'Inter';
     public string $primary_color = 'amber';
     public string $success_color = 'green';
     public string $warning_color = 'amber';
