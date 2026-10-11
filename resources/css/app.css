@@ -9,3 +9,52 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* Notification severity colors follow the global Filament color palette configured in Developer > Styling. */
+html .ccod-notifications .ccod-notifications__icon--info,
+html .ccod-notifications .ccod-notifications__severity--info {
+    background: var(--info-50);
+    color: var(--info-700);
+}
+
+html .ccod-notifications .ccod-notifications__icon--success,
+html .ccod-notifications .ccod-notifications__severity--success {
+    background: var(--success-50);
+    color: var(--success-700);
+}
+
+html .ccod-notifications .ccod-notifications__icon--warning,
+html .ccod-notifications .ccod-notifications__severity--warning {
+    background: var(--warning-50);
+    color: var(--warning-700);
+}
+
+html .ccod-notifications .ccod-notifications__icon--critical,
+html .ccod-notifications .ccod-notifications__severity--critical {
+    background: var(--danger-50);
+    color: var(--danger-700);
+}
+
+html.dark .ccod-notifications .ccod-notifications__icon--info,
+html.dark .ccod-notifications .ccod-notifications__severity--info {
+    background: var(--info-900);
+    color: var(--info-300);
+}
+
+html.dark .ccod-notifications .ccod-notifications__icon--success,
+html.dark .ccod-notifications .ccod-notifications__severity--success {
+    background: var(--success-900);
+    color: var(--success-300);
+}
+
+html.dark .ccod-notifications .ccod-notifications__icon--warning,
+html.dark .ccod-notifications .ccod-notifications__severity--warning {
+    background: var(--warning-900);
+    color: var(--warning-300);
+}
+
+html.dark .ccod-notifications .ccod-notifications__icon--critical,
+html.dark .ccod-notifications .ccod-notifications__severity--critical {
+    background: var(--danger-900);
+    color: var(--danger-300);
+}
