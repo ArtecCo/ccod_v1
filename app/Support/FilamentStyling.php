@@ -33,7 +33,7 @@ class FilamentStyling
             'warning' => self::color($settings?->warning_color ?? 'amber'),
             'danger' => self::color($settings?->danger_color ?? 'red'),
             'info' => self::color($settings?->info_color ?? 'blue'),
-            'gray' => self::color($settings?->gray_color ?? 'gray'),
+            'gray' => self::grayColor($settings),
         ];
     }
 
@@ -78,6 +78,15 @@ class FilamentStyling
         }
 
         return Storage::disk('public')->url($path);
+    }
+
+    private static function grayColor(?StylingSettings $settings): array
+    {
+        if (($settings?->dark_mode_theme ?? 'black') === 'blue') {
+            return Color::Gray;
+        }
+
+        return self::color($settings?->gray_color ?? 'gray');
     }
 
     private static function color(string $color): array
