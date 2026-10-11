@@ -25,7 +25,7 @@ class UsersTable
                     ->sortable(),
                 TextColumn::make('role')
                     ->badge()
-                    ->color(fn (string $state): string => PillColorRegistry::color($state))
+                    ->color(fn ($state): string => PillColorRegistry::color($state instanceof \BackedEnum ? $state->value : (string) $state))
                     ->sortable(),
                 IconColumn::make('is_active')
                     ->boolean()
