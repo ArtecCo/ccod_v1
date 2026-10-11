@@ -134,6 +134,11 @@ aside.fi-sidebar div::-webkit-scrollbar {
     display: block !important;
 }
 
+.fi-badge{
+                        font-size: 0.81rem !important;
+                        text-transform: capitalize !important;
+                        }
+                        
 html { font-size: 13px !important; }
 .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
     padding: 0.6rem !important;
