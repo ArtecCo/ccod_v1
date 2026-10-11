@@ -40,17 +40,20 @@ class UserResource extends Resource
 
     public static function canCreate(): bool
     {
-        return auth()->guard('web')->user()?->isGlobalOwner() === true;
+        return auth()->guard('developers')->user()?->is_active === true
+            || auth()->guard('web')->user()?->isGlobalOwner() === true;
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->guard('web')->user()?->isGlobalOwner() === true;
+        return auth()->guard('developers')->user()?->is_active === true
+            || auth()->guard('web')->user()?->isGlobalOwner() === true;
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->guard('web')->user()?->isGlobalOwner() === true;
+        return auth()->guard('developers')->user()?->is_active === true
+            || auth()->guard('web')->user()?->isGlobalOwner() === true;
     }
 
     public static function form(Schema $schema): Schema
