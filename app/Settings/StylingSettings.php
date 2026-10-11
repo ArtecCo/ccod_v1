@@ -16,6 +16,8 @@ class StylingSettings extends Settings
     public string $danger_color = 'red';
     public string $info_color = 'blue';
     public string $gray_color = 'gray';
+    /** @var array<int, array{id: string, name: string, color: string}> */
+    public array $custom_colors = [];
     public string $corner_radius = '0.375rem';
 
     public static function group(): string
