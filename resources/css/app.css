@@ -30,7 +30,9 @@ html .ccod-notifications .ccod-notifications__severity--warning {
 }
 
 html .ccod-notifications .ccod-notifications__icon--critical,
-html .ccod-notifications .ccod-notifications__severity--critical {
+html .ccod-notifications .ccod-notifications__severity--critical,
+html .ccod-notifications .ccod-notifications__icon--danger,
+html .ccod-notifications .ccod-notifications__severity--danger {
     background: var(--danger-600) !important;
     color: white !important;
 }
@@ -48,7 +50,8 @@ html .ccod-notifications .ccod-notifications__row:has(.ccod-notifications__sever
     border-left: 4px solid var(--warning-500) !important;
 }
 
-html .ccod-notifications .ccod-notifications__row:has(.ccod-notifications__severity--critical) {
+html .ccod-notifications .ccod-notifications__row:has(.ccod-notifications__severity--critical),
+html .ccod-notifications .ccod-notifications__row:has(.ccod-notifications__severity--danger) {
     border-left: 4px solid var(--danger-500) !important;
 }
 
@@ -67,7 +70,8 @@ html.dark .ccod-notifications .ccod-notifications__icon--warning {
     color: white !important;
 }
 
-html.dark .ccod-notifications .ccod-notifications__icon--critical {
+html.dark .ccod-notifications .ccod-notifications__icon--critical,
+html.dark .ccod-notifications .ccod-notifications__icon--danger {
     background: var(--danger-600) !important;
     color: white !important;
 }
