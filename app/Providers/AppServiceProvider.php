@@ -77,10 +77,14 @@ class AppServiceProvider extends ServiceProvider
                     ->sort(110),
             ]);
 
+            $darkModeCss = FilamentStyling::darkModeTheme() === 'blue'
+                ? '\n                        html.dark body,\n                        html.dark .fi-body,\n                        html.dark .fi-main,\n                        html.dark .fi-main-ctn {\n                            background-color: #030712 !important;\n                        }\n\n                        html.dark .fi-sidebar,\n                        html.dark .fi-topbar {\n                            background-color: #030712 !important;\n                        }\n\n                        html.dark .fi-section,\n                        html.dark .fi-ta-ctn,\n                        html.dark .fi-wi-widget,\n                        html.dark .fi-card,\n                        html.dark .fi-modal-window {\n                            background-color: #101828 !important;\n                        }\n\n                        html.dark .fi-sidebar-search input,\n                        html.dark .fi-input-wrp {\n                            background-color: #101828 !important;\n                        }\n\n                        html.dark .fi-sidebar-item-button:not([data-active]),\n                        html.dark .fi-sidebar-group-btn {\n                            background-color: transparent !important;\n                        }\n\n                        html.dark .fi-sidebar-item-button[data-active] {\n                            background-color: #101828 !important;\n                        }\n                    '
+                : '';
+
             FilamentView::registerRenderHook(
                 'panels::styles.after',
                 fn (): HtmlString => new HtmlString(
-                    '<style>:root { --ccod-corner-radius: '.e(FilamentStyling::cornerRadius()).'; }</style>'
+                    '<style>:root { --ccod-corner-radius: '.e(FilamentStyling::cornerRadius()).'; }'.$darkModeCss.'</style>'
                 ),
             );
         });
