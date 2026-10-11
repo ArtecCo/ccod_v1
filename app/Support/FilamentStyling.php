@@ -62,6 +62,11 @@ class FilamentStyling
         return self::settings()?->corner_radius ?? '0.375rem';
     }
 
+    public static function darkModeTheme(): string
+    {
+        return self::settings()?->dark_mode_theme ?? 'black';
+    }
+
     private static function assetUrl(?string $path): ?string
     {
         if (! $path) {
