@@ -4,7 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Settings\StylingSettings;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\SettingsPage;
@@ -61,33 +63,38 @@ class Styling extends SettingsPage
                     ])
                     ->columns(2),
 
+                Section::make('Saved Colors')
+                    ->description('Create custom colors with Filament’s color picker. Saved colors become available in the global palette selectors below.')
+                    ->schema([
+                        Repeater::make('custom_colors')
+                            ->label('Custom colors')
+                            ->schema([
+                                TextInput::make('name')
+                                    ->label('Name')
+                                    ->required()
+                                    ->maxLength(100),
+                                ColorPicker::make('value')
+                                    ->label('Color')
+                                    ->hex()
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->addActionLabel('Add color')
+                            ->defaultItems(0)
+                            ->reorderable(false)
+                            ->collapsible()
+                            ->itemLabel(fn (array $state): ?string => $state['name'] ?? null),
+                    ]),
+
                 Section::make('Colors')
                     ->description('Configure the global Filament color palette.')
                     ->schema([
-                        Select::make('primary_color')
-                            ->label('Primary')
-                            ->options(self::colorOptions())
-                            ->required(),
-                        Select::make('success_color')
-                            ->label('Success')
-                            ->options(self::colorOptions())
-                            ->required(),
-                        Select::make('warning_color')
-                            ->label('Warning')
-                            ->options(self::colorOptions())
-                            ->required(),
-                        Select::make('danger_color')
-                            ->label('Danger')
-                            ->options(self::colorOptions())
-                            ->required(),
-                        Select::make('info_color')
-                            ->label('Info')
-                            ->options(self::colorOptions())
-                            ->required(),
-                        Select::make('gray_color')
-                            ->label('Gray')
-                            ->options(self::colorOptions())
-                            ->required(),
+                        self::colorSelect('primary_color', 'Primary'),
+                        self::colorSelect('success_color', 'Success'),
+                        self::colorSelect('warning_color', 'Warning'),
+                        self::colorSelect('danger_color', 'Danger'),
+                        self::colorSelect('info_color', 'Info'),
+                        self::colorSelect('gray_color', 'Gray'),
                     ])
                     ->columns(2),
 
@@ -109,9 +116,17 @@ class Styling extends SettingsPage
             ]);
     }
 
-    protected static function colorOptions(): array
+    protected static function colorSelect(string $name, string $label): Select
     {
-        return [
+        return Select::make($name)
+            ->label($label)
+            ->options(fn (StylingSettings $settings): array => self::colorOptions($settings))
+            ->required();
+    }
+
+    protected static function colorOptions(?StylingSettings $settings = null): array
+    {
+        $options = [
             'black' => 'Black',
             'gray' => 'Gray',
             'red' => 'Red',
@@ -132,5 +147,13 @@ class Styling extends SettingsPage
             'pink' => 'Pink',
             'rose' => 'Rose',
         ];
+
+        foreach ($settings?->custom_colors ?? [] as $customColor) {
+            if (! empty($customColor['name']) && ! empty($customColor['value'])) {
+                $options['custom:' . $customColor['value']] = $customColor['name'];
+            }
+        }
+
+        return $options;
     }
 }
