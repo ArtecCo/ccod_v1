@@ -79,6 +79,7 @@ class FilamentStyling
     {
         return match ($color) {
             'black' => Color::hex('#000000'),
+            'gray' => Color::Zinc,
             'red' => Color::Red,
             'orange' => Color::Orange,
             'amber' => Color::Amber,
@@ -96,7 +97,7 @@ class FilamentStyling
             'fuchsia' => Color::Fuchsia,
             'pink' => Color::Pink,
             'rose' => Color::Rose,
-            default => Color::Gray,
+            default => Color::Zinc,
         };
     }
 }
