@@ -3,7 +3,6 @@
 namespace App\Filament\Pages;
 
 use App\Settings\StylingSettings;
-use Filament\Facades\Filament;
 use Filament\Forms\Components\ColorPicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Repeater;
@@ -21,13 +20,8 @@ class Styling extends SettingsPage
     protected static ?string $title = 'Styling';
     protected static ?string $slug = 'styling';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-paint-brush';
-    protected static string|\UnitEnum|null $navigationGroup = 'Developers';
+    protected static string|\UnitEnum|null $navigationGroup = 'Styling';
     protected static ?int $navigationSort = 10;
-
-    public static function canAccess(): bool
-    {
-        return Filament::getCurrentPanel()?->getId() === 'developer';
-    }
 
     public function form(Schema $schema): Schema
     {
