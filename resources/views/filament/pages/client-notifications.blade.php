@@ -45,8 +45,18 @@
         .ccod-notifications__message { margin:.25rem 0 0; color:rgb(75 85 99); font-size:.875rem; line-height:1.5rem; }
         .dark .ccod-notifications__message { color:rgb(209 213 219); }
         .ccod-notifications__meta { display:flex; align-items:center; gap:.5rem; margin-top:.625rem; }
-        .ccod-notifications__type { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; background:rgb(243 244 246); color:rgb(75 85 99); font-size:.75rem; font-weight:700; line-height:1rem; }
+        .ccod-notifications__type,
+        .ccod-notifications__severity { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; font-size:.75rem; font-weight:700; line-height:1rem; }
+        .ccod-notifications__type { background:rgb(243 244 246); color:rgb(75 85 99); }
         .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 231 219); }
+        .ccod-notifications__severity--info { background:rgb(239 246 255); color:rgb(37 99 235); }
+        .ccod-notifications__severity--success { background:rgb(240 253 244); color:rgb(22 163 74); }
+        .ccod-notifications__severity--warning { background:rgb(255 251 235); color:rgb(180 83 9); }
+        .ccod-notifications__severity--critical { background:rgb(254 242 242); color:rgb(220 38 38); }
+        .dark .ccod-notifications__severity--info { background:rgba(37,99,235,.16); color:rgb(96 165 250); }
+        .dark .ccod-notifications__severity--success { background:rgba(22,163,74,.16); color:rgb(74 222 128); }
+        .dark .ccod-notifications__severity--warning { background:rgba(217,119,6,.16); color:rgb(251 191 36); }
+        .dark .ccod-notifications__severity--critical { background:rgba(220,38,38,.16); color:rgb(248 113 113); }
         .ccod-notifications__action { color:rgb(217 119 6); font-size:.875rem; font-weight:700; }
         .dark .ccod-notifications__action { color:rgb(251 191 36); }
         .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.75rem; }
@@ -83,7 +93,12 @@
                 <template x-for="notification in notifications" :key="notification.id">
                     <button type="button" class="ccod-notifications__row" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="openNotification(notification)">
                         <div class="ccod-notifications__icon" x-bind:class="notification.read_at ? '' : 'ccod-notifications__icon--' + (notification.data.severity || 'info')">
-                            <x-filament::icon x-bind:icon="iconForType(notification.data.type)" class="h-5 w-5" />
+                            <span x-show="notification.data.type === 'general'"><x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" /></span>
+                            <span x-show="notification.data.type === 'announcement'"><x-filament::icon icon="heroicon-o-megaphone" class="h-5 w-5" /></span>
+                            <span x-show="notification.data.type === 'maintenance'"><x-filament::icon icon="heroicon-o-wrench-screwdriver" class="h-5 w-5" /></span>
+                            <span x-show="notification.data.type === 'alert'"><x-filament::icon icon="heroicon-o-bell-alert" class="h-5 w-5" /></span>
+                            <span x-show="notification.data.type === 'action_required'"><x-filament::icon icon="heroicon-o-hand-raised" class="h-5 w-5" /></span>
+                            <span x-show="!['general', 'announcement', 'maintenance', 'alert', 'action_required'].includes(notification.data.type)"><x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" /></span>
                         </div>
                         <div class="ccod-notifications__body">
                             <div class="ccod-notifications__top">
@@ -96,6 +111,7 @@
                             <p class="ccod-notifications__message" x-text="notification.data.message"></p>
                             <div class="ccod-notifications__meta">
                                 <span class="ccod-notifications__type" x-text="formatType(notification.data.type)"></span>
+                                <span class="ccod-notifications__severity" x-bind:class="'ccod-notifications__severity--' + (notification.data.severity || 'info')" x-text="formatSeverity(notification.data.severity)"></span>
                                 <span x-show="notification.data.action_url" class="ccod-notifications__action" x-text="(notification.data.action_label || 'Open') + ' →'"></span>
                             </div>
                         </div>
@@ -209,18 +225,12 @@
                 }
             },
 
-            iconForType(type) {
-                return {
-                    general: 'heroicon-o-bell',
-                    announcement: 'heroicon-o-megaphone',
-                    maintenance: 'heroicon-o-wrench-screwdriver',
-                    alert: 'heroicon-o-bell-alert',
-                    action_required: 'heroicon-o-hand-raised',
-                }[type] || 'heroicon-o-bell';
-            },
-
             formatType(type) {
                 return (type || 'general').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+            },
+
+            formatSeverity(severity) {
+                return (severity || 'info').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
             },
 
             formatDate(value) {
