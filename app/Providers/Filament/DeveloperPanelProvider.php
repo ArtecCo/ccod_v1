@@ -92,7 +92,6 @@ class DeveloperPanelProvider extends PanelProvider
                         '<style>:root{--ccod-corner-radius:' . e(FilamentStyling::cornerRadius()) . ';}</style>'
                     ),
                 );
-            })
-            ->viteTheme('resources/css/filament/developer/theme.css');
+            });
     }
 }
