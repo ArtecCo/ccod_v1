@@ -6,10 +6,13 @@ use App\Filament\Pages\DatabaseTablePage;
 use App\Filament\Pages\LogsControl;
 use App\Filament\Pages\PillColors;
 use App\Filament\Pages\SendNotification;
+use App\Filament\Pages\Styling;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Support\FilamentStyling;
+use Filament\FontProviders\SpatieGoogleFontProvider;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -18,7 +21,6 @@ use Filament\Navigation\NavigationGroup;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
-use Filament\Support\Colors\Color;
 use Filament\Support\Facades\FilamentView;
 use Filament\Support\Enums\Width;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -40,7 +42,12 @@ class DeveloperPanelProvider extends PanelProvider
             ->authGuard('developers')
             ->login()
             ->topbar(false)
-            ->colors(['primary' => Color::Amber])
+            ->brandName(fn (): string => FilamentStyling::brandName())
+            ->brandLogo(fn (): ?string => FilamentStyling::logoLight())
+            ->darkModeBrandLogo(fn (): ?string => FilamentStyling::logoDark())
+            ->favicon(fn (): ?string => FilamentStyling::favicon())
+            ->font(FilamentStyling::fontFamily(), provider: SpatieGoogleFontProvider::class)
+            ->colors(FilamentStyling::colors())
             ->sidebarWidth('18rem')
             ->sidebarCollapsibleOnDesktop()
             ->maxContentWidth(Width::Full)
@@ -61,6 +68,7 @@ class DeveloperPanelProvider extends PanelProvider
             ])
             ->pages([
                 Dashboard::class,
+                Styling::class,
                 SendNotification::class,
                 PillColors::class,
                 LogsControl::class,
@@ -131,7 +139,7 @@ aside.fi-sidebar div::-webkit-scrollbar {
 html { font-size: 13px !important; }
 .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
     padding: 0.6rem !important;
-    border-radius: 0.375rem !important;
+    border-radius: var(--ccod-corner-radius, 0.375rem) !important;
 }
 .fi-section-header, .fi-ta-header {
     padding-bottom: 0.35rem !important;
@@ -194,10 +202,6 @@ html { font-size: 13px !important; }
     .fi-sidebar-group-btn:hover {
         transform: translateX(1px);
     }
-        .fi-badge{
-                        font-size: 0.81rem !important;
-                        text-transform: capitalize !important;
-                        }
 
     /* Smooth rotation of the group collapse indicator. */
     .fi-sidebar-group-btn svg {
@@ -208,7 +212,7 @@ html { font-size: 13px !important; }
         transform: rotate(-90deg);
     }
 }
-                        </style>  ')
+                        </style>')
                 );
             });
     }
