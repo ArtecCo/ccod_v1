@@ -92,14 +92,25 @@ class Styling extends SettingsPage
                     ])
                     ->columns(2),
 
+                Section::make('Light mode')
+                    ->description('Choose the neutral palette used by the application when light mode is active.')
+                    ->schema([
+                        Select::make('light_mode_theme')
+                            ->label('Light mode theme')
+                            ->options(self::themePaletteOptions())
+                            ->default('gray')
+                            ->required(),
+                    ]),
+
                 Section::make('Dark mode')
-                    ->description('Choose the background style used when dark mode is active.')
+                    ->description('Choose the neutral palette used by the application when dark mode is active.')
                     ->schema([
                         Select::make('dark_mode_theme')
                             ->label('Dark mode theme')
                             ->options([
                                 'black' => 'Pitch black',
                                 'blue' => 'Dark blue',
+                                ...self::themePaletteOptions(),
                             ])
                             ->default('black')
                             ->required(),
@@ -129,6 +140,21 @@ class Styling extends SettingsPage
             ->label($label)
             ->options(fn (StylingSettings $settings): array => self::colorOptions($settings))
             ->required();
+    }
+
+    protected static function themePaletteOptions(): array
+    {
+        return [
+            'slate' => 'Slate',
+            'gray' => 'Gray',
+            'zinc' => 'Zinc',
+            'neutral' => 'Neutral',
+            'stone' => 'Stone',
+            'mauve' => 'Mauve',
+            'olive' => 'Olive',
+            'mist' => 'Mist',
+            'taupe' => 'Taupe',
+        ];
     }
 
     protected static function colorOptions(?StylingSettings $settings = null): array
