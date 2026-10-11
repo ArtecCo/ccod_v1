@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Settings\StylingSettings;
 use Filament\Support\Colors\Color;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class FilamentStyling
@@ -36,11 +37,6 @@ class FilamentStyling
         ];
     }
 
-    public static function fontFamily(): string
-    {
-        return self::settings()?->font_family ?? 'Inter';
-    }
-
     public static function brandName(): string
     {
         return self::settings()?->brand_name ?? 'CCOD';
@@ -48,17 +44,17 @@ class FilamentStyling
 
     public static function logoLight(): ?string
     {
-        return self::settings()?->logo_light ?: null;
+        return self::assetUrl(self::settings()?->logo_light);
     }
 
     public static function logoDark(): ?string
     {
-        return self::settings()?->logo_dark ?: null;
+        return self::assetUrl(self::settings()?->logo_dark);
     }
 
     public static function favicon(): ?string
     {
-        return self::settings()?->favicon ?: null;
+        return self::assetUrl(self::settings()?->favicon);
     }
 
     public static function cornerRadius(): string
@@ -66,9 +62,23 @@ class FilamentStyling
         return self::settings()?->corner_radius ?? '0.375rem';
     }
 
+    private static function assetUrl(?string $path): ?string
+    {
+        if (! $path) {
+            return null;
+        }
+
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            return $path;
+        }
+
+        return Storage::disk('public')->url($path);
+    }
+
     private static function color(string $color): array
     {
         return match ($color) {
+            'black' => Color::hex('#000000'),
             'red' => Color::Red,
             'orange' => Color::Orange,
             'amber' => Color::Amber,
