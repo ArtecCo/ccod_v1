@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\DatabaseTablePage;
 use App\Filament\Pages\LogsControl;
+use App\Filament\Pages\PillColors;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
@@ -45,6 +46,7 @@ class DeveloperPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->plugin(UpdaterPlugin::make()->navigationGroup('Maintenance')->navigationSort(10))
             ->navigationGroups([
+                NavigationGroup::make('Developers'),
                 NavigationGroup::make('Notifications'),
                 NavigationGroup::make('Logging'),
                 NavigationGroup::make('Administration'),
@@ -60,6 +62,7 @@ class DeveloperPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 SendNotification::class,
+                PillColors::class,
                 LogsControl::class,
                 DatabaseTablePage::class,
             ])
