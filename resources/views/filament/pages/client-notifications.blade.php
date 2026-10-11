@@ -83,7 +83,7 @@
                 <template x-for="notification in notifications" :key="notification.id">
                     <button type="button" class="ccod-notifications__row" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="openNotification(notification)">
                         <div class="ccod-notifications__icon" x-bind:class="notification.read_at ? '' : 'ccod-notifications__icon--' + (notification.data.severity || 'info')">
-                            <x-filament::icon x-bind:icon="iconForSeverity(notification.data.severity)" class="h-5 w-5" />
+                            <x-filament::icon x-bind:icon="iconForType(notification.data.type)" class="h-5 w-5" />
                         </div>
                         <div class="ccod-notifications__body">
                             <div class="ccod-notifications__top">
@@ -209,13 +209,14 @@
                 }
             },
 
-            iconForSeverity(severity) {
+            iconForType(type) {
                 return {
-                    info: 'heroicon-o-information-circle',
-                    success: 'heroicon-o-check-circle',
-                    warning: 'heroicon-o-exclamation-triangle',
-                    critical: 'heroicon-o-exclamation-circle',
-                }[severity] || 'heroicon-o-bell';
+                    general: 'heroicon-o-bell',
+                    announcement: 'heroicon-o-megaphone',
+                    maintenance: 'heroicon-o-wrench-screwdriver',
+                    alert: 'heroicon-o-bell-alert',
+                    action_required: 'heroicon-o-hand-raised',
+                }[type] || 'heroicon-o-bell';
             },
 
             formatType(type) {
