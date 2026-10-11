@@ -5,6 +5,7 @@ namespace App\Support;
 use App\Enums\AccessRequestStatus;
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
+use App\Models\PillColor;
 
 class PillColorRegistry
 {
@@ -54,5 +55,16 @@ class PillColorRegistry
         }
 
         return $pills;
+    }
+
+    public static function color(string $key): string
+    {
+        $definition = static::all()[$key] ?? null;
+
+        if ($definition === null) {
+            return 'gray';
+        }
+
+        return PillColor::query()->where('key', $key)->value('color') ?? $definition['default'];
     }
 }
