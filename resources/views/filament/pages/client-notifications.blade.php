@@ -29,12 +29,12 @@
         .ccod-notifications__icon--info { background:rgb(239 246 255); color:rgb(37 99 235); }
         .ccod-notifications__icon--success { background:rgb(240 253 244); color:rgb(22 163 74); }
         .ccod-notifications__icon--warning { background:rgb(255 251 235); color:rgb(217 119 6); }
-        .ccod-notifications__icon--danger { background:rgb(254 242 242); color:rgb(220 38 38); }
+        .ccod-notifications__icon--critical { background:rgb(254 242 242); color:rgb(220 38 38); }
         .dark .ccod-notifications__icon { background:rgb(31 41 55); color:rgb(156 163 175); }
         .dark .ccod-notifications__row--unread .ccod-notifications__icon--info { background:rgba(37,99,235,.16); color:rgb(96 165 250); }
         .dark .ccod-notifications__row--unread .ccod-notifications__icon--success { background:rgba(22,163,74,.16); color:rgb(74 222 128); }
         .dark .ccod-notifications__row--unread .ccod-notifications__icon--warning { background:rgba(217,119,6,.16); color:rgb(251 191 36); }
-        .dark .ccod-notifications__row--unread .ccod-notifications__icon--danger { background:rgba(220,38,38,.16); color:rgb(248 113 113); }
+        .dark .ccod-notifications__row--unread .ccod-notifications__icon--critical { background:rgba(220,38,38,.16); color:rgb(248 113 113); }
         .ccod-notifications__body { min-width:0; flex:1; }
         .ccod-notifications__top { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; }
         .ccod-notifications__title-wrap { display:flex; min-width:0; align-items:center; gap:.45rem; }
@@ -214,7 +214,7 @@
                     info: 'heroicon-o-information-circle',
                     success: 'heroicon-o-check-circle',
                     warning: 'heroicon-o-exclamation-triangle',
-                    danger: 'heroicon-o-exclamation-circle',
+                    critical: 'heroicon-o-exclamation-circle',
                 }[severity] || 'heroicon-o-bell';
             },
 
