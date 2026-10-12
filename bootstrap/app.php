@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\AuditRequestMiddleware;
+use App\Http\Middleware\MaintenanceModeMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -14,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->append(MaintenanceModeMiddleware::class);
         $middleware->append(AuditRequestMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
