@@ -125,8 +125,6 @@
             });
         }
 
-        // Filament may finish mounting/replacing the navigation after the
-        // render hook has executed, so retry briefly during initial mount.
         let attempts = 0;
         const retry = () => {
             if (install() || attempts >= 20) {
@@ -150,31 +148,46 @@
 
 <style>
     .ccod-sidebar-collapse-all {
-        display: flex;
-        align-items: center;
-        justify-content: flex-end;
-        width: 100%;
-        padding: 0.35rem 0.65rem;
-        margin-bottom: 0.35rem;
-        border: 0;
-        background: transparent;
-        color: rgb(107 114 128);
-        font-size: 0.72rem;
-        font-weight: 600;
-        line-height: 1.25rem;
-        cursor: pointer;
-        transition: color 150ms ease;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: flex-end !important;
+        box-sizing: border-box !important;
+        position: relative !important;
+        z-index: 9999 !important;
+        width: 100% !important;
+        min-width: 100% !important;
+        min-height: 2rem !important;
+        flex: 0 0 auto !important;
+        padding: 0.35rem 0.65rem !important;
+        margin: 0 0 0.35rem !important;
+        border: 0 !important;
+        border-radius: 0.375rem !important;
+        background: transparent !important;
+        color: rgb(107 114 128) !important;
+        font-family: inherit !important;
+        font-size: 0.72rem !important;
+        font-weight: 600 !important;
+        line-height: 1.25rem !important;
+        text-align: right !important;
+        white-space: nowrap !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        cursor: pointer !important;
+        transition: color 150ms ease, background-color 150ms ease !important;
     }
 
     .ccod-sidebar-collapse-all:hover {
-        color: rgb(17 24 39);
+        color: rgb(17 24 39) !important;
+        background: rgb(243 244 246) !important;
     }
 
     .dark .ccod-sidebar-collapse-all {
-        color: rgb(156 163 175);
+        color: rgb(156 163 175) !important;
     }
 
     .dark .ccod-sidebar-collapse-all:hover {
-        color: rgb(243 244 246);
+        color: rgb(243 244 246) !important;
+        background: rgb(31 41 55) !important;
     }
 </style>
