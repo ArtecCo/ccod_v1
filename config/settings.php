@@ -1,10 +1,12 @@
 <?php
 
+use App\Settings\MaintenanceSettings;
 use App\Settings\StylingSettings;
 
 return [
     'settings' => [
         StylingSettings::class,
+        MaintenanceSettings::class,
     ],
 
     'setting_class_path' => app_path('Settings'),
