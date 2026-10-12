@@ -22,6 +22,7 @@ class LogSettings
     public const UPDATE_FAILED = 'update_failed';
     public const PACKAGES_UPDATED = 'packages_updated';
     public const PACKAGES_UPDATE_FAILED = 'packages_update_failed';
+    public const MAINTENANCE_MODE = 'maintenance_mode';
 
     public const GROUPS = [
         'Authentication' => [
@@ -49,6 +50,7 @@ class LogSettings
             self::UPDATE_FAILED => 'Application update failed',
             self::PACKAGES_UPDATED => 'Packages updated',
             self::PACKAGES_UPDATE_FAILED => 'Package update failed',
+            self::MAINTENANCE_MODE => 'Maintenance mode enabled/disabled',
         ],
     ];
 
@@ -69,6 +71,7 @@ class LogSettings
         self::UPDATE_FAILED,
         self::PACKAGES_UPDATED,
         self::PACKAGES_UPDATE_FAILED,
+        self::MAINTENANCE_MODE,
     ];
 
     public function enabled(string $key): bool
