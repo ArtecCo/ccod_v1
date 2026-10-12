@@ -215,6 +215,6 @@
 
     .dark .ccod-sidebar-collapse-all:hover {
         background: rgb(31 41 55) !important;
-        color: rgb(243 244 55) !important;
+        color: rgb(243 244 246) !important;
     }
 </style>
