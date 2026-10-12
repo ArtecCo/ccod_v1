@@ -6,7 +6,7 @@
     const buttonId = `ccod-sidebar-collapse-all-${panelKey}`;
 
     const getGroupButtons = () => Array.from(
-        document.querySelectorAll('.fi-sidebar-group-btn[aria-expanded]')
+        document.querySelectorAll('.fi-sidebar-group-button[aria-expanded]')
     );
 
     const getButton = () => document.getElementById(buttonId);
@@ -73,7 +73,10 @@
             button.setAttribute('aria-label', 'Collapse all navigation groups');
             button.setAttribute('title', 'Collapse all navigation groups');
 
-            button.addEventListener('click', () => {
+            button.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+
                 const groups = getGroupButtons();
 
                 if (!groups.length) {
@@ -191,6 +194,7 @@
     }
 
     .ccod-sidebar-collapse-all svg {
+        display: block !important;
         width: 0.9rem !important;
         height: 0.9rem !important;
         fill: none !important;
@@ -211,6 +215,6 @@
 
     .dark .ccod-sidebar-collapse-all:hover {
         background: rgb(31 41 55) !important;
-        color: rgb(243 244 246) !important;
+        color: rgb(243 244 55) !important;
     }
 </style>
