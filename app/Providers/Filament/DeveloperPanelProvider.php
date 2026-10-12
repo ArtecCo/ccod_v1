@@ -4,6 +4,7 @@ namespace App\Providers\Filament;
 
 use App\Filament\Pages\DatabaseTablePage;
 use App\Filament\Pages\LogsControl;
+use App\Filament\Pages\MaintenanceMode;
 use App\Filament\Pages\PillColors;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Pages\Styling;
@@ -71,6 +72,7 @@ class DeveloperPanelProvider extends PanelProvider
                 PillColors::class,
                 LogsControl::class,
                 DatabaseTablePage::class,
+                MaintenanceMode::class,
             ])
             ->widgets([])
             ->middleware([
