@@ -10,14 +10,24 @@ use Throwable;
 
 class FilamentStyling
 {
+    private static bool $settingsResolved = false;
+
+    private static ?StylingSettings $cachedSettings = null;
+
     public static function settings(): ?StylingSettings
     {
+        if (self::$settingsResolved) {
+            return self::$cachedSettings;
+        }
+
+        self::$settingsResolved = true;
+
         try {
             if (! Schema::hasTable('settings')) {
                 return null;
             }
 
-            return app(StylingSettings::class);
+            return self::$cachedSettings = app(StylingSettings::class);
         } catch (Throwable) {
             return null;
         }
