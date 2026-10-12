@@ -34,6 +34,22 @@ class AzureSubscriptionResource extends Resource
         return auth()->user()?->role === UserRole::GlobalOwner;
     }
 
+    public static function canView($record): bool
+    {
+        $user = auth()->user();
+
+        if (! $user) {
+            return false;
+        }
+
+        return $user->isGlobal()
+            || app(AccessAuthorizationService::class)->effectiveRole(
+                $user,
+                AccessRequestTargetType::Subscription,
+                $record,
+            ) !== null;
+    }
+
     public static function canEdit($record): bool
     {
         return auth()->user()?->role === UserRole::GlobalOwner;
@@ -73,6 +89,14 @@ class AzureSubscriptionResource extends Resource
             return $query;
         }
 
+        // Record pages must resolve the actual model before authorization is
+        // evaluated. Otherwise an inaccessible existing subscription is
+        // filtered out here and Filament turns it into a misleading 404.
+        // The record-level canView() check below then produces the proper 403.
+        if (request()->route('record') !== null) {
+            return $query;
+        }
+
         return $query
             ->where(function (Builder $builder) use ($user): void {
                 $builder->whereHas('teams.users', fn ($teamUsers) => $teamUsers->whereKey($user->getKey()))
@@ -102,8 +126,6 @@ class AzureSubscriptionResource extends Resource
                             });
                     });
             })
-            // A revocation is an explicit per-user override. It must win over
-            // both team membership and direct/team grants, including direct URLs.
             ->whereNotExists(function ($overrideQuery) use ($user): void {
                 $overrideQuery->selectRaw('1')
                     ->from('user_subscription_access_overrides')
