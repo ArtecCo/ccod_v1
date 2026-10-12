@@ -1,8 +1,9 @@
 <script>
 (() => {
-    const panelKey = document.documentElement.dataset.filamentPanel ?? window.location.pathname.split('/')[1] ?? 'default';
+    const panelKey = document.documentElement.dataset.filamentPanel
+        ?? (window.location.pathname.startsWith('/developer') ? 'developer' : 'admin');
     const storageKey = `ccod-sidebar-groups-${panelKey}`;
-    const buttonId = 'ccod-sidebar-collapse-all';
+    const buttonId = `ccod-sidebar-collapse-all-${panelKey}`;
 
     const getGroupButtons = () => Array.from(
         document.querySelectorAll('.fi-sidebar-group-btn[aria-expanded]')
@@ -11,15 +12,23 @@
     const updateButton = (button) => {
         const groups = getGroupButtons();
 
-        if (!groups.length || !button) {
+        if (!button || !groups.length) {
             return;
         }
 
-        const allCollapsed = groups.every((group) => group.getAttribute('aria-expanded') === 'false');
+        const allCollapsed = groups.every(
+            (group) => group.getAttribute('aria-expanded') === 'false'
+        );
+
         button.textContent = allCollapsed ? 'Expand all' : 'Collapse all';
-        button.setAttribute('aria-label', allCollapsed ? 'Expand all navigation groups' : 'Collapse all navigation groups');
-        button.setAttribute('title', allCollapsed ? 'Expand all navigation groups' : 'Collapse all navigation groups');
-        button.dataset.collapsed = allCollapsed ? 'true' : 'false';
+        button.setAttribute(
+            'aria-label',
+            allCollapsed ? 'Expand all navigation groups' : 'Collapse all navigation groups'
+        );
+        button.setAttribute(
+            'title',
+            allCollapsed ? 'Expand all navigation groups' : 'Collapse all navigation groups'
+        );
     };
 
     const applySavedState = () => {
@@ -29,9 +38,10 @@
             return;
         }
 
+        const shouldExpand = saved === 'expanded';
+
         getGroupButtons().forEach((group) => {
             const expanded = group.getAttribute('aria-expanded') === 'true';
-            const shouldExpand = saved === 'expanded';
 
             if (expanded !== shouldExpand) {
                 group.click();
@@ -43,7 +53,7 @@
         const nav = document.querySelector('.fi-sidebar-nav');
 
         if (!nav) {
-            return;
+            return false;
         }
 
         let button = document.getElementById(buttonId);
@@ -55,7 +65,12 @@
             button.className = 'ccod-sidebar-collapse-all';
             button.addEventListener('click', () => {
                 const groups = getGroupButtons();
-                const allCollapsed = groups.length > 0 && groups.every(
+
+                if (!groups.length) {
+                    return;
+                }
+
+                const allCollapsed = groups.every(
                     (group) => group.getAttribute('aria-expanded') === 'false'
                 );
                 const shouldExpand = allCollapsed;
@@ -78,20 +93,51 @@
         updateButton(button);
         applySavedState();
         updateButton(button);
+
+        return true;
     };
 
-    const observer = new MutationObserver(() => {
-        install();
-    });
+    let observer = null;
+    let installTimer = null;
+
+    const scheduleInstall = () => {
+        if (installTimer !== null) {
+            return;
+        }
+
+        installTimer = window.setTimeout(() => {
+            installTimer = null;
+            install();
+        }, 50);
+    };
 
     const start = () => {
         install();
 
-        const sidebar = document.querySelector('.fi-sidebar');
+        if (!observer) {
+            observer = new MutationObserver(() => {
+                scheduleInstall();
+            });
 
-        if (sidebar) {
-            observer.observe(sidebar, { childList: true, subtree: true });
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+            });
         }
+
+        // Filament may finish mounting/replacing the navigation after the
+        // render hook has executed, so retry briefly during initial mount.
+        let attempts = 0;
+        const retry = () => {
+            if (install() || attempts >= 20) {
+                return;
+            }
+
+            attempts += 1;
+            window.setTimeout(retry, 100);
+        };
+
+        retry();
     };
 
     if (document.readyState === 'loading') {
