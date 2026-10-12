@@ -46,7 +46,9 @@ class MaintenanceMode extends Page
                 'class' => 'min-w-20 justify-center',
                 'title' => 'Toggle maintenance mode',
             ])
-            ->action(fn (MaintenanceSettings $settings, AuditLogger $auditLogger): void => $this->toggle($settings, $auditLogger));
+            ->action(function (MaintenanceSettings $settings, AuditLogger $auditLogger): void {
+                $this->toggle($settings, $auditLogger);
+            });
     }
 
     public function toggle(MaintenanceSettings $settings, AuditLogger $auditLogger): void
