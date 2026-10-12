@@ -8,6 +8,8 @@ use App\Settings\MaintenanceSettings;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\File;
+use RuntimeException;
 
 class MaintenanceMode extends Page
 {
@@ -50,9 +52,38 @@ class MaintenanceMode extends Page
 
     public function toggle(MaintenanceSettings $settings, AuditLogger $auditLogger): void
     {
-        $settings->enabled = ! $settings->enabled;
-        $settings->save();
-        $this->enabled = $settings->enabled;
+        $newState = ! $settings->enabled;
+        $flagPath = storage_path('framework/maintenance.flag');
+
+        try {
+            File::ensureDirectoryExists(dirname($flagPath));
+
+            if ($newState) {
+                File::put($flagPath, now()->toIso8601String());
+            } else {
+                File::delete($flagPath);
+            }
+
+            $settings->enabled = $newState;
+            $settings->save();
+            $this->enabled = $newState;
+        } catch (\Throwable $exception) {
+            // The runtime flag is the actual request gate. Never report a successful
+            // state change if the flag and persisted setting could not be synchronized.
+            if ($newState) {
+                File::delete($flagPath);
+            }
+
+            report($exception);
+
+            Notification::make()
+                ->title('Maintenance mode could not be changed')
+                ->body('The application state was not changed. Check the application logs and filesystem permissions.')
+                ->danger()
+                ->send();
+
+            return;
+        }
 
         $event = $this->enabled ? 'Maintenance Mode Enabled' : 'Maintenance Mode Disabled';
         $description = $this->enabled
