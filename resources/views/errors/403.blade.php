@@ -1,6 +1,9 @@
 @php
     $logoLight = \App\Support\FilamentStyling::logoLight();
     $logoDark = \App\Support\FilamentStyling::logoDark() ?? $logoLight;
+    $primary = \App\Support\FilamentStyling::colors()['primary'];
+    $radius = \App\Support\FilamentStyling::cornerRadius();
+    $brandName = \App\Support\FilamentStyling::brandName();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
@@ -9,45 +12,203 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>403 — Access Denied</title>
-    @vite(['resources/css/app.css'])
+    <style>
+        :root {
+            --primary-50: {{ $primary[50] }};
+            --primary-100: {{ $primary[100] }};
+            --primary-200: {{ $primary[200] }};
+            --primary-500: {{ $primary[500] }};
+            --primary-600: {{ $primary[600] }};
+            --primary-700: {{ $primary[700] }};
+            --primary-800: {{ $primary[800] }};
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-600: #4b5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --radius: {{ $radius }};
+        }
+
+        * { box-sizing: border-box; }
+        html, body { margin: 0; min-height: 100%; }
+        body {
+            font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: #fff;
+            color: var(--gray-900);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .error-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 24px;
+        }
+
+        .error-content {
+            width: min(100%, 640px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 58px;
+            margin-bottom: 52px;
+        }
+
+        .brand img {
+            display: block;
+            width: auto;
+            max-width: 220px;
+            max-height: 58px;
+            object-fit: contain;
+        }
+
+        .status-icon {
+            width: 68px;
+            height: 68px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 24px;
+            border: 1px solid var(--primary-200);
+            border-radius: calc(var(--radius) * 2);
+            background: var(--primary-50);
+            color: var(--primary-700);
+        }
+
+        .status-icon svg { width: 34px; height: 34px; }
+
+        .code {
+            margin: 0;
+            font-size: 64px;
+            line-height: 1;
+            font-weight: 700;
+            letter-spacing: -0.04em;
+            color: var(--gray-900);
+        }
+
+        h1 {
+            margin: 16px 0 0;
+            font-size: 24px;
+            line-height: 32px;
+            font-weight: 600;
+            letter-spacing: -0.015em;
+        }
+
+        .message {
+            max-width: 540px;
+            margin: 12px 0 0;
+            color: var(--gray-600);
+            font-size: 15px;
+            line-height: 24px;
+        }
+
+        .actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 28px;
+        }
+
+        .button {
+            min-height: 40px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+            border-radius: var(--radius);
+            border: 1px solid transparent;
+            font-size: 14px;
+            line-height: 20px;
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: background-color .15s ease, border-color .15s ease, color .15s ease, box-shadow .15s ease;
+        }
+
+        .button-secondary {
+            background: #fff;
+            border-color: var(--gray-200);
+            color: var(--gray-700);
+        }
+
+        .button-secondary:hover { background: var(--gray-50); }
+
+        .button-primary {
+            background: var(--primary-600);
+            color: #fff;
+            box-shadow: 0 1px 2px rgba(0,0,0,.08);
+        }
+
+        .button-primary:hover { background: var(--primary-700); }
+        .button:focus-visible {
+            outline: 2px solid var(--primary-500);
+            outline-offset: 2px;
+        }
+
+        @media (max-width: 640px) {
+            .error-page { padding: 32px 20px; }
+            .brand { margin-bottom: 40px; }
+            .brand img { max-width: 180px; max-height: 48px; }
+            .code { font-size: 56px; }
+            h1 { font-size: 22px; }
+            .actions { flex-direction: column-reverse; width: 100%; }
+            .button { width: 100%; }
+        }
+
+        @media (prefers-color-scheme: dark) {
+            body { background: #09090b; color: #f4f4f5; }
+            .code, h1 { color: #f4f4f5; }
+            .message { color: #a1a1aa; }
+            .button-secondary { background: #18181b; border-color: #3f3f46; color: #e4e4e7; }
+            .button-secondary:hover { background: #27272a; }
+        }
+    </style>
 </head>
-<body class="min-h-full bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-white">
-    <main class="flex min-h-screen flex-col items-center justify-center px-6 py-12 text-center">
-        <div class="w-full max-w-2xl">
-            <div class="mb-10 flex justify-center">
+<body>
+    <main class="error-page">
+        <section class="error-content" aria-labelledby="error-title">
+            <div class="brand">
                 @if ($logoLight)
                     <picture>
                         @if ($logoDark)
                             <source media="(prefers-color-scheme: dark)" srcset="{{ $logoDark }}">
                         @endif
-                        <img src="{{ $logoLight }}" alt="Bosch" class="h-12 w-auto object-contain">
+                        <img src="{{ $logoLight }}" alt="{{ $brandName }}">
                     </picture>
                 @endif
             </div>
 
-            <div class="mx-auto mb-7 flex h-28 w-28 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900" aria-hidden="true">
-                <svg viewBox="0 0 96 96" class="h-16 w-16 text-gray-700 dark:text-gray-200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="48" cy="48" r="34" stroke="currentColor" stroke-width="5"/>
-                    <path d="M34 34L62 62M62 34L34 62" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+            <div class="status-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 3 4.5 6.5v5.1c0 4.7 3.1 7.8 7.5 9.4 4.4-1.6 7.5-4.7 7.5-9.4V6.5L12 3Z"/>
+                    <path d="M12 8v4"/>
+                    <path d="M12 15.5h.01"/>
                 </svg>
             </div>
 
-            <p class="text-7xl font-semibold tracking-tight text-gray-900 dark:text-white sm:text-8xl">403</p>
-            <h1 class="mt-5 text-2xl font-semibold tracking-tight sm:text-3xl">Access denied</h1>
-            <p class="mx-auto mt-4 max-w-xl text-base leading-7 text-gray-600 dark:text-gray-400 sm:text-lg">
-                You don't seem to have the required permissions to view this page.
+            <p class="code">403</p>
+            <h1 id="error-title">Access denied</h1>
+            <p class="message">
+                You don't seem to have the required permissions to view this page.<br>
                 Please contact the admin to raise an access request.
             </p>
 
-            <div class="mt-9 flex flex-wrap justify-center gap-3">
-                <button type="button" onclick="history.back()" class="rounded-lg border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-                    Go back
-                </button>
-                <a href="{{ url('/') }}" class="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-800 dark:bg-white dark:text-gray-900 dark:hover:bg-gray-200">
-                    Go to dashboard
-                </a>
+            <div class="actions">
+                <button type="button" onclick="history.back()" class="button button-secondary">Go back</button>
+                <a href="{{ url('/') }}" class="button button-primary">Go to dashboard</a>
             </div>
-        </div>
+        </section>
     </main>
 </body>
 </html>
