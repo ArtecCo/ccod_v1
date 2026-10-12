@@ -27,22 +27,25 @@ class MaintenanceMode extends Page
         $this->enabled = $settings->enabled;
     }
 
-    protected function getHeaderActions(): array
+    public function toggleMaintenanceAction(): Action
     {
-        return [
-            Action::make('toggleMaintenance')
-                ->label(fn (): string => $this->enabled ? 'Disable maintenance mode' : 'Enable maintenance mode')
-                ->icon(fn (): string => $this->enabled ? 'heroicon-o-check-circle' : 'heroicon-o-pause-circle')
-                ->color(fn (): string => $this->enabled ? 'success' : 'warning')
-                ->requiresConfirmation()
-                ->modalHeading(fn (): string => $this->enabled ? 'Disable maintenance mode?' : 'Enable maintenance mode?')
-                ->modalDescription(fn (): string => $this->enabled
-                    ? 'The public application will become accessible again.'
-                    : 'The public application will become inaccessible. Localhost and the Developer panel will remain available for testing and administration.'
-                )
-                ->modalSubmitActionLabel(fn (): string => $this->enabled ? 'Disable maintenance mode' : 'Enable maintenance mode')
-                ->action(fn (MaintenanceSettings $settings, AuditLogger $auditLogger): void => $this->toggle($settings, $auditLogger)),
-        ];
+        return Action::make('toggleMaintenance')
+            ->label(fn (): string => $this->enabled ? 'ON' : 'OFF')
+            ->icon(fn (): string => $this->enabled ? 'heroicon-o-check' : 'heroicon-o-pause')
+            ->color(fn (): string => $this->enabled ? 'success' : 'gray')
+            ->size('lg')
+            ->requiresConfirmation()
+            ->modalHeading(fn (): string => $this->enabled ? 'Disable maintenance mode?' : 'Enable maintenance mode?')
+            ->modalDescription(fn (): string => $this->enabled
+                ? 'The public application will become accessible again.'
+                : 'The public application will become inaccessible. Localhost and the Developer panel will remain available for testing and administration.'
+            )
+            ->modalSubmitActionLabel(fn (): string => $this->enabled ? 'Disable maintenance mode' : 'Enable maintenance mode')
+            ->extraAttributes([
+                'class' => 'min-w-20 justify-center',
+                'title' => 'Toggle maintenance mode',
+            ])
+            ->action(fn (MaintenanceSettings $settings, AuditLogger $auditLogger): void => $this->toggle($settings, $auditLogger));
     }
 
     public function toggle(MaintenanceSettings $settings, AuditLogger $auditLogger): void
