@@ -30,7 +30,7 @@ return [
     'decoder' => null,
 
     'cache' => [
-        'enabled' => false,
+        'enabled' => true,
         'store' => null,
         'prefix' => null,
         'ttl' => null,
