@@ -219,6 +219,11 @@ html { font-size: 13px !important; }
 }
                         </style>')
                 );
+
+                FilamentView::registerRenderHook(
+                    'panels::body.end',
+                    fn (): string => view('filament.partials.sidebar-collapse-all')->render(),
+                );
             })
             ->viteTheme('resources/css/filament/developer/theme.css');
     }
