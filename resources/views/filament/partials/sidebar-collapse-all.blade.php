@@ -9,7 +9,10 @@
         document.querySelectorAll('.fi-sidebar-group-btn[aria-expanded]')
     );
 
-    const updateButton = (button) => {
+    const getButton = () => document.getElementById(buttonId);
+
+    const updateButton = () => {
+        const button = getButton();
         const groups = getGroupButtons();
 
         if (!button || !groups.length) {
@@ -20,7 +23,7 @@
             (group) => group.getAttribute('aria-expanded') === 'false'
         );
 
-        button.textContent = allCollapsed ? 'Expand all' : 'Collapse all';
+        button.dataset.state = allCollapsed ? 'collapsed' : 'expanded';
         button.setAttribute(
             'aria-label',
             allCollapsed ? 'Expand all navigation groups' : 'Collapse all navigation groups'
@@ -29,6 +32,10 @@
             'title',
             allCollapsed ? 'Expand all navigation groups' : 'Collapse all navigation groups'
         );
+
+        button.innerHTML = allCollapsed
+            ? '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 7.5 10 12.5 15 7.5"/></svg>'
+            : '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="m5 12.5 5-5 5 5"/></svg>';
     };
 
     const applySavedState = () => {
@@ -56,13 +63,16 @@
             return false;
         }
 
-        let button = document.getElementById(buttonId);
+        let button = getButton();
 
         if (!button) {
             button = document.createElement('button');
             button.type = 'button';
             button.id = buttonId;
             button.className = 'ccod-sidebar-collapse-all';
+            button.setAttribute('aria-label', 'Collapse all navigation groups');
+            button.setAttribute('title', 'Collapse all navigation groups');
+
             button.addEventListener('click', () => {
                 const groups = getGroupButtons();
 
@@ -84,15 +94,15 @@
                 });
 
                 localStorage.setItem(storageKey, shouldExpand ? 'expanded' : 'collapsed');
-                updateButton(button);
+                updateButton();
             });
 
             nav.prepend(button);
         }
 
-        updateButton(button);
+        updateButton();
         applySavedState();
-        updateButton(button);
+        updateButton();
 
         return true;
     };
@@ -117,11 +127,14 @@
         if (!observer) {
             observer = new MutationObserver(() => {
                 scheduleInstall();
+                updateButton();
             });
 
             observer.observe(document.body, {
                 childList: true,
                 subtree: true,
+                attributes: true,
+                attributeFilter: ['aria-expanded'],
             });
         }
 
@@ -147,39 +160,45 @@
 </script>
 
 <style>
+    /* Small icon-only toggle. It sits over the sidebar and does not consume navigation space. */
     .ccod-sidebar-collapse-all {
+        position: absolute !important;
+        top: 0.35rem !important;
+        right: 0.65rem !important;
+        z-index: 50 !important;
         display: flex !important;
         align-items: center !important;
-        justify-content: flex-end !important;
-        box-sizing: border-box !important;
-        position: relative !important;
-        z-index: 9999 !important;
-        width: 100% !important;
-        min-width: 100% !important;
-        min-height: 2rem !important;
-        flex: 0 0 auto !important;
-        padding: 0.35rem 0.65rem !important;
-        margin: 0 0 0.35rem !important;
+        justify-content: center !important;
+        width: 1.75rem !important;
+        height: 1.75rem !important;
+        min-width: 1.75rem !important;
+        min-height: 1.75rem !important;
+        margin: 0 !important;
+        padding: 0 !important;
         border: 0 !important;
         border-radius: 0.375rem !important;
         background: transparent !important;
         color: rgb(107 114 128) !important;
-        font-family: inherit !important;
-        font-size: 0.72rem !important;
-        font-weight: 600 !important;
-        line-height: 1.25rem !important;
-        text-align: right !important;
-        white-space: nowrap !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
         cursor: pointer !important;
-        transition: color 150ms ease, background-color 150ms ease !important;
+        pointer-events: auto !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        line-height: 1 !important;
+    }
+
+    .ccod-sidebar-collapse-all svg {
+        width: 0.9rem !important;
+        height: 0.9rem !important;
+        fill: none !important;
+        stroke: currentColor !important;
+        stroke-width: 1.8 !important;
+        stroke-linecap: round !important;
+        stroke-linejoin: round !important;
     }
 
     .ccod-sidebar-collapse-all:hover {
-        color: rgb(17 24 39) !important;
         background: rgb(243 244 246) !important;
+        color: rgb(17 24 39) !important;
     }
 
     .dark .ccod-sidebar-collapse-all {
@@ -187,7 +206,7 @@
     }
 
     .dark .ccod-sidebar-collapse-all:hover {
-        color: rgb(243 244 246) !important;
         background: rgb(31 41 55) !important;
+        color: rgb(243 244 246) !important;
     }
 </style>
