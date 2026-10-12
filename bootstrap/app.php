@@ -4,6 +4,9 @@ use App\Http\Middleware\AuditRequestMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
+use Throwable;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,5 +18,21 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(AuditRequestMiddleware::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (! $exception instanceof HttpExceptionInterface) {
+                return null;
+            }
+
+            $status = $exception->getStatusCode();
+
+            if (! in_array($status, [403, 404], true)) {
+                return null;
+            }
+
+            return response()->view(
+                "errors.{$status}",
+                ['exception' => $exception],
+                $status,
+            );
+        });
     })->create();
