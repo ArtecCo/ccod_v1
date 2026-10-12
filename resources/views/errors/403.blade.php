@@ -1,3 +1,7 @@
+@php
+    $logoLight = \App\Support\FilamentStyling::logoLight();
+    $logoDark = \App\Support\FilamentStyling::logoDark() ?? $logoLight;
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
 <head>
@@ -11,7 +15,14 @@
     <main class="flex min-h-screen flex-col items-center justify-center px-6 py-12 text-center">
         <div class="w-full max-w-2xl">
             <div class="mb-10 flex justify-center">
-                <img src="{{ asset('images/bosch-logo.svg') }}" alt="Bosch" class="h-12 w-auto object-contain dark:brightness-0 dark:invert">
+                @if ($logoLight)
+                    <picture>
+                        @if ($logoDark)
+                            <source media="(prefers-color-scheme: dark)" srcset="{{ $logoDark }}">
+                        @endif
+                        <img src="{{ $logoLight }}" alt="Bosch" class="h-12 w-auto object-contain">
+                    </picture>
+                @endif
             </div>
 
             <div class="mx-auto mb-7 flex h-28 w-28 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-900" aria-hidden="true">
