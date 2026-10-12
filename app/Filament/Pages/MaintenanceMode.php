@@ -9,7 +9,6 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\File;
-use RuntimeException;
 
 class MaintenanceMode extends Page
 {
@@ -54,6 +53,7 @@ class MaintenanceMode extends Page
     {
         $newState = ! $settings->enabled;
         $flagPath = storage_path('framework/maintenance.flag');
+        $flagWasPresent = is_file($flagPath);
 
         try {
             File::ensureDirectoryExists(dirname($flagPath));
@@ -68,9 +68,10 @@ class MaintenanceMode extends Page
             $settings->save();
             $this->enabled = $newState;
         } catch (\Throwable $exception) {
-            // The runtime flag is the actual request gate. Never report a successful
-            // state change if the flag and persisted setting could not be synchronized.
-            if ($newState) {
+            // Keep the runtime gate and persisted state consistent if either write fails.
+            if ($flagWasPresent) {
+                File::put($flagPath, now()->toIso8601String());
+            } else {
                 File::delete($flagPath);
             }
 
