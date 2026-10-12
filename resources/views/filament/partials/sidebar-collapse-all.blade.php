@@ -160,12 +160,16 @@
 </script>
 
 <style>
-    /* Small icon-only toggle. It sits over the sidebar and does not consume navigation space. */
+    /* Keep the control as a compact overlay at the top-right of the sidebar navigation. */
+    .fi-sidebar-nav {
+        position: relative !important;
+    }
+
     .ccod-sidebar-collapse-all {
         position: absolute !important;
         top: 0.35rem !important;
         right: 0.65rem !important;
-        z-index: 50 !important;
+        z-index: 999 !important;
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
