@@ -316,6 +316,11 @@ class AdminPanelProvider extends PanelProvider
                     'panels::body.end',
                     fn (): string => view('filament.partials.notification-poller')->render(),
                 );
+
+                FilamentView::registerRenderHook(
+                    'panels::body.end',
+                    fn (): string => view('filament.partials.sidebar-collapse-all')->render(),
+                );
             });
     }
 }
