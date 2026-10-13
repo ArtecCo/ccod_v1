@@ -5,6 +5,7 @@ namespace App\Filament\Resources\AzureSubscriptions\Pages;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureAlertsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
@@ -92,6 +93,11 @@ class ViewAzureSubscription extends ViewRecord
 
                         Tab::make('Alerts')
                             ->schema([
+                                Livewire::make(SubscriptionAlertSeverityOverview::class, [
+                                    'record' => $this->record,
+                                ])
+                                    ->columnSpanFull(),
+
                                 Livewire::make(AzureAlertsRelationManager::class, [
                                     'ownerRecord' => $this->record,
                                     'pageClass' => static::class,
