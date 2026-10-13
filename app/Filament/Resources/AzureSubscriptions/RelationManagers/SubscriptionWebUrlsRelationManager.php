@@ -156,7 +156,8 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                             ->action(function (SubscriptionWebUrl $record): void {
                                 $record->delete();
                                 $this->dispatch('web-url-added');
-                            }),
+                            })
+                            ->cancelParentActions(),
                     ]),
                 DeleteAction::make(),
             ])
