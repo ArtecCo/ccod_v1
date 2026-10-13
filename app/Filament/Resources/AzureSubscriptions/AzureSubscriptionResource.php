@@ -9,7 +9,6 @@ use App\Filament\Resources\AzureSubscriptions\Pages\EditAzureSubscription;
 use App\Filament\Resources\AzureSubscriptions\Pages\ListAzureSubscriptions;
 use App\Filament\Resources\AzureSubscriptions\Pages\ViewAzureSubscription;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\BillingResourcesRelationManager;
-use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\Schemas\AzureSubscriptionForm;
 use App\Filament\Resources\AzureSubscriptions\Schemas\AzureSubscriptionInfolist;
 use App\Filament\Resources\AzureSubscriptions\Tables\AzureSubscriptionsTable;
@@ -158,7 +157,6 @@ class AzureSubscriptionResource extends Resource
     {
         return [
             BillingResourcesRelationManager::class,
-            SubscriptionWebUrlsRelationManager::class,
         ];
     }
 
