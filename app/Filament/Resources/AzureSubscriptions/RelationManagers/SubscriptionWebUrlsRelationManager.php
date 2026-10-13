@@ -124,6 +124,11 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->headerActions([
+                XlsxExportAction::make()
+                    ->label('Export XLSX')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->title('Web URLs')
+                    ->fileName(fn (): string => 'web-urls-'.now()->format('Y-m-d-His')),
                 CreateAction::make()
                     ->label('Add Web URL')
                     ->icon(Heroicon::OutlinedGlobeAlt)
@@ -160,11 +165,6 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     ->after(function (): void {
                         $this->dispatch('web-url-added');
                     }),
-                XlsxExportAction::make()
-                    ->label('Export XLSX')
-                    ->icon(Heroicon::OutlinedArrowDownTray)
-                    ->title('Web URLs')
-                    ->fileName(fn (): string => 'web-urls-'.now()->format('Y-m-d-His')),
             ])
             ->recordActions([
                 EditAction::make()
