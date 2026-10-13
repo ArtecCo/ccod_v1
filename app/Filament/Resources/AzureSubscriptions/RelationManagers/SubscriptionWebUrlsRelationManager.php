@@ -62,6 +62,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->striped(false)
             ->columns([
                 TextColumn::make('url')
                     ->label('URL')
