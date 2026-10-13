@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 use App\Models\SubscriptionWebUrl;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
@@ -158,6 +159,11 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     ->after(function (): void {
                         $this->dispatch('web-url-added');
                     }),
+                XlsxExportAction::make()
+                    ->label('Export XLSX')
+                    ->icon(Heroicon::OutlinedArrowDownTray)
+                    ->title('Web URLs')
+                    ->fileName(fn (): string => 'web-urls-'.now()->format('Y-m-d-His')),
             ])
             ->recordActions([
                 EditAction::make()
