@@ -22,7 +22,10 @@ class AzureAlertsRelationManager extends RelationManager
     #[On('filter-alerts-by-severity')]
     public function filterAlertsBySeverity(?string $severity = null): void
     {
-        $this->tableFilters['severity']['value'] = $severity;
+        $currentSeverity = $this->tableFilters['severity']['value'] ?? null;
+
+        $this->tableFilters['severity']['value'] = $currentSeverity === $severity ? null : $severity;
+
         $this->updatedTableFilters();
     }
 
