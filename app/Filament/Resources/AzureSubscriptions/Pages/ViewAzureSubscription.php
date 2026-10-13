@@ -131,6 +131,8 @@ class ViewAzureSubscription extends ViewRecord
                         'url_hash' => hash('sha256', $url),
                         'is_active' => (bool) ($data['is_active'] ?? true),
                     ]);
+
+                    $this->dispatch('web-url-added');
                 })
                 ->successNotificationTitle('Web URL added'),
             EditAction::make(),
