@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\SubscriptionWebUrl;
-use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -53,7 +52,7 @@ class SubscriptionWebUrlMonitor
     {
         $parts = parse_url($webUrl->url);
 
-        if (($parts['scheme'] ?? null) !== 'https' || empty($parts['host'])) {
+        if (strtolower($parts['scheme'] ?? '') !== 'https' || empty($parts['host'])) {
             $this->clearSslData($webUrl);
 
             return;
@@ -73,7 +72,7 @@ class SubscriptionWebUrlMonitor
         ]);
 
         $socket = @stream_socket_client(
-            "ssl://{$host}:{$port}",
+            "tcp://{$host}:{$port}",
             $errno,
             $error,
             5,
@@ -82,6 +81,19 @@ class SubscriptionWebUrlMonitor
         );
 
         if ($socket === false) {
+            $this->clearSslData($webUrl, false);
+
+            return;
+        }
+
+        $cryptoEnabled = @stream_socket_enable_crypto(
+            $socket,
+            true,
+            STREAM_CRYPTO_METHOD_TLS_CLIENT,
+        );
+
+        if ($cryptoEnabled !== true) {
+            fclose($socket);
             $this->clearSslData($webUrl, false);
 
             return;
