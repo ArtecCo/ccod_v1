@@ -112,7 +112,9 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
 
                         return $data;
                     })
-                    ->after(fn (): void => $this->dispatch('web-url-added')),
+                    ->after(function (): void {
+                        $this->dispatch('web-url-added');
+                    }),
             ])
             ->recordActions([
                 Action::make('check')
