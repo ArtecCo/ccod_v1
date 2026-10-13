@@ -137,7 +137,15 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()
+                    ->label('Edit')
+                    ->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('update', $record))
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['url'] = rtrim(trim($data['url']), '/');
+                        $data['url_hash'] = hash('sha256', $data['url']);
+
+                        return $data;
+                    }),
                 DeleteAction::make(),
             ])
             ->defaultSort('url');
