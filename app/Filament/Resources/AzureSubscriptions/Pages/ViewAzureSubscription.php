@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AzureSubscriptions\Pages;
 
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureAlertsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
@@ -90,7 +91,13 @@ class ViewAzureSubscription extends ViewRecord
                             ->schema([]),
 
                         Tab::make('Alerts')
-                            ->schema([]),
+                            ->schema([
+                                Livewire::make(AzureAlertsRelationManager::class, [
+                                    'ownerRecord' => $this->record,
+                                    'pageClass' => static::class,
+                                ])->columnSpanFull(),
+                            ])
+                            ->columns(1),
                     ])
                     ->persistTabInQueryString()
                     ->contained(false)
