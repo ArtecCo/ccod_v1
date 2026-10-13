@@ -145,7 +145,13 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                         $data['url_hash'] = hash('sha256', $data['url']);
 
                         return $data;
-                    }),
+                    })
+                    ->extraModalFooterActions([
+                        DeleteAction::make('delete')
+                            ->label('Delete URL')
+                            ->color('danger')
+                            ->requiresConfirmation(),
+                    ]),
                 DeleteAction::make(),
             ])
             ->defaultSort('url');
