@@ -9,6 +9,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -133,6 +134,27 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
 
                         return $data;
                     })
+                    ->before(function (CreateAction $action, array $data): void {
+                        $url = rtrim(trim((string) ($data['url'] ?? '')), '/');
+                        $urlHash = hash('sha256', $url);
+
+                        $exists = $this->getOwnerRecord()
+                            ->webUrls()
+                            ->where('url_hash', $urlHash)
+                            ->exists();
+
+                        if (! $exists) {
+                            return;
+                        }
+
+                        Notification::make()
+                            ->danger()
+                            ->title('Web URL already exists')
+                            ->body('This URL has already been added to this subscription.')
+                            ->send();
+
+                        $action->halt();
+                    })
                     ->after(function (): void {
                         $this->dispatch('web-url-added');
                     }),
@@ -146,6 +168,29 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                         $data['url_hash'] = hash('sha256', $data['url']);
 
                         return $data;
+                    })
+                    ->before(function (EditAction $action, array $data, SubscriptionWebUrl $record): void {
+                        $url = rtrim(trim((string) ($data['url'] ?? '')), '/');
+                        $urlHash = hash('sha256', $url);
+
+                        $exists = $record->subscription()
+                            ->first()
+                            ?->webUrls()
+                            ->where('url_hash', $urlHash)
+                            ->whereKeyNot($record->getKey())
+                            ->exists();
+
+                        if (! $exists) {
+                            return;
+                        }
+
+                        Notification::make()
+                            ->danger()
+                            ->title('Web URL already exists')
+                            ->body('Another URL with the same address is already configured for this subscription.')
+                            ->send();
+
+                        $action->halt();
                     })
                     ->extraModalFooterActions([
                         Action::make('delete')
