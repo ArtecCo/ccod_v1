@@ -79,4 +79,9 @@ class AzureSubscription extends Model
     {
         return $this->hasMany(SubscriptionWebUrl::class, 'subscription_id', 'subscription_id');
     }
+
+    public function alerts(): HasMany
+    {
+        return $this->hasMany(AzureAlert::class, 'subscription_id', 'subscription_id');
+    }
 }
