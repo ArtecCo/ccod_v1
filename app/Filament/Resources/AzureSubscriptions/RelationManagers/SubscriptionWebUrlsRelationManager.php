@@ -3,8 +3,6 @@
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 use App\Models\SubscriptionWebUrl;
-use App\Services\SubscriptionWebUrlMonitor;
-use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -89,6 +87,28 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     ->label('SSL')
                     ->boolean()
                     ->placeholder('N/A'),
+                TextColumn::make('ssl_provider')
+                    ->label('SSL Provider')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ssl_subject')
+                    ->label('SSL Subject')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ssl_issuer')
+                    ->label('SSL Issuer')
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ssl_valid_from')
+                    ->label('SSL Valid From')
+                    ->dateTime()
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('ssl_expires_at')
+                    ->label('SSL Expires')
+                    ->dateTime()
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ssl_days_remaining')
                     ->label('SSL Days')
                     ->placeholder('—')
@@ -117,11 +137,6 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     }),
             ])
             ->recordActions([
-                Action::make('check')
-                    ->label('Check')
-                    ->icon(Heroicon::OutlinedArrowPath)
-                    ->action(fn (SubscriptionWebUrl $record): SubscriptionWebUrl => app(SubscriptionWebUrlMonitor::class)->check($record))
-                    ->successNotificationTitle('Web URL checked'),
                 EditAction::make(),
                 DeleteAction::make(),
             ])
