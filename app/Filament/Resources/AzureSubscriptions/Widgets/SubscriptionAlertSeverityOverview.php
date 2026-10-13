@@ -16,7 +16,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
 
     protected function getDescription(): ?string
     {
-        return 'Click a severity card to filter alerts. Click Total Alerts to remove filters.';
+        return 'Click a severity card to filter. Click the same card or Total Alerts to clear the filter.';
     }
 
     protected function getStats(): array
@@ -28,7 +28,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
 
         return [
             Stat::make('Sev 0', (string) ($counts['Sev0'] ?? 0))
-                ->color('danger')
+                ->color('gray')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
