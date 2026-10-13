@@ -8,9 +8,9 @@ use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Resources\RelationManagers\RelationManager;
-use Filament\Schemas\Components\TextInput;
-use Filament\Schemas\Components\Toggle;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
@@ -18,6 +18,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Attributes\On;
 
 class SubscriptionWebUrlsRelationManager extends RelationManager
 {
@@ -35,6 +36,12 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
             'create',
             [SubscriptionWebUrl::class, $this->getOwnerRecord()],
         );
+    }
+
+    #[On('web-url-added')]
+    public function refreshWebUrlsTable(): void
+    {
+        $this->resetTable();
     }
 
     public function form(Schema $schema): Schema
@@ -104,7 +111,8 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                         $data['is_active'] = (bool) ($data['is_active'] ?? true);
 
                         return $data;
-                    }),
+                    })
+                    ->after(fn (): void => $this->dispatch('web-url-added')),
             ])
             ->recordActions([
                 Action::make('check')
