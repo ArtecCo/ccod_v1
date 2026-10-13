@@ -24,39 +24,45 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
         return [
             Stat::make('Sev 0', (string) ($counts['Sev0'] ?? 0))
                 ->color('danger')
+                ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev0' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev0' })",
                 ]),
             Stat::make('Sev 1', (string) ($counts['Sev1'] ?? 0))
                 ->color('danger')
+                ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev1' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev1' })",
                 ]),
             Stat::make('Sev 2', (string) ($counts['Sev2'] ?? 0))
                 ->color('warning')
+                ->icon('heroicon-o-exclamation-circle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev2' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev2' })",
                 ]),
             Stat::make('Sev 3', (string) ($counts['Sev3'] ?? 0))
-                ->color('info')
+                ->color('warning')
+                ->icon('heroicon-o-exclamation-circle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev3' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev3' })",
                 ]),
             Stat::make('Sev 4', (string) ($counts['Sev4'] ?? 0))
                 ->color('gray')
+                ->icon('heroicon-o-information-circle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev4' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev4' })",
                 ]),
             Stat::make('Total Alerts', (string) $this->record->alerts()->count())
                 ->color('primary')
+                ->icon('heroicon-o-bell-alert')
                 ->extraAttributes([
                     'role' => 'button',
-                    'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: null })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: null })",
                 ]),
         ];
     }
