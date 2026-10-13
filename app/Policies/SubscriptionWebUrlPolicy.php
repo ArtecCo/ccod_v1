@@ -63,7 +63,15 @@ class SubscriptionWebUrlPolicy
             return false;
         }
 
-        $role = $this->effectiveRole($user, $webUrl->subscription_id);
+        $subscription = AzureSubscription::query()
+            ->whereKey($webUrl->subscription_id)
+            ->first();
+
+        if ($subscription === null) {
+            return false;
+        }
+
+        $role = $this->effectiveRole($user, $subscription);
 
         return in_array($role, [
             UserRole::GlobalOwner,
