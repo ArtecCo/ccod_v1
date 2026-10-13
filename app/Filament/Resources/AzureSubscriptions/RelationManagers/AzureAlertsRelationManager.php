@@ -23,7 +23,6 @@ class AzureAlertsRelationManager extends RelationManager
     public function filterAlertsBySeverity(?string $severity = null): void
     {
         $this->tableFilters['severity']['value'] = $severity;
-
         $this->updatedTableFilters();
     }
 
@@ -54,6 +53,12 @@ class AzureAlertsRelationManager extends RelationManager
                 TextColumn::make('severity')
                     ->label('Severity')
                     ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Sev0', 'Sev1' => 'danger',
+                        'Sev2', 'Sev3' => 'warning',
+                        'Sev4' => 'gray',
+                        default => 'gray',
+                    })
                     ->sortable(),
                 TextColumn::make('affected_resource')
                     ->label('Affected Resource')
