@@ -48,8 +48,7 @@ class AzureAlertsRelationManager extends RelationManager
                 TextColumn::make('affected_resource')
                     ->label('Affected Resource')
                     ->searchable()
-                    ->limit(45)
-                    ->tooltip(fn (TextColumn $column): ?string => $column->getState()),
+                    ->limit(45),
                 TextColumn::make('signal_type')
                     ->label('Signal Type')
                     ->searchable()
