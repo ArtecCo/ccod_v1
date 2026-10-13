@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 use App\Models\SubscriptionWebUrl;
+use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
@@ -147,10 +148,15 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                         return $data;
                     })
                     ->extraModalFooterActions([
-                        DeleteAction::make('delete')
+                        Action::make('delete')
                             ->label('Delete URL')
                             ->color('danger')
-                            ->requiresConfirmation(),
+                            ->requiresConfirmation()
+                            ->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record))
+                            ->action(function (SubscriptionWebUrl $record): void {
+                                $record->delete();
+                                $this->dispatch('web-url-added');
+                            }),
                     ]),
                 DeleteAction::make(),
             ])
