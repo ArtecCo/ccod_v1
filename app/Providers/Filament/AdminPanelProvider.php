@@ -201,6 +201,10 @@ class AdminPanelProvider extends PanelProvider
                             -ms-overflow-style: none !important;
                         }
 
+                        *{
+                        user-select: none !important;
+                        }
+
                         .fi-sidebar-nav::-webkit-scrollbar,
                         .fi-sidebar-nav-groups::-webkit-scrollbar,
                         .fi-sidebar-group::-webkit-scrollbar,
