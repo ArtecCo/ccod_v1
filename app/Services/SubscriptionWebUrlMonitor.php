@@ -89,24 +89,17 @@ class SubscriptionWebUrlMonitor
             return false;
         }
 
-        $values = [];
-        foreach ($certificates[0] as $line) {
-            if (! is_string($line)) {
-                continue;
-            }
-            $separator = strpos($line, ':');
-            if ($separator === false) {
-                continue;
-            }
-            $values[trim(substr($line, 0, $separator))] = trim(substr($line, $separator + 1));
-        }
+        // CURLINFO_CERTINFO returns certificate fields as an associative array,
+        // e.g. ['Subject' => 'CN = example.com', 'Issuer' => '...'].
+        // Do not parse the field values as if they were "Key: Value" lines.
+        $certificate = $certificates[0];
 
-        $validFrom = $this->parseCertificateDate($values['Start date'] ?? null);
-        $expiresAt = $this->parseCertificateDate($values['Expire date'] ?? null);
-        $subject = $this->extractDistinguishedNameValue($values['Subject'] ?? null, 'CN');
-        $provider = $this->extractDistinguishedNameValue($values['Issuer'] ?? null, 'O')
-            ?? $this->extractDistinguishedNameValue($values['Issuer'] ?? null, 'CN');
-        $issuer = $this->extractDistinguishedNameValue($values['Issuer'] ?? null, 'CN');
+        $validFrom = $this->parseCertificateDate($certificate['Start date'] ?? null);
+        $expiresAt = $this->parseCertificateDate($certificate['Expire date'] ?? null);
+        $subject = $this->extractDistinguishedNameValue($certificate['Subject'] ?? null, 'CN');
+        $provider = $this->extractDistinguishedNameValue($certificate['Issuer'] ?? null, 'O')
+            ?? $this->extractDistinguishedNameValue($certificate['Issuer'] ?? null, 'CN');
+        $issuer = $this->extractDistinguishedNameValue($certificate['Issuer'] ?? null, 'CN');
 
         if ($validFrom === null && $expiresAt === null && $subject === null && $issuer === null) {
             return false;
