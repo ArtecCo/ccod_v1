@@ -232,7 +232,10 @@ class AdminPanelProvider extends PanelProvider
                             display: block !important;
                         }
 
-                        html { font-size: 13px !important; }
+                        html {
+                            font-size: 13px !important;
+                            scrollbar-gutter: stable;
+                        }
                         .fi-section, .fi-ta-ctn, .fi-wi-widget, .fi-card, .fi-modal-window {
                             padding: 0.6rem !important;
                             border-radius: var(--ccod-corner-radius, 0.375rem) !important;
