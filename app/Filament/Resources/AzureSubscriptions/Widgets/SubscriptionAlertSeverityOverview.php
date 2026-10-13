@@ -14,6 +14,11 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
 
     protected int | array | null $columns = 6;
 
+    protected function getDescription(): ?string
+    {
+        return 'Click a severity card to filter alerts. Click Total Alerts to remove filters.';
+    }
+
     protected function getStats(): array
     {
         $counts = $this->record->alerts()
