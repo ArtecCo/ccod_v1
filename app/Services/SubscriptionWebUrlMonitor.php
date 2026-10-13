@@ -61,7 +61,7 @@ class SubscriptionWebUrlMonitor
 
     private function checkSslWithCurl(SubscriptionWebUrl $webUrl, string $host, int $port): bool
     {
-        if (! function_exists('curl_init') || ! defined('CURLINFO_CERTINFO') || ! defined('CURLOPT_CERTINFO')) {
+        if (! function_exists('curl_init') || ! defined('CURLINFO_CERTINFO') || ! defined('CURLOPT_CERTINFO') || ! function_exists('openssl_x509_parse')) {
             return false;
         }
 
@@ -89,23 +89,41 @@ class SubscriptionWebUrlMonitor
             return false;
         }
 
-        // CURLINFO_CERTINFO returns certificate fields as an associative array,
-        // e.g. ['Subject' => 'CN = example.com', 'Issuer' => '...'].
-        // Do not parse the field values as if they were "Key: Value" lines.
-        $certificate = $certificates[0];
-
-        $validFrom = $this->parseCertificateDate($certificate['Start date'] ?? null);
-        $expiresAt = $this->parseCertificateDate($certificate['Expire date'] ?? null);
-        $subject = $this->extractDistinguishedNameValue($certificate['Subject'] ?? null, 'CN');
-        $provider = $this->extractDistinguishedNameValue($certificate['Issuer'] ?? null, 'O')
-            ?? $this->extractDistinguishedNameValue($certificate['Issuer'] ?? null, 'CN');
-        $issuer = $this->extractDistinguishedNameValue($certificate['Issuer'] ?? null, 'CN');
-
-        if ($validFrom === null && $expiresAt === null && $subject === null && $issuer === null) {
+        // CURLINFO_CERTINFO provides the leaf certificate as PEM in the
+        // `Cert` field. Parse that certificate directly so the values come
+        // from the same X.509 structure used by the stream fallback.
+        $certificatePem = $certificates[0]['Cert'] ?? null;
+        if (! is_string($certificatePem) || trim($certificatePem) === '') {
             return false;
         }
 
-        $this->applyCertificateData($webUrl, $validFrom, $expiresAt, $provider, $subject, $issuer, $host);
+        $parsed = openssl_x509_parse($certificatePem);
+        if ($parsed === false) {
+            return false;
+        }
+
+        $validFrom = isset($parsed['validFrom_time_t'])
+            ? Carbon::createFromTimestamp((int) $parsed['validFrom_time_t'])
+            : null;
+        $expiresAt = isset($parsed['validTo_time_t'])
+            ? Carbon::createFromTimestamp((int) $parsed['validTo_time_t'])
+            : null;
+
+        $hostnameMatches = function_exists('openssl_x509_check_host')
+            ? openssl_x509_check_host($certificatePem, $host)
+            : true;
+
+        $this->applyCertificateData(
+            $webUrl,
+            $validFrom,
+            $expiresAt,
+            $parsed['issuer']['O'] ?? $parsed['issuer']['CN'] ?? null,
+            $parsed['subject']['CN'] ?? null,
+            $parsed['issuer']['CN'] ?? null,
+            $host,
+            $hostnameMatches,
+        );
+
         return true;
     }
 
