@@ -41,7 +41,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                     'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev2' })",
                 ]),
             Stat::make('Sev 3', (string) ($counts['Sev3'] ?? 0))
-                ->color('warning')
+                ->color('info')
                 ->extraAttributes([
                     'role' => 'button',
                     'wire:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev3' })",
