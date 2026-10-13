@@ -55,144 +55,82 @@ class SubscriptionWebUrlMonitor
             return;
         }
 
-        if (! function_exists('curl_init') || ! defined('CURLINFO_CERTINFO')) {
-            $this->clearSslData($webUrl, false);
-
-            return;
-        }
-
-        $curl = curl_init($webUrl->url);
-
-        if ($curl === false) {
-            $this->clearSslData($webUrl, false);
-
-            return;
-        }
-
-        curl_setopt_array($curl, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_NOBODY => true,
-            CURLOPT_FOLLOWLOCATION => true,
-            CURLOPT_MAXREDIRS => 5,
-            CURLOPT_CONNECTTIMEOUT => 5,
-            CURLOPT_TIMEOUT => 10,
-            CURLOPT_USERAGENT => 'CCOD Web URL Monitor/1.0',
-            CURLOPT_SSL_VERIFYPEER => false,
-            CURLOPT_SSL_VERIFYHOST => 0,
-            CURLOPT_CERTINFO => true,
+        $host = $parts['host'];
+        $port = (int) ($parts['port'] ?? 443);
+        $context = stream_context_create([
+            'ssl' => [
+                'capture_peer_cert' => true,
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'peer_name' => $host,
+                'SNI_enabled' => true,
+                'disable_compression' => true,
+            ],
         ]);
 
-        curl_exec($curl);
-        $certificates = curl_getinfo($curl, CURLINFO_CERTINFO);
-        curl_close($curl);
+        $socket = @stream_socket_client(
+            "ssl://{$host}:{$port}",
+            $errno,
+            $error,
+            10,
+            STREAM_CLIENT_CONNECT,
+            $context,
+        );
 
-        $certificate = is_array($certificates) && isset($certificates[0])
-            ? $certificates[0]
+        if ($socket === false) {
+            $this->clearSslData($webUrl, false);
+
+            return;
+        }
+
+        $options = stream_context_get_options($socket);
+        $params = stream_context_get_params($socket);
+        $certificate = $options['ssl']['peer_certificate']
+            ?? $params['options']['ssl']['peer_certificate']
+            ?? null;
+
+        if ($certificate === null) {
+            fclose($socket);
+            $this->clearSslData($webUrl, false);
+
+            return;
+        }
+
+        $parsed = openssl_x509_parse($certificate);
+        fclose($socket);
+
+        if ($parsed === false) {
+            $this->clearSslData($webUrl, false);
+
+            return;
+        }
+
+        $validFromTimestamp = $parsed['validFrom_time_t'] ?? null;
+        $expiresTimestamp = $parsed['validTo_time_t'] ?? null;
+
+        $validFrom = $validFromTimestamp !== null
+            ? now()->createFromTimestamp((int) $validFromTimestamp)
             : null;
-
-        if (! is_array($certificate)) {
-            $this->clearSslData($webUrl, false);
-
-            return;
-        }
-
-        $certificateData = $this->parseCertificateInfo($certificate);
-
-        if ($certificateData === null) {
-            $this->clearSslData($webUrl, false);
-
-            return;
-        }
-
-        $validFrom = $certificateData['valid_from'];
-        $expiresAt = $certificateData['expires_at'];
+        $expiresAt = $expiresTimestamp !== null
+            ? now()->createFromTimestamp((int) $expiresTimestamp)
+            : null;
 
         $withinValidityPeriod = $validFrom !== null
             && $expiresAt !== null
             && now()->betweenIncluded($validFrom, $expiresAt);
+        $hostnameMatches = function_exists('openssl_x509_check_host')
+            ? openssl_x509_check_host($certificate, $host)
+            : true;
 
-        $webUrl->ssl_status = $withinValidityPeriod;
-        $webUrl->ssl_provider = $certificateData['provider'];
-        $webUrl->ssl_subject = $certificateData['subject'];
-        $webUrl->ssl_issuer = $certificateData['issuer'];
+        $webUrl->ssl_status = $withinValidityPeriod && $hostnameMatches;
+        $webUrl->ssl_provider = $parsed['issuer']['O'] ?? $parsed['issuer']['CN'] ?? null;
+        $webUrl->ssl_subject = $parsed['subject']['CN'] ?? null;
+        $webUrl->ssl_issuer = $parsed['issuer']['CN'] ?? null;
         $webUrl->ssl_valid_from = $validFrom;
         $webUrl->ssl_expires_at = $expiresAt;
         $webUrl->ssl_days_remaining = $expiresAt === null
             ? null
             : (int) now()->diffInDays($expiresAt, false);
-    }
-
-    /**
-     * @param array<int, string> $certificate
-     * @return array<string, mixed>|null
-     */
-    private function parseCertificateInfo(array $certificate): ?array
-    {
-        $values = [];
-
-        foreach ($certificate as $line) {
-            if (! is_string($line)) {
-                continue;
-            }
-
-            $separator = strpos($line, ':');
-
-            if ($separator === false) {
-                continue;
-            }
-
-            $key = trim(substr($line, 0, $separator));
-            $value = trim(substr($line, $separator + 1));
-
-            if ($key !== '') {
-                $values[$key] = $value;
-            }
-        }
-
-        $validFrom = $this->parseCertificateDate($values['Start date'] ?? null);
-        $expiresAt = $this->parseCertificateDate($values['Expire date'] ?? null);
-        $subject = $this->extractDistinguishedNameValue($values['Subject'] ?? null, 'CN');
-        $provider = $this->extractDistinguishedNameValue($values['Issuer'] ?? null, 'O')
-            ?? $this->extractDistinguishedNameValue($values['Issuer'] ?? null, 'CN');
-        $issuer = $this->extractDistinguishedNameValue($values['Issuer'] ?? null, 'CN');
-
-        if ($validFrom === null && $expiresAt === null && $subject === null && $issuer === null) {
-            return null;
-        }
-
-        return [
-            'valid_from' => $validFrom,
-            'expires_at' => $expiresAt,
-            'subject' => $subject,
-            'provider' => $provider,
-            'issuer' => $issuer,
-        ];
-    }
-
-    private function parseCertificateDate(?string $value): mixed
-    {
-        if ($value === null || trim($value) === '') {
-            return null;
-        }
-
-        try {
-            return now()->parse($value);
-        } catch (Throwable) {
-            return null;
-        }
-    }
-
-    private function extractDistinguishedNameValue(?string $value, string $key): ?string
-    {
-        if ($value === null || $value === '') {
-            return null;
-        }
-
-        if (preg_match('/(?:^|,\s*)'.preg_quote($key, '/').'\s*=\s*(?:"([^"]+)"|([^,]+))/i', $value, $matches)) {
-            return trim($matches[1] !== '' ? $matches[1] : $matches[2]);
-        }
-
-        return null;
     }
 
     private function clearSslData(SubscriptionWebUrl $webUrl, ?bool $status = null): void
