@@ -2,12 +2,14 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Livewire\Attributes\On;
 
 class AzureAlertsRelationManager extends RelationManager
 {
@@ -16,6 +18,14 @@ class AzureAlertsRelationManager extends RelationManager
     protected static ?string $title = 'Alerts';
 
     protected static bool $isLazy = true;
+
+    #[On('filter-alerts-by-severity')]
+    public function filterAlertsBySeverity(?string $severity = null): void
+    {
+        $this->tableFilters['severity']['value'] = $severity;
+
+        $this->updatedTableFilters();
+    }
 
     public function table(Table $table): Table
     {
@@ -49,10 +59,26 @@ class AzureAlertsRelationManager extends RelationManager
                     ->label('Affected Resource')
                     ->searchable()
                     ->limit(45),
+                TextColumn::make('target_resource_type')
+                    ->label('Target Resource Type')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('signal_type')
                     ->label('Signal Type')
                     ->searchable()
                     ->sortable(),
+                TextColumn::make('monitor_service')
+                    ->label('Monitor Service')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('target_resource_group')
+                    ->label('Resource Group')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('suppression_status')
+                    ->label('Suppression')
+                    ->badge()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('alert_condition')
                     ->label('Condition')
                     ->badge()
@@ -112,6 +138,8 @@ class AzureAlertsRelationManager extends RelationManager
             ->defaultSort('last_modified_time', 'desc')
             ->striped(false)
             ->recordActions([])
-            ->toolbarActions([]);
+            ->toolbarActions([
+                XlsxExportAction::make(),
+            ]);
     }
 }
