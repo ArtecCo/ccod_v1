@@ -110,36 +110,21 @@
         return true;
     };
 
-    let observer = null;
-    let installTimer = null;
-
-    const scheduleInstall = () => {
-        if (installTimer !== null) {
-            return;
-        }
-
-        installTimer = window.setTimeout(() => {
-            installTimer = null;
-            install();
-        }, 50);
-    };
-
     const start = () => {
         install();
 
-        if (!observer) {
-            observer = new MutationObserver(() => {
-                scheduleInstall();
-                updateButton();
-            });
+        // Do not observe aria-expanded changes. Filament uses the same
+        // attribute for the native collapsed-sidebar subscription flyout.
+        // Re-running install() from a MutationObserver would immediately
+        // close that flyout again when it opens.
+        const observer = new MutationObserver(() => {
+            updateButton();
+        });
 
-            observer.observe(document.body, {
-                childList: true,
-                subtree: true,
-                attributes: true,
-                attributeFilter: ['aria-expanded'],
-            });
-        }
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true,
+        });
 
         let attempts = 0;
         const retry = () => {
@@ -163,11 +148,6 @@
 </script>
 
 <style>
-    /* Keep the control as a compact overlay at the top-right of the sidebar navigation. */
-    .fi-sidebar-nav {
-        position: relative !important;
-    }
-
     .ccod-sidebar-collapse-all {
         position: absolute !important;
         top: 0.35rem !important;
