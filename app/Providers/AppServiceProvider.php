@@ -5,8 +5,10 @@ namespace App\Providers;
 use App\Filament\Plugins\ShipLogPlugin;
 use App\Models\Developer;
 use App\Models\Documentation;
+use App\Models\SubscriptionWebUrl;
 use App\Policies\ActivityPolicy;
 use App\Policies\DocumentationPolicy;
+use App\Policies\SubscriptionWebUrlPolicy;
 use App\Services\AuditLogger;
 use App\Services\LogSettings;
 use App\Support\FilamentStyling;
@@ -94,6 +96,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Gate::policy(Documentation::class, DocumentationPolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
+        Gate::policy(SubscriptionWebUrl::class, SubscriptionWebUrlPolicy::class);
 
         Gate::define('updater.manage', function (mixed $user): bool {
             return $user instanceof Developer
@@ -220,32 +223,33 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(UpdateSucceeded::class, function (UpdateSucceeded $event): void {
             app(AuditLogger::class)->log(
                 event: 'Update Succeeded',
-                description: 'The application update completed successfully.',
+                description: 'The updater completed an application or dependency update.',
+                properties: ['package_count' => count($event->packages ?? [])],
                 logName: 'Maintenance',
-                tags: ['updater', 'application_update', 'success'],
-                category: LogSettings::UPDATE_SUCCEEDED,
+                tags: ['updater', 'update_succeeded'],
+                category: LogSettings::UPDATES_SUCCEEDED,
             );
         });
 
         Event::listen(UpdateFailed::class, function (UpdateFailed $event): void {
             app(AuditLogger::class)->log(
                 event: 'Update Failed',
-                description: 'The application update failed.',
+                description: 'The updater failed to complete an application or dependency update.',
                 success: false,
-                failureReason: $event->exception->getMessage(),
+                failureReason: $event->exception?->getMessage(),
                 logName: 'Maintenance',
-                tags: ['updater', 'application_update', 'failure'],
-                category: LogSettings::UPDATE_FAILED,
+                tags: ['updater', 'update_failed'],
+                category: LogSettings::UPDATES_FAILED,
             );
         });
 
         Event::listen(PackagesUpdated::class, function (PackagesUpdated $event): void {
             app(AuditLogger::class)->log(
                 event: 'Packages Updated',
-                description: sprintf('Composer package update completed%s.', $event->package ? ' for '.$event->package : ''),
-                properties: ['package' => $event->package],
+                description: 'The updater completed a package update operation.',
+                properties: ['package_count' => count($event->packages ?? [])],
                 logName: 'Maintenance',
-                tags: ['updater', 'packages', 'success'],
+                tags: ['updater', 'packages_updated'],
                 category: LogSettings::PACKAGES_UPDATED,
             );
         });
@@ -253,12 +257,11 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(PackagesUpdateFailed::class, function (PackagesUpdateFailed $event): void {
             app(AuditLogger::class)->log(
                 event: 'Package Update Failed',
-                description: sprintf('Composer package update failed%s.', $event->package ? ' for '.$event->package : ''),
+                description: 'The updater failed to complete a package update operation.',
                 success: false,
-                failureReason: $event->exception->getMessage(),
-                properties: ['package' => $event->package],
+                failureReason: $event->exception?->getMessage(),
                 logName: 'Maintenance',
-                tags: ['updater', 'packages', 'failure'],
+                tags: ['updater', 'packages_update_failed'],
                 category: LogSettings::PACKAGES_UPDATE_FAILED,
             );
         });
