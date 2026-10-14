@@ -69,8 +69,6 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-                        Tab::make('Security')
-                            ->schema([]),
 
                         Tab::make('Alerts')
                             ->schema([
@@ -85,6 +83,9 @@ class ViewAzureSubscription extends ViewRecord
                                 ])->columnSpanFull(),
                             ])
                             ->columns(1),
+
+                            Tab::make('Security')
+                            ->schema([]),
 
                         Tab::make('Tickets')
                             ->schema([]),
