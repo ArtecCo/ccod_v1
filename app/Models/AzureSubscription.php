@@ -43,16 +43,24 @@ class AzureSubscription extends Model
         return $this->belongsTo(Application::class);
     }
 
-    public function teams(): BelongsToMany
+    public function businessUnits(): BelongsToMany
     {
         return $this->belongsToMany(
-            Team::class,
+            BusinessUnit::class,
             'team_subscription',
             'subscription_id',
-            'team_id',
+            'business_unit_id',
             'subscription_id',
             'id',
         )->withTimestamps();
+    }
+
+    /**
+     * @deprecated Use businessUnits(). Kept temporarily for compatibility.
+     */
+    public function teams(): BelongsToMany
+    {
+        return $this->businessUnits();
     }
 
     public function documentation(): HasOne
