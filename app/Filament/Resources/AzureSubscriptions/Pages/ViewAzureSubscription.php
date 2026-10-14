@@ -50,9 +50,6 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-                        Tab::make('Security')
-                            ->schema([]),
-
                         Tab::make('Cost')
                             ->schema([
                                 Livewire::make(SubscriptionCostSummary::class, [
@@ -72,23 +69,7 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-                        Tab::make('Resources')
-                            ->schema([
-                                $this->getRelationManagersContentComponent()
-                                    ->columnSpanFull(),
-                            ])
-                            ->columns(1),
-
-                        Tab::make('Web URLs')
-                            ->schema([
-                                Livewire::make(SubscriptionWebUrlsRelationManager::class, [
-                                    'ownerRecord' => $this->record,
-                                    'pageClass' => static::class,
-                                ])->columnSpanFull(),
-                            ])
-                            ->columns(1),
-
-                        Tab::make('Tickets')
+                        Tab::make('Security')
                             ->schema([]),
 
                         Tab::make('Alerts')
@@ -102,6 +83,25 @@ class ViewAzureSubscription extends ViewRecord
                                     'ownerRecord' => $this->record,
                                     'pageClass' => static::class,
                                 ])->columnSpanFull(),
+                            ])
+                            ->columns(1),
+
+                        Tab::make('Tickets')
+                            ->schema([]),
+
+                        Tab::make('Web URLs')
+                            ->schema([
+                                Livewire::make(SubscriptionWebUrlsRelationManager::class, [
+                                    'ownerRecord' => $this->record,
+                                    'pageClass' => static::class,
+                                ])->columnSpanFull(),
+                            ])
+                            ->columns(1),
+
+                        Tab::make('Resources')
+                            ->schema([
+                                $this->getRelationManagersContentComponent()
+                                    ->columnSpanFull(),
                             ])
                             ->columns(1),
                     ])
