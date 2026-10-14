@@ -35,8 +35,9 @@ class UserForm
                         ->required(fn (string $operation): bool => $operation === 'create')
                         ->dehydrated(fn (?string $state): bool => filled($state))
                         ->minLength(12),
-                    Select::make('teams')
-                        ->relationship('teams', 'name')
+                    Select::make('businessUnits')
+                        ->relationship('businessUnits', 'name')
+                        ->label('Business Units')
                         ->multiple()
                         ->searchable()
                         ->preload()
