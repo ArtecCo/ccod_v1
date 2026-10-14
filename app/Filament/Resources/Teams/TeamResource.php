@@ -10,7 +10,7 @@ use App\Filament\Resources\Teams\Pages\ViewTeam;
 use App\Filament\Resources\Teams\Schemas\TeamForm;
 use App\Filament\Resources\Teams\Schemas\TeamInfolist;
 use App\Filament\Resources\Teams\Tables\TeamsTable;
-use App\Models\Team;
+use App\Models\BusinessUnit;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -19,11 +19,11 @@ use Filament\Tables\Table;
 
 class TeamResource extends Resource
 {
-    protected static ?string $model = Team::class;
+    protected static ?string $model = BusinessUnit::class;
 
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedUserGroup;
 
-    protected static ?string $navigationLabel = 'Teams';
+    protected static ?string $navigationLabel = 'Business Units';
 
     protected static string|\UnitEnum|null $navigationGroup = 'Administration';
 
