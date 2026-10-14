@@ -8,8 +8,8 @@ use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
 use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
+use App\Models\BusinessUnit;
 use App\Models\Developer;
-use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
 use App\Models\UserSubscriptionAccessOverride;
@@ -27,7 +27,7 @@ class AccessRequestService
     public function create(
         User $user,
         AccessRequestTargetType $targetType,
-        Team|AzureSubscription $target,
+        BusinessUnit|AzureSubscription $target,
         UserRole $requestedRole,
         string $reason,
         AccessRequestDuration $duration,
@@ -59,7 +59,7 @@ class AccessRequestService
             ->where('status', AccessRequestStatus::Pending->value)
             ->when(
                 $targetType === AccessRequestTargetType::Team,
-                fn ($query) => $query->where('team_id', $target->getKey()),
+                fn ($query) => $query->where('business_unit_id', $target->getKey()),
                 fn ($query) => $query->where('subscription_id', $target->getKey()),
             )
             ->exists();
@@ -71,9 +71,9 @@ class AccessRequestService
         $request = AccessRequest::create([
             'user_id' => $user->getKey(),
             'target_type' => $targetType,
-            'team_id' => $targetType === AccessRequestTargetType::Team ? $target->getKey() : null,
+            'business_unit_id' => $targetType === AccessRequestTargetType::Team ? $target->getKey() : null,
             'subscription_id' => $targetType === AccessRequestTargetType::Subscription ? $target->getKey() : null,
-            'target_name' => $target instanceof Team ? $target->name : $target->display_name,
+            'target_name' => $target instanceof BusinessUnit ? $target->name : $target->display_name,
             'requested_role' => $requestedRole->value,
             'reason' => $reason,
             'duration' => $duration,
@@ -162,7 +162,7 @@ class AccessRequestService
         $grant = UserAccessGrant::create([
             'user_id' => $request->user_id,
             'target_type' => $request->target_type,
-            'team_id' => $request->team_id,
+            'business_unit_id' => $request->business_unit_id,
             'subscription_id' => $request->subscription_id,
             'target_name' => $request->target_name,
             'role' => $request->requested_role,
@@ -316,7 +316,7 @@ class AccessRequestService
             properties: [
                 'requested_role' => $request->requested_role,
                 'target_type' => $request->target_type->value,
-                'target_id' => $request->team_id ?? $request->subscription_id,
+                'target_id' => $request->business_unit_id ?? $request->subscription_id,
                 'approved_duration' => $duration?->value,
                 'approved_until' => $requestedUntil?->format(DATE_ATOM),
             ],
