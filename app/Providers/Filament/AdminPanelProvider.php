@@ -211,6 +211,9 @@ class AdminPanelProvider extends PanelProvider
                             height: 0px !important;
                             background: transparent !important;
                         }
+                            *{
+                        user-select: none !important;
+                        }   
 
                         .fi-sidebar {
                             box-shadow: inset -1px 0 0 rgba(0, 0, 0, 0.18) !important;
