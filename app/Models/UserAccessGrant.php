@@ -14,7 +14,7 @@ class UserAccessGrant extends Model
     protected $fillable = [
         'user_id',
         'target_type',
-        'team_id',
+        'business_unit_id',
         'subscription_id',
         'target_name',
         'role',
@@ -30,9 +30,17 @@ class UserAccessGrant extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function businessUnit(): BelongsTo
+    {
+        return $this->belongsTo(BusinessUnit::class);
+    }
+
+    /**
+     * @deprecated Use businessUnit(). Kept temporarily for compatibility.
+     */
     public function team(): BelongsTo
     {
-        return $this->belongsTo(Team::class);
+        return $this->businessUnit();
     }
 
     public function subscription(): BelongsTo
