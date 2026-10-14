@@ -30,9 +30,22 @@ class User extends Authenticatable implements FilamentUser
         'remember_token',
     ];
 
+    public function businessUnits(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            BusinessUnit::class,
+            'team_user',
+            'user_id',
+            'business_unit_id',
+        )->withTimestamps();
+    }
+
+    /**
+     * @deprecated Use businessUnits(). Kept temporarily for compatibility.
+     */
     public function teams(): BelongsToMany
     {
-        return $this->belongsToMany(Team::class)->withTimestamps();
+        return $this->businessUnits();
     }
 
     public function accessRequests(): HasMany
