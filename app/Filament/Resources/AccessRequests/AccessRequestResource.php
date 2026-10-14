@@ -53,7 +53,7 @@ class AccessRequestResource extends Resource
         $user = auth()->guard('web')->user();
 
         if ($developer?->is_active === true) {
-            return parent::getEloquentQuery()->with(['user', 'team', 'subscription']);
+            return parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
         }
 
         if (! $user) {
@@ -61,29 +61,29 @@ class AccessRequestResource extends Resource
         }
 
         if ($user->isGlobalOwner()) {
-            return parent::getEloquentQuery()->with(['user', 'team', 'subscription']);
+            return parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
         }
 
-        $query = parent::getEloquentQuery()->with(['user', 'team', 'subscription']);
+        $query = parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
 
         if ($user->roleEnum() !== UserRole::RestrictedOwner) {
             return $query->where('user_id', $user->getKey());
         }
 
-        $subscriptionIds = $user->teams()
+        $subscriptionIds = $user->businessUnits()
             ->with('subscriptions')
             ->get()
-            ->flatMap(fn ($team) => $team->subscriptions->pluck('subscription_id'))
+            ->flatMap(fn ($businessUnit) => $businessUnit->subscriptions->pluck('subscription_id'))
             ->unique()
             ->values();
 
         return $query->where(function (Builder $requestQuery) use ($user, $subscriptionIds): void {
             $requestQuery->where('user_id', $user->getKey());
             $requestQuery->orWhere(function (Builder $approvalQuery) use ($user, $subscriptionIds): void {
-                $approvalQuery->where(function (Builder $teamQuery) use ($user): void {
-                    $teamQuery
+                $approvalQuery->where(function (Builder $businessUnitQuery) use ($user): void {
+                    $businessUnitQuery
                         ->where('target_type', AccessRequestTargetType::Team->value)
-                        ->whereIn('team_id', $user->teams()->select('teams.id'));
+                        ->whereIn('business_unit_id', $user->businessUnits()->select('business_units.id'));
                 });
 
                 if ($subscriptionIds->isNotEmpty()) {
@@ -150,7 +150,7 @@ class AccessRequestResource extends Resource
             ->filters([
                 SelectFilter::make('status')->options(collect(AccessRequestStatus::cases())->mapWithKeys(fn (AccessRequestStatus $status): array => [$status->value => $status->label()])->all()),
                 SelectFilter::make('target_type')->options([
-                    AccessRequestTargetType::Team->value => 'Team',
+                    AccessRequestTargetType::Team->value => 'Business Unit',
                     AccessRequestTargetType::Subscription->value => 'Subscription',
                 ]),
             ])
