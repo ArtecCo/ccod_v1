@@ -3,6 +3,7 @@
     const panelKey = document.documentElement.dataset.filamentPanel
         ?? (window.location.pathname.startsWith('/developer') ? 'developer' : 'admin');
     const storageKey = `ccod-sidebar-groups-${panelKey}`;
+    const scrollStorageKey = `ccod-sidebar-scroll-${panelKey}`;
     const buttonId = `ccod-sidebar-collapse-all-${panelKey}`;
 
     const getGroupButtons = () => Array.from(
@@ -56,11 +57,40 @@
         });
     };
 
+    const restoreSidebarScroll = () => {
+        const nav = document.querySelector('.fi-sidebar-nav');
+
+        if (!nav) {
+            return;
+        }
+
+        const savedScroll = Number.parseInt(localStorage.getItem(scrollStorageKey) ?? '0', 10);
+
+        if (Number.isNaN(savedScroll)) {
+            return;
+        }
+
+        requestAnimationFrame(() => {
+            nav.scrollTop = savedScroll;
+        });
+
+        window.setTimeout(() => {
+            nav.scrollTop = savedScroll;
+        }, 100);
+    };
+
     const install = () => {
         const nav = document.querySelector('.fi-sidebar-nav');
 
         if (!nav) {
             return false;
+        }
+
+        if (!nav.dataset.ccodScrollPersistence) {
+            nav.dataset.ccodScrollPersistence = 'true';
+            nav.addEventListener('scroll', () => {
+                localStorage.setItem(scrollStorageKey, String(nav.scrollTop));
+            }, { passive: true });
         }
 
         let button = getButton();
@@ -106,6 +136,7 @@
         updateButton();
         applySavedState();
         updateButton();
+        restoreSidebarScroll();
 
         return true;
     };
@@ -113,10 +144,11 @@
     const start = () => {
         install();
 
+        // Re-run after Filament navigates between pages and rebuilds the sidebar.
+        document.addEventListener('livewire:navigated', install);
+
         // Do not observe aria-expanded changes. Filament uses the same
         // attribute for the native collapsed-sidebar subscription flyout.
-        // Re-running install() from a MutationObserver would immediately
-        // close that flyout again when it opens.
         const observer = new MutationObserver(() => {
             updateButton();
         });
