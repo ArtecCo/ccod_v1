@@ -6,8 +6,8 @@ use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
 use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
+use App\Models\BusinessUnit;
 use App\Models\Developer;
-use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
 use App\Models\UserSubscriptionAccessOverride;
@@ -15,7 +15,7 @@ use Illuminate\Support\Collection;
 
 class AccessAuthorizationService
 {
-    public function effectiveRole(User $user, AccessRequestTargetType|string $targetType, Team|AzureSubscription|int|string $target): ?UserRole
+    public function effectiveRole(User $user, AccessRequestTargetType|string $targetType, BusinessUnit|AzureSubscription|int|string $target): ?UserRole
     {
         $targetType = $targetType instanceof AccessRequestTargetType
             ? $targetType
@@ -38,14 +38,14 @@ class AccessAuthorizationService
         $roles = collect();
 
         if ($targetType === AccessRequestTargetType::Team) {
-            $team = $target instanceof Team ? $target : Team::query()->findOrFail($target);
+            $businessUnit = $target instanceof BusinessUnit ? $target : BusinessUnit::query()->findOrFail($target);
 
-            if ($user->teams()->whereKey($team->getKey())->exists()) {
+            if ($user->businessUnits()->whereKey($businessUnit->getKey())->exists()) {
                 $roles->push($user->roleEnum());
             }
 
             $roles = $roles->merge(
-                $this->activeGrants($user, $targetType, $team->getKey(), null)->pluck('role')
+                $this->activeGrants($user, $targetType, $businessUnit->getKey(), null)->pluck('role')
                     ->map(fn (string $role): ?UserRole => UserRole::tryFrom($role))
                     ->filter(),
             );
@@ -54,15 +54,15 @@ class AccessAuthorizationService
                 ? $target
                 : AzureSubscription::query()->whereKey($target)->firstOrFail();
 
-            if ($user->teams()->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))->exists()) {
+            if ($user->businessUnits()->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))->exists()) {
                 $roles->push($user->roleEnum());
             }
 
-            $teamIds = $subscription->teams()->pluck('teams.id');
+            $businessUnitIds = $subscription->businessUnits()->pluck('business_units.id');
 
             $roles = $roles->merge(
                 $this->activeGrants($user, AccessRequestTargetType::Team, null, null)
-                    ->whereIn('team_id', $teamIds)
+                    ->whereIn('business_unit_id', $businessUnitIds)
                     ->pluck('role')
                     ->map(fn (string $role): ?UserRole => UserRole::tryFrom($role))
                     ->filter(),
@@ -95,19 +95,19 @@ class AccessAuthorizationService
 
         $subscriptions = collect();
 
-        $teamSubscriptions = $user->teams()
+        $businessUnitSubscriptions = $user->businessUnits()
             ->with('subscriptions')
             ->get()
-            ->flatMap(fn (Team $team) => $team->subscriptions->map(fn (AzureSubscription $subscription) => [
+            ->flatMap(fn (BusinessUnit $businessUnit) => $businessUnit->subscriptions->map(fn (AzureSubscription $subscription) => [
                 'subscription' => $subscription,
-                'source' => 'Team: '.$team->name,
+                'source' => 'Business Unit: '.$businessUnit->name,
             ]));
 
-        $teamGrants = $this->activeGrants($user, AccessRequestTargetType::Team, null, null)
-            ->load('team.subscriptions')
-            ->flatMap(fn (UserAccessGrant $grant) => $grant->team?->subscriptions->map(fn (AzureSubscription $subscription) => [
+        $businessUnitGrants = $this->activeGrants($user, AccessRequestTargetType::Team, null, null)
+            ->load('businessUnit.subscriptions')
+            ->flatMap(fn (UserAccessGrant $grant) => $grant->businessUnit?->subscriptions->map(fn (AzureSubscription $subscription) => [
                 'subscription' => $subscription,
-                'source' => 'Team grant: '.$grant->team->name,
+                'source' => 'Business Unit grant: '.$grant->businessUnit->name,
             ]) ?? collect());
 
         $directGrants = $this->activeGrants($user, AccessRequestTargetType::Subscription, null, null)
@@ -118,7 +118,7 @@ class AccessAuthorizationService
                 'source' => 'Direct grant',
             ]);
 
-        foreach ($teamSubscriptions->concat($teamGrants)->concat($directGrants) as $entry) {
+        foreach ($businessUnitSubscriptions->concat($businessUnitGrants)->concat($directGrants) as $entry) {
             $subscription = $entry['subscription'];
             $id = $subscription->getKey();
 
@@ -144,7 +144,7 @@ class AccessAuthorizationService
         return $subscriptions->sortBy('display_name')->values();
     }
 
-    public function canRequestRole(User $user, AccessRequestTargetType|string $targetType, Team|AzureSubscription|int|string $target, UserRole $requestedRole): bool
+    public function canRequestRole(User $user, AccessRequestTargetType|string $targetType, BusinessUnit|AzureSubscription|int|string $target, UserRole $requestedRole): bool
     {
         if ($user->isGlobal()) {
             return false;
@@ -170,10 +170,10 @@ class AccessAuthorizationService
         }
 
         if ($request->target_type === AccessRequestTargetType::Team) {
-            return $approver->teams()->whereKey($request->team_id)->exists();
+            return $approver->businessUnits()->whereKey($request->business_unit_id)->exists();
         }
 
-        return $approver->teams()
+        return $approver->businessUnits()
             ->whereHas('subscriptions', fn ($query) => $query->whereKey($request->subscription_id))
             ->exists();
     }
@@ -192,7 +192,7 @@ class AccessAuthorizationService
             return false;
         }
 
-        return $actor->teams()
+        return $actor->businessUnits()
             ->whereHas('subscriptions', fn ($query) => $query->whereKey($subscription->getKey()))
             ->exists();
     }
@@ -215,23 +215,23 @@ class AccessAuthorizationService
                 $query->where('role', UserRole::GlobalOwner->value);
 
                 if ($request->target_type === AccessRequestTargetType::Team) {
-                    $query->orWhere(function ($teamOwnerQuery) use ($request): void {
-                        $teamOwnerQuery
+                    $query->orWhere(function ($ownerQuery) use ($request): void {
+                        $ownerQuery
                             ->where('role', UserRole::RestrictedOwner->value)
-                            ->whereHas('teams', fn ($teams) => $teams->whereKey($request->team_id));
+                            ->whereHas('businessUnits', fn ($businessUnits) => $businessUnits->whereKey($request->business_unit_id));
                     });
                 } else {
-                    $teamIds = AzureSubscription::query()
+                    $businessUnitIds = AzureSubscription::query()
                         ->whereKey($request->subscription_id)
-                        ->first()?->teams()
-                        ->pluck('teams.id')
+                        ->first()?->businessUnits()
+                        ->pluck('business_units.id')
                         ->all() ?? [];
 
-                    if ($teamIds !== []) {
-                        $query->orWhere(function ($teamOwnerQuery) use ($teamIds): void {
-                            $teamOwnerQuery
+                    if ($businessUnitIds !== []) {
+                        $query->orWhere(function ($ownerQuery) use ($businessUnitIds): void {
+                            $ownerQuery
                                 ->where('role', UserRole::RestrictedOwner->value)
-                                ->whereHas('teams', fn ($teams) => $teams->whereIn('teams.id', $teamIds));
+                                ->whereHas('businessUnits', fn ($businessUnits) => $businessUnits->whereIn('business_units.id', $businessUnitIds));
                         });
                     }
                 }
@@ -260,7 +260,7 @@ class AccessAuthorizationService
             ->first();
     }
 
-    private function activeGrants(User $user, AccessRequestTargetType $targetType, int|string|null $teamId, ?string $subscriptionId): Collection
+    private function activeGrants(User $user, AccessRequestTargetType $targetType, int|string|null $businessUnitId, ?string $subscriptionId): Collection
     {
         $query = UserAccessGrant::query()
             ->where('user_id', $user->getKey())
@@ -270,8 +270,8 @@ class AccessAuthorizationService
                 $query->whereNull('expires_at')->orWhere('expires_at', '>', now());
             });
 
-        if ($teamId !== null) {
-            $query->where('team_id', $teamId);
+        if ($businessUnitId !== null) {
+            $query->where('business_unit_id', $businessUnitId);
         }
 
         if ($subscriptionId !== null) {
