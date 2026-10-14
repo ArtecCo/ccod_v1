@@ -6,7 +6,7 @@ use App\Enums\AccessRequestTargetType;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
-use App\Models\Team;
+use App\Models\BusinessUnit;
 use App\Models\User;
 use App\Services\AccessRequestService;
 use Filament\Resources\Pages\CreateRecord;
@@ -20,9 +20,9 @@ class CreateAccessRequest extends CreateRecord
     {
         $user = auth()->guard('web')->user();
 
-        /** @var Team|AzureSubscription $target */
+        /** @var BusinessUnit|AzureSubscription $target */
         $target = $data['target_type'] === AccessRequestTargetType::Team->value
-            ? Team::query()->findOrFail($data['team_id'])
+            ? BusinessUnit::query()->findOrFail($data['business_unit_id'])
             : AzureSubscription::query()->whereKey($data['subscription_id'])->firstOrFail();
 
         return app(AccessRequestService::class)->create(
