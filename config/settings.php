@@ -2,11 +2,13 @@
 
 use App\Settings\MaintenanceSettings;
 use App\Settings\StylingSettings;
+use App\Settings\TabAccessSettings;
 
 return [
     'settings' => [
         StylingSettings::class,
         MaintenanceSettings::class,
+        TabAccessSettings::class,
     ],
 
     'setting_class_path' => app_path('Settings'),
