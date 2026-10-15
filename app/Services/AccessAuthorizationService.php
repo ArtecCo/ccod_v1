@@ -64,6 +64,13 @@ class AccessAuthorizationService
             ?->role;
     }
 
+    public function hasAnyResourceAccess(User $user): bool
+    {
+        return $this->isSuperAdmin($user) || $this->activeAssignments($user)->contains(
+            fn (UserRoleAssignment $assignment): bool => $assignment->resourceAccess !== null
+        );
+    }
+
     public function hasResourceAccess(User $user, BusinessUnit|Project|AzureSubscription $target): bool
     {
         return $this->isSuperAdmin($user) || $this->activeAssignments($user)->contains(
