@@ -12,7 +12,6 @@ class ProjectsTable
         return $table->columns([
             TextColumn::make('name')->searchable()->sortable(),
             TextColumn::make('businessUnit.name')->label('Business Unit')->searchable()->sortable(),
-            TextColumn::make('is_active')->label('Status')->badge()->formatStateUsing(fn (bool $state): string => $state ? 'Active' : 'Inactive'),
             TextColumn::make('created_at')->dateTime()->sortable(),
         ]);
     }
