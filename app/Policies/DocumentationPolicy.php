@@ -2,47 +2,47 @@
 
 namespace App\Policies;
 
-use App\Enums\UserRole;
 use App\Models\Documentation;
 use App\Models\User;
+use App\Services\AccessAuthorizationService;
 
 class DocumentationPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->is_active;
+        return $user->is_active === true;
     }
 
     public function view(User $user, Documentation $documentation): bool
     {
-        return $user->is_active;
+        return $user->is_active === true;
     }
 
     public function create(User $user): bool
     {
-        return $user->is_active && in_array($user->roleEnum(), [
-            UserRole::GlobalOwner,
-            UserRole::GlobalContributor,
-        ], true);
+        return $user->is_active === true
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'documentation.create');
     }
 
     public function update(User $user, Documentation $documentation): bool
     {
-        return $this->create($user);
+        return $user->is_active === true
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'documentation.edit');
     }
 
     public function delete(User $user, Documentation $documentation): bool
     {
-        return $this->create($user);
+        return $user->is_active === true
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'documentation.delete');
     }
 
     public function restore(User $user, Documentation $documentation): bool
     {
-        return $this->create($user);
+        return $this->delete($user, $documentation);
     }
 
     public function forceDelete(User $user, Documentation $documentation): bool
     {
-        return $this->create($user);
+        return $this->delete($user, $documentation);
     }
 }
