@@ -38,7 +38,7 @@ class ViewAzureSubscription extends ViewRecord
                 Tabs::make('Subscription Navigation')
                     ->tabs([
                         $this->makeTab('Overview', 'subscriptions.view')
-                            ->schema([
+                            ->schema(fn (): array => $this->tabContent('subscriptions.view', [
                                 Section::make('Subscription Details')
                                     ->schema([
                                         $this->getInfolistContentComponent()
@@ -50,11 +50,11 @@ class ViewAzureSubscription extends ViewRecord
                                     'record' => $this->record,
                                 ])
                                     ->columnSpanFull(),
-                            ])
+                            ]))
                             ->columns(1),
 
                         $this->makeTab('Cost', 'cost.view')
-                            ->schema([
+                            ->schema(fn (): array => $this->tabContent('cost.view', [
                                 Livewire::make(SubscriptionCostSummary::class, [
                                     'record' => $this->record,
                                 ])
@@ -69,11 +69,11 @@ class ViewAzureSubscription extends ViewRecord
                                     'record' => $this->record,
                                 ])
                                     ->columnSpanFull(),
-                            ])
+                            ]))
                             ->columns(1),
 
                         $this->makeTab('Alerts', 'alerts.view')
-                            ->schema([
+                            ->schema(fn (): array => $this->tabContent('alerts.view', [
                                 Livewire::make(SubscriptionAlertSeverityOverview::class, [
                                     'record' => $this->record,
                                 ])
@@ -83,29 +83,29 @@ class ViewAzureSubscription extends ViewRecord
                                     'ownerRecord' => $this->record,
                                     'pageClass' => static::class,
                                 ])->columnSpanFull(),
-                            ])
+                            ]))
                             ->columns(1),
 
                         $this->makeTab('Security', 'security.view')
-                            ->schema([]),
+                            ->schema(fn (): array => $this->tabContent('security.view', [])),
 
                         $this->makeTab('Tickets', 'tickets.view')
-                            ->schema([]),
+                            ->schema(fn (): array => $this->tabContent('tickets.view', [])),
 
                         $this->makeTab('Web URLs', 'urls.view')
-                            ->schema([
+                            ->schema(fn (): array => $this->tabContent('urls.view', [
                                 Livewire::make(SubscriptionWebUrlsRelationManager::class, [
                                     'ownerRecord' => $this->record,
                                     'pageClass' => static::class,
                                 ])->columnSpanFull(),
-                            ])
+                            ]))
                             ->columns(1),
 
                         $this->makeTab('Resources', 'resources.view')
-                            ->schema([
+                            ->schema(fn (): array => $this->tabContent('resources.view', [
                                 $this->getRelationManagersContentComponent()
                                     ->columnSpanFull(),
-                            ])
+                            ]))
                             ->columns(1),
                     ])
                     ->persistTabInQueryString()
@@ -119,8 +119,21 @@ class ViewAzureSubscription extends ViewRecord
 
     protected function makeTab(string $label, string $permission): Tab
     {
-        return Tab::make($label)
-            ->visible(fn (): bool => $this->canViewTab($permission));
+        return Tab::make($label);
+    }
+
+    protected function tabContent(string $permission, array $content): array
+    {
+        if ($this->canViewTab($permission)) {
+            return $content;
+        }
+
+        return [
+            Section::make("You don't have access to this")
+                ->description('You do not have permission to view this section of the subscription.')
+                ->icon(Heroicon::OutlinedLockClosed)
+                ->columnSpanFull(),
+        ];
     }
 
     protected function canViewTab(string $permission): bool
