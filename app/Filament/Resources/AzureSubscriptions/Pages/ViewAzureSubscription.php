@@ -9,7 +9,6 @@ use App\Models\Developer;
 use App\Models\SubscriptionWebUrl;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
-use App\Settings\TabAccessSettings;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -120,12 +119,8 @@ class ViewAzureSubscription extends ViewRecord
 
     protected function makeTab(string $label, string $permission): Tab
     {
-        $tab = Tab::make($label)
-            ->visible(fn (): bool => $this->shouldShowTab($permission))
-            ->disabled(fn (): bool => ! $this->canViewTab($permission)
-                && app(TabAccessSettings::class)->restricted_tab_behavior === 'disabled');
-
-        return $tab;
+        return Tab::make($label)
+            ->visible(fn (): bool => $this->canViewTab($permission));
     }
 
     protected function canViewTab(string $permission): bool
@@ -140,12 +135,6 @@ class ViewAzureSubscription extends ViewRecord
 
         return $user instanceof User
             && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $this->record);
-    }
-
-    protected function shouldShowTab(string $permission): bool
-    {
-        return $this->canViewTab($permission)
-            || app(TabAccessSettings::class)->restricted_tab_behavior !== 'hidden';
     }
 
     protected function getHeaderActions(): array
