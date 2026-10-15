@@ -6,6 +6,7 @@ use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestTargetType;
 use App\Enums\UserRole;
 use App\Models\AzureSubscription;
+use App\Models\BusinessUnit;
 use App\Models\Team;
 use App\Models\User;
 use App\Models\UserAccessGrant;
@@ -136,7 +137,7 @@ class Profile extends Page
                 ->description('Effective access combines your base role, team membership and active grants.')
                 ->schema($teams->isEmpty()
                     ? [TextEntry::make('no_teams')->hiddenLabel()->state('You are not currently assigned to a team.')]
-                    : $teams->flatMap(function (Team $team) use ($accessibleSubscriptionIds): array {
+                    : $teams->flatMap(function (BusinessUnit $team) use ($accessibleSubscriptionIds): array {
                         $teamRows = [
                             Grid::make(2)->schema([
                                 TextEntry::make("team_{$team->id}_name")
