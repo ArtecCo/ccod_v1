@@ -14,23 +14,81 @@ class UserInfolist
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('User')->schema([
-                TextEntry::make('name'), TextEntry::make('email'), TextEntry::make('roleAssignments.role.name')->label('Roles')->listWithLineBreaks(),
-                IconEntry::make('is_active')->boolean(), TextEntry::make('businessUnits.name')->label('Business Units')->listWithLineBreaks(), TextEntry::make('created_at')->dateTime()->label('Activation Date'), TextEntry::make('updated_at')->dateTime(),
-            ])->columns(2),
-            Section::make('Resource Access')->schema([
-                RepeatableEntry::make('resourceAccesses')->hiddenLabel()->schema([
-                    TextEntry::make('access_type')->label('Level')->badge(),
-                    TextEntry::make('businessUnit.name')->label('Business Unit')->placeholder('—'),
-                    TextEntry::make('project.name')->label('Project')->placeholder('—'),
-                    TextEntry::make('subscription.display_name')->label('Subscription')->placeholder('—'),
-                ])->columns(4),
-            ])->collapsible(),
-            Section::make('Accessible Subscriptions')->schema([
-                RepeatableEntry::make('accessible_subscriptions')->hiddenLabel()->state(fn($record):array=>app(AccessAuthorizationService::class)->accessibleSubscriptions($record)->map(fn($s):array=>['name'=>$s->display_name,'subscription_id'=>$s->subscription_id,'role'=>$s->access_role?->name??'—','source'=>implode(', ',$s->access_sources??[])])->all())->schema([
-                    TextEntry::make('name')->label('Subscription'), TextEntry::make('subscription_id')->label('Subscription ID')->copyable(), TextEntry::make('role')->badge(), TextEntry::make('source')->label('Access source'),
-                ])->columns(4),
-            ])->collapsible(),
+            Section::make('Account')
+                ->description('Identity, account status and direct Business Unit membership.')
+                ->icon('heroicon-o-user-circle')
+                ->schema([
+                    TextEntry::make('name')
+                        ->label('Name')
+                        ->weight('medium'),
+                    TextEntry::make('email')
+                        ->label('Email')
+                        ->copyable(),
+                    IconEntry::make('is_active')
+                        ->boolean()
+                        ->label('Active'),
+                    TextEntry::make('created_at')
+                        ->dateTime()
+                        ->label('Activation Date'),
+                    TextEntry::make('roleAssignments.role.name')
+                        ->label('Roles')
+                        ->badge()
+                        ->listWithLineBreaks(),
+                    TextEntry::make('businessUnits.name')
+                        ->label('Business Units')
+                        ->listWithLineBreaks()
+                        ->placeholder('None'),
+                ])
+                ->columns(2),
+
+            Section::make('Resource Access')
+                ->description('Where this user can access resources. Business Unit and Project access inherit the resources below them.')
+                ->icon('heroicon-o-squares-2x2')
+                ->schema([
+                    RepeatableEntry::make('resourceAccesses')
+                        ->hiddenLabel()
+                        ->schema([
+                            TextEntry::make('access_type')
+                                ->label('Access level')
+                                ->badge(),
+                            TextEntry::make('businessUnit.name')
+                                ->label('Business Unit')
+                                ->placeholder('—'),
+                            TextEntry::make('project.name')
+                                ->label('Project')
+                                ->placeholder('—'),
+                            TextEntry::make('subscription.display_name')
+                                ->label('Subscription')
+                                ->placeholder('—'),
+                        ])
+                        ->columns(4),
+                ])
+                ->collapsible(),
+
+            Section::make('Accessible Subscriptions')
+                ->description('Effective subscription access after hierarchy inheritance and authorization rules.')
+                ->icon('heroicon-o-cloud')
+                ->schema([
+                    RepeatableEntry::make('accessible_subscriptions')
+                        ->hiddenLabel()
+                        ->state(fn ($record): array => app(AccessAuthorizationService::class)
+                            ->accessibleSubscriptions($record)
+                            ->map(fn ($s): array => [
+                                'name' => $s->display_name,
+                                'subscription_id' => $s->subscription_id,
+                                'role' => $s->access_role?->name ?? '—',
+                                'source' => implode(', ', $s->access_sources ?? []),
+                            ])
+                            ->all())
+                        ->schema([
+                            TextEntry::make('name')->label('Subscription'),
+                            TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
+                            TextEntry::make('role')->label('Role')->badge(),
+                            TextEntry::make('source')->label('Access source'),
+                        ])
+                        ->columns(4),
+                ])
+                ->collapsible(),
         ]);
     }
 }
