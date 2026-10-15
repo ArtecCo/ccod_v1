@@ -20,13 +20,18 @@ class EditUser extends EditRecord
                     return $item->role?->weight ?? 0;
                 })->first();
 
+                $resourceId = match ($access->access_type) {
+                    'business_unit' => $access->business_unit_id,
+                    'project' => $access->project_id,
+                    'subscription' => $access->subscription_id,
+                    default => null,
+                };
+
                 return [
                     'resource_access_id' => $access->id,
                     'role_assignment_id' => $assignment?->id,
                     'access_type' => $access->access_type,
-                    'business_unit_id' => $access->business_unit_id,
-                    'project_id' => $access->project_id,
-                    'subscription_id' => $access->subscription_id,
+                    'resource_id' => $resourceId,
                     'role_id' => $assignment?->role_id,
                     'starts_at' => $assignment?->starts_at,
                     'expires_at' => $assignment?->expires_at,
