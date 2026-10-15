@@ -54,6 +54,7 @@ class RoleForm
             Permission::query()
                 ->where('is_active', true)
                 ->where('category', '!=', 'Administration')
+                ->whereNotIn('slug', ['projects.view', 'applications.view', 'environments.view', 'subscriptions.view'])
                 ->orderBy('category')
                 ->orderBy('name')
                 ->get()
@@ -104,8 +105,10 @@ class RoleForm
                                 return false;
                             }
 
-                            $viewSlug = RolePermissionService::viewPermissionFor($permission->slug);
-                            $viewPermission = $permissionById->firstWhere('slug', $viewSlug);
+                            $viewSlug = str_starts_with($permission->slug, 'projects.') || str_starts_with($permission->slug, 'applications.') || str_starts_with($permission->slug, 'environments.') || str_starts_with($permission->slug, 'subscriptions.')
+                                ? null
+                                : (str_starts_with($permission->slug, 'monitoring.') ? 'alerts.view' : str($permission->slug)->before('.') . '.view');
+                            $viewPermission = $viewSlug === null ? null : $permissionById->firstWhere('slug', $viewSlug);
 
                             return $viewPermission !== null
                                 && (int) $value !== (int) $viewPermission->id
@@ -126,7 +129,11 @@ class RoleForm
                                         return false;
                                     }
 
-                                    $viewSlug = RolePermissionService::viewPermissionFor($permission->slug);
+                                    if (str_starts_with($permission->slug, 'projects.') || str_starts_with($permission->slug, 'applications.') || str_starts_with($permission->slug, 'environments.') || str_starts_with($permission->slug, 'subscriptions.')) {
+                                        return true;
+                                    }
+
+                                    $viewSlug = str_starts_with($permission->slug, 'monitoring.') ? 'alerts.view' : str($permission->slug)->before('.') . '.view';
 
                                     return $permission->slug === $viewSlug
                                         || $selected->contains(function (int $selectedId) use ($permissionById, $viewSlug): bool {
