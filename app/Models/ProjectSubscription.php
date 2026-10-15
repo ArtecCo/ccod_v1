@@ -7,7 +7,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ProjectSubscription extends Model
 {
-    protected $fillable = ['project_id', 'subscription_id', 'environment'];
+    protected $fillable = ['project_id', 'subscription_id', 'environment', 'tags'];
+
+    protected $casts = [
+        'tags' => 'array',
+    ];
 
     public function project(): BelongsTo
     {
