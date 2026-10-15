@@ -29,18 +29,21 @@ return new class extends Migration
                 ]);
             }
 
-            if ($slug === 'documentation.view') {
-                DB::table('permission_role')
-                    ->whereIn('role_id', DB::table('roles')->whereIn('slug', ['viewer', 'operator', 'customer', 'admin', 'super_admin'])->pluck('id'))
-                    ->where('permission_id', $permissionId)
-                    ->insertOrIgnore();
-            }
+            $roleSlugs = $slug === 'documentation.view'
+                ? ['viewer', 'operator', 'customer', 'admin', 'super_admin']
+                : ['admin', 'super_admin'];
 
-            if (in_array($slug, ['documentation.create', 'documentation.edit', 'documentation.delete'], true)) {
-                DB::table('permission_role')
-                    ->whereIn('role_id', DB::table('roles')->whereIn('slug', ['admin', 'super_admin'])->pluck('id'))
-                    ->where('permission_id', $permissionId)
-                    ->insertOrIgnore();
+            $roleIds = DB::table('roles')
+                ->whereIn('slug', $roleSlugs)
+                ->pluck('id');
+
+            $rows = $roleIds->map(fn ($roleId): array => [
+                'role_id' => $roleId,
+                'permission_id' => $permissionId,
+            ])->all();
+
+            if ($rows !== []) {
+                DB::table('permission_role')->insertOrIgnore($rows);
             }
         }
     }
