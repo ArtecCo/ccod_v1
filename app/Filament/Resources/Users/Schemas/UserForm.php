@@ -14,6 +14,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+use Filament\Forms\Components\Repeater\TableColumn;
 
 class UserForm
 {
@@ -68,13 +69,15 @@ class UserForm
                 ->schema([
                     Repeater::make('accessAssignments')
                         ->addActionLabel('Add access')
-                        ->collapsible()
-                        ->itemLabel(fn (array $state): string => match ($state['access_type'] ?? null) {
-                            'business_unit' => 'Business Unit access',
-                            'project' => 'Project access',
-                            'subscription' => 'Subscription access',
-                            default => 'New access',
-                        })
+                        ->table([
+                            TableColumn::make('Access level'),
+                            TableColumn::make('Resource'),
+                            TableColumn::make('Role'),
+                            TableColumn::make('Starts'),
+                            TableColumn::make('Expires'),
+                            TableColumn::make('Actions')->hiddenHeaderLabel(),
+                        ])
+                        ->compact()
                         ->schema([
                             Select::make('access_type')
                                 ->label('Access level')
@@ -85,35 +88,24 @@ class UserForm
                                 ])
                                 ->required()
                                 ->live()
-                                ->afterStateUpdated(function ($state, callable $set): void {
-                                    $set('business_unit_id', null);
-                                    $set('project_id', null);
-                                    $set('subscription_id', null);
-                                }),
-                            Select::make('business_unit_id')
-                                ->label('Business Unit')
-                                ->options(fn (): array => BusinessUnit::query()->orderBy('name')->pluck('name', 'id')->all())
+                                ->afterStateUpdated(fn (callable $set): mixed => $set('resource_id', null)),
+                            Select::make('resource_id')
+                                ->label('Resource')
+                                ->options(function (Get $get): array {
+                                    return match ($get('access_type')) {
+                                        'business_unit' => BusinessUnit::query()->orderBy('name')->pluck('name', 'id')->all(),
+                                        'project' => Project::query()->orderBy('name')->pluck('name', 'id')->all(),
+                                        'subscription' => AzureSubscription::query()
+                                            ->orderBy('display_name')
+                                            ->pluck('display_name', 'subscription_id')
+                                            ->all(),
+                                        default => [],
+                                    };
+                                })
+                                ->required()
                                 ->searchable()
                                 ->preload()
-                                ->visible(fn (Get $get): bool => $get('access_type') === 'business_unit')
-                                ->required(fn (Get $get): bool => $get('access_type') === 'business_unit'),
-                            Select::make('project_id')
-                                ->label('Project')
-                                ->options(fn (): array => Project::query()->orderBy('name')->pluck('name', 'id')->all())
-                                ->searchable()
-                                ->preload()
-                                ->visible(fn (Get $get): bool => $get('access_type') === 'project')
-                                ->required(fn (Get $get): bool => $get('access_type') === 'project'),
-                            Select::make('subscription_id')
-                                ->label('Subscription')
-                                ->options(fn (): array => AzureSubscription::query()
-                                    ->orderBy('display_name')
-                                    ->pluck('display_name', 'subscription_id')
-                                    ->all())
-                                ->searchable()
-                                ->preload()
-                                ->visible(fn (Get $get): bool => $get('access_type') === 'subscription')
-                                ->required(fn (Get $get): bool => $get('access_type') === 'subscription'),
+                                ->live(),
                             Select::make('role_id')
                                 ->label('Role')
                                 ->options(fn (): array => Role::query()
@@ -134,7 +126,6 @@ class UserForm
                             TextInput::make('resource_access_id')->hidden()->dehydrated(),
                             TextInput::make('role_assignment_id')->hidden()->dehydrated(),
                         ])
-                        ->columns(3)
                         ->columnSpanFull(),
                 ]),
         ]);
