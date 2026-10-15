@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Users\Pages;
 
-use App\Enums\AccessRequestTargetType;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
 use App\Models\Developer;
@@ -47,7 +46,7 @@ class ViewUser extends ViewRecord
                 ])
                 ->requiresConfirmation()
                 ->modalHeading('Revoke subscription access')
-                ->modalDescription('The selected subscription access will be revoked for this user. This also overrides access inherited from their team.')
+                ->modalDescription('The selected subscription access will be revoked for this user. This also overrides access inherited through broader access scopes.')
                 ->action(function (array $data): void {
                     $actor = auth()->guard('developers')->user() ?? auth()->guard('web')->user();
                     $service = app(AccessRequestService::class);
@@ -79,19 +78,23 @@ class ViewUser extends ViewRecord
             return false;
         }
 
-        if ($actor instanceof Developer || $actor->isGlobalOwner()) {
-            return app(AccessAuthorizationService::class)
-                ->accessibleSubscriptions($this->record)
-                ->isNotEmpty();
-        }
+        $service = app(AccessAuthorizationService::class);
+        $accessibleSubscriptions = $service->accessibleSubscriptions($this->record);
 
-        if ($actor->roleEnum()->value !== 'restricted_owner') {
+        if ($accessibleSubscriptions->isEmpty()) {
             return false;
         }
 
-        return app(AccessAuthorizationService::class)
-            ->accessibleSubscriptions($this->record)
-            ->contains(fn (AzureSubscription $subscription): bool => app(AccessAuthorizationService::class)
-                ->canRevokeSubscriptionAccess($actor, $this->record, $subscription));
+        if ($actor instanceof Developer) {
+            return true;
+        }
+
+        return $accessibleSubscriptions->contains(
+            fn (AzureSubscription $subscription): bool => $service->canRevokeSubscriptionAccess(
+                $actor,
+                $this->record,
+                $subscription,
+            ),
+        );
     }
 }
