@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Roles\Schemas;
 
 use App\Models\Permission;
+use App\Models\Role;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class RoleForm
 {
@@ -23,12 +23,13 @@ class RoleForm
                     TextInput::make('name')
                         ->required()
                         ->maxLength(255)
-                        ->live(onBlur: true),
+                        ->unique(table: Role::class, column: 'name', ignoreRecord: true),
                     TextInput::make('slug')
                         ->required()
                         ->alphaDash()
                         ->maxLength(255)
-                        ->helperText('A unique identifier for this role.'),
+                        ->unique(table: Role::class, column: 'slug', ignoreRecord: true)
+                        ->helperText('A unique identifier for this role, for example monitoring-analyst.'),
                     Textarea::make('description')
                         ->columnSpanFull(),
                     Toggle::make('is_active')
