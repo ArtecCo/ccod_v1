@@ -17,6 +17,8 @@ class UserInfolist
             Section::make('Account')
                 ->description('Identity, account status and direct Business Unit membership.')
                 ->icon('heroicon-o-user-circle')
+                ->columnSpanFull()
+                ->columns(2)
                 ->schema([
                     TextEntry::make('name')
                         ->label('Name')
@@ -38,12 +40,12 @@ class UserInfolist
                         ->label('Business Units')
                         ->listWithLineBreaks()
                         ->placeholder('None'),
-                ])
-                ->columns(2),
+                ]),
 
             Section::make('Resource Access')
                 ->description('Where this user can access resources. Business Unit and Project access inherit the resources below them.')
                 ->icon('heroicon-o-squares-2x2')
+                ->columnSpanFull()
                 ->schema([
                     RepeatableEntry::make('resourceAccesses')
                         ->hiddenLabel()
@@ -62,12 +64,12 @@ class UserInfolist
                                 ->placeholder('—'),
                         ])
                         ->columns(4),
-                ])
-                ->collapsible(),
+                ]),
 
             Section::make('Accessible Subscriptions')
                 ->description('Effective subscription access after hierarchy inheritance and authorization rules.')
                 ->icon('heroicon-o-cloud')
+                ->columnSpanFull()
                 ->schema([
                     RepeatableEntry::make('accessible_subscriptions')
                         ->hiddenLabel()
@@ -87,8 +89,7 @@ class UserInfolist
                             TextEntry::make('source')->label('Access source'),
                         ])
                         ->columns(4),
-                ])
-                ->collapsible(),
+                ]),
         ]);
     }
 }
