@@ -75,7 +75,6 @@ class UserForm
                             TableColumn::make('Role'),
                             TableColumn::make('Starts'),
                             TableColumn::make('Expires'),
-                            TableColumn::make('Actions')->hiddenHeaderLabel(),
                         ])
                         ->compact()
                         ->schema([
