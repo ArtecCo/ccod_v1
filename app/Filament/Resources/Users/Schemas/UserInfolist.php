@@ -32,8 +32,14 @@ class UserInfolist
                     TextEntry::make('created_at')
                         ->dateTime()
                         ->label('Activation Date'),
-                    TextEntry::make('roleAssignments.role.name')
+                    TextEntry::make('roles')
                         ->label('Roles')
+                        ->state(fn ($record): array => $record->roleAssignments
+                            ->map(fn ($assignment) => $assignment->role?->name)
+                            ->filter()
+                            ->unique()
+                            ->values()
+                            ->all())
                         ->badge()
                         ->listWithLineBreaks(),
                     TextEntry::make('businessUnits.name')
