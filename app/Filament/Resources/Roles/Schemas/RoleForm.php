@@ -59,14 +59,40 @@ class RoleForm
                 ->get()
                 ->groupBy('category') as $category => $permissions
         ) {
-            $field = 'permission_' . md5($category);
-            $permissionById = $permissions->keyBy('id');
+            $displayPermissions = match ($category) {
+                'Projects & Applications' => $permissions->filter(fn (Permission $permission): bool => str_starts_with($permission->slug, 'projects.')),
+                'Environments & Subscriptions' => $permissions->filter(fn (Permission $permission): bool => str_starts_with($permission->slug, 'subscriptions.') && $permission->slug !== 'subscriptions.assign_environment'),
+                default => $permissions,
+            };
 
-            $permissionSections[] = Section::make($category)
+            if ($displayPermissions->isEmpty()) {
+                continue;
+            }
+
+            $field = 'permission_' . md5($category);
+            $permissionById = $displayPermissions->keyBy('id');
+            $categoryLabel = match ($category) {
+                'Projects & Applications' => 'Projects',
+                'Environments & Subscriptions' => 'Environments',
+                default => $category,
+            };
+
+            $permissionSections[] = Section::make($categoryLabel)
                 ->schema([
                     CheckboxList::make($field)
                         ->label('Actions')
-                        ->options($permissions->pluck('name', 'id')->all())
+                        ->options($displayPermissions->mapWithKeys(function (Permission $permission): array {
+                            $label = match ($permission->slug) {
+                                'subscriptions.view' => 'View environments',
+                                'subscriptions.create' => 'Create environments',
+                                'subscriptions.edit' => 'Edit environments',
+                                'subscriptions.delete' => 'Delete environments',
+                                'subscriptions.assign_business_unit' => 'Assign environments to business units',
+                                default => $permission->name,
+                            };
+
+                            return [$permission->id => $label];
+                        })->all())
                         ->columns(2)
                         ->bulkToggleable()
                         ->searchable()
