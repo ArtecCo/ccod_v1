@@ -10,10 +10,31 @@ class EditRole extends EditRecord
 {
     protected static string $resource = RoleResource::class;
 
+    /** @var array<int> */
+    protected array $legacyPermissionIds = [];
+
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        foreach ($this->record->permissions()->get()->groupBy('category') as $category => $permissions) {
-            $data['permission_' . md5($category)] = $permissions->pluck('id')->all();
+        $permissions = $this->record->permissions()->get();
+
+        $this->legacyPermissionIds = $permissions
+            ->filter(fn ($permission): bool => str_starts_with($permission->slug, 'applications.') || str_starts_with($permission->slug, 'environments.') || $permission->slug === 'subscriptions.assign_environment')
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->all();
+
+        foreach ($permissions->groupBy('category') as $category => $categoryPermissions) {
+            $visiblePermissions = $categoryPermissions->filter(function ($permission): bool {
+                return match ($permission->category) {
+                    'Projects & Applications' => str_starts_with($permission->slug, 'projects.'),
+                    'Environments & Subscriptions' => str_starts_with($permission->slug, 'subscriptions.') && $permission->slug !== 'subscriptions.assign_environment',
+                    default => true,
+                };
+            });
+
+            if ($visiblePermissions->isNotEmpty()) {
+                $data['permission_' . md5($category)] = $visiblePermissions->pluck('id')->all();
+            }
         }
 
         return $data;
@@ -21,7 +42,10 @@ class EditRole extends EditRecord
 
     protected function afterSave(): void
     {
-        app(RolePermissionService::class)->sync($this->record, $this->permissionIds($this->data));
+        app(RolePermissionService::class)->sync(
+            $this->record,
+            array_merge($this->legacyPermissionIds, $this->permissionIds($this->data)),
+        );
     }
 
     protected function getHeaderActions(): array
