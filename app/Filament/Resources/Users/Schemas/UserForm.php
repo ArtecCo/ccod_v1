@@ -107,6 +107,7 @@ class UserForm
                                     ->all())
                                 ->searchable()
                                 ->preload()
+                                ->optionsLimit(100)
                                 ->placeholder('Select a Subscription')
                                 ->visible(fn (Get $get): bool => $get('access_type') === 'subscription')
                                 ->required(fn (Get $get): bool => $get('access_type') === 'subscription'),
