@@ -17,4 +17,9 @@ class CreateUser extends CreateRecord
             $this->data['accessAssignments'] ?? [],
         );
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return UserResource::getUrl('index');
+    }
 }
