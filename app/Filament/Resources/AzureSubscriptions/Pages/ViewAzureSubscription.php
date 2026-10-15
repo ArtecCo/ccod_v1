@@ -146,8 +146,15 @@ class ViewAzureSubscription extends ViewRecord
 
         $user = auth()->guard('web')->user();
 
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $this->record);
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $authorization = app(AccessAuthorizationService::class);
+
+        return $permission === 'subscriptions.view'
+            ? $authorization->hasResourceAccess($user, $this->record)
+            : $authorization->hasPermission($user, $permission, $this->record);
     }
 
     protected function getHeaderActions(): array
