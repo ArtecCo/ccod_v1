@@ -24,8 +24,14 @@ class UsersTable
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                TextColumn::make('roleAssignments.role.name')
+                TextColumn::make('roles')
                     ->label('Roles')
+                    ->state(fn ($record): array => $record->roleAssignments
+                        ->map(fn ($assignment) => $assignment->role?->name)
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all())
                     ->badge()
                     ->separator(', ')
                     ->wrap(),
