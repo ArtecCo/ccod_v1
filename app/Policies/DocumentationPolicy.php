@@ -10,12 +10,14 @@ class DocumentationPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->is_active === true;
+        return $user->is_active === true
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'documentation.view');
     }
 
     public function view(User $user, Documentation $documentation): bool
     {
-        return $user->is_active === true;
+        return $user->is_active === true
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'documentation.view');
     }
 
     public function create(User $user): bool
