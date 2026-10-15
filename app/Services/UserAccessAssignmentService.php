@@ -3,8 +3,6 @@
 namespace App\Services;
 
 use App\Models\User;
-use App\Models\UserResourceAccess;
-use App\Models\UserRoleAssignment;
 use Illuminate\Support\Facades\DB;
 
 class UserAccessAssignmentService
@@ -20,16 +18,17 @@ class UserAccessAssignmentService
 
             foreach ($rows as $row) {
                 $accessType = $row['access_type'] ?? null;
+                $resourceId = $row['resource_id'] ?? null;
 
-                if (! in_array($accessType, ['business_unit', 'project', 'subscription'], true)) {
+                if (! in_array($accessType, ['business_unit', 'project', 'subscription'], true) || blank($resourceId)) {
                     continue;
                 }
 
                 $attributes = [
                     'access_type' => $accessType,
-                    'business_unit_id' => $accessType === 'business_unit' ? ($row['business_unit_id'] ?? null) : null,
-                    'project_id' => $accessType === 'project' ? ($row['project_id'] ?? null) : null,
-                    'subscription_id' => $accessType === 'subscription' ? ($row['subscription_id'] ?? null) : null,
+                    'business_unit_id' => $accessType === 'business_unit' ? $resourceId : null,
+                    'project_id' => $accessType === 'project' ? $resourceId : null,
+                    'subscription_id' => $accessType === 'subscription' ? $resourceId : null,
                 ];
 
                 $accessId = isset($row['resource_access_id'])
