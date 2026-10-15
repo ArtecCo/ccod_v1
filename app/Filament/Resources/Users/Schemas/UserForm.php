@@ -1,15 +1,105 @@
 <?php
+
 namespace App\Filament\Resources\Users\Schemas;
+
 use App\Models\AzureSubscription;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
-use Filament\Forms\Get;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
+
 class UserForm
 {
- public static function configure(Schema $schema):Schema{return $schema->components([Section::make('User')->columns(2)->schema([TextInput::make('name')->required()->maxLength(255),TextInput::make('email')->email()->required()->unique(ignoreRecord:true),Toggle::make('is_active')->default(true),TextInput::make('password')->password()->revealable()->required(fn(string $operation):bool=>$operation==='create')->dehydrated(fn(?string $state):bool=>filled($state))->minLength(12),Select::make('businessUnits')->relationship('businessUnits','name')->label('Business Units')->multiple()->searchable()->preload()->columnSpanFull()]),Section::make('Role Assignments')->description('Roles define what the user can do. Scope defines where the role applies.')->schema([Repeater::make('roleAssignments')->relationship()->addActionLabel('Add role assignment')->collapsible()->schema([Select::make('role_id')->relationship('role','name')->required()->searchable()->preload(),Select::make('scope_type')->label('Scope')->options(['business_unit'=>'Business Unit','project'=>'Project','application'=>'Application','environment'=>'Environment','subscription'=>'Subscription'])->required()->live(),Select::make('business_unit_id')->label('Business Unit')->relationship('businessUnit','name')->searchable()->preload()->visible(fn(Get $get):bool=>$get('scope_type')==='business_unit')->required(fn(Get $get):bool=>$get('scope_type')==='business_unit'),Select::make('project_id')->label('Project')->relationship('project','name')->searchable()->preload()->visible(fn(Get $get):bool=>$get('scope_type')==='project')->required(fn(Get $get):bool=>$get('scope_type')==='project'),Select::make('application_id')->label('Application')->relationship('application','name')->searchable()->preload()->visible(fn(Get $get):bool=>in_array($get('scope_type'),['application','environment'],true))->required(fn(Get $get):bool=>in_array($get('scope_type'),['application','environment'],true)),TextInput::make('environment')->label('Environment')->placeholder('prod / dev / qa')->visible(fn(Get $get):bool=>$get('scope_type')==='environment')->required(fn(Get $get):bool=>$get('scope_type')==='environment'),Select::make('subscription_id')->label('Subscription')->options(fn()=>AzureSubscription::query()->orderBy('display_name')->pluck('display_name','subscription_id')->all())->searchable()->preload()->visible(fn(Get $get):bool=>$get('scope_type')==='subscription')->required(fn(Get $get):bool=>$get('scope_type')==='subscription'),DateTimePicker::make('starts_at')->default(now()),DateTimePicker::make('expires_at')])->columns(2)->columnSpanFull()])]);}
+    public static function configure(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('User')
+                ->columns(2)
+                ->schema([
+                    TextInput::make('name')->required()->maxLength(255),
+                    TextInput::make('email')->email()->required()->unique(ignoreRecord: true),
+                    Toggle::make('is_active')->default(true),
+                    TextInput::make('password')
+                        ->password()
+                        ->revealable()
+                        ->required(fn (string $operation): bool => $operation === 'create')
+                        ->dehydrated(fn (?string $state): bool => filled($state))
+                        ->minLength(12),
+                    Select::make('businessUnits')
+                        ->relationship('businessUnits', 'name')
+                        ->label('Business Units')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->columnSpanFull(),
+                ]),
+            Section::make('Role Assignments')
+                ->description('Roles define what the user can do. Scope defines where the role applies.')
+                ->schema([
+                    Repeater::make('roleAssignments')
+                        ->relationship()
+                        ->addActionLabel('Add role assignment')
+                        ->collapsible()
+                        ->schema([
+                            Select::make('role_id')
+                                ->relationship('role', 'name')
+                                ->required()
+                                ->searchable()
+                                ->preload(),
+                            Select::make('scope_type')
+                                ->label('Scope')
+                                ->options([
+                                    'business_unit' => 'Business Unit',
+                                    'project' => 'Project',
+                                    'application' => 'Application',
+                                    'environment' => 'Environment',
+                                    'subscription' => 'Subscription',
+                                ])
+                                ->required()
+                                ->live(),
+                            Select::make('business_unit_id')
+                                ->label('Business Unit')
+                                ->relationship('businessUnit', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn (Get $get): bool => $get('scope_type') === 'business_unit')
+                                ->required(fn (Get $get): bool => $get('scope_type') === 'business_unit'),
+                            Select::make('project_id')
+                                ->label('Project')
+                                ->relationship('project', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn (Get $get): bool => $get('scope_type') === 'project')
+                                ->required(fn (Get $get): bool => $get('scope_type') === 'project'),
+                            Select::make('application_id')
+                                ->label('Application')
+                                ->relationship('application', 'name')
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn (Get $get): bool => in_array($get('scope_type'), ['application', 'environment'], true))
+                                ->required(fn (Get $get): bool => in_array($get('scope_type'), ['application', 'environment'], true)),
+                            TextInput::make('environment')
+                                ->label('Environment')
+                                ->placeholder('prod / dev / qa')
+                                ->visible(fn (Get $get): bool => $get('scope_type') === 'environment')
+                                ->required(fn (Get $get): bool => $get('scope_type') === 'environment'),
+                            Select::make('subscription_id')
+                                ->label('Subscription')
+                                ->options(fn () => AzureSubscription::query()->orderBy('display_name')->pluck('display_name', 'subscription_id')->all())
+                                ->searchable()
+                                ->preload()
+                                ->visible(fn (Get $get): bool => $get('scope_type') === 'subscription')
+                                ->required(fn (Get $get): bool => $get('scope_type') === 'subscription'),
+                            DateTimePicker::make('starts_at')->default(now()),
+                            DateTimePicker::make('expires_at'),
+                        ])
+                        ->columns(2)
+                        ->columnSpanFull(),
+                ]),
+        ]);
+    }
 }
