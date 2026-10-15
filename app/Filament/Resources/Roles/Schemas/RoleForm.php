@@ -52,6 +52,7 @@ class RoleForm
         foreach (
             Permission::query()
                 ->where('is_active', true)
+                ->where('category', '!=', 'Administration')
                 ->orderBy('category')
                 ->orderBy('name')
                 ->get()
