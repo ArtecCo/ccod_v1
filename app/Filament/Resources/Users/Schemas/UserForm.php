@@ -70,11 +70,11 @@ class UserForm
                     Repeater::make('accessAssignments')
                         ->addActionLabel('Add access')
                         ->table([
-                            TableColumn::make('Access level'),
-                            TableColumn::make('Resource'),
-                            TableColumn::make('Role'),
-                            TableColumn::make('Starts'),
-                            TableColumn::make('Expires'),
+                            TableColumn::make('Access level')->width('10rem'),
+                            TableColumn::make('Resource')->width('18rem'),
+                            TableColumn::make('Role')->width('15rem'),
+                            TableColumn::make('Starts')->width('13rem'),
+                            TableColumn::make('Expires')->width('15rem'),
                         ])
                         ->compact()
                         ->schema([
