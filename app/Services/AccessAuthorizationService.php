@@ -66,31 +66,85 @@ class AccessAuthorizationService
 
     public function accessibleSubscriptions(User $user): Collection
     {
-        $subscriptions = AzureSubscription::query()->orderBy('display_name')->get();
-        $isSuperAdmin = $this->isSuperAdmin($user);
+        $assignments = $this->activeAssignments($user)
+            ->with(['role.permissions', 'resourceAccess.businessUnit', 'resourceAccess.project', 'resourceAccess.subscription'])
+            ->get();
 
-        return $subscriptions
-            ->filter(fn (AzureSubscription $subscription): bool => $isSuperAdmin
-                || ($this->hasPermission($user, 'subscriptions.view', $subscription)
-                    && ! $this->isSubscriptionRevoked($user, $subscription)))
-            ->values()
-            ->map(function (AzureSubscription $subscription) use ($user, $isSuperAdmin): AzureSubscription {
-                $subscription->setAttribute(
-                    'access_role',
-                    $isSuperAdmin
-                        ? $this->superAdminRole($user)
-                        : $this->effectiveRole($user, AccessRequestTargetType::Subscription, $subscription)
-                );
-                $subscription->setAttribute(
-                    'access_sources',
-                    $isSuperAdmin
-                        ? ['global: Super Admin']
-                        : $this->accessSources($user, $subscription)
-                );
+        $superAdminAssignment = $assignments->first(
+            fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin'
+        );
+        $isSuperAdmin = $superAdminAssignment !== null;
+
+        $subscriptions = AzureSubscription::query()
+            ->with('projects.businessUnit')
+            ->orderBy('display_name')
+            ->get();
+
+        if ($isSuperAdmin) {
+            $role = $superAdminAssignment->role;
+
+            return $subscriptions->map(function (AzureSubscription $subscription) use ($role): AzureSubscription {
+                $subscription->setAttribute('access_role', $role);
+                $subscription->setAttribute('access_sources', ['global: Super Admin']);
                 $subscription->setAttribute('access_revoked', false);
 
                 return $subscription;
             });
+        }
+
+        $viewAssignments = $assignments->filter(
+            fn (UserRoleAssignment $assignment): bool => $assignment->role->permissions->contains(
+                fn ($permission): bool => $permission->slug === 'subscriptions.view' && $permission->is_active
+            )
+        );
+
+        if ($viewAssignments->isEmpty()) {
+            return collect();
+        }
+
+        $revokedIds = UserSubscriptionAccessOverride::query()
+            ->where('user_id', $user->getKey())
+            ->where('override', 'revoked')
+            ->pluck('subscription_id')
+            ->map(fn ($id): string => (string) $id)
+            ->flip();
+
+        return $subscriptions
+            ->filter(function (AzureSubscription $subscription) use ($viewAssignments, $revokedIds): bool {
+                if ($revokedIds->has((string) $subscription->getKey())) {
+                    return false;
+                }
+
+                return $viewAssignments->contains(
+                    fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies(
+                        $assignment->resourceAccess,
+                        $subscription
+                    )
+                );
+            })
+            ->map(function (AzureSubscription $subscription) use ($viewAssignments): AzureSubscription {
+                $applicable = $viewAssignments->filter(
+                    fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies(
+                        $assignment->resourceAccess,
+                        $subscription
+                    )
+                );
+
+                $roleAssignment = $applicable
+                    ->sortByDesc(fn (UserRoleAssignment $assignment): int => $this->roleWeight($assignment->role))
+                    ->first();
+
+                $sources = $applicable->map(function (UserRoleAssignment $assignment): string {
+                    return $assignment->resourceAccess->access_type . ': ' . $assignment->role->name;
+                })->unique()->values()->all();
+
+                $subscription->setAttribute('access_role', $roleAssignment?->role);
+                $subscription->setAttribute('access_sources', $sources);
+                $subscription->setAttribute('access_revoked', false);
+
+                return $subscription;
+            })
+            ->values();
     }
 
     public function canRequestRole(User $user, AccessRequestTargetType|string $targetType, BusinessUnit|Project|AzureSubscription|int|string $target, Role $requestedRole): bool
@@ -230,7 +284,7 @@ class AccessAuthorizationService
             return (string) $access->subscription_id === (string) $target->getKey();
         }
 
-        $project = $target->projects()->first();
+        $project = $target->projects->first();
 
         if (! $project) {
             return false;
