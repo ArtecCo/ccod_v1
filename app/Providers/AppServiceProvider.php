@@ -9,6 +9,7 @@ use App\Models\SubscriptionWebUrl;
 use App\Policies\ActivityPolicy;
 use App\Policies\DocumentationPolicy;
 use App\Policies\SubscriptionWebUrlPolicy;
+use App\Services\AccessAuthorizationService;
 use App\Services\AuditLogger;
 use App\Services\LogSettings;
 use App\Support\FilamentStyling;
@@ -39,6 +40,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->app->singleton(AuditLogger::class);
         $this->app->singleton(LogSettings::class);
+        $this->app->scoped(AccessAuthorizationService::class);
 
         Panel::configureUsing(function (Panel $panel): void {
             match ($panel->getId()) {
@@ -261,7 +263,7 @@ class AppServiceProvider extends ServiceProvider
                 success: false,
                 failureReason: $event->exception?->getMessage(),
                 logName: 'Maintenance',
-                tags: ['updater', 'packages_update_failed'],
+                tags: ['updater', 'package_update_failed'],
                 category: LogSettings::PACKAGES_UPDATE_FAILED,
             );
         });
