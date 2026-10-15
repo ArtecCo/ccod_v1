@@ -5,12 +5,11 @@ namespace App\Filament\Resources\AzureSubscriptions\Pages;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureAlertsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityOverview;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
+use App\Models\Developer;
 use App\Models\SubscriptionWebUrl;
+use App\Models\User;
+use App\Services\AccessAuthorizationService;
+use App\Settings\TabAccessSettings;
 use Filament\Actions\Action;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -23,6 +22,11 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Illuminate\Support\Facades\Gate;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityOverview;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 
 class ViewAzureSubscription extends ViewRecord
 {
@@ -34,7 +38,7 @@ class ViewAzureSubscription extends ViewRecord
             ->components([
                 Tabs::make('Subscription Navigation')
                     ->tabs([
-                        Tab::make('Overview')
+                        $this->makeTab('Overview', 'subscriptions.view')
                             ->schema([
                                 Section::make('Subscription Details')
                                     ->schema([
@@ -50,7 +54,7 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-                        Tab::make('Cost')
+                        $this->makeTab('Cost', 'cost.view')
                             ->schema([
                                 Livewire::make(SubscriptionCostSummary::class, [
                                     'record' => $this->record,
@@ -69,8 +73,7 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-
-                        Tab::make('Alerts')
+                        $this->makeTab('Alerts', 'alerts.view')
                             ->schema([
                                 Livewire::make(SubscriptionAlertSeverityOverview::class, [
                                     'record' => $this->record,
@@ -84,13 +87,13 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-                            Tab::make('Security')
+                        $this->makeTab('Security', 'security.view')
                             ->schema([]),
 
-                        Tab::make('Tickets')
+                        $this->makeTab('Tickets', 'tickets.view')
                             ->schema([]),
 
-                        Tab::make('Web URLs')
+                        $this->makeTab('Web URLs', 'urls.view')
                             ->schema([
                                 Livewire::make(SubscriptionWebUrlsRelationManager::class, [
                                     'ownerRecord' => $this->record,
@@ -99,7 +102,7 @@ class ViewAzureSubscription extends ViewRecord
                             ])
                             ->columns(1),
 
-                        Tab::make('Resources')
+                        $this->makeTab('Resources', 'resources.view')
                             ->schema([
                                 $this->getRelationManagersContentComponent()
                                     ->columnSpanFull(),
@@ -113,6 +116,36 @@ class ViewAzureSubscription extends ViewRecord
                     ])
                     ->columnSpanFull(),
             ]);
+    }
+
+    protected function makeTab(string $label, string $permission): Tab
+    {
+        $tab = Tab::make($label)
+            ->visible(fn (): bool => $this->shouldShowTab($permission))
+            ->disabled(fn (): bool => ! $this->canViewTab($permission)
+                && app(TabAccessSettings::class)->restricted_tab_behavior === 'disabled');
+
+        return $tab;
+    }
+
+    protected function canViewTab(string $permission): bool
+    {
+        $developer = auth()->guard('developers')->user();
+
+        if ($developer instanceof Developer && $developer->is_active) {
+            return true;
+        }
+
+        $user = auth()->guard('web')->user();
+
+        return $user instanceof User
+            && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $this->record);
+    }
+
+    protected function shouldShowTab(string $permission): bool
+    {
+        return $this->canViewTab($permission)
+            || app(TabAccessSettings::class)->restricted_tab_behavior !== 'hidden';
     }
 
     protected function getHeaderActions(): array
