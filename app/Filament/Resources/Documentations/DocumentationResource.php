@@ -27,7 +27,7 @@ class DocumentationResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()?->is_active ?? false;
+        return auth()->user()?->can('viewAny', Documentation::class) ?? false;
     }
 
     public static function canCreate(): bool
