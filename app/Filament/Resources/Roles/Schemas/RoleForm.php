@@ -8,6 +8,7 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
@@ -21,6 +22,7 @@ class RoleForm
         $sections = [
             Section::make('Role')
                 ->description('Create a custom role by defining its name and permissions. Custom roles are separate from built-in system roles.')
+                ->columnSpanFull()
                 ->columns(2)
                 ->schema([
                     TextInput::make('name')
@@ -52,6 +54,8 @@ class RoleForm
                 ]),
         ];
 
+        $permissionSections = [];
+
         foreach (
             Permission::query()
                 ->where('is_active', true)
@@ -61,7 +65,7 @@ class RoleForm
                 ->get()
                 ->groupBy('category') as $category => $permissions
         ) {
-            $sections[] = Section::make($category)
+            $permissionSections[] = Section::make($category)
                 ->schema([
                     CheckboxList::make('permission_' . md5($category))
                         ->label('Actions')
@@ -70,6 +74,12 @@ class RoleForm
                         ->bulkToggleable()
                         ->searchable(),
                 ]);
+        }
+
+        if ($permissionSections !== []) {
+            $sections[] = Grid::make(2)
+                ->schema($permissionSections)
+                ->columnSpanFull();
         }
 
         return $schema->components($sections);
