@@ -18,8 +18,9 @@ class User extends Authenticatable implements FilamentUser
     protected $hidden = ['password','remember_token'];
     public function businessUnits(): BelongsToMany { return $this->belongsToMany(BusinessUnit::class,'team_user','user_id','business_unit_id')->withTimestamps(); }
     public function teams(): BelongsToMany { return $this->businessUnits(); }
-    public function roles(): BelongsToMany { return $this->belongsToMany(Role::class,'user_role_assignments')->withPivot(['scope_type','business_unit_id','project_id','application_id','environment','subscription_id','starts_at','expires_at','granted_by_user_id'])->withTimestamps(); }
+    public function roles(): BelongsToMany { return $this->belongsToMany(Role::class,'user_role_assignments')->withPivot(['resource_access_id','starts_at','expires_at','granted_by_user_id'])->withTimestamps(); }
     public function roleAssignments(): HasMany { return $this->hasMany(UserRoleAssignment::class); }
+    public function resourceAccesses(): HasMany { return $this->hasMany(UserResourceAccess::class); }
     public function accessRequests(): HasMany { return $this->hasMany(AccessRequest::class); }
     public function accessGrants(): HasMany { return $this->hasMany(UserAccessGrant::class); }
     public function canAccessPanel(Panel $panel): bool { return $panel->getId() === 'admin' && $this->is_active; }
