@@ -26,6 +26,7 @@ class RoleForm
                     TextInput::make('name')
                         ->required()
                         ->maxLength(255)
+                        ->columnSpanFull()
                         ->live(onBlur: true)
                         ->afterStateUpdated(function (Set $set, Get $get, ?string $state): void {
                             if (blank($get('slug'))) {
@@ -37,12 +38,14 @@ class RoleForm
                         ->required()
                         ->alphaDash()
                         ->maxLength(255)
+                        ->columnSpanFull()
                         ->unique(table: Role::class, column: 'slug', ignoreRecord: true)
                         ->helperText('Automatically suggested from the role name. You can change it if needed.'),
                     Textarea::make('description')
-                        ->columnSpanFull(),
+                        ->columnSpan(1),
                     Toggle::make('is_active')
-                        ->default(true),
+                        ->default(true)
+                        ->columnSpan(1),
                     Toggle::make('is_system_role')
                         ->hidden()
                         ->dehydrated(false),
