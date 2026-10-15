@@ -9,7 +9,10 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Str;
 
 class RoleForm
 {
@@ -23,13 +26,19 @@ class RoleForm
                     TextInput::make('name')
                         ->required()
                         ->maxLength(255)
+                        ->live(onBlur: true)
+                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state): void {
+                            if (blank($get('slug'))) {
+                                $set('slug', Str::slug((string) $state));
+                            }
+                        })
                         ->unique(table: Role::class, column: 'name', ignoreRecord: true),
                     TextInput::make('slug')
                         ->required()
                         ->alphaDash()
                         ->maxLength(255)
                         ->unique(table: Role::class, column: 'slug', ignoreRecord: true)
-                        ->helperText('A unique identifier for this role, for example monitoring-analyst.'),
+                        ->helperText('Automatically suggested from the role name. You can change it if needed.'),
                     Textarea::make('description')
                         ->columnSpanFull(),
                     Toggle::make('is_active')
