@@ -15,4 +15,9 @@ class EditNotificationRule extends EditRecord
 
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return NotificationRuleResource::getUrl('index');
+    }
 }

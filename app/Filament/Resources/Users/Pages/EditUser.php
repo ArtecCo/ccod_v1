@@ -50,4 +50,9 @@ class EditUser extends EditRecord
             $this->data['accessAssignments'] ?? [],
         );
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return UserResource::getUrl('index');
+    }
 }

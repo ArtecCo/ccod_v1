@@ -16,4 +16,9 @@ class CreateNotificationRule extends CreateRecord
 
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return NotificationRuleResource::getUrl('index');
+    }
 }

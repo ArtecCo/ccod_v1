@@ -15,6 +15,11 @@ class CreateRole extends CreateRecord
         app(RolePermissionService::class)->sync($this->record, $this->permissionIds($this->data));
     }
 
+    protected function getRedirectUrl(): string
+    {
+        return RoleResource::getUrl('index');
+    }
+
     private function permissionIds(array $data): array
     {
         return collect($data)

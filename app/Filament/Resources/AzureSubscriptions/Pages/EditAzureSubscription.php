@@ -23,4 +23,9 @@ class EditAzureSubscription extends EditRecord
             DeleteAction::make(),
         ];
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return AzureSubscriptionResource::getUrl('index');
+    }
 }
