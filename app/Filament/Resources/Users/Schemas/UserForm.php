@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\Users\Schemas;
 
 use App\Models\AzureSubscription;
-use App\Models\UserResourceAccess;
+use App\Models\BusinessUnit;
+use App\Models\Project;
+use App\Models\Role;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
@@ -55,24 +57,23 @@ class UserForm
                         ->searchable()
                         ->preload()
                         ->placeholder('Select business units')
-                        ->helperText('Direct Business Unit membership. Resource access is managed separately below.')
+                        ->helperText('Direct Business Unit membership.')
                         ->columnSpanFull(),
                 ]),
 
-            Section::make('Resource Access')
-                ->description('Define where this user can access resources. Higher levels inherit everything below them.')
-                ->icon('heroicon-o-squares-2x2')
+            Section::make('Access & Roles')
+                ->description('Define where the user can access resources and what they can do there.')
+                ->icon('heroicon-o-shield-check')
                 ->columnSpanFull()
                 ->schema([
-                    Repeater::make('resourceAccesses')
-                        ->relationship()
-                        ->addActionLabel('Add access rule')
+                    Repeater::make('accessAssignments')
+                        ->addActionLabel('Add access')
                         ->collapsible()
-                        ->itemLabel(fn (array $state): ?string => match ($state['access_type'] ?? null) {
+                        ->itemLabel(fn (array $state): string => match ($state['access_type'] ?? null) {
                             'business_unit' => 'Business Unit access',
                             'project' => 'Project access',
                             'subscription' => 'Subscription access',
-                            default => 'New access rule',
+                            default => 'New access',
                         })
                         ->schema([
                             Select::make('access_type')
@@ -84,21 +85,23 @@ class UserForm
                                 ])
                                 ->required()
                                 ->live()
-                                ->helperText('Choose the narrowest level that matches the user’s access requirement.'),
+                                ->afterStateUpdated(function ($state, callable $set): void {
+                                    $set('business_unit_id', null);
+                                    $set('project_id', null);
+                                    $set('subscription_id', null);
+                                }),
                             Select::make('business_unit_id')
                                 ->label('Business Unit')
-                                ->relationship('businessUnit', 'name')
+                                ->options(fn (): array => BusinessUnit::query()->orderBy('name')->pluck('name', 'id')->all())
                                 ->searchable()
                                 ->preload()
-                                ->placeholder('Select a Business Unit')
                                 ->visible(fn (Get $get): bool => $get('access_type') === 'business_unit')
                                 ->required(fn (Get $get): bool => $get('access_type') === 'business_unit'),
                             Select::make('project_id')
                                 ->label('Project')
-                                ->relationship('project', 'name')
+                                ->options(fn (): array => Project::query()->orderBy('name')->pluck('name', 'id')->all())
                                 ->searchable()
                                 ->preload()
-                                ->placeholder('Select a Project')
                                 ->visible(fn (Get $get): bool => $get('access_type') === 'project')
                                 ->required(fn (Get $get): bool => $get('access_type') === 'project'),
                             Select::make('subscription_id')
@@ -109,48 +112,29 @@ class UserForm
                                     ->all())
                                 ->searchable()
                                 ->preload()
-                                ->placeholder('Select a Subscription')
                                 ->visible(fn (Get $get): bool => $get('access_type') === 'subscription')
                                 ->required(fn (Get $get): bool => $get('access_type') === 'subscription'),
-                        ])
-                        ->columns(2)
-                        ->columnSpanFull(),
-                ]),
-
-            Section::make('Role Assignments')
-                ->description('Roles define what the user can do within each resource-access rule.')
-                ->icon('heroicon-o-shield-check')
-                ->columnSpanFull()
-                ->schema([
-                    Repeater::make('roleAssignments')
-                        ->relationship()
-                        ->addActionLabel('Add role assignment')
-                        ->collapsible()
-                        ->itemLabel(fn (array $state): ?string => 'Role assignment')
-                        ->schema([
                             Select::make('role_id')
                                 ->label('Role')
-                                ->relationship('role', 'name')
+                                ->options(fn (): array => Role::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('name')
+                                    ->pluck('name', 'id')
+                                    ->all())
                                 ->required()
                                 ->searchable()
                                 ->preload()
                                 ->placeholder('Select a role'),
-                            Select::make('resource_access_id')
-                                ->label('Resource access')
-                                ->relationship('resourceAccess', 'id')
-                                ->getOptionLabelFromRecordUsing(fn (UserResourceAccess $record): string => $record->label())
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->placeholder('Select an access rule'),
                             DateTimePicker::make('starts_at')
                                 ->label('Starts')
                                 ->default(now()),
                             DateTimePicker::make('expires_at')
                                 ->label('Expires')
                                 ->helperText('Leave blank for no expiry.'),
+                            TextInput::make('resource_access_id')->hidden()->dehydrated(),
+                            TextInput::make('role_assignment_id')->hidden()->dehydrated(),
                         ])
-                        ->columns(2)
+                        ->columns(3)
                         ->columnSpanFull(),
                 ]),
         ]);
