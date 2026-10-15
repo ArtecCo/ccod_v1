@@ -12,8 +12,7 @@ class Project extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name','description','business_unit_id','is_active'];
-    protected $casts = ['is_active' => 'boolean'];
+    protected $fillable = ['name','description','business_unit_id'];
 
     public function businessUnit(): BelongsTo { return $this->belongsTo(BusinessUnit::class); }
     public function subscriptionAssignments(): HasMany { return $this->hasMany(ProjectSubscription::class); }
