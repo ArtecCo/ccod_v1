@@ -19,6 +19,7 @@ class ProjectForm
         return $schema->components([
             Section::make('Project')
                 ->description('Define the project and the Business Unit it belongs to.')
+                ->columnSpanFull()
                 ->columns(2)
                 ->schema([
                     TextInput::make('name')
@@ -41,6 +42,7 @@ class ProjectForm
 
             Section::make('Project subscriptions')
                 ->description('Select the Azure subscriptions that belong to this project. Add one or more tags to identify each subscription, such as prod, qa, or dev. Tags are only labels and can be customized.')
+                ->columnSpanFull()
                 ->schema([
                     Repeater::make('subscriptionAssignments')
                         ->relationship()
