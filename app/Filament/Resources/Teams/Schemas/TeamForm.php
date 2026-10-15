@@ -12,26 +12,10 @@ class TeamForm
     public static function configure(Schema $schema): Schema
     {
         return $schema->components([
-            TextInput::make('name')
-                ->required()
-                ->maxLength(255),
-            Textarea::make('description')
-                ->rows(3)
-                ->columnSpanFull(),
-            Select::make('users')
-                ->label('Users')
-                ->relationship('users', 'name')
-                ->multiple()
-                ->searchable()
-                ->preload()
-                ->columnSpanFull(),
-            Select::make('subscriptions')
-                ->label('Subscriptions')
-                ->relationship('subscriptions', 'display_name')
-                ->multiple()
-                ->searchable()
-                ->preload()
-                ->columnSpanFull(),
+            TextInput::make('name')->required()->maxLength(255),
+            Textarea::make('description')->rows(3)->columnSpanFull(),
+            Select::make('users')->label('Users')->relationship('users','name')->multiple()->searchable()->preload()->columnSpanFull(),
+            Select::make('projects')->label('Projects')->relationship('projects','name')->multiple()->searchable()->preload()->columnSpanFull(),
         ]);
     }
 }
