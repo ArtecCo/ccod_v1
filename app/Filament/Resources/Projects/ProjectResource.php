@@ -24,9 +24,9 @@ class ProjectResource extends Resource
     protected static ?string $navigationLabel = 'Projects';
     protected static string|\UnitEnum|null $navigationGroup = 'Administration';
 
-    public static function canViewAny(): bool { $user = auth()->guard('web')->user(); return $user instanceof User && app(\\App\\Services\\AccessAuthorizationService::class)->hasAnyResourceAccess($user); }
+    public static function canViewAny(): bool { $user = auth()->guard('web')->user(); return $user instanceof User && app(\App\Services\AccessAuthorizationService::class)->hasAnyResourceAccess($user); }
     public static function canCreate(): bool { return static::canManage('projects.create'); }
-    public static function canView($record): bool { $user = auth()->guard('web')->user(); return $user instanceof User && app(\\App\\Services\\AccessAuthorizationService::class)->hasResourceAccess($user, $record); }
+    public static function canView($record): bool { $user = auth()->guard('web')->user(); return $user instanceof User && app(\App\Services\AccessAuthorizationService::class)->hasResourceAccess($user, $record); }
     public static function canEdit($record): bool { return static::canManage('projects.edit', $record); }
     public static function canDelete($record): bool { return static::canManage('projects.delete', $record); }
     public static function form(Schema $schema): Schema { return ProjectForm::configure($schema); }
