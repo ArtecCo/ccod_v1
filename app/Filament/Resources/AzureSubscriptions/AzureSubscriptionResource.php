@@ -41,7 +41,7 @@ class AzureSubscriptionResource extends Resource
         $user = auth()->guard('web')->user();
 
         return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.view', $record);
+            && app(AccessAuthorizationService::class)->hasResourceAccess($user, $record);
     }
 
     public static function canEdit($record): bool
