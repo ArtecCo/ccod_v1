@@ -21,6 +21,7 @@ class UserForm
             Section::make('Account')
                 ->description('Basic identity and account status.')
                 ->icon('heroicon-o-user-circle')
+                ->columnSpanFull()
                 ->columns(2)
                 ->schema([
                     TextInput::make('name')
@@ -61,6 +62,7 @@ class UserForm
             Section::make('Resource Access')
                 ->description('Define where this user can access resources. Higher levels inherit everything below them.')
                 ->icon('heroicon-o-squares-2x2')
+                ->columnSpanFull()
                 ->schema([
                     Repeater::make('resourceAccesses')
                         ->relationship()
@@ -118,6 +120,7 @@ class UserForm
             Section::make('Role Assignments')
                 ->description('Roles define what the user can do within each resource-access rule.')
                 ->icon('heroicon-o-shield-check')
+                ->columnSpanFull()
                 ->schema([
                     Repeater::make('roleAssignments')
                         ->relationship()
