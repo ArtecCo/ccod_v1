@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\UserRole;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
@@ -14,95 +13,17 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements FilamentUser
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
-
-    protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'role',
-        'is_active',
-    ];
-
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
-
-    public function businessUnits(): BelongsToMany
-    {
-        return $this->belongsToMany(
-            BusinessUnit::class,
-            'team_user',
-            'user_id',
-            'business_unit_id',
-        )->withTimestamps();
-    }
-
-    /**
-     * @deprecated Use businessUnits(). Kept temporarily for compatibility.
-     */
-    public function teams(): BelongsToMany
-    {
-        return $this->businessUnits();
-    }
-
-    public function accessRequests(): HasMany
-    {
-        return $this->hasMany(AccessRequest::class);
-    }
-
-    public function accessGrants(): HasMany
-    {
-        return $this->hasMany(UserAccessGrant::class);
-    }
-
-    public function roleEnum(): UserRole
-    {
-        return $this->role instanceof UserRole
-            ? $this->role
-            : UserRole::from($this->role);
-    }
-
-    public function isGlobal(): bool
-    {
-        return $this->roleEnum()->isGlobal();
-    }
-
-    public function isGlobalOwner(): bool
-    {
-        return $this->roleEnum() === UserRole::GlobalOwner;
-    }
-
-    public function canAccessPanel(Panel $panel): bool
-    {
-        return $panel->getId() === 'admin' && $this->is_active;
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return [
-            'name',
-            'email',
-        ];
-    }
-
-    public static function getGlobalSearchResultDetails($record): array
-    {
-        return [
-            'Email' => $record->email,
-            'Role' => $record->roleEnum()->label(),
-        ];
-    }
-
-    protected function casts(): array
-    {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-            'role' => UserRole::class,
-            'is_active' => 'boolean',
-        ];
-    }
+    protected $fillable = ['name','email','password','is_active'];
+    protected $hidden = ['password','remember_token'];
+    public function businessUnits(): BelongsToMany { return $this->belongsToMany(BusinessUnit::class,'team_user','user_id','business_unit_id')->withTimestamps(); }
+    public function teams(): BelongsToMany { return $this->businessUnits(); }
+    public function roles(): BelongsToMany { return $this->belongsToMany(Role::class,'user_role_assignments')->withPivot(['scope_type','business_unit_id','project_id','application_id','environment','subscription_id','starts_at','expires_at','granted_by_user_id'])->withTimestamps(); }
+    public function roleAssignments(): HasMany { return $this->hasMany(UserRoleAssignment::class); }
+    public function accessRequests(): HasMany { return $this->hasMany(AccessRequest::class); }
+    public function accessGrants(): HasMany { return $this->hasMany(UserAccessGrant::class); }
+    public function canAccessPanel(Panel $panel): bool { return $panel->getId() === 'admin' && $this->is_active; }
+    public static function getGloballySearchableAttributes(): array { return ['name','email']; }
+    public static function getGlobalSearchResultDetails($record): array { return ['Email'=>$record->email]; }
+    protected function casts(): array { return ['email_verified_at'=>'datetime','password'=>'hashed','is_active'=>'boolean']; }
 }
