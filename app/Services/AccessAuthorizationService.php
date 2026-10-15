@@ -64,6 +64,13 @@ class AccessAuthorizationService
             ?->role;
     }
 
+    public function hasResourceAccess(User $user, BusinessUnit|Project|AzureSubscription $target): bool
+    {
+        return $this->isSuperAdmin($user) || $this->activeAssignments($user)->contains(
+            fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $target)
+        );
+    }
+
     public function accessibleSubscriptions(User $user): Collection
     {
         $assignments = $this->activeAssignments($user);
@@ -89,16 +96,6 @@ class AccessAuthorizationService
             });
         }
 
-        $viewAssignments = $assignments->filter(
-            fn (UserRoleAssignment $assignment): bool => $assignment->role->permissions->contains(
-                fn ($permission): bool => $permission->slug === 'subscriptions.view' && $permission->is_active
-            )
-        );
-
-        if ($viewAssignments->isEmpty()) {
-            return collect();
-        }
-
         $revokedIds = UserSubscriptionAccessOverride::query()
             ->where('user_id', $user->getKey())
             ->where('override', 'revoked')
@@ -107,20 +104,20 @@ class AccessAuthorizationService
             ->flip();
 
         return $subscriptions
-            ->filter(function (AzureSubscription $subscription) use ($viewAssignments, $revokedIds): bool {
+            ->filter(function (AzureSubscription $subscription) use ($assignments, $revokedIds): bool {
                 if ($revokedIds->has((string) $subscription->getKey())) {
                     return false;
                 }
 
-                return $viewAssignments->contains(
+                return $assignments->contains(
                     fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies(
                         $assignment->resourceAccess,
                         $subscription
                     )
                 );
             })
-            ->map(function (AzureSubscription $subscription) use ($viewAssignments): AzureSubscription {
-                $applicable = $viewAssignments->filter(
+            ->map(function (AzureSubscription $subscription) use ($assignments): AzureSubscription {
+                $applicable = $assignments->filter(
                     fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies(
                         $assignment->resourceAccess,
                         $subscription
