@@ -58,6 +58,7 @@ class UserAccessAssignmentService
 
                 $assignment->fill([
                     'role_id' => $row['role_id'],
+                    'scope_type' => $accessType,
                     'resource_access_id' => $access->id,
                     'starts_at' => $row['starts_at'] ?? null,
                     'expires_at' => $row['expires_at'] ?? null,
