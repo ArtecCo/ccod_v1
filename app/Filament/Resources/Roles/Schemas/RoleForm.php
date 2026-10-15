@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Roles\Schemas;
 
 use App\Models\Permission;
 use App\Models\Role;
+use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -41,14 +42,9 @@ class RoleForm
                         ->maxLength(255)
                         ->unique(table: Role::class, column: 'slug', ignoreRecord: true)
                         ->helperText('Automatically suggested from the role name. You can change it if needed.'),
-                    Textarea::make('description')
-                        ->columnSpan(1),
-                    Toggle::make('is_active')
-                        ->default(true)
-                        ->columnSpan(1),
-                    Toggle::make('is_system_role')
-                        ->hidden()
-                        ->dehydrated(false),
+                    Textarea::make('description')->columnSpan(1),
+                    Toggle::make('is_active')->default(true)->columnSpan(1),
+                    Toggle::make('is_system_role')->hidden()->dehydrated(false),
                 ]),
         ];
 
@@ -63,6 +59,8 @@ class RoleForm
                 ->get()
                 ->groupBy('category') as $category => $permissions
         ) {
+            $permissionById = $permissions->keyBy('id');
+
             $permissionSections[] = Section::make($category)
                 ->schema([
                     CheckboxList::make('permission_' . md5($category))
@@ -70,7 +68,46 @@ class RoleForm
                         ->options($permissions->pluck('name', 'id')->all())
                         ->columns(2)
                         ->bulkToggleable()
-                        ->searchable(),
+                        ->searchable()
+                        ->live()
+                        ->disableOptionWhen(function (string $value, Get $get) use ($permissionById): bool {
+                            $permission = $permissionById->get((int) $value);
+
+                            if ($permission === null) {
+                                return false;
+                            }
+
+                            $viewSlug = RolePermissionService::viewPermissionFor($permission->slug);
+                            $viewPermission = $permissionById->firstWhere('slug', $viewSlug);
+
+                            return $viewPermission !== null
+                                && (int) $value !== (int) $viewPermission->id
+                                && ! in_array((int) $viewPermission->id, array_map('intval', (array) $get($this->statePath ?? '') ?: []), true);
+                        })
+                        ->afterStateUpdated(function (Set $set, Get $get, ?array $state) use ($permissionById): void {
+                            $selected = collect($state ?? [])->map(fn ($id): int => (int) $id);
+                            $normalized = $selected
+                                ->filter(function (int $permissionId) use ($permissionById, $selected): bool {
+                                    $permission = $permissionById->get($permissionId);
+
+                                    if ($permission === null) {
+                                        return false;
+                                    }
+
+                                    $viewSlug = RolePermissionService::viewPermissionFor($permission->slug);
+
+                                    return $permission->slug === $viewSlug
+                                        || $selected->contains(function (int $selectedId) use ($permissionById, $viewSlug): bool {
+                                            return $permissionById->get($selectedId)?->slug === $viewSlug;
+                                        });
+                                })
+                                ->values()
+                                ->all();
+
+                            if ($normalized !== array_map('intval', $state ?? [])) {
+                                $set($get->getStatePath(), $normalized);
+                            }
+                        }),
                 ]);
         }
 
