@@ -59,18 +59,19 @@ class RoleForm
                 ->get()
                 ->groupBy('category') as $category => $permissions
         ) {
+            $field = 'permission_' . md5($category);
             $permissionById = $permissions->keyBy('id');
 
             $permissionSections[] = Section::make($category)
                 ->schema([
-                    CheckboxList::make('permission_' . md5($category))
+                    CheckboxList::make($field)
                         ->label('Actions')
                         ->options($permissions->pluck('name', 'id')->all())
                         ->columns(2)
                         ->bulkToggleable()
                         ->searchable()
                         ->live()
-                        ->disableOptionWhen(function (string $value, Get $get) use ($permissionById): bool {
+                        ->disableOptionWhen(function (string $value, Get $get) use ($permissionById, $field): bool {
                             $permission = $permissionById->get((int) $value);
 
                             if ($permission === null) {
@@ -82,10 +83,15 @@ class RoleForm
 
                             return $viewPermission !== null
                                 && (int) $value !== (int) $viewPermission->id
-                                && ! in_array((int) $viewPermission->id, array_map('intval', (array) $get($this->statePath ?? '') ?: []), true);
+                                && ! in_array(
+                                    (int) $viewPermission->id,
+                                    array_map('intval', (array) ($get($field) ?? [])),
+                                    true,
+                                );
                         })
-                        ->afterStateUpdated(function (Set $set, Get $get, ?array $state) use ($permissionById): void {
+                        ->afterStateUpdated(function (Set $set, ?array $state) use ($permissionById, $field): void {
                             $selected = collect($state ?? [])->map(fn ($id): int => (int) $id);
+
                             $normalized = $selected
                                 ->filter(function (int $permissionId) use ($permissionById, $selected): bool {
                                     $permission = $permissionById->get($permissionId);
@@ -104,8 +110,8 @@ class RoleForm
                                 ->values()
                                 ->all();
 
-                            if ($normalized !== array_map('intval', $state ?? [])) {
-                                $set($get->getStatePath(), $normalized);
+                            if ($normalized !== $selected->values()->all()) {
+                                $set($field, $normalized);
                             }
                         }),
                 ]);
