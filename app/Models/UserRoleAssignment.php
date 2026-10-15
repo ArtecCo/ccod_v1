@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class UserRoleAssignment extends Model
 {
-    protected $fillable = ['user_id','role_id','resource_access_id','granted_by_user_id','starts_at','expires_at'];
+    protected $fillable = ['user_id','role_id','scope_type','resource_access_id','granted_by_user_id','starts_at','expires_at'];
     protected $casts = ['starts_at'=>'datetime','expires_at'=>'datetime'];
     public function user(): BelongsTo { return $this->belongsTo(User::class); }
     public function role(): BelongsTo { return $this->belongsTo(Role::class); }
