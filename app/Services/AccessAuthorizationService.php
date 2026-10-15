@@ -17,15 +17,15 @@ use Illuminate\Support\Collection;
 
 class AccessAuthorizationService
 {
+    /** @var array<int, Collection> */
+    private array $assignmentCache = [];
+
+    /** @var array<int, Collection> */
+    private array $permissionAssignmentCache = [];
+
     public function hasPermission(User $user, string $permission, BusinessUnit|Project|AzureSubscription|null $target = null): bool
     {
-        $assignments = UserRoleAssignment::query()
-            ->with(['role.permissions', 'resourceAccess'])
-            ->where('user_id', $user->getKey())
-            ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->whereHas('role.permissions', fn ($q) => $q->where('slug', $permission)->where('is_active', true))
-            ->get();
+        $assignments = $this->permissionAssignments($user, $permission);
 
         if ($target === null) {
             return $assignments->isNotEmpty();
@@ -47,7 +47,7 @@ class AccessAuthorizationService
     public function effectiveRole(User $user, AccessRequestTargetType|string $targetType, BusinessUnit|Project|AzureSubscription|int|string $target): ?Role
     {
         $target = $this->resolveTarget($targetType, $target);
-        $assignments = $this->activeAssignments($user)->with('resourceAccess')->get();
+        $assignments = $this->activeAssignments($user);
 
         $superAdminRole = $assignments
             ->first(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin')
@@ -66,10 +66,7 @@ class AccessAuthorizationService
 
     public function accessibleSubscriptions(User $user): Collection
     {
-        $assignments = $this->activeAssignments($user)
-            ->with(['role.permissions', 'resourceAccess.businessUnit', 'resourceAccess.project', 'resourceAccess.subscription'])
-            ->get();
-
+        $assignments = $this->activeAssignments($user);
         $superAdminAssignment = $assignments->first(
             fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin'
         );
@@ -226,26 +223,45 @@ class AccessAuthorizationService
     public function isSuperAdmin(User $user): bool
     {
         return $this->activeAssignments($user)
-            ->whereHas('role', fn ($q) => $q->where('slug', 'super_admin'))
-            ->exists();
+            ->contains(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin');
     }
 
     private function superAdminRole(User $user): ?Role
     {
         return $this->activeAssignments($user)
-            ->with('role')
-            ->get()
             ->first(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin')
             ?->role;
     }
 
-    private function activeAssignments(User $user)
+    private function activeAssignments(User $user): Collection
     {
-        return UserRoleAssignment::query()
-            ->with('role')
-            ->where('user_id', $user->getKey())
-            ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+        $userId = (int) $user->getKey();
+
+        if (! isset($this->assignmentCache[$userId])) {
+            $this->assignmentCache[$userId] = UserRoleAssignment::query()
+                ->with(['role.permissions', 'resourceAccess'])
+                ->where('user_id', $user->getKey())
+                ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
+                ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+                ->get();
+        }
+
+        return $this->assignmentCache[$userId];
+    }
+
+    private function permissionAssignments(User $user, string $permission): Collection
+    {
+        $key = (int) $user->getKey() . ':' . $permission;
+
+        if (! isset($this->permissionAssignmentCache[$key])) {
+            $this->permissionAssignmentCache[$key] = $this->activeAssignments($user)->filter(
+                fn (UserRoleAssignment $assignment): bool => $assignment->role->permissions->contains(
+                    fn ($item): bool => $item->slug === $permission && $item->is_active
+                )
+            );
+        }
+
+        return $this->permissionAssignmentCache[$key];
     }
 
     private function resolveTarget(AccessRequestTargetType|string $type, BusinessUnit|Project|AzureSubscription|int|string $target): BusinessUnit|Project|AzureSubscription
@@ -302,7 +318,7 @@ class AccessAuthorizationService
     {
         $sources = [];
 
-        foreach ($this->activeAssignments($user)->with('resourceAccess', 'role')->get() as $assignment) {
+        foreach ($this->activeAssignments($user) as $assignment) {
             if ($this->resourceAccessApplies($assignment->resourceAccess, $subscription)) {
                 $sources[] = $assignment->resourceAccess->access_type . ': ' . $assignment->role->name;
             }
