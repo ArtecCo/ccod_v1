@@ -46,7 +46,9 @@ class RoleForm
         ];
 
         $permissionSections = [];
-        $managed = RolePermissionService::managedPermissions();
+        $managed = collect(RolePermissionService::managedPermissions())
+            ->reject(fn (array $definition, string $slug): bool => $slug === 'dashboard.view')
+            ->all();
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $field = 'permission_' . md5($category);
