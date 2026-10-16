@@ -50,7 +50,11 @@ class RoleForm
         $managed = collect(RolePermissionService::managedPermissions());
 
         foreach ($managed->groupBy('category') as $category => $definitions) {
-            $categorySlugs = $definitions->keys()->all();
+            $categorySlugs = $managed
+                ->filter(fn (array $definition): bool => $definition['category'] === $category)
+                ->keys()
+                ->all();
+
             $options = Permission::query()
                 ->whereIn('slug', $categorySlugs)
                 ->where('is_active', true)
