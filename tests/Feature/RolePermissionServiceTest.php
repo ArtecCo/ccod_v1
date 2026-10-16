@@ -71,6 +71,23 @@ class RolePermissionServiceTest extends TestCase
         );
     }
 
+    public function test_permission_selection_by_slug_is_supported(): void
+    {
+        $role = Role::create([
+            'name' => 'Test slug role',
+            'slug' => 'test-slug-role',
+            'is_active' => true,
+            'is_system_role' => false,
+        ]);
+
+        app(RolePermissionService::class)->sync($role, ['urls.export']);
+
+        $this->assertEqualsCanonicalizing(
+            ['urls.view', 'urls.export'],
+            $role->fresh()->permissions()->pluck('slug')->all(),
+        );
+    }
+
     public function test_unmanaged_permissions_cannot_be_added_to_custom_roles(): void
     {
         $legacy = Permission::create([
