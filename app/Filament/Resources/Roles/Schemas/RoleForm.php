@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Roles\Schemas;
 
-use App\Models\Permission;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
@@ -48,32 +47,17 @@ class RoleForm
 
         $permissionSections = [];
         $managed = RolePermissionService::managedPermissions();
-        $permissionRecords = Permission::query()
-            ->whereIn('slug', array_keys($managed))
-            ->where('is_active', true)
-            ->get(['id', 'slug'])
-            ->keyBy('slug');
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
-            $options = [];
-
-            foreach ($definitions as $slug => $definition) {
-                $permission = $permissionRecords->get($slug);
-
-                if ($permission === null) {
-                    continue;
-                }
-
-                $options[(string) $permission->id] = $definition['name'];
-            }
-
             $field = 'permission_' . md5($category);
 
             $permissionSections[] = Section::make($category)
                 ->schema([
                     CheckboxList::make($field)
                         ->label('Actions')
-                        ->options($options)
+                        ->options($definitions->mapWithKeys(
+                            fn (array $definition, string $slug): array => [$slug => $definition['name']],
+                        )->all())
                         ->columns(2)
                         ->bulkToggleable()
                         ->searchable(),
