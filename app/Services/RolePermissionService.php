@@ -59,45 +59,16 @@ class RolePermissionService
     public static function hiddenSystemPermissions(): array
     {
         return [
-            'subscriptions.assign_environment',
-            'subscriptions.assign_business_unit',
-            'users.roles.assign',
-            'users.scopes.assign',
-            'roles.permissions.assign',
-            'roles.scopes.assign',
-            'system.settings.view',
-            'system.settings.manage',
-            'system.integrations.manage',
-            'system.audit.manage',
-            'system.configuration.manage',
-            'authorization.configuration.manage',
-            'authorization.system_roles.manage',
-            'authorization.security.manage',
-            'applications.view',
-            'applications.create',
-            'applications.edit',
-            'applications.delete',
-            'environments.view',
-            'environments.create',
-            'environments.edit',
-            'environments.delete',
-            'monitoring.history.view',
-            'monitoring.checks.trigger',
-            'alerts.acknowledge',
-            'alerts.close',
-            'alerts.settings.manage',
-            'urls.check.trigger',
-            'urls.history.view',
-            'security.scores.view',
-            'security.settings.manage',
-            'dashboard.metrics.view',
-            'dashboard.widgets.view',
-            'dashboard.export',
-            'cost.view',
-            'cost.breakdown.view',
-            'cost.export',
-            'cost.settings.manage',
-            'resources.metrics.view',
+            'subscriptions.assign_environment', 'subscriptions.assign_business_unit',
+            'users.roles.assign', 'users.scopes.assign', 'roles.permissions.assign', 'roles.scopes.assign',
+            'system.settings.view', 'system.settings.manage', 'system.integrations.manage', 'system.audit.manage',
+            'system.configuration.manage', 'authorization.configuration.manage', 'authorization.system_roles.manage',
+            'authorization.security.manage', 'applications.view', 'applications.create', 'applications.edit',
+            'applications.delete', 'environments.view', 'environments.create', 'environments.edit', 'environments.delete',
+            'monitoring.history.view', 'monitoring.checks.trigger', 'alerts.acknowledge', 'alerts.close',
+            'alerts.settings.manage', 'urls.check.trigger', 'urls.history.view', 'security.scores.view',
+            'security.settings.manage', 'dashboard.metrics.view', 'dashboard.widgets.view', 'dashboard.export',
+            'cost.view', 'cost.breakdown.view', 'cost.export', 'cost.settings.manage', 'resources.metrics.view',
             'tickets.disable',
         ];
     }
@@ -119,26 +90,58 @@ class RolePermissionService
         ];
     }
 
-    /** @param array<int|string> $permissionIds */
-    public function normalizePermissionIds(array $permissionIds): array
+    /** @param array<int|string> $permissionValues */
+    public function normalizePermissionIds(array $permissionValues): array
     {
-        $allowed = array_merge(array_keys(self::managedPermissions()), self::hiddenSystemPermissions());
-        $ids = Permission::query()
-            ->whereIn('id', collect($permissionIds)->filter()->map(static fn ($id): int => (int) $id)->unique())
+        $managed = self::managedPermissions();
+        $allowed = array_merge(array_keys($managed), self::hiddenSystemPermissions());
+        $values = collect($permissionValues)->filter(fn ($value) => $value !== null && $value !== '')->unique()->values();
+
+        $selectedSlugs = $values
+            ->filter(fn ($value) => is_string($value) && ! ctype_digit($value))
+            ->intersect($allowed)
+            ->values()
+            ->all();
+
+        $selectedIds = $values
+            ->filter(fn ($value) => is_int($value) || (is_string($value) && ctype_digit($value)))
+            ->map(fn ($value): int => (int) $value)
+            ->unique()
+            ->values()
+            ->all();
+
+        $existingById = Permission::query()
+            ->whereIn('id', $selectedIds)
             ->whereIn('slug', $allowed)
             ->where('is_active', true)
             ->get(['id', 'slug']);
 
-        $slugs = $ids->pluck('slug')->all();
+        $selectedSlugs = array_values(array_unique(array_merge($selectedSlugs, $existingById->pluck('slug')->all())));
+
+        foreach ($selectedSlugs as $slug) {
+            if (! isset($managed[$slug])) {
+                continue;
+            }
+
+            Permission::query()->updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $managed[$slug]['name'],
+                    'category' => $managed[$slug]['category'],
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ],
+            );
+        }
 
         foreach (self::viewPermissionForActions() as $action => $view) {
-            if (in_array($action, $slugs, true) && ! in_array($view, $slugs, true)) {
-                $slugs[] = $view;
+            if (in_array($action, $selectedSlugs, true) && ! in_array($view, $selectedSlugs, true)) {
+                $selectedSlugs[] = $view;
             }
         }
 
         return Permission::query()
-            ->whereIn('slug', $slugs)
+            ->whereIn('slug', array_values(array_unique($selectedSlugs)))
             ->where('is_active', true)
             ->pluck('id')
             ->map(static fn ($id): int => (int) $id)
@@ -146,9 +149,9 @@ class RolePermissionService
             ->all();
     }
 
-    public function sync(Role $role, array $permissionIds): void
+    public function sync(Role $role, array $permissionValues): void
     {
-        $role->permissions()->sync($this->normalizePermissionIds($permissionIds));
+        $role->permissions()->sync($this->normalizePermissionIds($permissionValues));
     }
 
     public static function resourceViewPermissions(): array
