@@ -23,14 +23,18 @@ class EditRole extends EditRecord
             ->map(fn ($id): int => (int) $id)
             ->all();
 
+        $resourceViewPermissions = RolePermissionService::resourceViewPermissions();
+
         foreach ($permissions->groupBy('category') as $category => $categoryPermissions) {
-            $visiblePermissions = $categoryPermissions->filter(function ($permission): bool {
-                return match ($permission->category) {
-                    'Projects & Applications' => str_starts_with($permission->slug, 'projects.'),
-                    'Environments & Subscriptions' => str_starts_with($permission->slug, 'subscriptions.') && $permission->slug !== 'subscriptions.assign_environment',
-                    default => true,
-                };
-            });
+            $visiblePermissions = $categoryPermissions
+                ->reject(fn ($permission): bool => in_array($permission->slug, $resourceViewPermissions, true))
+                ->filter(function ($permission): bool {
+                    return match ($permission->category) {
+                        'Projects & Applications' => str_starts_with($permission->slug, 'projects.'),
+                        'Environments & Subscriptions' => str_starts_with($permission->slug, 'subscriptions.') && $permission->slug !== 'subscriptions.assign_environment',
+                        default => true,
+                    };
+                });
 
             if ($visiblePermissions->isNotEmpty()) {
                 $data['permission_' . md5($category)] = $visiblePermissions->pluck('id')->all();
