@@ -38,7 +38,7 @@ class EditRole extends EditRecord
     {
         app(RolePermissionService::class)->sync(
             $this->record,
-            array_merge($this->preservedPermissionIds, $this->permissionSlugs($this->data)),
+            array_merge($this->preservedPermissionIds, $this->permissionSlugs($this->form->getState())),
         );
     }
 
