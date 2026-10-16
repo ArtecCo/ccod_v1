@@ -11,34 +11,21 @@ class EditRole extends EditRecord
     protected static string $resource = RoleResource::class;
 
     /** @var array<int> */
-    protected array $legacyPermissionIds = [];
+    protected array $preservedPermissionIds = [];
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
         $permissions = $this->record->permissions()->get();
+        $managedSlugs = array_keys(RolePermissionService::managedPermissions());
 
-        $this->legacyPermissionIds = $permissions
-            ->filter(fn ($permission): bool => str_starts_with($permission->slug, 'applications.') || str_starts_with($permission->slug, 'environments.') || $permission->slug === 'subscriptions.assign_environment')
+        $this->preservedPermissionIds = $permissions
+            ->reject(fn ($permission): bool => in_array($permission->slug, $managedSlugs, true))
             ->pluck('id')
             ->map(fn ($id): int => (int) $id)
             ->all();
 
-        $resourceViewPermissions = RolePermissionService::resourceViewPermissions();
-
-        foreach ($permissions->groupBy('category') as $category => $categoryPermissions) {
-            $visiblePermissions = $categoryPermissions
-                ->reject(fn ($permission): bool => in_array($permission->slug, $resourceViewPermissions, true))
-                ->filter(function ($permission): bool {
-                    return match ($permission->category) {
-                        'Projects & Applications' => str_starts_with($permission->slug, 'projects.'),
-                        'Environments & Subscriptions' => str_starts_with($permission->slug, 'subscriptions.') && $permission->slug !== 'subscriptions.assign_environment',
-                        default => true,
-                    };
-                });
-
-            if ($visiblePermissions->isNotEmpty()) {
-                $data['permission_' . md5($category)] = $visiblePermissions->pluck('id')->all();
-            }
+        foreach ($permissions->whereIn('slug', $managedSlugs)->groupBy('category') as $category => $categoryPermissions) {
+            $data['permission_' . md5($category)] = $categoryPermissions->pluck('id')->all();
         }
 
         return $data;
@@ -48,7 +35,7 @@ class EditRole extends EditRecord
     {
         app(RolePermissionService::class)->sync(
             $this->record,
-            array_merge($this->legacyPermissionIds, $this->permissionIds($this->data)),
+            array_merge($this->preservedPermissionIds, $this->permissionIds($this->data)),
         );
     }
 
