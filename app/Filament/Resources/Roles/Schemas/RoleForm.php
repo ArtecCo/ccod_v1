@@ -49,22 +49,15 @@ class RoleForm
         $permissions = RolePermissionService::managedPermissions();
 
         foreach (collect($permissions)->groupBy('category') as $category => $definitions) {
-            $slugs = $definitions->keys()->all();
-            $permissionModels = \App\Models\Permission::query()
-                ->whereIn('slug', $slugs)
-                ->where('is_active', true)
-                ->get()
-                ->keyBy('slug');
-
             $field = 'permission_' . md5($category);
 
             $permissionSections[] = Section::make($category)
                 ->schema([
                     CheckboxList::make($field)
                         ->label('Actions')
-                        ->options($definitions->mapWithKeys(fn (array $definition, string $slug): array => [
-                            $permissionModels->get($slug)?->id => $definition['name'],
-                        ])->filter(fn ($label, $id): bool => $id !== null)->all())
+                        ->options($definitions->mapWithKeys(
+                            fn (array $definition, string $slug): array => [$slug => $definition['name']],
+                        )->all())
                         ->columns(2)
                         ->bulkToggleable()
                         ->searchable(),
