@@ -87,7 +87,7 @@ class AdminPanelProvider extends PanelProvider
                 }
 
                 $baseItems = [];
-                if ($user instanceof User && $authz->hasPermission($user, 'dashboard.view')) $baseItems[] = NavigationItem::make('Dashboard')->icon(Heroicon::OutlinedHome)->url(Dashboard::getUrl());
+                if ($user instanceof User) $baseItems[] = NavigationItem::make('Dashboard')->icon(Heroicon::OutlinedHome)->url(Dashboard::getUrl());
                 $baseItems[] = NavigationItem::make('Notifications')->icon(Heroicon::OutlinedBell)->url(ClientNotifications::getUrl());
                 if ($user instanceof User && $authz->hasPermission($user, 'documentation.view')) $baseItems[] = NavigationItem::make('Documentation')->icon(Heroicon::OutlinedDocumentText)->url(DocumentationResource::getUrl());
 
