@@ -26,8 +26,8 @@ class EditRole extends EditRecord
 
         foreach ($permissions->whereIn('slug', $managedSlugs)->groupBy('category') as $category => $categoryPermissions) {
             $data['permission_' . md5($category)] = $categoryPermissions
-                ->pluck('id')
-                ->map(fn ($id): string => (string) $id)
+                ->pluck('slug')
+                ->map(fn ($slug): string => (string) $slug)
                 ->all();
         }
 
@@ -38,7 +38,7 @@ class EditRole extends EditRecord
     {
         app(RolePermissionService::class)->sync(
             $this->record,
-            array_merge($this->preservedPermissionIds, $this->permissionIds($this->data)),
+            array_merge($this->preservedPermissionIds, $this->permissionSlugs($this->data)),
         );
     }
 
@@ -52,7 +52,7 @@ class EditRole extends EditRecord
         return RoleResource::getUrl('index');
     }
 
-    private function permissionIds(array $data): array
+    private function permissionSlugs(array $data): array
     {
         return collect($data)
             ->filter(fn ($value, $key) => str_starts_with($key, 'permission_'))
