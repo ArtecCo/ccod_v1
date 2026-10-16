@@ -56,48 +56,73 @@ class RolePermissionService
         ];
     }
 
+    public static function hiddenSystemPermissions(): array
+    {
+        return [
+            'subscriptions.assign_environment',
+            'subscriptions.assign_business_unit',
+            'users.roles.assign',
+            'users.scopes.assign',
+            'roles.permissions.assign',
+            'roles.scopes.assign',
+            'system.settings.view',
+            'system.settings.manage',
+            'system.integrations.manage',
+            'system.audit.manage',
+            'system.configuration.manage',
+            'authorization.configuration.manage',
+            'authorization.system_roles.manage',
+            'authorization.security.manage',
+            'applications.view',
+            'applications.create',
+            'applications.edit',
+            'applications.delete',
+            'environments.view',
+            'environments.create',
+            'environments.edit',
+            'environments.delete',
+            'monitoring.history.view',
+            'monitoring.checks.trigger',
+            'alerts.acknowledge',
+            'alerts.close',
+            'alerts.settings.manage',
+            'urls.check.trigger',
+            'urls.history.view',
+            'security.scores.view',
+            'security.settings.manage',
+            'dashboard.metrics.view',
+            'dashboard.widgets.view',
+            'dashboard.export',
+            'cost.view',
+            'cost.breakdown.view',
+            'cost.export',
+            'cost.settings.manage',
+            'resources.metrics.view',
+            'tickets.disable',
+        ];
+    }
+
     /** @return array<string, string> */
     public static function viewPermissionForActions(): array
     {
         return [
-            'documentation.create' => 'documentation.view',
-            'documentation.edit' => 'documentation.view',
-            'documentation.delete' => 'documentation.view',
-            'subscriptions.create' => 'subscriptions.view',
-            'subscriptions.edit' => 'subscriptions.view',
-            'subscriptions.delete' => 'subscriptions.view',
-            'subscriptions.sync' => 'subscriptions.view',
-            'alerts.export' => 'alerts.view',
-            'alerts.sync' => 'alerts.view',
-            'projects.create' => 'projects.view',
-            'projects.edit' => 'projects.view',
-            'projects.delete' => 'projects.view',
-            'resources.export' => 'resources.view',
-            'resources.sync' => 'resources.view',
-            'security.export' => 'security.view',
-            'security.sync' => 'security.view',
-            'tickets.create' => 'tickets.view',
-            'tickets.update' => 'tickets.view',
-            'tickets.assign' => 'tickets.view',
-            'tickets.close' => 'tickets.view',
-            'tickets.export' => 'tickets.view',
-            'urls.create' => 'urls.view',
-            'urls.edit' => 'urls.view',
-            'urls.delete' => 'urls.view',
-            'urls.export' => 'urls.view',
-            'roles.create' => 'roles.view',
-            'roles.edit' => 'roles.view',
-            'roles.delete' => 'roles.view',
-            'users.create' => 'users.view',
-            'users.edit' => 'users.view',
-            'users.delete' => 'users.view',
+            'documentation.create' => 'documentation.view', 'documentation.edit' => 'documentation.view', 'documentation.delete' => 'documentation.view',
+            'subscriptions.create' => 'subscriptions.view', 'subscriptions.edit' => 'subscriptions.view', 'subscriptions.delete' => 'subscriptions.view', 'subscriptions.sync' => 'subscriptions.view',
+            'alerts.export' => 'alerts.view', 'alerts.sync' => 'alerts.view',
+            'projects.create' => 'projects.view', 'projects.edit' => 'projects.view', 'projects.delete' => 'projects.view',
+            'resources.export' => 'resources.view', 'resources.sync' => 'resources.view',
+            'security.export' => 'security.view', 'security.sync' => 'security.view',
+            'tickets.create' => 'tickets.view', 'tickets.update' => 'tickets.view', 'tickets.assign' => 'tickets.view', 'tickets.close' => 'tickets.view', 'tickets.export' => 'tickets.view',
+            'urls.create' => 'urls.view', 'urls.edit' => 'urls.view', 'urls.delete' => 'urls.view', 'urls.export' => 'urls.view',
+            'roles.create' => 'roles.view', 'roles.edit' => 'roles.view', 'roles.delete' => 'roles.view',
+            'users.create' => 'users.view', 'users.edit' => 'users.view', 'users.delete' => 'users.view',
         ];
     }
 
     /** @param array<int|string> $permissionIds */
     public function normalizePermissionIds(array $permissionIds): array
     {
-        $allowed = array_keys(self::managedPermissions());
+        $allowed = array_merge(array_keys(self::managedPermissions()), self::hiddenSystemPermissions());
         $ids = Permission::query()
             ->whereIn('id', collect($permissionIds)->filter()->map(static fn ($id): int => (int) $id)->unique())
             ->whereIn('slug', $allowed)
@@ -121,7 +146,6 @@ class RolePermissionService
             ->all();
     }
 
-    /** @param array<int|string> $permissionIds */
     public function sync(Role $role, array $permissionIds): void
     {
         $role->permissions()->sync($this->normalizePermissionIds($permissionIds));
