@@ -23,101 +23,31 @@ use Illuminate\Database\Eloquent\Builder;
 class AzureSubscriptionResource extends Resource
 {
     protected static ?string $model = AzureSubscription::class;
-
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
-
     protected static ?string $recordTitleAttribute = 'display_name';
 
-    public static function canCreate(): bool
+    public static function canViewAny(): bool
     {
         $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.create');
+        return $user instanceof User && (
+            app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.create')
+            || app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.edit')
+            || app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.delete')
+            || app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.assign_environment')
+            || app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.assign_business_unit')
+        );
     }
-
-    public static function canView($record): bool
-    {
-        $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasResourceAccess($user, $record);
-    }
-
-    public static function canEdit($record): bool
-    {
-        $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.edit', $record);
-    }
-
-    public static function canDelete($record): bool
-    {
-        $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.delete', $record);
-    }
-
-    public static function getGloballySearchableAttributes(): array
-    {
-        return ['display_name', 'subscription_id'];
-    }
-
-    public static function getGlobalSearchResultDetails($record): array
-    {
-        return ['Subscription ID' => $record->subscription_id];
-    }
-
-    public static function getGlobalSearchResultUrl($record): string
-    {
-        return static::getUrl('view', ['record' => $record]);
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        $query = parent::getEloquentQuery();
-        $user = auth()->guard('web')->user();
-
-        if (! $user instanceof User) {
-            return $query->whereRaw('1 = 0');
-        }
-
-        $accessibleSubscriptionIds = app(AccessAuthorizationService::class)
-            ->accessibleSubscriptions($user)
-            ->pluck('subscription_id');
-
-        return $query->whereIn('subscription_id', $accessibleSubscriptionIds);
-    }
-
-    public static function form(Schema $schema): Schema
-    {
-        return AzureSubscriptionForm::configure($schema);
-    }
-
-    public static function infolist(Schema $schema): Schema
-    {
-        return AzureSubscriptionInfolist::configure($schema);
-    }
-
-    public static function table(Table $table): Table
-    {
-        return AzureSubscriptionsTable::configure($table);
-    }
-
-    public static function getRelations(): array
-    {
-        return [BillingResourcesRelationManager::class];
-    }
-
-    public static function getPages(): array
-    {
-        return [
-            'index' => ListAzureSubscriptions::route('/'),
-            'create' => CreateAzureSubscription::route('/create'),
-            'view' => ViewAzureSubscription::route('/{record}'),
-            'edit' => EditAzureSubscription::route('/{record}/edit'),
-        ];
-    }
+    public static function canCreate(): bool { $user=auth()->guard('web')->user(); return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user,'subscriptions.create'); }
+    public static function canView($record): bool { $user=auth()->guard('web')->user(); return $user instanceof User && app(AccessAuthorizationService::class)->hasResourceAccess($user,$record); }
+    public static function canEdit($record): bool { $user=auth()->guard('web')->user(); return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user,'subscriptions.edit',$record); }
+    public static function canDelete($record): bool { $user=auth()->guard('web')->user(); return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user,'subscriptions.delete',$record); }
+    public static function getGloballySearchableAttributes(): array { return ['display_name','subscription_id']; }
+    public static function getGlobalSearchResultDetails($record): array { return ['Subscription ID'=>$record->subscription_id]; }
+    public static function getGlobalSearchResultUrl($record): string { return static::getUrl('view',['record'=>$record]); }
+    public static function getEloquentQuery(): Builder { $query=parent::getEloquentQuery();$user=auth()->guard('web')->user();if(!$user instanceof User)return $query->whereRaw('1 = 0');$ids=app(AccessAuthorizationService::class)->accessibleSubscriptions($user)->pluck('subscription_id');return $query->whereIn('subscription_id',$ids); }
+    public static function form(Schema $schema): Schema { return AzureSubscriptionForm::configure($schema); }
+    public static function infolist(Schema $schema): Schema { return AzureSubscriptionInfolist::configure($schema); }
+    public static function table(Table $table): Table { return AzureSubscriptionsTable::configure($table); }
+    public static function getRelations(): array { return [BillingResourcesRelationManager::class]; }
+    public static function getPages(): array { return ['index'=>ListAzureSubscriptions::route('/'),'create'=>CreateAzureSubscription::route('/create'),'view'=>ViewAzureSubscription::route('/{record}'),'edit'=>EditAzureSubscription::route('/{record}/edit')]; }
 }
