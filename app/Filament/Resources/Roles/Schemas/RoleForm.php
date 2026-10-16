@@ -4,15 +4,12 @@ namespace App\Filament\Resources\Roles\Schemas;
 
 use App\Models\Permission;
 use App\Models\Role;
-use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Utilities\Get;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
@@ -30,7 +27,7 @@ class RoleForm
                         ->required()
                         ->maxLength(255)
                         ->live(onBlur: true)
-                        ->afterStateUpdated(function (Set $set, Get $get, ?string $state): void {
+                        ->afterStateUpdated(function ($set, $get, ?string $state): void {
                             if (blank($get('slug'))) {
                                 $set('slug', Str::slug((string) $state));
                             }
@@ -54,7 +51,12 @@ class RoleForm
             Permission::query()
                 ->where('is_active', true)
                 ->where('category', '!=', 'Administration')
-                ->whereNotIn('slug', ['projects.view', 'applications.view', 'environments.view', 'subscriptions.view'])
+                ->whereNotIn('slug', [
+                    'projects.view',
+                    'applications.view',
+                    'environments.view',
+                    'subscriptions.view',
+                ])
                 ->orderBy('category')
                 ->orderBy('name')
                 ->get()
@@ -71,7 +73,6 @@ class RoleForm
             }
 
             $field = 'permission_' . md5($category);
-            $permissionById = $displayPermissions->keyBy('id');
             $categoryLabel = match ($category) {
                 'Projects & Applications' => 'Projects',
                 'Environments & Subscriptions' => 'Environments',
@@ -97,56 +98,7 @@ class RoleForm
                         ->columns(2)
                         ->bulkToggleable()
                         ->searchable()
-                        ->live()
-                        ->disableOptionWhen(function (string $value, Get $get) use ($permissionById, $field): bool {
-                            $permission = $permissionById->get((int) $value);
-
-                            if ($permission === null) {
-                                return false;
-                            }
-
-                            $viewSlug = str_starts_with($permission->slug, 'projects.') || str_starts_with($permission->slug, 'applications.') || str_starts_with($permission->slug, 'environments.') || str_starts_with($permission->slug, 'subscriptions.')
-                                ? null
-                                : (str_starts_with($permission->slug, 'monitoring.') ? 'alerts.view' : str($permission->slug)->before('.') . '.view');
-                            $viewPermission = $viewSlug === null ? null : $permissionById->firstWhere('slug', $viewSlug);
-
-                            return $viewPermission !== null
-                                && (int) $value !== (int) $viewPermission->id
-                                && ! in_array(
-                                    (int) $viewPermission->id,
-                                    array_map('intval', (array) ($get($field) ?? [])),
-                                    true,
-                                );
-                        })
-                        ->afterStateUpdated(function (Set $set, ?array $state) use ($permissionById, $field): void {
-                            $selected = collect($state ?? [])->map(fn ($id): int => (int) $id);
-
-                            $normalized = $selected
-                                ->filter(function (int $permissionId) use ($permissionById, $selected): bool {
-                                    $permission = $permissionById->get($permissionId);
-
-                                    if ($permission === null) {
-                                        return false;
-                                    }
-
-                                    if (str_starts_with($permission->slug, 'projects.') || str_starts_with($permission->slug, 'applications.') || str_starts_with($permission->slug, 'environments.') || str_starts_with($permission->slug, 'subscriptions.')) {
-                                        return true;
-                                    }
-
-                                    $viewSlug = str_starts_with($permission->slug, 'monitoring.') ? 'alerts.view' : str($permission->slug)->before('.') . '.view';
-
-                                    return $permission->slug === $viewSlug
-                                        || $selected->contains(function (int $selectedId) use ($permissionById, $viewSlug): bool {
-                                            return $permissionById->get($selectedId)?->slug === $viewSlug;
-                                        });
-                                })
-                                ->values()
-                                ->all();
-
-                            if ($normalized !== $selected->values()->all()) {
-                                $set($field, $normalized);
-                            }
-                        }),
+                        ->live(),
                 ]);
         }
 
