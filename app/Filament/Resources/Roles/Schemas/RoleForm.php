@@ -46,20 +46,23 @@ class RoleForm
         ];
 
         $permissionSections = [];
-        $managed = collect(RolePermissionService::managedPermissions())
-            ->reject(fn (array $definition, string $slug): bool => $slug === 'dashboard.view')
-            ->all();
+        $managed = collect(RolePermissionService::managedPermissions());
 
-        foreach (collect($managed)->groupBy('category') as $category => $definitions) {
-            $field = 'permission_' . md5($category);
+        foreach ($managed->groupBy('category') as $category => $definitions) {
+            $categorySlugs = $definitions->keys()->all();
 
             $permissionSections[] = Section::make($category)
                 ->schema([
-                    CheckboxList::make($field)
+                    CheckboxList::make('permission_' . md5($category))
                         ->label('Actions')
-                        ->options($definitions->mapWithKeys(
-                            fn (array $definition, string $slug): array => [$slug => $definition['name']],
-                        )->all())
+                        ->relationship(
+                            name: 'permissions',
+                            titleAttribute: 'name',
+                            modifyQueryUsing: fn ($query) => $query->whereIn('slug', $categorySlugs),
+                        )
+                        ->saveRelationshipsUsing(function (Role $record, ?array $state) use ($category): void {
+                            app(RolePermissionService::class)->syncManagedCategory($record, $category, $state);
+                        })
                         ->columns(2)
                         ->bulkToggleable()
                         ->searchable(),
