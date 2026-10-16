@@ -33,88 +33,17 @@ class ViewAzureSubscription extends ViewRecord
 
     public function content(Schema $schema): Schema
     {
-        return $schema
-            ->components([
-                Tabs::make('Subscription Navigation')
-                    ->tabs([
-                        $this->makeTab('Overview', 'subscriptions.view')
-                            ->schema(fn (): array => $this->tabContent('subscriptions.view', [
-                                Section::make('Subscription Details')
-                                    ->schema([
-                                        $this->getInfolistContentComponent()
-                                            ->columnSpanFull(),
-                                    ])
-                                    ->columnSpanFull(),
-
-                                Livewire::make(SubscriptionStatsOverview::class, [
-                                    'record' => $this->record,
-                                ])
-                                    ->columnSpanFull(),
-                            ]))
-                            ->columns(1),
-
-                        $this->makeTab('Cost', 'cost.view')
-                            ->schema(fn (): array => $this->tabContent('cost.view', [
-                                Livewire::make(SubscriptionCostSummary::class, [
-                                    'record' => $this->record,
-                                ])
-                                    ->columnSpanFull(),
-
-                                Livewire::make(SubscriptionBudgetDetails::class, [
-                                    'record' => $this->record,
-                                ])
-                                    ->columnSpanFull(),
-
-                                Livewire::make(SubscriptionResourceCostBreakdown::class, [
-                                    'record' => $this->record,
-                                ])
-                                    ->columnSpanFull(),
-                            ]))
-                            ->columns(1),
-
-                        $this->makeTab('Alerts', 'alerts.view')
-                            ->schema(fn (): array => $this->tabContent('alerts.view', [
-                                Livewire::make(SubscriptionAlertSeverityOverview::class, [
-                                    'record' => $this->record,
-                                ])
-                                    ->columnSpanFull(),
-
-                                Livewire::make(AzureAlertsRelationManager::class, [
-                                    'ownerRecord' => $this->record,
-                                    'pageClass' => static::class,
-                                ])->columnSpanFull(),
-                            ]))
-                            ->columns(1),
-
-                        $this->makeTab('Security', 'security.view')
-                            ->schema(fn (): array => $this->tabContent('security.view', [])),
-
-                        $this->makeTab('Tickets', 'tickets.view')
-                            ->schema(fn (): array => $this->tabContent('tickets.view', [])),
-
-                        $this->makeTab('Web URLs', 'urls.view')
-                            ->schema(fn (): array => $this->tabContent('urls.view', [
-                                Livewire::make(SubscriptionWebUrlsRelationManager::class, [
-                                    'ownerRecord' => $this->record,
-                                    'pageClass' => static::class,
-                                ])->columnSpanFull(),
-                            ]))
-                            ->columns(1),
-
-                        $this->makeTab('Resources', 'resources.view')
-                            ->schema(fn (): array => $this->tabContent('resources.view', [
-                                $this->getRelationManagersContentComponent()
-                                    ->columnSpanFull(),
-                            ]))
-                            ->columns(1),
-                    ])
-                    ->persistTabInQueryString()
-                    ->contained(false)
-                    ->extraAttributes([
-                        'class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none',
-                    ])
-                    ->columnSpanFull(),
-            ]);
+        return $schema->components([
+            Tabs::make('Subscription Navigation')->tabs([
+                $this->makeTab('Overview', 'subscriptions.view')->schema(fn (): array => $this->tabContent('subscriptions.view', [Section::make('Subscription Details')->schema([$this->getInfolistContentComponent()->columnSpanFull()])->columnSpanFull(), Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->columnSpanFull()]))->columns(1),
+                $this->makeTab('Cost', 'cost.view')->schema(fn (): array => $this->tabContent('cost.view', [Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(SubscriptionBudgetDetails::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(SubscriptionResourceCostBreakdown::class, ['record' => $this->record])->columnSpanFull()]))->columns(1),
+                $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => $this->tabContent('alerts.view', [Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull()]))->columns(1),
+                $this->makeTab('Security', 'security.view')->schema(fn (): array => $this->tabContent('security.view', [])),
+                $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => $this->tabContent('tickets.view', [])),
+                $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => $this->tabContent('urls.view', [Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull()]))->columns(1),
+                $this->makeTab('Resources', 'resources.view')->schema(fn (): array => $this->tabContent('resources.view', [$this->getRelationManagersContentComponent()->columnSpanFull()]))->columns(1),
+            ])->persistTabInQueryString()->contained(false)->extraAttributes(['class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none'])->columnSpanFull(),
+        ]);
     }
 
     protected function makeTab(string $label, string $permission): Tab
@@ -124,11 +53,7 @@ class ViewAzureSubscription extends ViewRecord
 
     protected function tabContent(string $permission, array $content): array
     {
-        if ($this->canViewTab($permission)) {
-            return $content;
-        }
-
-        return [
+        return $this->canViewTab($permission) ? $content : [
             Section::make("You don't have access to this")
                 ->description('You do not have permission to view this section of the subscription.')
                 ->icon(Heroicon::OutlinedLockClosed)
@@ -139,59 +64,16 @@ class ViewAzureSubscription extends ViewRecord
     protected function canViewTab(string $permission): bool
     {
         $developer = auth()->guard('developers')->user();
-
-        if ($developer instanceof Developer && $developer->is_active) {
-            return true;
-        }
-
+        if ($developer instanceof Developer && $developer->is_active) return true;
         $user = auth()->guard('web')->user();
-
-        if (! $user instanceof User) {
-            return false;
-        }
-
-        $authorization = app(AccessAuthorizationService::class);
-
-        return $permission === 'subscriptions.view'
-            ? $authorization->hasResourceAccess($user, $this->record)
-            : $authorization->hasPermission($user, $permission, $this->record);
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $this->record);
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('addWebUrl')
-                ->label('Add Web URL')
-                ->icon(Heroicon::OutlinedGlobeAlt)
-                ->visible(fn (): bool => Gate::forUser(auth()->user())->allows(
-                    'create',
-                    [SubscriptionWebUrl::class, $this->record],
-                ))
-                ->modalHeading('Add Web URL')
-                ->modalSubmitActionLabel('Add URL')
-                ->form([
-                    TextInput::make('url')
-                        ->label('Web URL')
-                        ->url()
-                        ->required()
-                        ->maxLength(2048),
-                    Toggle::make('is_active')
-                        ->label('Active')
-                        ->default(true),
-                ])
-                ->action(function (array $data): void {
-                    $url = rtrim(trim($data['url']), '/');
-
-                    $this->record->webUrls()->create([
-                        'url' => $url,
-                        'url_hash' => hash('sha256', $url),
-                        'is_active' => (bool) ($data['is_active'] ?? true),
-                    ]);
-
-                    $this->dispatch('web-url-added');
-                })
-                ->successNotificationTitle('Web URL added'),
-            EditAction::make(),
+            Action::make('addWebUrl')->label('Add Web URL')->icon(Heroicon::OutlinedGlobeAlt)->visible(fn (): bool => Gate::forUser(auth()->user())->allows('create', [SubscriptionWebUrl::class, $this->record]))->modalHeading('Add Web URL')->modalSubmitActionLabel('Add URL')->form([TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048), Toggle::make('is_active')->label('Active')->default(true)])->action(function (array $data): void {$url=rtrim(trim($data['url']),'/');$this->record->webUrls()->create(['url'=>$url,'url_hash'=>hash('sha256',$url),'is_active'=>(bool)($data['is_active']??true)]);$this->dispatch('web-url-added');})->successNotificationTitle('Web URL added'),
+            EditAction::make()->visible(fn (): bool => AzureSubscriptionResource::canEdit($this->record)),
         ];
     }
 }
