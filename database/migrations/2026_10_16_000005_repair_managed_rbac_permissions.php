@@ -1,9 +1,7 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -64,21 +62,17 @@ return new class extends Migration
                     'category' => $category,
                     'description' => null,
                     'is_active' => true,
+                    'created_at' => $now,
                     'updated_at' => $now,
                 ],
             );
         }
 
-        $managedSlugs = array_column($permissions, 0);
         $managedIds = DB::table('permissions')
-            ->whereIn('slug', $managedSlugs)
+            ->whereIn('slug', array_column($permissions, 0))
             ->pluck('id');
 
-        $adminRoleIds = DB::table('roles')
-            ->whereIn('slug', ['admin', 'super_admin'])
-            ->pluck('id');
-
-        foreach ($adminRoleIds as $roleId) {
+        foreach (DB::table('roles')->whereIn('slug', ['admin', 'super_admin'])->pluck('id') as $roleId) {
             foreach ($managedIds as $permissionId) {
                 DB::table('permission_role')->insertOrIgnore([
                     'role_id' => $roleId,
