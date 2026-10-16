@@ -25,7 +25,7 @@ class EditRole extends EditRecord
             ->all();
 
         foreach ($permissions->whereIn('slug', $managedSlugs)->groupBy('category') as $category => $categoryPermissions) {
-            $data['permission_' . md5($category)] = $categoryPermissions->pluck('id')->all();
+            $data['permission_' . md5($category)] = $categoryPermissions->pluck('slug')->all();
         }
 
         return $data;
