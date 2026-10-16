@@ -2,8 +2,8 @@
 
 namespace App\Filament\Resources\Roles\Schemas;
 
-use App\Models\Permission;
 use App\Models\Role;
+use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -46,59 +46,28 @@ class RoleForm
         ];
 
         $permissionSections = [];
+        $permissions = RolePermissionService::managedPermissions();
 
-        foreach (
-            Permission::query()
+        foreach (collect($permissions)->groupBy('category') as $category => $definitions) {
+            $slugs = $definitions->keys()->all();
+            $permissionModels = \App\Models\Permission::query()
+                ->whereIn('slug', $slugs)
                 ->where('is_active', true)
-                ->where('category', '!=', 'Administration')
-                ->whereNotIn('slug', [
-                    'projects.view',
-                    'applications.view',
-                    'environments.view',
-                    'subscriptions.view',
-                ])
-                ->orderBy('category')
-                ->orderBy('name')
                 ->get()
-                ->groupBy('category') as $category => $permissions
-        ) {
-            $displayPermissions = match ($category) {
-                'Projects & Applications' => $permissions->filter(fn (Permission $permission): bool => str_starts_with($permission->slug, 'projects.')),
-                'Environments & Subscriptions' => $permissions->filter(fn (Permission $permission): bool => str_starts_with($permission->slug, 'subscriptions.') && $permission->slug !== 'subscriptions.assign_environment'),
-                default => $permissions,
-            };
-
-            if ($displayPermissions->isEmpty()) {
-                continue;
-            }
+                ->keyBy('slug');
 
             $field = 'permission_' . md5($category);
-            $categoryLabel = match ($category) {
-                'Projects & Applications' => 'Projects',
-                'Environments & Subscriptions' => 'Environments',
-                default => $category,
-            };
 
-            $permissionSections[] = Section::make($categoryLabel)
+            $permissionSections[] = Section::make($category)
                 ->schema([
                     CheckboxList::make($field)
                         ->label('Actions')
-                        ->options($displayPermissions->mapWithKeys(function (Permission $permission): array {
-                            $label = match ($permission->slug) {
-                                'subscriptions.view' => 'View environments',
-                                'subscriptions.create' => 'Create environments',
-                                'subscriptions.edit' => 'Edit environments',
-                                'subscriptions.delete' => 'Delete environments',
-                                'subscriptions.assign_business_unit' => 'Assign environments to business units',
-                                default => $permission->name,
-                            };
-
-                            return [$permission->id => $label];
-                        })->all())
+                        ->options($definitions->mapWithKeys(fn (array $definition, string $slug): array => [
+                            $permissionModels->get($slug)?->id => $definition['name'],
+                        ])->filter(fn ($label, $id): bool => $id !== null)->all())
                         ->columns(2)
                         ->bulkToggleable()
-                        ->searchable()
-                        ->live(),
+                        ->searchable(),
                 ]);
         }
 
