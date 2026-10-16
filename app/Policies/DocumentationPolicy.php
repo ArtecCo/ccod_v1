@@ -28,8 +28,14 @@ class DocumentationPolicy
 
     public function update(User $user, Documentation $documentation): bool
     {
-        return $user->is_active === true
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'documentation.edit');
+        if ($user->is_active !== true) {
+            return false;
+        }
+
+        $authz = app(AccessAuthorizationService::class);
+
+        return $authz->hasPermission($user, 'documentation.edit')
+            || ($documentation->author_id === $user->getKey() && $authz->hasPermission($user, 'documentation.create'));
     }
 
     public function delete(User $user, Documentation $documentation): bool
