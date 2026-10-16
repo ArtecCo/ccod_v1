@@ -26,21 +26,27 @@ class ProjectResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return static::canManage('projects.create') || static::canManage('projects.edit') || static::canManage('projects.delete');
+        return static::canManage('projects.view');
     }
+
     public static function canCreate(): bool { return static::canManage('projects.create'); }
-    public static function canView($record): bool { return static::canManage('projects.edit', $record) || static::canManage('projects.delete', $record); }
+    public static function canView($record): bool { return static::canManage('projects.view', $record); }
     public static function canEdit($record): bool { return static::canManage('projects.edit', $record); }
     public static function canDelete($record): bool { return static::canManage('projects.delete', $record); }
     public static function form(Schema $schema): Schema { return ProjectForm::configure($schema); }
     public static function infolist(Schema $schema): Schema { return ProjectInfolist::configure($schema); }
     public static function table(Table $table): Table { return ProjectsTable::configure($table); }
-    public static function getPages(): array { return ['index'=>ListProjects::route('/'),'create'=>CreateProject::route('/create'),'view'=>ViewProject::route('/{record}'),'edit'=>EditProject::route('/{record}/edit')]; }
+    public static function getPages(): array { return ['index' => ListProjects::route('/'), 'create' => CreateProject::route('/create'), 'view' => ViewProject::route('/{record}'), 'edit' => EditProject::route('/{record}/edit')]; }
 
     private static function canManage(string $permission, ?Project $target = null): bool
     {
-        if (auth()->guard('developers')->user()?->is_active === true) return true;
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
         $user = auth()->guard('web')->user();
-        return $user instanceof User && app(\App\Services\AccessAuthorizationService::class)->hasPermission($user, $permission, $target);
+
+        return $user instanceof User
+            && app(\App\Services\AccessAuthorizationService::class)->hasPermission($user, $permission, $target);
     }
 }
