@@ -29,39 +29,30 @@ class AzureSubscriptionResource extends Resource
     public static function canViewAny(): bool
     {
         $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.view');
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.view');
     }
 
     public static function canCreate(): bool
     {
-        // Subscriptions are imported from Azure; manual creation is intentionally disabled.
         return false;
     }
 
     public static function canView($record): bool
     {
         $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.view', $record);
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasResourceAccess($user, $record);
     }
 
     public static function canEdit($record): bool
     {
         $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.edit', $record);
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.edit', $record);
     }
 
     public static function canDelete($record): bool
     {
         $user = auth()->guard('web')->user();
-
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.delete', $record);
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.delete', $record);
     }
 
     public static function getGloballySearchableAttributes(): array { return ['display_name', 'subscription_id']; }
@@ -72,13 +63,8 @@ class AzureSubscriptionResource extends Resource
     {
         $query = parent::getEloquentQuery();
         $user = auth()->guard('web')->user();
-
-        if (! $user instanceof User) {
-            return $query->whereRaw('1 = 0');
-        }
-
+        if (! $user instanceof User) return $query->whereRaw('1 = 0');
         $ids = app(AccessAuthorizationService::class)->accessibleSubscriptions($user)->pluck('subscription_id');
-
         return $query->whereIn('subscription_id', $ids);
     }
 
