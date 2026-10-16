@@ -11,7 +11,6 @@ class RolePermissionService
     public static function managedPermissions(): array
     {
         return [
-            'dashboard.view' => ['category' => 'Dashboard', 'name' => 'Open home route'],
             'documentation.view' => ['category' => 'Documentation', 'name' => 'View documents'],
             'documentation.create' => ['category' => 'Documentation', 'name' => 'Create documents'],
             'documentation.edit' => ['category' => 'Documentation', 'name' => 'Edit documents'],
@@ -59,12 +58,14 @@ class RolePermissionService
     public static function hiddenSystemPermissions(): array
     {
         return [
+            'dashboard.view',
             'subscriptions.assign_environment', 'subscriptions.assign_business_unit',
             'users.roles.assign', 'users.scopes.assign', 'roles.permissions.assign', 'roles.scopes.assign',
             'system.settings.view', 'system.settings.manage', 'system.integrations.manage', 'system.audit.manage',
-            'system.configuration.manage', 'authorization.configuration.manage', 'authorization.system_roles.manage',
-            'authorization.security.manage', 'applications.view', 'applications.create', 'applications.edit',
-            'applications.delete', 'environments.view', 'environments.create', 'environments.edit', 'environments.delete',
+            'system.configuration.manage', 'system.audit.manage', 'authorization.configuration.manage',
+            'authorization.system_roles.manage', 'authorization.security.manage',
+            'applications.view', 'applications.create', 'applications.edit', 'applications.delete',
+            'environments.view', 'environments.create', 'environments.edit', 'environments.delete',
             'monitoring.history.view', 'monitoring.checks.trigger', 'alerts.acknowledge', 'alerts.close',
             'alerts.settings.manage', 'urls.check.trigger', 'urls.history.view', 'security.scores.view',
             'security.settings.manage', 'dashboard.metrics.view', 'dashboard.widgets.view', 'dashboard.export',
@@ -88,6 +89,63 @@ class RolePermissionService
             'roles.create' => 'roles.view', 'roles.edit' => 'roles.view', 'roles.delete' => 'roles.view',
             'users.create' => 'users.view', 'users.edit' => 'users.view', 'users.delete' => 'users.view',
         ];
+    }
+
+    /** @param array<int|string>|null $permissionValues */
+    public function syncManagedCategory(Role $role, string $category, ?array $permissionValues): void
+    {
+        $managed = self::managedPermissions();
+        $categorySlugs = collect($managed)
+            ->filter(fn (array $definition): bool => $definition['category'] === $category)
+            ->keys()
+            ->values();
+
+        $selectedIds = collect($permissionValues ?? [])
+            ->map(fn ($value): int => (int) $value)
+            ->filter(fn (int $value): bool => $value > 0)
+            ->unique()
+            ->values();
+
+        $selectedSlugs = Permission::query()
+            ->whereIn('id', $selectedIds->all())
+            ->whereIn('slug', $categorySlugs->all())
+            ->where('is_active', true)
+            ->pluck('slug')
+            ->all();
+
+        foreach (self::viewPermissionForActions() as $action => $view) {
+            if (in_array($action, $selectedSlugs, true) && $categorySlugs->contains($view)) {
+                $selectedSlugs[] = $view;
+            }
+        }
+
+        $selectedSlugs = array_values(array_unique($selectedSlugs));
+
+        foreach ($selectedSlugs as $slug) {
+            Permission::query()->updateOrCreate(
+                ['slug' => $slug],
+                [
+                    'name' => $managed[$slug]['name'],
+                    'category' => $managed[$slug]['category'],
+                    'is_active' => true,
+                    'updated_at' => now(),
+                ],
+            );
+        }
+
+        $categoryPermissionIds = Permission::query()
+            ->whereIn('slug', $categorySlugs->all())
+            ->pluck('id')
+            ->all();
+
+        $selectedPermissionIds = Permission::query()
+            ->whereIn('slug', $selectedSlugs)
+            ->where('is_active', true)
+            ->pluck('id')
+            ->all();
+
+        $role->permissions()->detach($categoryPermissionIds);
+        $role->permissions()->syncWithoutDetaching($selectedPermissionIds);
     }
 
     /** @param array<int|string> $permissionValues */
