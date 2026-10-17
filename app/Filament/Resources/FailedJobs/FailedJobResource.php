@@ -68,7 +68,7 @@ class FailedJobResource extends Resource
                     ->action(function (FailedJob $record): void {
                         try {
                             $exitCode = Artisan::call('queue:retry', [
-                                'id' => [(string) $record->getKey()],
+                                'id' => (string) $record->getKey(),
                             ]);
 
                             if ($exitCode !== 0) {
