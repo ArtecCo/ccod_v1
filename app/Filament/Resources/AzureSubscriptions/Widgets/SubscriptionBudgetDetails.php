@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
+use App\Models\User;
+use App\Services\AccessAuthorizationService;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -56,7 +58,16 @@ class SubscriptionBudgetDetails extends BaseWidget
             ->striped(false)
             ->recordActions([])
             ->toolbarActions([
-                XlsxExportAction::make(),
+                XlsxExportAction::make()
+                    ->visible(fn (): bool => $this->canExportCost()),
             ]);
+    }
+
+    protected function canExportCost(): bool
+    {
+        $user = auth()->guard('web')->user();
+
+        return $user instanceof User
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'cost.export', $this->record);
     }
 }
