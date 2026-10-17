@@ -14,8 +14,10 @@ class ViewProject extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
-            DeleteAction::make(),
+            EditAction::make()
+                ->visible(fn (): bool => ProjectResource::canEdit($this->getRecord())),
+            DeleteAction::make()
+                ->visible(fn (): bool => ProjectResource::canDelete($this->getRecord())),
         ];
     }
 }
