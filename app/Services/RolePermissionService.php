@@ -51,11 +51,12 @@ class RolePermissionService
             'roles.create' => ['category' => 'Roles & Permissions', 'name' => 'Create roles'],
             'roles.edit' => ['category' => 'Roles & Permissions', 'name' => 'Update/Edit roles'],
             'roles.delete' => ['category' => 'Roles & Permissions', 'name' => 'Delete roles'],
-            'users.roles.assign' => ['category' => 'Roles & Permissions', 'name' => 'Manage access requests'],
             'users.view' => ['category' => 'Users', 'name' => 'View users'],
             'users.create' => ['category' => 'Users', 'name' => 'Create users'],
             'users.edit' => ['category' => 'Users', 'name' => 'Update/Edit users'],
             'users.delete' => ['category' => 'Users', 'name' => 'Delete users'],
+            'users.access_requests.view' => ['category' => 'Access Requests', 'name' => 'View access requests'],
+            'users.access_requests.decide' => ['category' => 'Access Requests', 'name' => 'Take decision'],
         ];
     }
 
@@ -92,6 +93,7 @@ class RolePermissionService
             'urls.create' => 'urls.view', 'urls.edit' => 'urls.view', 'urls.delete' => 'urls.view', 'urls.export' => 'urls.view',
             'roles.create' => 'roles.view', 'roles.edit' => 'roles.view', 'roles.delete' => 'roles.view',
             'users.create' => 'users.view', 'users.edit' => 'users.view', 'users.delete' => 'users.view',
+            'users.access_requests.decide' => 'users.access_requests.view',
         ];
     }
 
