@@ -11,7 +11,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
+use Filament\Schemas\Components\Schema;
 use Illuminate\Support\Str;
 
 class RoleForm
@@ -48,11 +50,19 @@ class RoleForm
 
         $permissionSections = [];
         $managed = collect(RolePermissionService::managedPermissions());
+        $viewPermissions = RolePermissionService::viewPermissionForActions();
 
         foreach ($managed->groupBy('category') as $category => $definitions) {
             $categorySlugs = $managed
                 ->filter(fn (array $definition): bool => $definition['category'] === $category)
                 ->keys()
+                ->all();
+
+            $permissionIdsBySlug = Permission::query()
+                ->whereIn('slug', $categorySlugs)
+                ->where('is_active', true)
+                ->pluck('id', 'slug')
+                ->map(fn ($id): string => (string) $id)
                 ->all();
 
             $options = Permission::query()
@@ -63,14 +73,57 @@ class RoleForm
                 ->mapWithKeys(fn ($name, $id): array => [(string) $id => $name])
                 ->all();
 
+            $viewSlug = collect($categorySlugs)
+                ->first(fn (string $slug): bool => ($viewPermissions[$slug] ?? null) === $slug);
+
+            if ($viewSlug === null) {
+                $viewSlug = collect($categorySlugs)
+                    ->first(fn (string $slug): bool => $slug === $thisViewSlug = str_replace(['.create', '.edit', '.delete', '.export', '.sync', '.update', '.assign', '.close'], '.view', $slug));
+            }
+
+            $viewId = $viewSlug !== null ? ($permissionIdsBySlug[$viewSlug] ?? null) : null;
+            $dependentActionIds = collect($viewPermissions)
+                ->filter(fn (string $view): bool => $view === $viewSlug)
+                ->keys()
+                ->map(fn (string $slug): ?string => $permissionIdsBySlug[$slug] ?? null)
+                ->filter()
+                ->values()
+                ->all();
+
+            $fieldName = 'permission_' . md5($category);
+
             $permissionSections[] = Section::make($category)
                 ->schema([
-                    CheckboxList::make('permission_' . md5($category))
+                    CheckboxList::make($fieldName)
                         ->label('Actions')
                         ->options($options)
                         ->columns(2)
                         ->bulkToggleable()
-                        ->searchable(),
+                        ->searchable()
+                        ->live()
+                        ->afterStateUpdated(function (Set $set, ?array $state) use ($viewId, $dependentActionIds): void {
+                            if ($viewId === null || $dependentActionIds === []) {
+                                return;
+                            }
+
+                            $state = array_map('strval', $state ?? []);
+
+                            if (array_intersect($dependentActionIds, $state) !== []) {
+                                if (! in_array($viewId, $state, true)) {
+                                    $state[] = $viewId;
+                                    $set($fieldName = '', $state);
+                                }
+                            }
+                        })
+                        ->disableOptionWhen(function (string $value, Get $get) use ($fieldName, $viewId, $dependentActionIds): bool {
+                            if ($viewId === null || $value !== $viewId || $dependentActionIds === []) {
+                                return false;
+                            }
+
+                            $state = array_map('strval', $get($fieldName) ?? []);
+
+                            return array_intersect($dependentActionIds, $state) !== [];
+                        }),
                 ]);
         }
 
