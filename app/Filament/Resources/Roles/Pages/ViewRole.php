@@ -30,11 +30,12 @@ class ViewRole extends ViewRecord
 
         $managedSlugs = array_keys(RolePermissionService::managedPermissions());
 
-        // Read the role's actual permission assignments directly from the pivot.
-        // This keeps the View page independent from authorization resolution/caching.
+        // Use the same permission assignments that the role edit page uses.
+        // The View page is only displaying what is assigned to the role; it should
+        // not apply an additional active-state filter that can make granted entries
+        // appear as not granted.
         $grantedSlugs = $this->record->permissions()
             ->whereIn('permissions.slug', $managedSlugs)
-            ->where('permissions.is_active', true)
             ->pluck('permissions.slug')
             ->map(static fn ($slug): string => (string) $slug)
             ->flip()
