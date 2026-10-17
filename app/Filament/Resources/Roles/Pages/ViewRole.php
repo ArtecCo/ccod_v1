@@ -6,16 +6,16 @@ use App\Filament\Resources\Roles\RoleResource;
 use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\IconEntry;
-use Filament\Infolists\Components\Section;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Infolist;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class ViewRole extends ViewRecord
 {
     protected static string $resource = RoleResource::class;
 
-    public function infolist(Infolist $infolist): Infolist
+    public function infolist(Schema $schema): Schema
     {
         $components = [
             Section::make('Role')
@@ -46,7 +46,7 @@ class ViewRole extends ViewRecord
                 ->columns(2);
         }
 
-        return $infolist->schema($components);
+        return $schema->components($components);
     }
 
     protected function getHeaderActions(): array
