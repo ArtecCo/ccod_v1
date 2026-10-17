@@ -135,12 +135,12 @@ class AccessRequestResource extends Resource
                                     })
                                     ->columnSpanFull(),
                             ]),
-                        Step::make(fn (AccessRequest $record): string => match ($record->status) {
-                            AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'Approved',
-                            AccessRequestStatus::Rejected => 'Rejected',
-                            default => 'Not decided',
-                        })
-                            ->description(fn (AccessRequest $record): string => $record->decided_at?->format('d M Y, H:i:s') ?? 'Awaiting decision')
+                        Step::make('Decision')
+                            ->description(fn (AccessRequest $record): string => match ($record->status) {
+                                AccessRequestStatus::Approved, AccessRequestStatus::Revoked => $record->decided_at?->format('d M Y, H:i:s') ?? 'Approved',
+                                AccessRequestStatus::Rejected => $record->decided_at?->format('d M Y, H:i:s') ?? 'Rejected',
+                                default => 'Awaiting decision',
+                            })
                             ->schema([
                                 TextEntry::make('workflow_decision_by')
                                     ->label('Decision by')
