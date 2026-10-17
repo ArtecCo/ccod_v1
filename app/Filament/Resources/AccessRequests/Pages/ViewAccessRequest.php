@@ -6,6 +6,7 @@ use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestStatus;
 use App\Enums\AccessRequestTargetType;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
+use App\Models\Developer;
 use App\Services\AccessAuthorizationService;
 use App\Services\AccessRequestService;
 use Filament\Actions\Action;
@@ -28,7 +29,10 @@ class ViewAccessRequest extends ViewRecord
         $developer = auth()->guard('developers')->user();
 
         if ($this->record->status === AccessRequestStatus::Pending) {
-            if (! $user || ! $authorization->canApprove($user, $this->record)) {
+            $canApprove = $developer?->is_active === true
+                || ($user !== null && $authorization->canApprove($user, $this->record));
+
+            if (! $canApprove) {
                 return [];
             }
 
@@ -66,10 +70,11 @@ class ViewAccessRequest extends ViewRecord
                         $requestedUntil = $duration === AccessRequestDuration::TimeBound
                             ? Carbon::parse($data['requested_until'])
                             : null;
+                        $actor = auth()->guard('developers')->user() ?? auth()->guard('web')->user();
 
                         app(AccessRequestService::class)->approve(
                             $this->record,
-                            auth()->guard('web')->user(),
+                            $actor,
                             $data['reason'] ?? null,
                             $duration,
                             $requestedUntil,
@@ -87,9 +92,11 @@ class ViewAccessRequest extends ViewRecord
                         Textarea::make('reason')->label('Reason')->rows(3)->required()->placeholder('Explain why the request is being rejected.'),
                     ])
                     ->action(function (array $data): void {
+                        $actor = auth()->guard('developers')->user() ?? auth()->guard('web')->user();
+
                         app(AccessRequestService::class)->reject(
                             $this->record,
-                            auth()->guard('web')->user(),
+                            $actor,
                             $data['reason'],
                         );
 
@@ -133,7 +140,7 @@ class ViewAccessRequest extends ViewRecord
 
                         $this->record->forceFill([
                             'status' => AccessRequestStatus::Revoked,
-                            'decided_by_type' => $actor instanceof \App\Models\Developer ? \App\Models\Developer::class : \App\Models\User::class,
+                            'decided_by_type' => $actor instanceof Developer ? Developer::class : \App\Models\User::class,
                             'decided_by_id' => $actor->getKey(),
                             'decided_at' => now(),
                             'decision_reason' => $data['reason'],
