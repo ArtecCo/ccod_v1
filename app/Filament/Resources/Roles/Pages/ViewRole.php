@@ -35,33 +35,19 @@ class ViewRole extends ViewRecord
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $statePath = 'permission_status_' . md5($slug);
-
-                $entries[] = TextEntry::make($statePath)
+                $entries[] = TextEntry::make('id')
                     ->label($definition['name'])
-                    ->state(function (Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return '✓ Granted';
-                        }
+                    ->formatStateUsing(function ($state, Role $record) use ($slug): string {
+                        $granted = $record->slug === 'super_admin'
+                            || $record->permissions->contains('slug', $slug);
 
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->where('permissions.is_active', true)
-                            ->exists()
-                            ? '✓ Granted'
-                            : '✕ Not granted';
+                        return $granted ? '✓ Granted' : '✕ Not granted';
                     })
-                    ->color(function (Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return 'success';
-                        }
+                    ->color(function ($state, Role $record) use ($slug): string {
+                        $granted = $record->slug === 'super_admin'
+                            || $record->permissions->contains('slug', $slug);
 
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->where('permissions.is_active', true)
-                            ->exists()
-                            ? 'success'
-                            : 'danger';
+                        return $granted ? 'success' : 'danger';
                     });
             }
 
