@@ -28,16 +28,38 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        $grantedSlugs = array_flip(
-            app(RolePermissionService::class)->effectiveManagedPermissionSlugs($this->record),
-        );
+        $managedSlugs = array_keys(RolePermissionService::managedPermissions());
+
+        // Read the role's actual permission assignments directly from the pivot.
+        // This keeps the View page independent from authorization resolution/caching.
+        $grantedSlugs = $this->record->permissions()
+            ->whereIn('permissions.slug', $managedSlugs)
+            ->where('permissions.is_active', true)
+            ->pluck('permissions.slug')
+            ->map(static fn ($slug): string => (string) $slug)
+            ->flip()
+            ->all();
+
+        // Super Admin is an intrinsic full-access role. Treat it as having every
+        // managed permission even if the pivot data is incomplete.
+        if (
+            $this->record->is_system_role &&
+            (
+                $this->record->slug === 'super_admin' ||
+                strcasecmp(trim((string) $this->record->name), 'Super Admin') === 0
+            )
+        ) {
+            $grantedSlugs = array_fill_keys($managedSlugs, true);
+        }
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
                 $granted = isset($grantedSlugs[$slug]);
-                $entries[] = TextEntry::make($slug)
+                $stateKey = 'permission_' . md5($slug);
+
+                $entries[] = TextEntry::make($stateKey)
                     ->label($definition['name'])
                     ->state($granted ? '✓ Granted' : '✕ Not granted')
                     ->color($granted ? 'success' : 'danger');
