@@ -12,8 +12,10 @@ use App\Filament\Pages\TabAccess;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Filament\Resources\FailedJobs\FailedJobResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use App\Filament\Resources\Projects\ProjectResource;
+use App\Filament\Resources\QueueJobs\QueueJobResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
@@ -72,6 +74,8 @@ class DeveloperPanelProvider extends PanelProvider
                 RoleResource::class,
                 TeamResource::class,
                 UserResource::class,
+                QueueJobResource::class,
+                FailedJobResource::class,
                 AuditLogResource::class,
                 NotificationRuleResource::class,
             ])
