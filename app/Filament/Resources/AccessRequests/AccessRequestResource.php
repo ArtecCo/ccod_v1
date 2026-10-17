@@ -6,12 +6,12 @@ use App\Enums\AccessRequestStatus;
 use App\Filament\Resources\AccessRequests\Pages\ListAccessRequests;
 use App\Filament\Resources\AccessRequests\Pages\ViewAccessRequest;
 use App\Models\AccessRequest;
+use App\Models\Developer;
 use App\Models\Role;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
-use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -19,6 +19,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use LaraZeus\ActivityTimeline\Components\ActivityDate;
+use LaraZeus\ActivityTimeline\Components\ActivityDescription;
+use LaraZeus\ActivityTimeline\Components\ActivityIcon;
+use LaraZeus\ActivityTimeline\Components\ActivitySection;
+use LaraZeus\ActivityTimeline\Components\ActivityTitle;
 
 class AccessRequestResource extends Resource
 {
@@ -89,6 +94,86 @@ class AccessRequestResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
+        $record = $schema->getRecord();
+        $authorization = app(AccessAuthorizationService::class);
+        $approvers = $record instanceof AccessRequest
+            ? $authorization->approvers($record)
+            : collect();
+
+        $decisionModel = null;
+        if ($record instanceof AccessRequest && $record->decided_by_id && $record->decided_by_type) {
+            $decisionModel = $record->decided_by_type === Developer::class
+                ? Developer::query()->find($record->decided_by_id)
+                : User::query()->find($record->decided_by_id);
+        }
+
+        $decisionStatus = $record instanceof AccessRequest
+            ? match ($record->status) {
+                AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'Approved',
+                AccessRequestStatus::Rejected => 'Rejected',
+                default => 'Awaiting decision',
+            }
+            : 'Awaiting decision';
+
+        $decisionColor = $record instanceof AccessRequest
+            ? match ($record->status) {
+                AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'success',
+                AccessRequestStatus::Rejected => 'danger',
+                default => 'warning',
+            }
+            : 'warning';
+
+        $decisionIcon = $record instanceof AccessRequest
+            ? match ($record->status) {
+                AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'heroicon-o-check-circle',
+                AccessRequestStatus::Rejected => 'heroicon-o-x-circle',
+                default => 'heroicon-o-clock',
+            }
+            : 'heroicon-o-clock';
+
+        $decisionDescription = $record instanceof AccessRequest
+            ? ($record->decision_reason ?: 'No decision reason recorded.')
+            : 'No decision reason recorded.';
+
+        if ($record instanceof AccessRequest && $record->decided_at) {
+            $decisionDescription .= ' · '.$record->decided_at->format('d M Y, H:i:s');
+
+            if ($decisionModel?->name) {
+                $decisionDescription .= ' · by '.$decisionModel->name;
+            }
+        }
+
+        $activities = [
+            [
+                'title' => 'Submitted',
+                'description' => $record instanceof AccessRequest
+                    ? (($record->user?->name ?? 'The requester').' submitted the access request.')
+                    : 'The access request was submitted.',
+                'status' => 'submitted',
+                'created_at' => $record instanceof AccessRequest
+                    ? $record->created_at?->format('d M Y, H:i:s')
+                    : null,
+            ],
+            [
+                'title' => 'Awaiting approval',
+                'description' => $approvers->isNotEmpty()
+                    ? 'Eligible approvers: '.$approvers->map(fn (User $approver): string => $approver->name.' ('.$approver->email.')')->implode(', ')
+                    : 'No eligible approvers found.',
+                'status' => $record instanceof AccessRequest && $record->decided_at ? 'completed' : 'pending',
+                'created_at' => $record instanceof AccessRequest && ! $record->decided_at
+                    ? 'Awaiting decision'
+                    : ($record instanceof AccessRequest ? $record->created_at?->format('d M Y, H:i:s') : null),
+            ],
+            [
+                'title' => 'Decision',
+                'description' => $decisionDescription,
+                'status' => $record instanceof AccessRequest && $record->decided_at ? 'decision' : 'pending',
+                'created_at' => $record instanceof AccessRequest && $record->decided_at
+                    ? $record->decided_at->format('d M Y, H:i:s')
+                    : 'Awaiting decision',
+            ],
+        ];
+
         return $schema->columns(1)->components([
             Section::make('Request')
                 ->columns(2)
@@ -105,13 +190,28 @@ class AccessRequestResource extends Resource
                     TextEntry::make('status')->badge(),
                     TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
                 ]),
-            Section::make('Approval workflow')
+            ActivitySection::make('activities')
+                ->label('Approval workflow')
+                ->description('Request submission, eligible approvers, and the final decision.')
                 ->columnSpanFull()
+                ->state($activities)
                 ->schema([
-                    ViewEntry::make('workflow')
-                        ->view('filament.infolists.entries.access-request-timeline')
-                        ->hiddenLabel()
-                        ->columnSpanFull(),
+                    ActivityTitle::make('title'),
+                    ActivityDescription::make('description'),
+                    ActivityDate::make('created_at'),
+                    ActivityIcon::make('status')
+                        ->icon(fn (?string $state): ?string => match ($state) {
+                            'submitted' => 'heroicon-o-paper-airplane',
+                            'completed' => 'heroicon-o-check-circle',
+                            'decision' => $decisionIcon,
+                            default => 'heroicon-o-clock',
+                        })
+                        ->color(fn (?string $state): ?string => match ($state) {
+                            'submitted' => 'primary',
+                            'completed' => 'success',
+                            'decision' => $decisionColor,
+                            default => 'gray',
+                        }),
                 ]),
         ]);
     }
