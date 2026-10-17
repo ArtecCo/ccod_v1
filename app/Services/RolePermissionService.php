@@ -15,7 +15,6 @@ class RolePermissionService
             'documentation.create' => ['category' => 'Documentation', 'name' => 'Create documents'],
             'documentation.edit' => ['category' => 'Documentation', 'name' => 'Edit documents'],
             'documentation.delete' => ['category' => 'Documentation', 'name' => 'Delete documents'],
-            'subscriptions.create' => ['category' => 'Subscriptions', 'name' => 'Create subscription'],
             'subscriptions.view' => ['category' => 'Subscriptions', 'name' => 'View subscription'],
             'subscriptions.edit' => ['category' => 'Subscriptions', 'name' => 'Edit subscription'],
             'subscriptions.delete' => ['category' => 'Subscriptions', 'name' => 'Delete subscription'],
@@ -27,6 +26,10 @@ class RolePermissionService
             'projects.create' => ['category' => 'Projects', 'name' => 'Create projects'],
             'projects.edit' => ['category' => 'Projects', 'name' => 'Update/Edit projects'],
             'projects.delete' => ['category' => 'Projects', 'name' => 'Delete projects'],
+            'cost.view' => ['category' => 'Cost', 'name' => 'View cost'],
+            'cost.breakdown.view' => ['category' => 'Cost', 'name' => 'View cost breakdown'],
+            'cost.export' => ['category' => 'Cost', 'name' => 'Export cost'],
+            'cost.settings.manage' => ['category' => 'Cost', 'name' => 'Manage cost settings'],
             'resources.view' => ['category' => 'Resources', 'name' => 'View resources'],
             'resources.export' => ['category' => 'Resources', 'name' => 'Export resources'],
             'resources.sync' => ['category' => 'Resources', 'name' => 'Manual Sync'],
@@ -69,8 +72,7 @@ class RolePermissionService
             'monitoring.history.view', 'monitoring.checks.trigger', 'alerts.acknowledge', 'alerts.close',
             'alerts.settings.manage', 'urls.check.trigger', 'urls.history.view', 'security.scores.view',
             'security.settings.manage', 'dashboard.metrics.view', 'dashboard.widgets.view', 'dashboard.export',
-            'cost.view', 'cost.breakdown.view', 'cost.export', 'cost.settings.manage', 'resources.metrics.view',
-            'tickets.disable',
+            'resources.metrics.view', 'tickets.disable',
         ];
     }
 
@@ -79,7 +81,8 @@ class RolePermissionService
     {
         return [
             'documentation.create' => 'documentation.view', 'documentation.edit' => 'documentation.view', 'documentation.delete' => 'documentation.view',
-            'subscriptions.create' => 'subscriptions.view', 'subscriptions.edit' => 'subscriptions.view', 'subscriptions.delete' => 'subscriptions.view', 'subscriptions.sync' => 'subscriptions.view',
+            'subscriptions.edit' => 'subscriptions.view', 'subscriptions.delete' => 'subscriptions.view', 'subscriptions.sync' => 'subscriptions.view',
+            'cost.breakdown.view' => 'cost.view', 'cost.export' => 'cost.view', 'cost.settings.manage' => 'cost.view',
             'alerts.export' => 'alerts.view', 'alerts.sync' => 'alerts.view',
             'projects.create' => 'projects.view', 'projects.edit' => 'projects.view', 'projects.delete' => 'projects.view',
             'resources.export' => 'resources.view', 'resources.sync' => 'resources.view',
@@ -95,55 +98,18 @@ class RolePermissionService
     public function syncManagedCategory(Role $role, string $category, ?array $permissionValues): void
     {
         $managed = self::managedPermissions();
-        $categorySlugs = collect($managed)
-            ->filter(fn (array $definition): bool => $definition['category'] === $category)
-            ->keys()
-            ->values();
-
-        $selectedIds = collect($permissionValues ?? [])
-            ->map(fn ($value): int => (int) $value)
-            ->filter(fn (int $value): bool => $value > 0)
-            ->unique()
-            ->values();
-
-        $selectedSlugs = Permission::query()
-            ->whereIn('id', $selectedIds->all())
-            ->whereIn('slug', $categorySlugs->all())
-            ->where('is_active', true)
-            ->pluck('slug')
-            ->all();
-
+        $categorySlugs = collect($managed)->filter(fn (array $definition): bool => $definition['category'] === $category)->keys()->values();
+        $selectedIds = collect($permissionValues ?? [])->map(fn ($value): int => (int) $value)->filter(fn (int $value): bool => $value > 0)->unique()->values();
+        $selectedSlugs = Permission::query()->whereIn('id', $selectedIds->all())->whereIn('slug', $categorySlugs->all())->where('is_active', true)->pluck('slug')->all();
         foreach (self::viewPermissionForActions() as $action => $view) {
-            if (in_array($action, $selectedSlugs, true) && $categorySlugs->contains($view)) {
-                $selectedSlugs[] = $view;
-            }
+            if (in_array($action, $selectedSlugs, true) && $categorySlugs->contains($view)) $selectedSlugs[] = $view;
         }
-
         $selectedSlugs = array_values(array_unique($selectedSlugs));
-
         foreach ($selectedSlugs as $slug) {
-            Permission::query()->updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $managed[$slug]['name'],
-                    'category' => $managed[$slug]['category'],
-                    'is_active' => true,
-                    'updated_at' => now(),
-                ],
-            );
+            Permission::query()->updateOrCreate(['slug' => $slug], ['name' => $managed[$slug]['name'], 'category' => $managed[$slug]['category'], 'is_active' => true, 'updated_at' => now()]);
         }
-
-        $categoryPermissionIds = Permission::query()
-            ->whereIn('slug', $categorySlugs->all())
-            ->pluck('id')
-            ->all();
-
-        $selectedPermissionIds = Permission::query()
-            ->whereIn('slug', $selectedSlugs)
-            ->where('is_active', true)
-            ->pluck('id')
-            ->all();
-
+        $categoryPermissionIds = Permission::query()->whereIn('slug', $categorySlugs->all())->pluck('id')->all();
+        $selectedPermissionIds = Permission::query()->whereIn('slug', $selectedSlugs)->where('is_active', true)->pluck('id')->all();
         $role->permissions()->detach($categoryPermissionIds);
         $role->permissions()->syncWithoutDetaching($selectedPermissionIds);
     }
@@ -154,57 +120,18 @@ class RolePermissionService
         $managed = self::managedPermissions();
         $allowed = array_merge(array_keys($managed), self::hiddenSystemPermissions());
         $values = collect($permissionValues)->filter(fn ($value) => $value !== null && $value !== '')->unique()->values();
-
-        $selectedSlugs = $values
-            ->filter(fn ($value) => is_string($value) && ! ctype_digit($value))
-            ->intersect($allowed)
-            ->values()
-            ->all();
-
-        $selectedIds = $values
-            ->filter(fn ($value) => is_int($value) || (is_string($value) && ctype_digit($value)))
-            ->map(fn ($value): int => (int) $value)
-            ->unique()
-            ->values()
-            ->all();
-
-        $existingById = Permission::query()
-            ->whereIn('id', $selectedIds)
-            ->whereIn('slug', $allowed)
-            ->where('is_active', true)
-            ->get(['id', 'slug']);
-
+        $selectedSlugs = $values->filter(fn ($value) => is_string($value) && ! ctype_digit($value))->intersect($allowed)->values()->all();
+        $selectedIds = $values->filter(fn ($value) => is_int($value) || (is_string($value) && ctype_digit($value)))->map(fn ($value): int => (int) $value)->unique()->values()->all();
+        $existingById = Permission::query()->whereIn('id', $selectedIds)->whereIn('slug', $allowed)->where('is_active', true)->get(['id', 'slug']);
         $selectedSlugs = array_values(array_unique(array_merge($selectedSlugs, $existingById->pluck('slug')->all())));
-
         foreach ($selectedSlugs as $slug) {
-            if (! isset($managed[$slug])) {
-                continue;
-            }
-
-            Permission::query()->updateOrCreate(
-                ['slug' => $slug],
-                [
-                    'name' => $managed[$slug]['name'],
-                    'category' => $managed[$slug]['category'],
-                    'is_active' => true,
-                    'updated_at' => now(),
-                ],
-            );
+            if (! isset($managed[$slug])) continue;
+            Permission::query()->updateOrCreate(['slug' => $slug], ['name' => $managed[$slug]['name'], 'category' => $managed[$slug]['category'], 'is_active' => true, 'updated_at' => now()]);
         }
-
         foreach (self::viewPermissionForActions() as $action => $view) {
-            if (in_array($action, $selectedSlugs, true) && ! in_array($view, $selectedSlugs, true)) {
-                $selectedSlugs[] = $view;
-            }
+            if (in_array($action, $selectedSlugs, true) && ! in_array($view, $selectedSlugs, true)) $selectedSlugs[] = $view;
         }
-
-        return Permission::query()
-            ->whereIn('slug', array_values(array_unique($selectedSlugs)))
-            ->where('is_active', true)
-            ->pluck('id')
-            ->map(static fn ($id): int => (int) $id)
-            ->values()
-            ->all();
+        return Permission::query()->whereIn('slug', array_values(array_unique($selectedSlugs)))->where('is_active', true)->pluck('id')->map(static fn ($id): int => (int) $id)->values()->all();
     }
 
     public function sync(Role $role, array $permissionValues): void
