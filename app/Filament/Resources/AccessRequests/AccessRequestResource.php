@@ -169,12 +169,6 @@ class AccessRequestResource extends Resource
                             ->columns(2),
                     ])
                         ->skippable()
-                        ->startOnStep(fn (AccessRequest $record): int => match ($record->status) {
-                            AccessRequestStatus::Approved,
-                            AccessRequestStatus::Rejected,
-                            AccessRequestStatus::Revoked => 3,
-                            default => 2,
-                        })
                         ->columnSpanFull(),
                 ]),
         ]);
