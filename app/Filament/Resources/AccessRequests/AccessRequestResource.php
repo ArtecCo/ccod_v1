@@ -12,9 +12,8 @@ use App\Services\AccessAuthorizationService;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Wizard;
-use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -109,67 +108,66 @@ class AccessRequestResource extends Resource
             Section::make('Approval workflow')
                 ->columnSpanFull()
                 ->schema([
-                    Wizard::make([
-                        Step::make('Submitted')
-                            ->description(fn (AccessRequest $record): string => $record->created_at?->format('d M Y, H:i:s') ?? '—')
-                            ->schema([
-                                TextEntry::make('workflow_submitted_by')
-                                    ->label('Submitted by')
-                                    ->state(fn (AccessRequest $record): string => $record->user?->name ?? 'The requester'),
-                                TextEntry::make('workflow_submitted_at')
-                                    ->label('Submitted at')
-                                    ->state(fn (AccessRequest $record): string => $record->created_at?->format('d M Y, H:i:s') ?? '—'),
-                            ])
-                            ->columns(2),
-                        Step::make('Awaiting approval')
-                            ->description('Eligible approvers')
-                            ->schema([
-                                TextEntry::make('workflow_approvers')
-                                    ->label('Eligible approvers')
-                                    ->state(function (AccessRequest $record): string {
-                                        $approvers = app(AccessAuthorizationService::class)->approvers($record);
+                    Grid::make(3)
+                        ->columnSpanFull()
+                        ->schema([
+                            Section::make('Submitted')
+                                ->description(fn (AccessRequest $record): string => $record->created_at?->format('d M Y, H:i:s') ?? '—')
+                                ->schema([
+                                    TextEntry::make('workflow_submitted_by')
+                                        ->label('Submitted by')
+                                        ->state(fn (AccessRequest $record): string => $record->user?->name ?? 'The requester'),
+                                ]),
+                            Section::make('Awaiting approval')
+                                ->description('Eligible approvers')
+                                ->schema([
+                                    TextEntry::make('workflow_approvers')
+                                        ->label('Approvers')
+                                        ->state(function (AccessRequest $record): string {
+                                            $approvers = app(AccessAuthorizationService::class)->approvers($record);
 
-                                        return $approvers->isNotEmpty()
-                                            ? $approvers->map(fn (User $approver): string => $approver->name . ' (' . $approver->email . ')')->implode(', ')
-                                            : 'No eligible approvers found.';
-                                    })
-                                    ->columnSpanFull(),
-                            ]),
-                        Step::make('Decision')
-                            ->description(fn (AccessRequest $record): string => match ($record->status) {
-                                AccessRequestStatus::Approved, AccessRequestStatus::Revoked => $record->decided_at?->format('d M Y, H:i:s') ?? 'Approved',
-                                AccessRequestStatus::Rejected => $record->decided_at?->format('d M Y, H:i:s') ?? 'Rejected',
-                                default => 'Awaiting decision',
-                            })
-                            ->schema([
-                                TextEntry::make('workflow_decision_by')
-                                    ->label('Decision by')
-                                    ->state(function (AccessRequest $record): ?string {
-                                        if (! $record->decided_by_id || ! $record->decided_by_type) {
-                                            return null;
-                                        }
+                                            return $approvers->isNotEmpty()
+                                                ? $approvers->map(fn (User $approver): string => $approver->name . ' (' . $approver->email . ')')->implode(', ')
+                                                : 'No eligible approvers found.';
+                                        }),
+                                ]),
+                            Section::make('Decision')
+                                ->description(fn (AccessRequest $record): string => match ($record->status) {
+                                    AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'Approved',
+                                    AccessRequestStatus::Rejected => 'Rejected',
+                                    default => 'Awaiting decision',
+                                })
+                                ->schema([
+                                    TextEntry::make('workflow_decision')
+                                        ->label('Decision')
+                                        ->state(function (AccessRequest $record): string {
+                                            if (! $record->decided_at) {
+                                                return 'Not decided yet';
+                                            }
 
-                                        $model = $record->decided_by_type === \App\Models\Developer::class
-                                            ? \App\Models\Developer::query()->find($record->decided_by_id)
-                                            : User::query()->find($record->decided_by_id);
+                                            $model = $record->decided_by_id && $record->decided_by_type
+                                                ? ($record->decided_by_type === \App\Models\Developer::class
+                                                    ? \App\Models\Developer::query()->find($record->decided_by_id)
+                                                    : User::query()->find($record->decided_by_id))
+                                                : null;
 
-                                        return $model?->name;
-                                    })
-                                    ->placeholder('Not decided'),
-                                TextEntry::make('workflow_decision_at')
-                                    ->label('Decision at')
-                                    ->state(fn (AccessRequest $record): ?string => $record->decided_at?->format('d M Y, H:i:s'))
-                                    ->placeholder('Not decided'),
-                                TextEntry::make('workflow_decision_reason')
-                                    ->label('Decision reason')
-                                    ->state(fn (AccessRequest $record): ?string => $record->decision_reason)
-                                    ->placeholder('No decision reason recorded.')
-                                    ->columnSpanFull(),
-                            ])
-                            ->columns(2),
-                    ])
-                        ->skippable()
-                        ->columnSpanFull(),
+                                            return collect([
+                                                match ($record->status) {
+                                                    AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'Approved',
+                                                    AccessRequestStatus::Rejected => 'Rejected',
+                                                    default => 'Decided',
+                                                },
+                                                $record->decided_at->format('d M Y, H:i:s'),
+                                                $model?->name ? 'by ' . $model->name : null,
+                                            ])->filter()->implode(' · ');
+                                        }),
+                                    TextEntry::make('workflow_decision_reason')
+                                        ->label('Reason')
+                                        ->state(fn (AccessRequest $record): ?string => $record->decision_reason)
+                                        ->placeholder('No decision reason recorded.')
+                                        ->columnSpanFull(),
+                                ]),
+                        ]),
                 ]),
         ]);
     }
