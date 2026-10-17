@@ -28,20 +28,18 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        $permissionService = app(RolePermissionService::class);
-        $grantedSlugs = array_flip($permissionService->effectiveManagedPermissionSlugs($this->record));
-        $permissionState = [];
+        $grantedSlugs = array_flip(
+            app(RolePermissionService::class)->effectiveManagedPermissionSlugs($this->record),
+        );
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $stateKey = 'permission_' . md5($slug);
                 $granted = isset($grantedSlugs[$slug]);
-                $permissionState[$stateKey] = $granted ? '✓ Granted' : '✕ Not granted';
-
-                $entries[] = TextEntry::make($stateKey)
+                $entries[] = TextEntry::make($slug)
                     ->label($definition['name'])
+                    ->state($granted ? '✓ Granted' : '✕ Not granted')
                     ->color($granted ? 'success' : 'danger');
             }
 
@@ -50,9 +48,7 @@ class ViewRole extends ViewRecord
                 ->columns(2);
         }
 
-        return $schema
-            ->constantState($permissionState)
-            ->components($components);
+        return $schema->components($components);
     }
 
     protected function getHeaderActions(): array
