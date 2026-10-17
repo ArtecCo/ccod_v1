@@ -36,6 +36,11 @@ class ViewRole extends ViewRecord
         ];
 
         $managed = RolePermissionService::managedPermissions();
+        $managed['users.roles.assign'] = [
+            'category' => 'Roles & Permissions',
+            'name' => 'Manage access requests',
+        ];
+
         $isSuperAdmin = $this->record->slug === 'super_admin';
         $permissionSections = [];
 
