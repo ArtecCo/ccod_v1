@@ -10,7 +10,8 @@ return [
     'current_version' => env('UPDATER_CURRENT_VERSION', '0.0.0'),
     'ability' => 'updater.manage',
     'check_cache_minutes' => 10,
-    'schedule' => env('UPDATER_SCHEDULE', '0 */6 * * *'),
+    // Automatic updater checks are disabled. Updates remain available manually.
+    'schedule' => null,
     'timeout' => 900,
     'maintenance' => [
         'enabled' => true,
