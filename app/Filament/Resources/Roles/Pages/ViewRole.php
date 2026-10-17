@@ -31,7 +31,7 @@ class ViewRole extends ViewRecord
         $managed = RolePermissionService::managedPermissions();
         $isSuperAdmin = $this->record->slug === 'super_admin';
 
-        foreach (collect($managed)->groupBy('category') as $category => $definitions) {
+        foreach (collect($managed)->groupBy('category', preserveKeys: true) as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
