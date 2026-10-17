@@ -23,22 +23,10 @@ class RoleForm
                 ->columnSpanFull()
                 ->columns(2)
                 ->schema([
-                    TextInput::make('name')
-                        ->required()
-                        ->maxLength(255)
-                        ->live(onBlur: true)
-                        ->afterStateUpdated(function ($set, $get, ?string $state): void {
-                            if (blank($get('slug'))) {
-                                $set('slug', Str::slug((string) $state));
-                            }
-                        })
-                        ->unique(table: Role::class, column: 'name', ignoreRecord: true),
-                    TextInput::make('slug')
-                        ->required()
-                        ->alphaDash()
-                        ->maxLength(255)
-                        ->unique(table: Role::class, column: 'slug', ignoreRecord: true)
-                        ->helperText('Automatically suggested from the role name. You can change it if needed.'),
+                    TextInput::make('name')->required()->maxLength(255)->live(onBlur: true)->afterStateUpdated(function ($set, $get, ?string $state): void {
+                        if (blank($get('slug'))) $set('slug', Str::slug((string) $state));
+                    })->unique(table: Role::class, column: 'name', ignoreRecord: true),
+                    TextInput::make('slug')->required()->alphaDash()->maxLength(255)->unique(table: Role::class, column: 'slug', ignoreRecord: true)->helperText('Automatically suggested from the role name. You can change it if needed.'),
                     Textarea::make('description')->columnSpan(1),
                     Toggle::make('is_active')->default(true)->columnSpan(1),
                     Toggle::make('is_system_role')->hidden()->dehydrated(false),
@@ -50,72 +38,38 @@ class RoleForm
         $viewDependencies = RolePermissionService::viewPermissionForActions();
 
         foreach ($managed->groupBy('category') as $category => $definitions) {
-            // The managed permission catalog is authoritative for this form.
-            // Do not populate options from the Permission table: legacy/system
-            // permissions must never leak into these category sections.
-            $categoryDefinitions = $managed
-                ->filter(fn (array $definition): bool => $definition['category'] === $category);
-
+            $categoryDefinitions = $managed->filter(fn (array $definition): bool => $definition['category'] === $category);
             $categorySlugs = $categoryDefinitions->keys()->values()->all();
-            $options = $categoryDefinitions
-                ->mapWithKeys(fn (array $definition, string $slug): array => [$slug => $definition['name']])
-                ->all();
-
-            // Access Requests is an explicit managed permission and must remain
-            // visible as a role control in the Roles & Permissions section.
-            if ($category === 'Roles & Permissions' && ! array_key_exists('users.roles.assign', $options)) {
-                $options['users.roles.assign'] = 'Manage access requests';
-                $categorySlugs[] = 'users.roles.assign';
-            }
-
-            $viewSlug = collect($categorySlugs)
-                ->first(fn (string $slug): bool => str_ends_with($slug, '.view'));
-
+            $options = $categoryDefinitions->mapWithKeys(fn (array $definition, string $slug): array => [$slug => $definition['name']])->all();
+            $viewSlug = collect($categorySlugs)->first(fn (string $slug): bool => str_ends_with($slug, '.view'));
             $dependentActionSlugs = collect($viewDependencies)
                 ->filter(fn (string $view): bool => $view === $viewSlug)
                 ->keys()
                 ->filter(fn (string $slug): bool => in_array($slug, $categorySlugs, true))
                 ->values()
                 ->all();
-
             $fieldName = 'permission_' . md5($category);
 
-            $permissionSections[] = Section::make($category)
-                ->schema([
-                    CheckboxList::make($fieldName)
-                        ->label('Actions')
-                        ->options($options)
-                        ->columns(2)
-                        ->bulkToggleable()
-                        ->searchable()
-                        ->live()
-                        ->afterStateUpdated(function ($set, ?array $state) use ($fieldName, $viewSlug, $dependentActionSlugs): void {
-                            if ($viewSlug === null || $dependentActionSlugs === []) {
-                                return;
-                            }
-
-                            $state = array_map('strval', $state ?? []);
-
-                            // View is a prerequisite for every mapped action. If
-                            // an action is selected, View is always restored.
-                            // We intentionally enforce this in state rather than
-                            // disabling the View option: Filament treats a
-                            // disabled selected option as invalid during its
-                            // CheckboxList option validation.
-                            if (array_intersect($dependentActionSlugs, $state) !== [] && ! in_array($viewSlug, $state, true)) {
-                                $state[] = $viewSlug;
-                                $set($fieldName, array_values(array_unique($state)));
-                            }
-                        }),
-                ]);
+            $permissionSections[] = Section::make($category)->schema([
+                CheckboxList::make($fieldName)
+                    ->label('Actions')
+                    ->options($options)
+                    ->columns(2)
+                    ->bulkToggleable()
+                    ->searchable()
+                    ->live()
+                    ->afterStateUpdated(function ($set, ?array $state) use ($fieldName, $viewSlug, $dependentActionSlugs): void {
+                        if ($viewSlug === null || $dependentActionSlugs === []) return;
+                        $state = array_map('strval', $state ?? []);
+                        if (array_intersect($dependentActionSlugs, $state) !== [] && ! in_array($viewSlug, $state, true)) {
+                            $state[] = $viewSlug;
+                            $set($fieldName, array_values(array_unique($state)));
+                        }
+                    }),
+            ]);
         }
 
-        if ($permissionSections !== []) {
-            $sections[] = Grid::make(2)
-                ->schema($permissionSections)
-                ->columnSpanFull();
-        }
-
+        if ($permissionSections !== []) $sections[] = Grid::make(2)->schema($permissionSections)->columnSpanFull();
         return $schema->components($sections);
     }
 }
