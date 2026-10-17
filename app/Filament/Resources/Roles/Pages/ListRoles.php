@@ -14,7 +14,8 @@ class ListRoles extends ListRecords
     {
         return [
             CreateAction::make()
-                ->label('Create role'),
+                ->label('Create role')
+                ->visible(fn (): bool => RoleResource::canCreate()),
         ];
     }
 }
