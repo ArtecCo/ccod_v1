@@ -30,7 +30,29 @@ class ProjectResource extends Resource
     }
 
     public static function canCreate(): bool { return static::canManage('projects.create'); }
-    public static function canView($record): bool { return static::canManage('projects.view', $record); }
+
+    public static function canView($record): bool
+    {
+        if (! $record instanceof Project) {
+            return false;
+        }
+
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
+        $user = auth()->guard('web')->user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $authz = app(\App\Services\AccessAuthorizationService::class);
+
+        return $authz->hasPermission($user, 'projects.view')
+            && $authz->hasResourceAccess($user, $record);
+    }
+
     public static function canEdit($record): bool { return static::canManage('projects.edit', $record); }
     public static function canDelete($record): bool { return static::canManage('projects.delete', $record); }
     public static function form(Schema $schema): Schema { return ProjectForm::configure($schema); }
