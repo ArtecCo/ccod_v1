@@ -28,21 +28,19 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        $managedSlugs = array_keys(RolePermissionService::managedPermissions());
+        $managed = RolePermissionService::managedPermissions();
 
-        // Use the same permission assignments that the role edit page uses.
-        // The View page is only displaying what is assigned to the role; it should
-        // not apply an additional active-state filter that can make granted entries
-        // appear as not granted.
+        // The Edit page reads the role's permissions directly from the relationship.
+        // Do the same here and only use the managed catalog to decide which entries
+        // to display. Do not add authorization or permission-state filtering here.
         $grantedSlugs = $this->record->permissions()
-            ->whereIn('permissions.slug', $managedSlugs)
-            ->pluck('permissions.slug')
+            ->get()
+            ->pluck('slug')
             ->map(static fn ($slug): string => (string) $slug)
             ->flip()
             ->all();
 
-        // Super Admin is an intrinsic full-access role. Treat it as having every
-        // managed permission even if the pivot data is incomplete.
+        // Super Admin is an intrinsic full-access role.
         if (
             $this->record->is_system_role &&
             (
@@ -50,10 +48,10 @@ class ViewRole extends ViewRecord
                 strcasecmp(trim((string) $this->record->name), 'Super Admin') === 0
             )
         ) {
-            $grantedSlugs = array_fill_keys($managedSlugs, true);
+            $grantedSlugs = array_fill_keys(array_keys($managed), true);
         }
 
-        foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
+        foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
