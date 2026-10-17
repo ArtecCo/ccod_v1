@@ -69,54 +69,54 @@ class NotificationService
             severity: $severity,
         );
 
-        $delivered = 0;
+        $queued = 0;
 
         try {
-            $recipients->each(function (User $user) use ($notification, &$delivered): void {
+            $recipients->each(function (User $user) use ($notification, &$queued): void {
                 $user->notify($notification);
-                $delivered++;
+                $queued++;
             });
 
             $this->auditLogger->log(
-                event: 'Notification Sent',
-                description: sprintf('Client portal notification "%s" delivered to %d active user(s).', $title, $delivered),
+                event: 'Notification Queued',
+                description: sprintf('Client portal notification "%s" queued for %d active user(s).', $title, $queued),
                 success: true,
                 properties: [
                     'type' => $type,
                     'severity' => $severity,
-                    'recipient_count' => $delivered,
+                    'recipient_count' => $queued,
                     'all_users' => $allUsers,
                     'team_count' => count($teamIds),
                     'selected_user_count' => count($selectedUserIds),
                 ],
                 logName: 'Notifications',
-                tags: ['notification', 'client_portal', 'sent'],
+                tags: ['notification', 'client_portal', 'queued'],
                 category: LogSettings::NOTIFICATIONS,
             );
         } catch (Throwable $exception) {
             $this->auditLogger->log(
-                event: 'Notification Send Failed',
-                description: sprintf('Client portal notification "%s" could not be delivered completely.', $title),
+                event: 'Notification Queue Failed',
+                description: sprintf('Client portal notification "%s" could not be queued completely.', $title),
                 success: false,
                 failureReason: $exception->getMessage(),
                 properties: [
                     'type' => $type,
                     'severity' => $severity,
                     'recipient_count' => $recipients->count(),
-                    'delivered_count' => $delivered,
+                    'queued_count' => $queued,
                     'all_users' => $allUsers,
                     'team_count' => count($teamIds),
                     'selected_user_count' => count($selectedUserIds),
                 ],
                 logName: 'Notifications',
-                tags: ['notification', 'client_portal', 'failure'],
+                tags: ['notification', 'client_portal', 'queue_failure'],
                 category: LogSettings::NOTIFICATIONS,
             );
 
             throw $exception;
         }
 
-        return $delivered;
+        return $queued;
     }
 
     public function sendToUser(User $user, ClientPortalNotification $notification): void
