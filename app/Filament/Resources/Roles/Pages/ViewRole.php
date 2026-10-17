@@ -9,6 +9,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\DB;
 
 class ViewRole extends ViewRecord
 {
@@ -30,10 +31,12 @@ class ViewRole extends ViewRecord
 
         $managed = RolePermissionService::managedPermissions();
 
-        // Resolve the permission slugs once from the role relationship. The value
-        // displayed by each entry is then calculated from this set rather than
-        // relying on an artificial infolist state path being hydrated by Livewire.
-        $grantedSlugs = $this->record->permissions()
+        // Read the pivot directly, using the same permission slugs that the
+        // edit page displays. This keeps the view page independent of infolist
+        // state hydration and of the role relationship's loaded state.
+        $grantedSlugs = DB::table('permission_role')
+            ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
+            ->where('permission_role.role_id', $this->record->getKey())
             ->pluck('permissions.slug')
             ->map(static fn ($slug): string => (string) $slug)
             ->flip()
@@ -57,7 +60,7 @@ class ViewRole extends ViewRecord
 
                 $entries[] = TextEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->formatStateUsing(static fn (): string => $granted ? '✓ Granted' : '✕ Not granted')
+                    ->state($granted ? '✓ Granted' : '✕ Not granted')
                     ->color($granted ? 'success' : 'danger');
             }
 
