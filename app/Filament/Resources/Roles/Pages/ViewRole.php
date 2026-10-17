@@ -17,6 +17,8 @@ class ViewRole extends ViewRecord
 
     public function infolist(Schema $schema): Schema
     {
+        $this->record->loadMissing('permissions');
+
         $components = [
             Section::make('Role')
                 ->schema([
