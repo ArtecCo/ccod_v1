@@ -94,6 +94,24 @@ class RolePermissionService
         ];
     }
 
+    /** @return array<int, string> */
+    public function effectiveManagedPermissionSlugs(Role $role): array
+    {
+        $managedSlugs = array_keys(self::managedPermissions());
+
+        if ($role->slug === 'super_admin') {
+            return $managedSlugs;
+        }
+
+        return $role->permissions()
+            ->whereIn('permissions.slug', $managedSlugs)
+            ->where('permissions.is_active', true)
+            ->pluck('permissions.slug')
+            ->map(static fn ($slug): string => (string) $slug)
+            ->values()
+            ->all();
+    }
+
     /** @param array<int|string>|null $permissionValues */
     public function syncManagedCategory(Role $role, string $category, ?array $permissionValues): void
     {
