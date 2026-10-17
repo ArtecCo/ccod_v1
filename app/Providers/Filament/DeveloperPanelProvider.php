@@ -19,6 +19,7 @@ use App\Filament\Resources\QueueJobs\QueueJobResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Widgets\DeveloperOverview;
 use App\Support\FilamentStyling;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -89,7 +90,9 @@ class DeveloperPanelProvider extends PanelProvider
                 DatabaseTablePage::class,
                 MaintenanceMode::class,
             ])
-            ->widgets([])
+            ->widgets([
+                DeveloperOverview::class,
+            ])
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
