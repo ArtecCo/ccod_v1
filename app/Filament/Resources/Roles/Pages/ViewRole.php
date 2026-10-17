@@ -31,29 +31,18 @@ class ViewRole extends ViewRecord
         $managed = RolePermissionService::managedPermissions();
         $isSuperAdmin = $this->record->slug === 'super_admin';
 
-        $grantedSlugs = $isSuperAdmin
-            ? array_keys($managed)
-            : $this->record->permissions()
-                ->whereIn('permissions.slug', array_keys($managed))
-                ->pluck('permissions.slug')
-                ->map(static fn ($slug): string => (string) $slug)
-                ->all();
-
-        $grantedSlugs = array_fill_keys($grantedSlugs, true);
-
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $statePath = 'permission_status_' . md5($slug);
-                $this->record->setAttribute(
-                    $statePath,
-                    isset($grantedSlugs[$slug]) ? '✓ Granted' : '✕ Not granted',
-                );
+                $granted = $isSuperAdmin || $this->record->permissions()
+                    ->where('permissions.slug', $slug)
+                    ->exists();
 
-                $entries[] = TextEntry::make($statePath)
+                $entries[] = TextEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->color(isset($grantedSlugs[$slug]) ? 'success' : 'danger');
+                    ->state($granted ? '✓ Granted' : '✕ Not granted')
+                    ->color($granted ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
