@@ -23,7 +23,7 @@ class RolesTable
             ])
             ->defaultSort('name')
             ->recordUrl(fn ($record): ?string => RoleResource::canView($record)
-                ? RoleResource::getUrl('edit', ['record' => $record])
+                ? RoleResource::getUrl('view', ['record' => $record])
                 : null)
             ->recordActions([
                 EditAction::make()
