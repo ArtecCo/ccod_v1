@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RoleResource;
-use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\TextEntry;
@@ -30,35 +29,31 @@ class ViewRole extends ViewRecord
         ];
 
         $managed = RolePermissionService::managedPermissions();
+        $isSuperAdmin = $this->record->slug === 'super_admin';
+
+        $grantedSlugs = $isSuperAdmin
+            ? array_keys($managed)
+            : $this->record->permissions()
+                ->whereIn('permissions.slug', array_keys($managed))
+                ->pluck('permissions.slug')
+                ->map(static fn ($slug): string => (string) $slug)
+                ->all();
+
+        $grantedSlugs = array_fill_keys($grantedSlugs, true);
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $entries[] = TextEntry::make('id')
+                $statePath = 'permission_status_' . md5($slug);
+                $this->record->setAttribute(
+                    $statePath,
+                    isset($grantedSlugs[$slug]) ? '✓ Granted' : '✕ Not granted',
+                );
+
+                $entries[] = TextEntry::make($statePath)
                     ->label($definition['name'])
-                    ->state(function (Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return '✓ Granted';
-                        }
-
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->exists()
-                            ? '✓ Granted'
-                            : '✕ Not granted';
-                    })
-                    ->color(function (Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return 'success';
-                        }
-
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->exists()
-                            ? 'success'
-                            : 'danger';
-                    });
+                    ->color(isset($grantedSlugs[$slug]) ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
