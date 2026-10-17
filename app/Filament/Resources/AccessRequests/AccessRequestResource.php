@@ -87,7 +87,7 @@ class AccessRequestResource extends Resource
 
     public static function infolist(Schema $schema): Schema
     {
-        return $schema->components([
+        return $schema->columns(1)->components([
             Section::make('Request')
                 ->columns(2)
                 ->columnSpanFull()
