@@ -43,9 +43,9 @@
 
         .access-request-timeline__rail {
             position: absolute;
-            top: 1.1rem;
-            bottom: 0;
-            left: 0.6875rem;
+            top: 0.625rem;
+            bottom: -0.625rem;
+            left: 0.375rem;
             width: 1px;
             background: var(--timeline-line);
         }
@@ -63,6 +63,7 @@
             border: 2px solid var(--timeline-line);
             border-radius: 9999px;
             background: var(--timeline-line);
+            box-sizing: border-box;
         }
 
         .access-request-timeline__item--complete .access-request-timeline__dot,
@@ -138,19 +139,16 @@
         <div>
             <div class="access-request-timeline__title">Decision</div>
             <div class="access-request-timeline__meta">{{ $decisionStatus }}</div>
-            @if ($isDecided)
-                <div class="access-request-timeline__detail">
+            <div class="access-request-timeline__detail">
+                {{ $record->decision_reason ?: 'No decision reason recorded.' }}
+                @if ($isDecided)
+                    <br>
                     {{ $record->decided_at?->format('d M Y, H:i:s') }}
                     @if ($decisionModel?->name)
                         · by {{ $decisionModel->name }}
                     @endif
-                    @if ($record->decision_reason)
-                        <br>{{ $record->decision_reason }}
-                    @endif
-                </div>
-            @else
-                <div class="access-request-timeline__detail">Awaiting a decision from an eligible approver.</div>
-            @endif
+                @endif
+            </div>
         </div>
     </div>
 </div>
