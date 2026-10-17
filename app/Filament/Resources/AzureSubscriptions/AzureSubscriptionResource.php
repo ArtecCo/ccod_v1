@@ -61,11 +61,12 @@ class AzureSubscriptionResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
         $user = auth()->guard('web')->user();
-        if (! $user instanceof User) return $query->whereRaw('1 = 0');
-        $ids = app(AccessAuthorizationService::class)->accessibleSubscriptions($user)->pluck('subscription_id');
-        return $query->whereIn('subscription_id', $ids);
+        if (! $user instanceof User) {
+            return parent::getEloquentQuery()->whereRaw('1 = 0');
+        }
+
+        return app(AccessAuthorizationService::class)->accessibleSubscriptionQuery($user);
     }
 
     public static function form(Schema $schema): Schema { return AzureSubscriptionForm::configure($schema); }
