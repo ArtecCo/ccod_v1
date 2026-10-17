@@ -5,12 +5,10 @@ namespace App\Filament\Resources\Roles\Pages;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
-use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\DB;
 
 class ViewRole extends ViewRecord
 {
@@ -24,31 +22,30 @@ class ViewRole extends ViewRecord
                     TextEntry::make('name')->label('Role name'),
                     TextEntry::make('slug'),
                     TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-                    IconEntry::make('is_system_role')->label('System role')->boolean(),
-                    IconEntry::make('is_active')->label('Active')->boolean(),
+                    TextEntry::make('is_system_role')->label('System role')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                    TextEntry::make('is_active')->label('Active')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
                 ])
                 ->columns(2),
         ];
 
-        // Read the authoritative role-permission mapping directly from the RBAC pivot.
-        // These entries are dynamically generated and are not model-backed infolist fields.
-        $permissionSlugs = DB::table('permission_role')
-            ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
-            ->where('permission_role.role_id', $this->record->getKey())
+        // Resolve the permissions from the actual Role model relationship once.
+        // The relationship is the same mapping used by RolePermissionService::sync().
+        $permissionSlugs = $this->record->permissions()
+            ->where('permissions.is_active', true)
             ->pluck('permissions.slug')
-            ->all();
+            ->map(static fn ($slug): string => (string) $slug)
+            ->flip();
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $hasPermission = in_array($slug, $permissionSlugs, true);
+                $granted = $permissionSlugs->has($slug);
 
-                $entries[] = IconEntry::make('permission_' . md5($slug))
+                $entries[] = TextEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->state($hasPermission ? 'granted' : 'denied')
-                    ->icon($hasPermission ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
-                    ->color($hasPermission ? 'success' : 'danger');
+                    ->state($granted ? '✓ Granted' : '✕ Not granted')
+                    ->color($granted ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
