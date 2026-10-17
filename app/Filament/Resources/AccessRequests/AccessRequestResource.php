@@ -24,14 +24,19 @@ class AccessRequestResource extends Resource
 {
     protected static ?string $model = AccessRequest::class;
     protected static ?string $navigationLabel = 'Access Requests';
-    protected static string|\\BackedEnum|null $navigationIcon = 'heroicon-o-key';
-    protected static string|\\UnitEnum|null $navigationGroup = 'Administration';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-key';
+    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
 
     public static function canViewAny(): bool
     {
         $u = auth()->guard('web')->user();
         return auth()->guard('developers')->user()?->is_active === true
             || ($u instanceof User && app(AccessAuthorizationService::class)->hasPermission($u, 'users.access_requests.view'));
+    }
+
+    public static function canView($record): bool
+    {
+        return static::canViewAny();
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -44,10 +49,7 @@ class AccessRequestResource extends Resource
         $u = auth()->guard('web')->user();
         if (auth()->guard('developers')->user()?->is_active === true) return parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
         if (! $u) return parent::getEloquentQuery()->whereKey(0);
-        $a = app(AccessAuthorizationService::class);
-        return $a->hasPermission($u, 'users.access_requests.view')
-            ? parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription'])
-            : parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription'])->where('user_id', $u->getKey());
+        return parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
     }
 
     public static function form(Schema $schema): Schema { return $schema->components([]); }
@@ -56,13 +58,15 @@ class AccessRequestResource extends Resource
     {
         return $schema->components([
             Section::make('Request')->columns(2)->schema([
-                TextEntry::make('user.name')->label('Requester'), TextEntry::make('user.email')->label('Email'),
+                TextEntry::make('user.name')->label('Requester'),
+                TextEntry::make('user.email')->label('Email'),
                 TextEntry::make('target_name')->label('Target'),
-                TextEntry::make('target_type')->label('Target type')->formatStateUsing(fn ($state): string => $state instanceof \\BackedEnum ? $state->value : (string) $state)->badge(),
-                TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \\BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
-                TextEntry::make('duration')->label('Duration')->formatStateUsing(fn ($state): string => $state instanceof \\BackedEnum ? $state->value : (string) $state),
+                TextEntry::make('target_type')->label('Target type')->badge(),
+                TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
+                TextEntry::make('duration')->label('Duration'),
                 TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
-                TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'), TextEntry::make('status')->badge(),
+                TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
+                TextEntry::make('status')->badge(),
                 TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
             ]),
             Section::make('Approval')->columns(2)->schema([
@@ -77,9 +81,11 @@ class AccessRequestResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->defaultSort('created_at', 'desc')->columns([
-            TextColumn::make('user.name')->label('Requester')->searchable()->sortable(), TextColumn::make('target_name')->label('Target')->searchable()->sortable(),
-            TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \\BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
-            TextColumn::make('status')->badge(), TextColumn::make('created_at')->dateTime()->sortable(),
+            TextColumn::make('user.name')->label('Requester')->searchable()->sortable(),
+            TextColumn::make('target_name')->label('Target')->searchable()->sortable(),
+            TextColumn::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
+            TextColumn::make('status')->badge(),
+            TextColumn::make('created_at')->dateTime()->sortable(),
         ])->filters([
             SelectFilter::make('status')->options(collect(AccessRequestStatus::cases())->mapWithKeys(fn ($s) => [$s->value => $s->label()])->all()),
         ])->actions([ViewAction::make()]);
@@ -87,6 +93,10 @@ class AccessRequestResource extends Resource
 
     public static function getPages(): array
     {
-        return ['index' => ListAccessRequests::route('/'), 'view' => ViewAccessRequest::route('/{record}'), 'create' => \App\Filament\Resources\AccessRequests\Pages\CreateAccessRequest::route('/create')];
+        return [
+            'index' => ListAccessRequests::route('/'),
+            'view' => ViewAccessRequest::route('/{record}'),
+            'create' => \App\Filament\Resources\AccessRequests\Pages\CreateAccessRequest::route('/create'),
+        ];
     }
 }
