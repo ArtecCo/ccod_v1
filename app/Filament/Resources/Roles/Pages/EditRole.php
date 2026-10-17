@@ -69,6 +69,34 @@ class EditRole extends EditRecord
                         throw new AuthorizationException('You are not authorized to delete this role.');
                     }
 
+                    $assignedUsers = $record->assignments()
+                        ->where(function ($query): void {
+                            $query
+                                ->whereNull('starts_at')
+                                ->orWhere('starts_at', '<=', now());
+                        })
+                        ->where(function ($query): void {
+                            $query
+                                ->whereNull('expires_at')
+                                ->orWhere('expires_at', '>', now());
+                        })
+                        ->with('user:id,name')
+                        ->get()
+                        ->pluck('user')
+                        ->filter()
+                        ->unique('id');
+
+                    if ($assignedUsers->isNotEmpty()) {
+                        $names = $assignedUsers
+                            ->map(fn ($user): string => (string) $user->name)
+                            ->values()
+                            ->implode(', ');
+
+                        throw new AuthorizationException(
+                            'This role cannot be deleted because it is currently assigned to the following users: ' . $names . '. Remove the role assignment from these users before deleting the role.'
+                        );
+                    }
+
                     return (bool) $record->delete();
                 }),
         ];
