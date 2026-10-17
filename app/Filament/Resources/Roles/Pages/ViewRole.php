@@ -29,7 +29,7 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        $permissionSlugs = $this->record->permissions()->pluck('permissions.slug')->all();
+        $permissionSlugs = $this->record->permissions->pluck('slug')->all();
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
@@ -37,7 +37,8 @@ class ViewRole extends ViewRecord
             foreach ($definitions as $slug => $definition) {
                 $entries[] = IconEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->boolean(fn (): bool => in_array($slug, $permissionSlugs, true))
+                    ->state(in_array($slug, $permissionSlugs, true))
+                    ->boolean()
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle');
             }
