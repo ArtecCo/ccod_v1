@@ -29,24 +29,29 @@ class ViewRole extends ViewRecord
         ];
 
         $managed = RolePermissionService::managedPermissions();
+        $managedSlugs = array_keys($managed);
         $isSuperAdmin = $this->record->slug === 'super_admin';
+
+        $grantedSlugs = $isSuperAdmin
+            ? $managedSlugs
+            : $this->record->permissions()
+                ->whereIn('permissions.slug', $managedSlugs)
+                ->pluck('permissions.slug')
+                ->map(static fn ($slug): string => (string) $slug)
+                ->all();
+
+        $grantedSlugs = array_fill_keys($grantedSlugs, true);
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
+                $granted = isset($grantedSlugs[$slug]);
+
                 $entries[] = TextEntry::make('name')
                     ->label($definition['name'])
-                    ->formatStateUsing(function ($state, $record) use ($slug, $isSuperAdmin): string {
-                        $granted = $isSuperAdmin || $record->permissions->contains('slug', $slug);
-
-                        return $granted ? '✓ Granted' : '✕ Not granted';
-                    })
-                    ->color(function ($state, $record) use ($slug, $isSuperAdmin): string {
-                        $granted = $isSuperAdmin || $record->permissions->contains('slug', $slug);
-
-                        return $granted ? 'success' : 'danger';
-                    });
+                    ->formatStateUsing(fn (): string => $granted ? '✓ Granted' : '✕ Not granted')
+                    ->color($granted ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
