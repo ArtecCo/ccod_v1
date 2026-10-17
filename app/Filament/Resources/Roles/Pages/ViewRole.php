@@ -10,6 +10,7 @@ use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\DB;
 
 class ViewRole extends ViewRecord
 {
@@ -29,7 +30,13 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        $permissionSlugs = $this->record->permissions->pluck('slug')->all();
+        // Read the authoritative role-permission mapping directly from the RBAC pivot.
+        // These entries are dynamically generated and are not model-backed infolist fields.
+        $permissionSlugs = DB::table('permission_role')
+            ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
+            ->where('permission_role.role_id', $this->record->getKey())
+            ->pluck('permissions.slug')
+            ->all();
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
@@ -39,10 +46,8 @@ class ViewRole extends ViewRecord
 
                 $entries[] = IconEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->state($slug)
-                    ->icon($hasPermission
-                        ? 'heroicon-o-check-circle'
-                        : 'heroicon-o-x-circle')
+                    ->state($hasPermission ? 'granted' : 'denied')
+                    ->icon($hasPermission ? 'heroicon-o-check-circle' : 'heroicon-o-x-circle')
                     ->color($hasPermission ? 'success' : 'danger');
             }
 
