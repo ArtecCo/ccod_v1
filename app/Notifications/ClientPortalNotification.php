@@ -4,12 +4,26 @@ namespace App\Notifications;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\BroadcastMessage;
 use Illuminate\Notifications\Notification;
 
-class ClientPortalNotification extends Notification
+class ClientPortalNotification extends Notification implements ShouldQueue
 {
     use Queueable;
+
+    /**
+     * Number of attempts allowed for a notification delivery job.
+     */
+    public int $tries = 3;
+
+    /**
+     * Maximum time a notification delivery job may run.
+     */
+    public int $timeout = 120;
+
+    /**
+     * Maximum number of unhandled exceptions before the job is failed.
+     */
+    public int $maxExceptions = 3;
 
     public function __construct(
         public readonly string $title,
@@ -19,6 +33,20 @@ class ClientPortalNotification extends Notification
         public readonly ?string $actionLabel = null,
         public readonly string $severity = 'info',
     ) {
+        // Do not allow a worker to process this notification before an
+        // enclosing database transaction has committed.
+        $this->afterCommit();
+    }
+
+    /**
+     * Seconds to wait between retry attempts.
+     *
+     * The delays increase so a temporary database problem does not cause
+     * immediate repeated failures.
+     */
+    public function backoff(): array
+    {
+        return [10, 60, 300];
     }
 
     public function via(object $notifiable): array
