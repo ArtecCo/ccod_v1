@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RoleResource;
-use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\TextEntry;
@@ -30,25 +29,30 @@ class ViewRole extends ViewRecord
         ];
 
         $managed = RolePermissionService::managedPermissions();
+        $managedSlugs = array_keys($managed);
+
+        $grantedSlugs = $this->record->slug === 'super_admin'
+            ? $managedSlugs
+            : $this->record->permissions()
+                ->whereIn('permissions.slug', $managedSlugs)
+                ->where('permissions.is_active', true)
+                ->pluck('permissions.slug')
+                ->map(static fn ($slug): string => (string) $slug)
+                ->all();
+
+        $grantedSlugs = array_fill_keys($grantedSlugs, true);
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $entries[] = TextEntry::make('id')
+                $granted = isset($grantedSlugs[$slug]);
+                $statePath = 'permission_status_' . md5($slug);
+
+                $entries[] = TextEntry::make($statePath)
                     ->label($definition['name'])
-                    ->formatStateUsing(function ($state, Role $record) use ($slug): string {
-                        $granted = $record->slug === 'super_admin'
-                            || $record->permissions->contains('slug', $slug);
-
-                        return $granted ? '✓ Granted' : '✕ Not granted';
-                    })
-                    ->color(function ($state, Role $record) use ($slug): string {
-                        $granted = $record->slug === 'super_admin'
-                            || $record->permissions->contains('slug', $slug);
-
-                        return $granted ? 'success' : 'danger';
-                    });
+                    ->state($granted ? '✓ Granted' : '✕ Not granted')
+                    ->color($granted ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
