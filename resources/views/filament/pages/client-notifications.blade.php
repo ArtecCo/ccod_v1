@@ -71,7 +71,8 @@
                     Your notifications
                     <span x-show="unreadCount > 0" x-cloak class="ccod-notifications__count" x-text="unreadCount"></span>
                 </p>
-                <p class="ccod-notifications__description">Stay up to date with important portal notifications and alerts.</p>
+                <!-- <p class="ccod-notifications__description">Stay up to date with important portal notifications and alerts.</p> -->
+                <p class="ccod-notifications__description">Click on a notification to mark it as read.</p>
             </div>
             <button type="button" class="ccod-notifications__mark-read" x-on:click="markAllRead()" x-bind:disabled="unreadCount === 0">Mark all as read</button>
         </div>
