@@ -28,13 +28,18 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        // Resolve the permissions from the actual Role model relationship once.
-        // The relationship is the same mapping used by RolePermissionService::sync().
-        $permissionSlugs = $this->record->permissions()
-            ->where('permissions.is_active', true)
-            ->pluck('permissions.slug')
-            ->map(static fn ($slug): string => (string) $slug)
-            ->flip();
+        // Super Admin is an intrinsic full-access role. Its effective permissions
+        // must not depend on whether the permission_role pivot has been repaired
+        // or populated by a migration.
+        $isSuperAdmin = $this->record->slug === 'super_admin';
+
+        $permissionSlugs = $isSuperAdmin
+            ? collect(array_keys(RolePermissionService::managedPermissions()))->flip()
+            : $this->record->permissions()
+                ->where('permissions.is_active', true)
+                ->pluck('permissions.slug')
+                ->map(static fn ($slug): string => (string) $slug)
+                ->flip();
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
