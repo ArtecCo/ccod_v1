@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RoleResource;
+use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
-use Filament\Infolists\Components\ViewEntry;
+use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\DB;
 
 class ViewRole extends ViewRecord
 {
@@ -20,45 +20,45 @@ class ViewRole extends ViewRecord
         $components = [
             Section::make('Role')
                 ->schema([
-                    \Filament\Infolists\Components\TextEntry::make('name')->label('Role name'),
-                    \Filament\Infolists\Components\TextEntry::make('slug'),
-                    \Filament\Infolists\Components\TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-                    \Filament\Infolists\Components\TextEntry::make('is_system_role')->label('System role')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
-                    \Filament\Infolists\Components\TextEntry::make('is_active')->label('Active')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                    TextEntry::make('name')->label('Role name'),
+                    TextEntry::make('slug'),
+                    TextEntry::make('description')->placeholder('—')->columnSpanFull(),
+                    TextEntry::make('is_system_role')->label('System role')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                    TextEntry::make('is_active')->label('Active')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
                 ])
                 ->columns(2),
         ];
 
         $managed = RolePermissionService::managedPermissions();
 
-        $grantedSlugs = DB::table('permission_role')
-            ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
-            ->where('permission_role.role_id', $this->record->getKey())
-            ->pluck('permissions.slug')
-            ->map(static fn ($slug): string => (string) $slug)
-            ->flip()
-            ->all();
-
-        if (
-            $this->record->is_system_role &&
-            (
-                $this->record->slug === 'super_admin' ||
-                strcasecmp(trim((string) $this->record->name), 'Super Admin') === 0
-            )
-        ) {
-            $grantedSlugs = array_fill_keys(array_keys($managed), true);
-        }
-
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $entries[] = ViewEntry::make('permission_status_' . md5($slug))
+                $entries[] = TextEntry::make('id')
                     ->label($definition['name'])
-                    ->view('filament.infolists.entries.permission-status')
-                    ->viewData([
-                        'granted' => isset($grantedSlugs[$slug]),
-                    ]);
+                    ->formatStateUsing(function ($state, Role $record) use ($slug): string {
+                        if ($record->slug === 'super_admin') {
+                            return '✓ Granted';
+                        }
+
+                        return $record->permissions()
+                            ->where('permissions.slug', $slug)
+                            ->exists()
+                            ? '✓ Granted'
+                            : '✕ Not granted';
+                    })
+                    ->color(function ($state, Role $record) use ($slug): string {
+                        if ($record->slug === 'super_admin') {
+                            return 'success';
+                        }
+
+                        return $record->permissions()
+                            ->where('permissions.slug', $slug)
+                            ->exists()
+                            ? 'success'
+                            : 'danger';
+                    });
             }
 
             $components[] = Section::make($category)
