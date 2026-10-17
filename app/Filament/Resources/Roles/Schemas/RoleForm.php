@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Roles\Schemas;
 
-use App\Filament\Resources\Roles\RoleResource;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
@@ -11,7 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Components\Schema;
+use Filament\Schemas\Schema;
 use Illuminate\Support\Str;
 
 class RoleForm
