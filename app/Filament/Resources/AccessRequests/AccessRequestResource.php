@@ -88,18 +88,21 @@ class AccessRequestResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Request')->columns(2)->schema([
-                TextEntry::make('user.name')->label('Requester'),
-                TextEntry::make('user.email')->label('Email'),
-                TextEntry::make('target_name')->label('Target'),
-                TextEntry::make('target_type')->label('Target type')->badge(),
-                TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
-                TextEntry::make('duration')->label('Duration'),
-                TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
-                TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
-                TextEntry::make('status')->badge(),
-                TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
-            ]),
+            Section::make('Request')
+                ->columns(2)
+                ->columnSpanFull()
+                ->schema([
+                    TextEntry::make('user.name')->label('Requester'),
+                    TextEntry::make('user.email')->label('Email'),
+                    TextEntry::make('target_name')->label('Target'),
+                    TextEntry::make('target_type')->label('Target type')->badge(),
+                    TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
+                    TextEntry::make('duration')->label('Duration'),
+                    TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
+                    TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
+                    TextEntry::make('status')->badge(),
+                    TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
+                ]),
             Section::make('Approval workflow')
                 ->schema([
                     ViewEntry::make('workflow')
