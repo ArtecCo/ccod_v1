@@ -37,8 +37,7 @@ class ViewRole extends ViewRecord
             foreach ($definitions as $slug => $definition) {
                 $entries[] = IconEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->state(fn (): bool => in_array($slug, $permissionSlugs, true))
-                    ->boolean()
+                    ->boolean(fn (): bool => in_array($slug, $permissionSlugs, true))
                     ->trueIcon('heroicon-o-check-circle')
                     ->falseIcon('heroicon-o-x-circle');
             }
