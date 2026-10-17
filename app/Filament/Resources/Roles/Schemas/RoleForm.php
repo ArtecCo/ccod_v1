@@ -51,8 +51,13 @@ class RoleForm
         $viewDependencies = RolePermissionService::viewPermissionForActions();
 
         foreach ($managed->groupBy('category') as $category => $definitions) {
-            // Only permissions belonging to this category are shown in this section.
-            $categorySlugs = $definitions->keys()->all();
+            // groupBy() reindexes the inner collection, so derive the slugs from
+            // the original managed catalog instead of using $definitions->keys().
+            $categorySlugs = $managed
+                ->filter(fn (array $definition): bool => $definition['category'] === $category)
+                ->keys()
+                ->values()
+                ->all();
 
             $permissions = Permission::query()
                 ->whereIn('slug', $categorySlugs)
@@ -68,14 +73,15 @@ class RoleForm
                 ->mapWithKeys(fn (Permission $permission): array => [$permission->slug => (string) $permission->id])
                 ->all();
 
-            $viewSlug = $permissions
-                ->first(fn (Permission $permission): bool => str_ends_with($permission->slug, '.view'))
-                ?->slug;
+            $viewSlug = $categorySlugs[
+                array_key_first(array_filter(
+                    $categorySlugs,
+                    fn (string $slug): bool => str_ends_with($slug, '.view'),
+                )) ?? 0
+            ] ?? null;
 
             $viewId = $viewSlug !== null ? ($permissionIdsBySlug[$viewSlug] ?? null) : null;
 
-            // Every action explicitly mapped to this category's View permission
-            // automatically requires View when selected.
             $dependentActionIds = collect($viewDependencies)
                 ->filter(fn (string $view): bool => $view === $viewSlug)
                 ->keys()
