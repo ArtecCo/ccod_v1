@@ -28,28 +28,20 @@ class ViewRole extends ViewRecord
                 ->columns(2),
         ];
 
-        // Super Admin is an intrinsic full-access role. Its effective permissions
-        // must not depend on whether the permission_role pivot has been repaired
-        // or populated by a migration.
-        $isSuperAdmin = $this->record->slug === 'super_admin';
-
-        $permissionSlugs = $isSuperAdmin
-            ? collect(array_keys(RolePermissionService::managedPermissions()))->flip()
-            : $this->record->permissions()
-                ->where('permissions.is_active', true)
-                ->pluck('permissions.slug')
-                ->map(static fn ($slug): string => (string) $slug)
-                ->flip();
+        $permissionService = app(RolePermissionService::class);
+        $grantedSlugs = array_flip($permissionService->effectiveManagedPermissionSlugs($this->record));
+        $permissionState = [];
 
         foreach (collect(RolePermissionService::managedPermissions())->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $granted = $permissionSlugs->has($slug);
+                $stateKey = 'permission_' . md5($slug);
+                $granted = isset($grantedSlugs[$slug]);
+                $permissionState[$stateKey] = $granted ? '✓ Granted' : '✕ Not granted';
 
-                $entries[] = TextEntry::make('permission_' . md5($slug))
+                $entries[] = TextEntry::make($stateKey)
                     ->label($definition['name'])
-                    ->state($granted ? '✓ Granted' : '✕ Not granted')
                     ->color($granted ? 'success' : 'danger');
             }
 
@@ -58,7 +50,9 @@ class ViewRole extends ViewRecord
                 ->columns(2);
         }
 
-        return $schema->components($components);
+        return $schema
+            ->constantState($permissionState)
+            ->components($components);
     }
 
     protected function getHeaderActions(): array
