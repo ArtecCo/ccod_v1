@@ -11,10 +11,11 @@ use App\Models\Role;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Actions\ViewAction;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
@@ -29,27 +30,57 @@ class AccessRequestResource extends Resource
 
     public static function canViewAny(): bool
     {
-        $u = auth()->guard('web')->user();
         return auth()->guard('developers')->user()?->is_active === true
-            || ($u instanceof User && app(AccessAuthorizationService::class)->hasPermission($u, 'users.access_requests.view'));
+            || auth()->guard('web')->check();
     }
 
     public static function canView($record): bool
     {
-        return static::canViewAny();
+        $developer = auth()->guard('developers')->user();
+        if ($developer?->is_active === true) {
+            return true;
+        }
+
+        $user = auth()->guard('web')->user();
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        return $record->user_id === $user->getKey()
+            || app(AccessAuthorizationService::class)->hasPermission($user, 'users.access_requests.view');
     }
 
     public static function shouldRegisterNavigation(): bool
     {
-        return static::canViewAny();
+        $developer = auth()->guard('developers')->user();
+        if ($developer?->is_active === true) {
+            return true;
+        }
+
+        $user = auth()->guard('web')->user();
+        return $user instanceof User
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'users.access_requests.view');
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $u = auth()->guard('web')->user();
-        if (auth()->guard('developers')->user()?->is_active === true) return parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
-        if (! $u) return parent::getEloquentQuery()->whereKey(0);
-        return parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
+        $query = parent::getEloquentQuery()->with(['user', 'businessUnit', 'subscription']);
+        $developer = auth()->guard('developers')->user();
+
+        if ($developer?->is_active === true) {
+            return $query;
+        }
+
+        $user = auth()->guard('web')->user();
+        if (! $user instanceof User) {
+            return $query->whereKey(0);
+        }
+
+        $canViewAll = app(AccessAuthorizationService::class)->hasPermission($user, 'users.access_requests.view');
+
+        return $canViewAll
+            ? $query
+            : $query->where('user_id', $user->getKey());
     }
 
     public static function form(Schema $schema): Schema { return $schema->components([]); }
@@ -69,12 +100,17 @@ class AccessRequestResource extends Resource
                 TextEntry::make('status')->badge(),
                 TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
             ]),
-            Section::make('Approval')->columns(2)->schema([
-                TextEntry::make('approvers')->label('Approvers')->state(fn (AccessRequest $record): string => app(AccessAuthorizationService::class)->approvers($record)->map(fn (User $approver): string => $approver->name.' ('.$approver->email.')')->implode("\n"))->placeholder('No eligible approvers found.')->columnSpanFull(),
-                TextEntry::make('decision_maker')->label('Decision by')->state(function (AccessRequest $record): ?string { if (!$record->decided_by_id || !$record->decided_by_type) return null; $model = $record->decided_by_type === Developer::class ? Developer::query()->find($record->decided_by_id) : User::query()->find($record->decided_by_id); return $model?->name ?? null; })->placeholder('Not decided'),
-                TextEntry::make('decided_at')->label('Decision at')->dateTime('Y-m-d H:i:s')->placeholder('Not decided'),
-                TextEntry::make('decision_reason')->label('Decision reason')->placeholder('No decision reason recorded.')->columnSpanFull(),
-            ]),
+            Section::make('Approval workflow')
+                ->schema([
+                    ViewEntry::make('workflow')
+                        ->view('filament.infolists.entries.access-request-workflow')
+                        ->hiddenLabel()
+                        ->columnSpanFull(),
+                    TextEntry::make('decision_maker')->label('Decision by')->state(function (AccessRequest $record): ?string { if (!$record->decided_by_id || !$record->decided_by_type) return null; $model = $record->decided_by_type === Developer::class ? Developer::query()->find($record->decided_by_id) : User::query()->find($record->decided_by_id); return $model?->name ?? null; })->placeholder('Not decided'),
+                    TextEntry::make('decided_at')->label('Decision at')->dateTime('Y-m-d H:i:s')->placeholder('Not decided'),
+                    TextEntry::make('decision_reason')->label('Decision reason')->placeholder('No decision reason recorded.')->columnSpanFull(),
+                ])
+                ->columnSpanFull(),
         ]);
     }
 
