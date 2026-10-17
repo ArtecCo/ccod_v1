@@ -30,35 +30,21 @@ class ViewRole extends ViewRecord
         ];
 
         $managed = RolePermissionService::managedPermissions();
+        $grantedSlugs = array_flip(
+            app(RolePermissionService::class)->effectiveManagedPermissionSlugs($this->record),
+        );
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $entries[] = TextEntry::make('id')
+                $statePath = 'permission_status_' . md5($slug);
+                $granted = isset($grantedSlugs[$slug]);
+
+                $entries[] = TextEntry::make($statePath)
                     ->label($definition['name'])
-                    ->formatStateUsing(function ($state, Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return '✓ Granted';
-                        }
-
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->exists()
-                            ? '✓ Granted'
-                            : '✕ Not granted';
-                    })
-                    ->color(function ($state, Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return 'success';
-                        }
-
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->exists()
-                            ? 'success'
-                            : 'danger';
-                    });
+                    ->state($granted ? '✓ Granted' : '✕ Not granted')
+                    ->color($granted ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
