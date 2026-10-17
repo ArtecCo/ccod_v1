@@ -29,30 +29,26 @@ class ViewRole extends ViewRecord
         ];
 
         $managed = RolePermissionService::managedPermissions();
-        $managedSlugs = array_keys($managed);
-
-        // Match the Edit Role page exactly: a permission is granted here when
-        // that permission is actually assigned to the role. Do not filter by
-        // is_active because EditRole displays the role's actual assignments
-        // regardless of that column's value.
-        $grantedSlugs = $this->record->slug === 'super_admin'
-            ? $managedSlugs
-            : $this->record->permissions()
-                ->whereIn('permissions.slug', $managedSlugs)
-                ->pluck('permissions.slug')
-                ->map(static fn ($slug): string => (string) $slug)
-                ->all();
-
-        $grantedSlugs = array_fill_keys($grantedSlugs, true);
+        $isSuperAdmin = $this->record->slug === 'super_admin';
 
         foreach (collect($managed)->groupBy('category') as $category => $definitions) {
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $entries[] = TextEntry::make('permission_status_' . md5($slug))
+                $entries[] = TextEntry::make('permissions')
                     ->label($definition['name'])
-                    ->state(isset($grantedSlugs[$slug]) ? '✓ Granted' : '✕ Not granted')
-                    ->color(isset($grantedSlugs[$slug]) ? 'success' : 'danger');
+                    ->formatStateUsing(function ($state) use ($slug, $isSuperAdmin): string {
+                        $granted = $isSuperAdmin
+                            || ($state instanceof \Illuminate\Support\Collection && $state->contains('slug', $slug));
+
+                        return $granted ? '✓ Granted' : '✕ Not granted';
+                    })
+                    ->color(function ($state) use ($slug, $isSuperAdmin): string {
+                        $granted = $isSuperAdmin
+                            || ($state instanceof \Illuminate\Support\Collection && $state->contains('slug', $slug));
+
+                        return $granted ? 'success' : 'danger';
+                    });
             }
 
             $components[] = Section::make($category)
