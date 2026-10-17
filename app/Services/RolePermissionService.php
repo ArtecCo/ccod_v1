@@ -51,6 +51,7 @@ class RolePermissionService
             'roles.create' => ['category' => 'Roles & Permissions', 'name' => 'Create roles'],
             'roles.edit' => ['category' => 'Roles & Permissions', 'name' => 'Update/Edit roles'],
             'roles.delete' => ['category' => 'Roles & Permissions', 'name' => 'Delete roles'],
+            'users.roles.assign' => ['category' => 'Roles & Permissions', 'name' => 'Manage access requests'],
             'users.view' => ['category' => 'Users', 'name' => 'View users'],
             'users.create' => ['category' => 'Users', 'name' => 'Create users'],
             'users.edit' => ['category' => 'Users', 'name' => 'Update/Edit users'],
@@ -63,7 +64,7 @@ class RolePermissionService
         return [
             'dashboard.view',
             'subscriptions.assign_environment', 'subscriptions.assign_business_unit',
-            'users.roles.assign', 'users.scopes.assign', 'roles.permissions.assign', 'roles.scopes.assign',
+            'users.scopes.assign', 'roles.permissions.assign', 'roles.scopes.assign',
             'system.settings.view', 'system.settings.manage', 'system.integrations.manage', 'system.audit.manage',
             'system.configuration.manage', 'system.audit.manage', 'authorization.configuration.manage',
             'authorization.system_roles.manage', 'authorization.security.manage',
