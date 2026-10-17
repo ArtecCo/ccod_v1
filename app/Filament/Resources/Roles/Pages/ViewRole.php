@@ -7,6 +7,7 @@ use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -18,18 +19,25 @@ class ViewRole extends ViewRecord
     {
         $components = [
             Section::make('Role')
+                ->description('Role details and status.')
+                ->columnSpanFull()
+                ->columns(2)
                 ->schema([
                     TextEntry::make('name')->label('Role name'),
                     TextEntry::make('slug'),
-                    TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-                    TextEntry::make('is_system_role')->label('System role')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
-                    TextEntry::make('is_active')->label('Active')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
-                ])
-                ->columns(2),
+                    TextEntry::make('description')->placeholder('—')->columnSpan(1),
+                    TextEntry::make('is_active')
+                        ->label('Active')
+                        ->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                    TextEntry::make('is_system_role')
+                        ->label('System role')
+                        ->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                ]),
         ];
 
         $managed = RolePermissionService::managedPermissions();
         $isSuperAdmin = $this->record->slug === 'super_admin';
+        $permissionSections = [];
 
         foreach (collect($managed)->groupBy('category', preserveKeys: true) as $category => $definitions) {
             $entries = [];
@@ -45,9 +53,15 @@ class ViewRole extends ViewRecord
                     ->color($granted ? 'success' : 'danger');
             }
 
-            $components[] = Section::make($category)
+            $permissionSections[] = Section::make($category)
                 ->schema($entries)
                 ->columns(2);
+        }
+
+        if ($permissionSections !== []) {
+            $components[] = Grid::make(2)
+                ->schema($permissionSections)
+                ->columnSpanFull();
         }
 
         return $schema->components($components);
