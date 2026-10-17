@@ -5,7 +5,7 @@ namespace App\Filament\Resources\Roles\Pages;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Services\RolePermissionService;
 use Filament\Actions\EditAction;
-use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\ViewEntry;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -20,20 +20,17 @@ class ViewRole extends ViewRecord
         $components = [
             Section::make('Role')
                 ->schema([
-                    TextEntry::make('name')->label('Role name'),
-                    TextEntry::make('slug'),
-                    TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-                    TextEntry::make('is_system_role')->label('System role')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
-                    TextEntry::make('is_active')->label('Active')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                    \Filament\Infolists\Components\TextEntry::make('name')->label('Role name'),
+                    \Filament\Infolists\Components\TextEntry::make('slug'),
+                    \Filament\Infolists\Components\TextEntry::make('description')->placeholder('—')->columnSpanFull(),
+                    \Filament\Infolists\Components\TextEntry::make('is_system_role')->label('System role')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
+                    \Filament\Infolists\Components\TextEntry::make('is_active')->label('Active')->formatStateUsing(fn ($state): string => $state ? 'Yes' : 'No'),
                 ])
                 ->columns(2),
         ];
 
         $managed = RolePermissionService::managedPermissions();
 
-        // Read the pivot directly, using the same permission slugs that the
-        // edit page displays. This keeps the view page independent of infolist
-        // state hydration and of the role relationship's loaded state.
         $grantedSlugs = DB::table('permission_role')
             ->join('permissions', 'permissions.id', '=', 'permission_role.permission_id')
             ->where('permission_role.role_id', $this->record->getKey())
@@ -56,12 +53,12 @@ class ViewRole extends ViewRecord
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $granted = isset($grantedSlugs[$slug]);
-
-                $entries[] = TextEntry::make('permission_' . md5($slug))
+                $entries[] = ViewEntry::make('permission_status_' . md5($slug))
                     ->label($definition['name'])
-                    ->state($granted ? '✓ Granted' : '✕ Not granted')
-                    ->color($granted ? 'success' : 'danger');
+                    ->view('filament.infolists.entries.permission-status')
+                    ->viewData([
+                        'granted' => isset($grantedSlugs[$slug]),
+                    ]);
             }
 
             $components[] = Section::make($category)
