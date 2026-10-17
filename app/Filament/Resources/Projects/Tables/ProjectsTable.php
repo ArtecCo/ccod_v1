@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Projects\Tables;
 
+use App\Filament\Resources\Projects\ProjectResource;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 
@@ -9,10 +10,14 @@ class ProjectsTable
 {
     public static function configure(Table $table): Table
     {
-        return $table->columns([
-            TextColumn::make('name')->searchable()->sortable(),
-            TextColumn::make('businessUnit.name')->label('Business Unit')->searchable()->sortable(),
-            TextColumn::make('created_at')->dateTime()->sortable(),
-        ]);
+        return $table
+            ->columns([
+                TextColumn::make('name')->searchable()->sortable(),
+                TextColumn::make('businessUnit.name')->label('Business Unit')->searchable()->sortable(),
+                TextColumn::make('created_at')->dateTime()->sortable(),
+            ])
+            ->recordUrl(fn ($record): ?string => ProjectResource::canView($record)
+                ? ProjectResource::getUrl('view', ['record' => $record])
+                : null);
     }
 }
