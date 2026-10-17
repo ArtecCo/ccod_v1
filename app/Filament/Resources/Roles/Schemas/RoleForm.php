@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Roles\Schemas;
 
+use App\Filament\Resources\Roles\RoleResource;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
@@ -10,7 +11,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
+use Filament\Schemas\Components\Schema;
 use Illuminate\Support\Str;
 
 class RoleForm
@@ -89,19 +90,16 @@ class RoleForm
 
                             $state = array_map('strval', $state ?? []);
 
+                            // View is a prerequisite for every mapped action. If
+                            // an action is selected, View is always restored.
+                            // We intentionally enforce this in state rather than
+                            // disabling the View option: Filament treats a
+                            // disabled selected option as invalid during its
+                            // CheckboxList option validation.
                             if (array_intersect($dependentActionSlugs, $state) !== [] && ! in_array($viewSlug, $state, true)) {
                                 $state[] = $viewSlug;
                                 $set($fieldName, array_values(array_unique($state)));
                             }
-                        })
-                        ->disableOptionWhen(function (string $value, $get) use ($fieldName, $viewSlug, $dependentActionSlugs): bool {
-                            if ($viewSlug === null || $value !== $viewSlug || $dependentActionSlugs === []) {
-                                return false;
-                            }
-
-                            $state = array_map('strval', $get($fieldName) ?? []);
-
-                            return array_intersect($dependentActionSlugs, $state) !== [];
                         }),
                 ]);
         }
