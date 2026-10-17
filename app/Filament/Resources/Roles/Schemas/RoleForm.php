@@ -61,6 +61,13 @@ class RoleForm
                 ->mapWithKeys(fn (array $definition, string $slug): array => [$slug => $definition['name']])
                 ->all();
 
+            // Access Requests is an explicit managed permission and must remain
+            // visible as a role control in the Roles & Permissions section.
+            if ($category === 'Roles & Permissions' && ! array_key_exists('users.roles.assign', $options)) {
+                $options['users.roles.assign'] = 'Manage access requests';
+                $categorySlugs[] = 'users.roles.assign';
+            }
+
             $viewSlug = collect($categorySlugs)
                 ->first(fn (string $slug): bool => str_ends_with($slug, '.view'));
 
