@@ -31,11 +31,14 @@ class ViewRole extends ViewRecord
         $managed = RolePermissionService::managedPermissions();
         $managedSlugs = array_keys($managed);
 
+        // Match the Edit Role page exactly: a permission is granted here when
+        // that permission is actually assigned to the role. Do not filter by
+        // is_active because EditRole displays the role's actual assignments
+        // regardless of that column's value.
         $grantedSlugs = $this->record->slug === 'super_admin'
             ? $managedSlugs
             : $this->record->permissions()
                 ->whereIn('permissions.slug', $managedSlugs)
-                ->where('permissions.is_active', true)
                 ->pluck('permissions.slug')
                 ->map(static fn ($slug): string => (string) $slug)
                 ->all();
@@ -46,13 +49,10 @@ class ViewRole extends ViewRecord
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $granted = isset($grantedSlugs[$slug]);
-                $statePath = 'permission_status_' . md5($slug);
-
-                $entries[] = TextEntry::make($statePath)
+                $entries[] = TextEntry::make('permission_status_' . md5($slug))
                     ->label($definition['name'])
-                    ->state($granted ? '✓ Granted' : '✕ Not granted')
-                    ->color($granted ? 'success' : 'danger');
+                    ->state(isset($grantedSlugs[$slug]) ? '✓ Granted' : '✕ Not granted')
+                    ->color(isset($grantedSlugs[$slug]) ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
