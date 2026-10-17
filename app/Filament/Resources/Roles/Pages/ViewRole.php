@@ -35,12 +35,15 @@ class ViewRole extends ViewRecord
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
+                $hasPermission = in_array($slug, $permissionSlugs, true);
+
                 $entries[] = IconEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->state(in_array($slug, $permissionSlugs, true))
-                    ->boolean()
-                    ->trueIcon('heroicon-o-check-circle')
-                    ->falseIcon('heroicon-o-x-circle');
+                    ->state($slug)
+                    ->icon($hasPermission
+                        ? 'heroicon-o-check-circle'
+                        : 'heroicon-o-x-circle')
+                    ->color($hasPermission ? 'success' : 'danger');
             }
 
             $components[] = Section::make($category)
