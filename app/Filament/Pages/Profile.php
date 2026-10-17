@@ -1,5 +1,7 @@
 <?php
+
 namespace App\Filament\Pages;
+
 use App\Enums\AccessRequestDuration;
 use App\Enums\AccessRequestTargetType;
 use App\Models\AzureSubscription;
@@ -21,17 +23,239 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+
 class Profile extends Page
 {
- protected static ?string $navigationLabel='Account';protected static ?string $title='Account';protected static ?string $slug='profile';protected static string|\BackedEnum|null $navigationIcon='heroicon-o-user-circle';public static function shouldRegisterNavigation():bool{return false;}
- public function getUser():User{return auth()->guard('web')->user();}public function getTeams():Collection{return $this->getUser()->businessUnits()->with('subscriptions')->orderBy('name')->get();}public function getSubscriptions():Collection{return app(AccessAuthorizationService::class)->accessibleSubscriptions($this->getUser());}public function getGrants():Collection{return UserAccessGrant::query()->where('user_id',$this->getUser()->getKey())->where('starts_at','<=',now())->where(fn($q)=>$q->whereNull('expires_at')->orWhere('expires_at','>',now()))->orderByDesc('starts_at')->get();}
- public function effectiveRoleForTeam(int $teamId):?string{return app(AccessAuthorizationService::class)->effectiveRole($this->getUser(),AccessRequestTargetType::Team,$teamId)?->name;}public function effectiveRoleForSubscription(string $subscriptionId):?string{return app(AccessAuthorizationService::class)->effectiveRole($this->getUser(),AccessRequestTargetType::Subscription,$subscriptionId)?->name;}
- public function content(Schema $schema):Schema{$u=$this->getUser();$bus=$this->getTeams();$grants=$this->getGrants();$subs=$this->getSubscriptions();$roles=$u->roleAssignments()->with('role')->get()->pluck('role.name')->filter()->unique()->implode(', ');return $schema->components([
-  Section::make('Account overview')->description('Your identity and current role assignments.')->schema([Grid::make(4)->schema([TextEntry::make('account_name')->label('Account')->state($u->name),TextEntry::make('roles')->label('Roles')->state($roles?:'No role assignments')->badge(),TextEntry::make('business_unit_count')->label('Business Units')->state((string)$bus->count()),TextEntry::make('grant_count')->label('Active grants')->state((string)$grants->count())])])->columnSpanFull(),
-  Section::make('Personal information')->schema([Grid::make(3)->schema([TextEntry::make('name')->label('Name')->state($u->name),TextEntry::make('email')->label('Email')->state($u->email),TextEntry::make('joined')->label('Date joined')->state($u->created_at?->format('d M Y, H:i'))])])->columnSpanFull(),
-  Section::make('Business Units and effective access')->schema($bus->isEmpty()?[TextEntry::make('none')->hiddenLabel()->state('You are not currently assigned to a Business Unit.')]:$bus->flatMap(function(BusinessUnit $bu)use($subs):array{$rows=[Grid::make(2)->schema([TextEntry::make('bu_'.$bu->id.'_name')->label('Business Unit')->state($bu->name),TextEntry::make('bu_'.$bu->id.'_role')->label('Effective role')->state($this->effectiveRoleForTeam($bu->id)??'No access')->badge()])];foreach($bu->subscriptions->whereIn('subscription_id',$subs->pluck('subscription_id')->all()) as $s)$rows[]=Grid::make(2)->schema([TextEntry::make('bu_'.$bu->id.'_s_'.$s->subscription_id)->label('Subscription')->state($s->display_name),TextEntry::make('bu_'.$bu->id.'_r_'.$s->subscription_id)->label('Effective role')->state($this->effectiveRoleForSubscription($s->subscription_id)??'No access')->badge()]);return [Section::make($bu->name)->schema($rows)->collapsible()->collapsed()];})->all())->columnSpanFull(),
-  Section::make('Accessible subscriptions')->schema($subs->isEmpty()?[TextEntry::make('none')->hiddenLabel()->state('You do not currently have access to any Azure subscriptions.')]:$subs->map(fn(AzureSubscription $s):Grid=>Grid::make(3)->schema([TextEntry::make('s_'.$s->subscription_id)->label('Subscription')->state($s->display_name),TextEntry::make('id_'.$s->subscription_id)->label('Subscription ID')->state($s->subscription_id),TextEntry::make('r_'.$s->subscription_id)->label('Effective role')->state($s->access_role?->name??'No access')->badge()]))->all())->collapsible()->collapsed()->columnSpanFull(),
-  Section::make('Access grants')->schema($grants->isEmpty()?[TextEntry::make('none')->hiddenLabel()->state('No active additional grants.')]:$grants->map(fn(UserAccessGrant $g):Grid=>Grid::make(3)->schema([TextEntry::make('g_'.$g->id.'_target')->label('Target')->state($g->target_name),TextEntry::make('g_'.$g->id.'_role')->label('Role')->state(Role::query()->where('slug',$g->role)->value('name')??$g->role)->badge(),TextEntry::make('g_'.$g->id.'_duration')->label('Duration')->state($g->expires_at?'Time-bound':'Permanent')->badge()]))->all())->columnSpanFull(),
- ]);}
- public function getHeaderActions():array{return [Action::make('viewRequests')->label('My access requests')->icon('heroicon-o-clipboard-document-list')->url(fn():string=>\App\Filament\Resources\AccessRequests\AccessRequestResource::getUrl('index')),Action::make('requestAccess')->label('Request access')->icon('heroicon-o-key')->form([Select::make('target_type')->label('Access to')->options([AccessRequestTargetType::Team->value=>'Business Unit',AccessRequestTargetType::Subscription->value=>'Azure subscription'])->default(AccessRequestTargetType::Subscription->value)->live()->required(),Select::make('business_unit_id')->label('Business Unit')->options(fn():array=>$this->getTeams()->pluck('name','id')->all())->searchable()->preload()->visible(fn($get):bool=>$get('target_type')===AccessRequestTargetType::Team->value)->required(fn($get):bool=>$get('target_type')===AccessRequestTargetType::Team->value),Select::make('subscription_id')->label('Azure subscription')->options(fn():array=>AzureSubscription::query()->orderBy('display_name')->pluck('display_name','subscription_id')->all())->searchable()->preload()->visible(fn($get):bool=>$get('target_type')===AccessRequestTargetType::Subscription->value)->required(fn($get):bool=>$get('target_type')===AccessRequestTargetType::Subscription->value),Select::make('requested_role')->label('Requested role')->options(fn():array=>Role::query()->where('is_active',true)->where('slug','<>','super_admin')->orderBy('name')->pluck('name','id')->all())->required(),Textarea::make('reason')->label('Reason')->required()->rows(4),Select::make('duration')->label('Access duration')->options([AccessRequestDuration::Permanent->value=>'Permanent',AccessRequestDuration::TimeBound->value=>'Time-bound'])->default(AccessRequestDuration::Permanent->value)->live()->required(),DateTimePicker::make('requested_until')->label('Requested expiry')->minDate(now())->visible(fn($get):bool=>$get('duration')===AccessRequestDuration::TimeBound->value)->required(fn($get):bool=>$get('duration')===AccessRequestDuration::TimeBound->value)])->action(function(array $data):void{$type=AccessRequestTargetType::from($data['target_type']);$target=$type===AccessRequestTargetType::Team?BusinessUnit::query()->findOrFail($data['business_unit_id']):AzureSubscription::query()->whereKey($data['subscription_id'])->firstOrFail();$role=Role::query()->findOrFail($data['requested_role']);app(AccessRequestService::class)->create($this->getUser(),$type,$target,$role,$data['reason'],AccessRequestDuration::from($data['duration']),isset($data['requested_until'])?Carbon::parse($data['requested_until']):null);Notification::make()->title('Access request submitted')->success()->send();})->modalSubmitActionLabel('Submit request')];}
+    protected static ?string $navigationLabel = 'Account';
+    protected static ?string $title = 'Account';
+    protected static ?string $slug = 'profile';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-user-circle';
+
+    public static function shouldRegisterNavigation(): bool
+    {
+        return false;
+    }
+
+    public function getUser(): User
+    {
+        return auth()->guard('web')->user();
+    }
+
+    public function getTeams(): Collection
+    {
+        return $this->getUser()->businessUnits()->with('subscriptions')->orderBy('name')->get();
+    }
+
+    public function getSubscriptions(): Collection
+    {
+        return app(AccessAuthorizationService::class)->accessibleSubscriptions($this->getUser());
+    }
+
+    public function getGrants(): Collection
+    {
+        return UserAccessGrant::query()
+            ->where('user_id', $this->getUser()->getKey())
+            ->where('starts_at', '<=', now())
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
+            ->orderByDesc('starts_at')
+            ->get();
+    }
+
+    public function effectiveRoleForTeam(int $teamId): ?string
+    {
+        return app(AccessAuthorizationService::class)
+            ->effectiveRole($this->getUser(), AccessRequestTargetType::Team, $teamId)
+            ?->name;
+    }
+
+    public function effectiveRoleForSubscription(string $subscriptionId): ?string
+    {
+        return app(AccessAuthorizationService::class)
+            ->effectiveRole($this->getUser(), AccessRequestTargetType::Subscription, $subscriptionId)
+            ?->name;
+    }
+
+    /**
+     * Return only Business Units for which the user has no current resource access.
+     */
+    public function getRequestableBusinessUnits(): Collection
+    {
+        $authorization = app(AccessAuthorizationService::class);
+        $user = $this->getUser();
+
+        return BusinessUnit::query()
+            ->orderBy('name')
+            ->get()
+            ->reject(fn (BusinessUnit $businessUnit): bool => $authorization->hasResourceAccess($user, $businessUnit))
+            ->values();
+    }
+
+    /**
+     * Return only Azure subscriptions for which the user has no current resource access.
+     * Revoked subscriptions are not considered current access and therefore remain requestable.
+     */
+    public function getRequestableSubscriptions(): Collection
+    {
+        $authorization = app(AccessAuthorizationService::class);
+        $user = $this->getUser();
+        $accessibleIds = $authorization->accessibleSubscriptions($user)
+            ->pluck('subscription_id')
+            ->map(fn ($id): string => (string) $id)
+            ->all();
+
+        return AzureSubscription::query()
+            ->whereNotIn('subscription_id', $accessibleIds)
+            ->orderBy('display_name')
+            ->get();
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        $u = $this->getUser();
+        $bus = $this->getTeams();
+        $grants = $this->getGrants();
+        $subs = $this->getSubscriptions();
+        $roles = $u->roleAssignments()->with('role')->get()->pluck('role.name')->filter()->unique()->implode(', ');
+
+        return $schema->components([
+            Section::make('Account overview')
+                ->description('Your identity and current role assignments.')
+                ->schema([
+                    Grid::make(4)->schema([
+                        TextEntry::make('account_name')->label('Account')->state($u->name),
+                        TextEntry::make('roles')->label('Roles')->state($roles ?: 'No role assignments')->badge(),
+                        TextEntry::make('business_unit_count')->label('Business Units')->state((string) $bus->count()),
+                        TextEntry::make('grant_count')->label('Active grants')->state((string) $grants->count()),
+                    ]),
+                ])
+                ->columnSpanFull(),
+            Section::make('Personal information')
+                ->schema([
+                    Grid::make(3)->schema([
+                        TextEntry::make('name')->label('Name')->state($u->name),
+                        TextEntry::make('email')->label('Email')->state($u->email),
+                        TextEntry::make('joined')->label('Date joined')->state($u->created_at?->format('d M Y, H:i')),
+                    ]),
+                ])
+                ->columnSpanFull(),
+            Section::make('Business Units and effective access')
+                ->schema($bus->isEmpty()
+                    ? [TextEntry::make('none')->hiddenLabel()->state('You are not currently assigned to a Business Unit.')]
+                    : $bus->flatMap(function (BusinessUnit $bu) use ($subs): array {
+                        $rows = [
+                            Grid::make(2)->schema([
+                                TextEntry::make('bu_'.$bu->id.'_name')->label('Business Unit')->state($bu->name),
+                                TextEntry::make('bu_'.$bu->id.'_role')->label('Effective role')->state($this->effectiveRoleForTeam($bu->id) ?? 'No access')->badge(),
+                            ]),
+                        ];
+
+                        foreach ($bu->subscriptions->whereIn('subscription_id', $subs->pluck('subscription_id')->all()) as $s) {
+                            $rows[] = Grid::make(2)->schema([
+                                TextEntry::make('bu_'.$bu->id.'_s_'.$s->subscription_id)->label('Subscription')->state($s->display_name),
+                                TextEntry::make('bu_'.$bu->id.'_r_'.$s->subscription_id)->label('Effective role')->state($this->effectiveRoleForSubscription($s->subscription_id) ?? 'No access')->badge(),
+                            ]);
+                        }
+
+                        return [Section::make($bu->name)->schema($rows)->collapsible()->collapsed()];
+                    })->all())
+                ->columnSpanFull(),
+            Section::make('Accessible subscriptions')
+                ->schema($subs->isEmpty()
+                    ? [TextEntry::make('none')->hiddenLabel()->state('You do not currently have access to any Azure subscriptions.')]
+                    : $subs->map(fn (AzureSubscription $s): Grid => Grid::make(3)->schema([
+                        TextEntry::make('s_'.$s->subscription_id)->label('Subscription')->state($s->display_name),
+                        TextEntry::make('id_'.$s->subscription_id)->label('Subscription ID')->state($s->subscription_id),
+                        TextEntry::make('r_'.$s->subscription_id)->label('Effective role')->state($s->access_role?->name ?? 'No access')->badge(),
+                    ]))->all())
+                ->collapsible()
+                ->collapsed()
+                ->columnSpanFull(),
+            Section::make('Access grants')
+                ->schema($grants->isEmpty()
+                    ? [TextEntry::make('none')->hiddenLabel()->state('No active additional grants.')]
+                    : $grants->map(fn (UserAccessGrant $g): Grid => Grid::make(3)->schema([
+                        TextEntry::make('g_'.$g->id.'_target')->label('Target')->state($g->target_name),
+                        TextEntry::make('g_'.$g->id.'_role')->label('Role')->state(Role::query()->where('slug', $g->role)->value('name') ?? $g->role)->badge(),
+                        TextEntry::make('g_'.$g->id.'_duration')->label('Duration')->state($g->expires_at ? 'Time-bound' : 'Permanent')->badge(),
+                    ]))->all())
+                ->columnSpanFull(),
+        ]);
+    }
+
+    public function getHeaderActions(): array
+    {
+        return [
+            Action::make('viewRequests')
+                ->label('My access requests')
+                ->icon('heroicon-o-clipboard-document-list')
+                ->url(fn (): string => \App\Filament\Resources\AccessRequests\AccessRequestResource::getUrl('index')),
+            Action::make('requestAccess')
+                ->label('Request access')
+                ->icon('heroicon-o-key')
+                ->form([
+                    Select::make('target_type')
+                        ->label('Access to')
+                        ->options([
+                            AccessRequestTargetType::Team->value => 'Business Unit',
+                            AccessRequestTargetType::Subscription->value => 'Azure subscription',
+                        ])
+                        ->default(AccessRequestTargetType::Subscription->value)
+                        ->live()
+                        ->required(),
+                    Select::make('business_unit_id')
+                        ->label('Business Unit')
+                        ->options(fn (): array => $this->getRequestableBusinessUnits()->pluck('name', 'id')->all())
+                        ->searchable()
+                        ->preload()
+                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value)
+                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value),
+                    Select::make('subscription_id')
+                        ->label('Azure subscription')
+                        ->options(fn (): array => $this->getRequestableSubscriptions()->pluck('display_name', 'subscription_id')->all())
+                        ->searchable()
+                        ->preload()
+                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)
+                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
+                    Select::make('requested_role')
+                        ->label('Requested role')
+                        ->options(fn (): array => Role::query()->where('is_active', true)->where('slug', '<>', 'super_admin')->orderBy('name')->pluck('name', 'id')->all())
+                        ->required(),
+                    Textarea::make('reason')->label('Reason')->required()->rows(4),
+                    Select::make('duration')
+                        ->label('Access duration')
+                        ->options([
+                            AccessRequestDuration::Permanent->value => 'Permanent',
+                            AccessRequestDuration::TimeBound->value => 'Time-bound',
+                        ])
+                        ->default(AccessRequestDuration::Permanent->value)
+                        ->live()
+                        ->required(),
+                    DateTimePicker::make('requested_until')
+                        ->label('Requested expiry')
+                        ->minDate(now())
+                        ->visible(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value)
+                        ->required(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value),
+                ])
+                ->action(function (array $data): void {
+                    $type = AccessRequestTargetType::from($data['target_type']);
+                    $target = $type === AccessRequestTargetType::Team
+                        ? BusinessUnit::query()->findOrFail($data['business_unit_id'])
+                        : AzureSubscription::query()->whereKey($data['subscription_id'])->firstOrFail();
+                    $role = Role::query()->findOrFail($data['requested_role']);
+
+                    app(AccessRequestService::class)->create(
+                        $this->getUser(),
+                        $type,
+                        $target,
+                        $role,
+                        $data['reason'],
+                        AccessRequestDuration::from($data['duration']),
+                        isset($data['requested_until']) ? Carbon::parse($data['requested_until']) : null,
+                    );
+
+                    Notification::make()->title('Access request submitted')->success()->send();
+                })
+                ->modalSubmitActionLabel('Submit request'),
+        ];
+    }
 }
