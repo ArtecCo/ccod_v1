@@ -38,26 +38,16 @@ class ViewRole extends ViewRecord
                 $entries[] = TextEntry::make('id')
                     ->label($definition['name'])
                     ->formatStateUsing(function ($state, Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return '✓ Granted';
-                        }
+                        $granted = $record->slug === 'super_admin'
+                            || $record->permissions->contains('slug', $slug);
 
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->exists()
-                            ? '✓ Granted'
-                            : '✕ Not granted';
+                        return $granted ? '✓ Granted' : '✕ Not granted';
                     })
                     ->color(function ($state, Role $record) use ($slug): string {
-                        if ($record->slug === 'super_admin') {
-                            return 'success';
-                        }
+                        $granted = $record->slug === 'super_admin'
+                            || $record->permissions->contains('slug', $slug);
 
-                        return $record->permissions()
-                            ->where('permissions.slug', $slug)
-                            ->exists()
-                            ? 'success'
-                            : 'danger';
+                        return $granted ? 'success' : 'danger';
                     });
             }
 
