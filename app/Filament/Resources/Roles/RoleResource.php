@@ -25,7 +25,7 @@ class RoleResource extends Resource
     public static function canDelete($record): bool { return static::canManage('roles.delete') && ! $record->is_system_role; }
     public static function form(Schema $schema): Schema { return \App\Filament\Resources\Roles\Schemas\RoleForm::configure($schema); }
     public static function table(Table $table): Table { return \App\Filament\Resources\Roles\Tables\RolesTable::configure($table); }
-    public static function getPages(): array { return ['index' => \App\Filament\Resources\Roles\Pages\ListRoles::route('/'), 'create' => \App\Filament\Resources\Roles\Pages\CreateRole::route('/create'), 'edit' => \App\Filament\Resources\Roles\Pages\EditRole::route('/{record}/edit')]; }
+    public static function getPages(): array { return ['index' => \App\Filament\Resources\Roles\Pages\ListRoles::route('/'), 'create' => \App\Filament\Resources\Roles\Pages\CreateRole::route('/create'), 'view' => \App\Filament\Resources\Roles\Pages\ViewRole::route('/{record}'), 'edit' => \App\Filament\Resources\Roles\Pages\EditRole::route('/{record}/edit')]; }
 
     public static function canManage(string $permission = 'roles.view'): bool
     {
