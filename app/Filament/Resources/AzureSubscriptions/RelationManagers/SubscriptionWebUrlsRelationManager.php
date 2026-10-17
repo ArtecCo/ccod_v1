@@ -66,12 +66,6 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                 TextColumn::make('last_checked_at')->label('Last Checked')->dateTime()->placeholder('Never')->sortable(),
             ])
             ->headerActions([
-                XlsxExportAction::make()
-                    ->label('Export XLSX')
-                    ->icon(Heroicon::OutlinedArrowDownTray)
-                    ->title('Web URLs')
-                    ->fileName(fn (): string => 'web-urls-'.now()->format('Y-m-d-His'))
-                    ->visible(fn (): bool => $this->canExport()),
                 CreateAction::make()
                     ->label('Add Web URL')
                     ->icon(Heroicon::OutlinedGlobeAlt)
@@ -114,6 +108,10 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                         Action::make('delete')->label('Delete URL')->color('danger')->requiresConfirmation()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record))->action(function (SubscriptionWebUrl $record): void {$record->delete(); $this->dispatch('web-url-added');})->cancelParentActions(),
                     ]),
                 DeleteAction::make()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record)),
+            ])
+            ->toolbarActions([
+                XlsxExportAction::make()
+                    ->visible(fn (): bool => $this->canExport()),
             ])
             ->defaultSort('url');
     }
