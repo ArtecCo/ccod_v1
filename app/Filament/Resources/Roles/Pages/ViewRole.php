@@ -35,17 +35,15 @@ class ViewRole extends ViewRecord
             $entries = [];
 
             foreach ($definitions as $slug => $definition) {
-                $entries[] = TextEntry::make('permissions')
+                $entries[] = TextEntry::make('name')
                     ->label($definition['name'])
-                    ->formatStateUsing(function ($state) use ($slug, $isSuperAdmin): string {
-                        $granted = $isSuperAdmin
-                            || ($state instanceof \Illuminate\Support\Collection && $state->contains('slug', $slug));
+                    ->formatStateUsing(function ($state, $record) use ($slug, $isSuperAdmin): string {
+                        $granted = $isSuperAdmin || $record->permissions->contains('slug', $slug);
 
                         return $granted ? '✓ Granted' : '✕ Not granted';
                     })
-                    ->color(function ($state) use ($slug, $isSuperAdmin): string {
-                        $granted = $isSuperAdmin
-                            || ($state instanceof \Illuminate\Support\Collection && $state->contains('slug', $slug));
+                    ->color(function ($state, $record) use ($slug, $isSuperAdmin): string {
+                        $granted = $isSuperAdmin || $record->permissions->contains('slug', $slug);
 
                         return $granted ? 'success' : 'danger';
                     });
