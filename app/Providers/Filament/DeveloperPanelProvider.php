@@ -11,7 +11,11 @@ use App\Filament\Pages\Styling;
 use App\Filament\Pages\TabAccess;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
+use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
+use App\Filament\Resources\Projects\ProjectResource;
+use App\Filament\Resources\Roles\RoleResource;
+use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Support\FilamentStyling;
 use Filament\Http\Middleware\Authenticate;
@@ -53,18 +57,23 @@ class DeveloperPanelProvider extends PanelProvider
             ->maxContentWidth(Width::Full)
             ->plugin(UpdaterPlugin::make()->navigationGroup('Maintenance')->navigationSort(10))
             ->navigationGroups([
-                NavigationGroup::make('Styling')->icon('heroicon-o-paint-brush'),
-                NavigationGroup::make('Notifications')->icon('heroicon-o-bell'),
-                NavigationGroup::make('Logging')->icon('heroicon-o-clipboard-document-list'),
                 NavigationGroup::make('Administration')->icon('heroicon-o-cog-6-tooth'),
+                NavigationGroup::make('Notifications')->icon('heroicon-o-bell'),
+                NavigationGroup::make('Operations')->icon('heroicon-o-bolt'),
                 NavigationGroup::make('Database')->icon('heroicon-o-circle-stack'),
+                NavigationGroup::make('Logging')->icon('heroicon-o-clipboard-document-list'),
+                NavigationGroup::make('Styling')->icon('heroicon-o-paint-brush'),
                 NavigationGroup::make('Maintenance')->icon('heroicon-o-wrench-screwdriver'),
             ])
             ->resources([
+                AccessRequestResource::class,
+                AzureSubscriptionResource::class,
+                ProjectResource::class,
+                RoleResource::class,
+                TeamResource::class,
+                UserResource::class,
                 AuditLogResource::class,
                 NotificationRuleResource::class,
-                AccessRequestResource::class,
-                UserResource::class,
             ])
             ->pages([
                 Dashboard::class,
