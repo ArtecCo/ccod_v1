@@ -6,6 +6,7 @@ use App\Filament\Resources\Roles\RoleResource;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Actions\DeleteAction;
+use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Illuminate\Auth\Access\AuthorizationException;
 
@@ -64,7 +65,7 @@ class EditRole extends EditRecord
         return [
             DeleteAction::make()
                 ->visible(fn (): bool => RoleResource::canDelete($this->record))
-                ->using(function (Role $record): bool {
+                ->using(function (DeleteAction $action, Role $record): bool {
                     if (! RoleResource::canDelete($record)) {
                         throw new AuthorizationException('You are not authorized to delete this role.');
                     }
@@ -92,9 +93,14 @@ class EditRole extends EditRecord
                             ->values()
                             ->implode(', ');
 
-                        throw new AuthorizationException(
-                            'This role cannot be deleted because it is currently assigned to the following users: ' . $names . '. Remove the role assignment from these users before deleting the role.'
-                        );
+                        Notification::make()
+                            ->danger()
+                            ->title('Role cannot be deleted')
+                            ->body('This role is currently assigned to: ' . $names . '. Remove the role assignment from these users before deleting it.')
+                            ->persistent()
+                            ->send();
+
+                        $action->halt();
                     }
 
                     return (bool) $record->delete();
