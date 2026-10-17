@@ -3,9 +3,11 @@
 namespace App\Filament\Resources\AzureSubscriptions\Pages;
 
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Models\AzureSubscription;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class EditAzureSubscription extends EditRecord
 {
@@ -20,7 +22,15 @@ class EditAzureSubscription extends EditRecord
     {
         return [
             ViewAction::make(),
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn (): bool => AzureSubscriptionResource::canDelete($this->record))
+                ->using(function (AzureSubscription $record): bool {
+                    if (! AzureSubscriptionResource::canDelete($record)) {
+                        throw new AuthorizationException('You are not authorized to delete this subscription.');
+                    }
+
+                    return (bool) $record->delete();
+                }),
         ];
     }
 
