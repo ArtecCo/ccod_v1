@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Roles\Schemas;
 
-use App\Models\Permission;
 use App\Models\Role;
 use App\Services\RolePermissionService;
 use Filament\Forms\Components\CheckboxList;
@@ -51,42 +50,24 @@ class RoleForm
         $viewDependencies = RolePermissionService::viewPermissionForActions();
 
         foreach ($managed->groupBy('category') as $category => $definitions) {
-            // groupBy() reindexes the inner collection, so derive the slugs from
-            // the original managed catalog instead of using $definitions->keys().
-            $categorySlugs = $managed
-                ->filter(fn (array $definition): bool => $definition['category'] === $category)
-                ->keys()
-                ->values()
+            // The managed permission catalog is authoritative for this form.
+            // Do not populate options from the Permission table: legacy/system
+            // permissions must never leak into these category sections.
+            $categoryDefinitions = $managed
+                ->filter(fn (array $definition): bool => $definition['category'] === $category);
+
+            $categorySlugs = $categoryDefinitions->keys()->values()->all();
+            $options = $categoryDefinitions
+                ->mapWithKeys(fn (array $definition, string $slug): array => [$slug => $definition['name']])
                 ->all();
 
-            $permissions = Permission::query()
-                ->whereIn('slug', $categorySlugs)
-                ->where('is_active', true)
-                ->orderBy('id')
-                ->get(['id', 'slug', 'name']);
+            $viewSlug = collect($categorySlugs)
+                ->first(fn (string $slug): bool => str_ends_with($slug, '.view'));
 
-            $options = $permissions
-                ->mapWithKeys(fn (Permission $permission): array => [(string) $permission->id => $permission->name])
-                ->all();
-
-            $permissionIdsBySlug = $permissions
-                ->mapWithKeys(fn (Permission $permission): array => [$permission->slug => (string) $permission->id])
-                ->all();
-
-            $viewSlug = $categorySlugs[
-                array_key_first(array_filter(
-                    $categorySlugs,
-                    fn (string $slug): bool => str_ends_with($slug, '.view'),
-                )) ?? 0
-            ] ?? null;
-
-            $viewId = $viewSlug !== null ? ($permissionIdsBySlug[$viewSlug] ?? null) : null;
-
-            $dependentActionIds = collect($viewDependencies)
+            $dependentActionSlugs = collect($viewDependencies)
                 ->filter(fn (string $view): bool => $view === $viewSlug)
                 ->keys()
-                ->map(fn (string $slug): ?string => $permissionIdsBySlug[$slug] ?? null)
-                ->filter()
+                ->filter(fn (string $slug): bool => in_array($slug, $categorySlugs, true))
                 ->values()
                 ->all();
 
@@ -101,26 +82,26 @@ class RoleForm
                         ->bulkToggleable()
                         ->searchable()
                         ->live()
-                        ->afterStateUpdated(function ($set, ?array $state) use ($fieldName, $viewId, $dependentActionIds): void {
-                            if ($viewId === null || $dependentActionIds === []) {
+                        ->afterStateUpdated(function ($set, ?array $state) use ($fieldName, $viewSlug, $dependentActionSlugs): void {
+                            if ($viewSlug === null || $dependentActionSlugs === []) {
                                 return;
                             }
 
                             $state = array_map('strval', $state ?? []);
 
-                            if (array_intersect($dependentActionIds, $state) !== [] && ! in_array($viewId, $state, true)) {
-                                $state[] = $viewId;
+                            if (array_intersect($dependentActionSlugs, $state) !== [] && ! in_array($viewSlug, $state, true)) {
+                                $state[] = $viewSlug;
                                 $set($fieldName, array_values(array_unique($state)));
                             }
                         })
-                        ->disableOptionWhen(function (string $value, $get) use ($fieldName, $viewId, $dependentActionIds): bool {
-                            if ($viewId === null || $value !== $viewId || $dependentActionIds === []) {
+                        ->disableOptionWhen(function (string $value, $get) use ($fieldName, $viewSlug, $dependentActionSlugs): bool {
+                            if ($viewSlug === null || $value !== $viewSlug || $dependentActionSlugs === []) {
                                 return false;
                             }
 
                             $state = array_map('strval', $get($fieldName) ?? []);
 
-                            return array_intersect($dependentActionIds, $state) !== [];
+                            return array_intersect($dependentActionSlugs, $state) !== [];
                         }),
                 ]);
         }
