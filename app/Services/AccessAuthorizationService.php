@@ -91,7 +91,7 @@ class AccessAuthorizationService
     {
         if ($approver->getKey() === $request->user_id) return false;
         if ($this->isSuperAdmin($approver)) return true;
-        $target = match ((string) $request->target_type) {
+        $target = match ($request->target_type instanceof AccessRequestTargetType ? $request->target_type->value : (string) $request->target_type) {
             'project' => Project::query()->find($request->project_id),
             'subscription' => AzureSubscription::query()->whereKey($request->subscription_id)->first(),
             default => BusinessUnit::query()->find($request->business_unit_id),
@@ -109,7 +109,7 @@ class AccessAuthorizationService
 
     public function approvers(AccessRequest $request): Collection
     {
-        $target = match ((string) $request->target_type) {
+        $target = match ($request->target_type instanceof AccessRequestTargetType ? $request->target_type->value : (string) $request->target_type) {
             'project' => Project::query()->find($request->project_id),
             'subscription' => AzureSubscription::query()->whereKey($request->subscription_id)->first(),
             default => BusinessUnit::query()->find($request->business_unit_id),
