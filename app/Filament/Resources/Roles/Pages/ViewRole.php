@@ -30,17 +30,15 @@ class ViewRole extends ViewRecord
 
         $managed = RolePermissionService::managedPermissions();
 
-        // The Edit page reads the role's permissions directly from the relationship.
-        // Do the same here and only use the managed catalog to decide which entries
-        // to display. Do not add authorization or permission-state filtering here.
+        // Resolve the permission slugs once from the role relationship. The value
+        // displayed by each entry is then calculated from this set rather than
+        // relying on an artificial infolist state path being hydrated by Livewire.
         $grantedSlugs = $this->record->permissions()
-            ->get()
-            ->pluck('slug')
+            ->pluck('permissions.slug')
             ->map(static fn ($slug): string => (string) $slug)
             ->flip()
             ->all();
 
-        // Super Admin is an intrinsic full-access role.
         if (
             $this->record->is_system_role &&
             (
@@ -56,11 +54,10 @@ class ViewRole extends ViewRecord
 
             foreach ($definitions as $slug => $definition) {
                 $granted = isset($grantedSlugs[$slug]);
-                $stateKey = 'permission_' . md5($slug);
 
-                $entries[] = TextEntry::make($stateKey)
+                $entries[] = TextEntry::make('permission_' . md5($slug))
                     ->label($definition['name'])
-                    ->state($granted ? '✓ Granted' : '✕ Not granted')
+                    ->formatStateUsing(static fn (): string => $granted ? '✓ Granted' : '✕ Not granted')
                     ->color($granted ? 'success' : 'danger');
             }
 
