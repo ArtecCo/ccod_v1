@@ -13,6 +13,7 @@ use App\Models\User;
 use App\Models\UserResourceAccess;
 use App\Models\UserRoleAssignment;
 use App\Models\UserSubscriptionAccessOverride;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
 
 class AccessAuthorizationService
@@ -78,20 +79,69 @@ class AccessAuthorizationService
         );
     }
 
+    /**
+     * Build the database query containing only subscriptions the user is
+     * authorized to access. The protected subscription rows are therefore
+     * never hydrated before the authorization scope has been applied.
+     */
+    public function accessibleSubscriptionQuery(User $user): Builder
+    {
+        $assignments = $this->activeAssignments($user);
+        $superAdminAssignment = $assignments->first(
+            fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin'
+        );
+
+        $query = AzureSubscription::query()
+            ->with('projects.businessUnit')
+            ->orderBy('display_name');
+
+        if ($superAdminAssignment !== null) {
+            return $query;
+        }
+
+        $revokedIds = UserSubscriptionAccessOverride::query()
+            ->where('user_id', $user->getKey())
+            ->where('override', 'revoked')
+            ->pluck('subscription_id');
+
+        $query
+            ->whereNotIn('subscription_id', $revokedIds)
+            ->where(function (Builder $query) use ($assignments): void {
+                foreach ($assignments as $assignment) {
+                    $access = $assignment->resourceAccess;
+
+                    if ($access === null) {
+                        continue;
+                    }
+
+                    match ($access->access_type) {
+                        'subscription' => $query->orWhere('subscription_id', $access->subscription_id),
+                        'project' => $query->orWhereHas(
+                            'projects',
+                            fn (Builder $projectQuery): Builder => $projectQuery->whereKey($access->project_id)
+                        ),
+                        'business_unit' => $query->orWhereHas(
+                            'projects',
+                            fn (Builder $projectQuery): Builder => $projectQuery->where('business_unit_id', $access->business_unit_id)
+                        ),
+                        default => null,
+                    };
+                }
+            });
+
+        return $query;
+    }
+
     public function accessibleSubscriptions(User $user): Collection
     {
         $assignments = $this->activeAssignments($user);
         $superAdminAssignment = $assignments->first(
             fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin'
         );
-        $isSuperAdmin = $superAdminAssignment !== null;
 
-        $subscriptions = AzureSubscription::query()
-            ->with('projects.businessUnit')
-            ->orderBy('display_name')
-            ->get();
+        $subscriptions = $this->accessibleSubscriptionQuery($user)->get();
 
-        if ($isSuperAdmin) {
+        if ($superAdminAssignment !== null) {
             $role = $superAdminAssignment->role;
 
             return $subscriptions->map(function (AzureSubscription $subscription) use ($role): AzureSubscription {
@@ -103,26 +153,7 @@ class AccessAuthorizationService
             });
         }
 
-        $revokedIds = UserSubscriptionAccessOverride::query()
-            ->where('user_id', $user->getKey())
-            ->where('override', 'revoked')
-            ->pluck('subscription_id')
-            ->map(fn ($id): string => (string) $id)
-            ->flip();
-
         return $subscriptions
-            ->filter(function (AzureSubscription $subscription) use ($assignments, $revokedIds): bool {
-                if ($revokedIds->has((string) $subscription->getKey())) {
-                    return false;
-                }
-
-                return $assignments->contains(
-                    fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies(
-                        $assignment->resourceAccess,
-                        $subscription
-                    )
-                );
-            })
             ->map(function (AzureSubscription $subscription) use ($assignments): AzureSubscription {
                 $applicable = $assignments->filter(
                     fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies(
@@ -304,18 +335,14 @@ class AccessAuthorizationService
             return (string) $access->subscription_id === (string) $target->getKey();
         }
 
-        $project = $target->projects->first();
+        return $target->projects->contains(function (Project $project) use ($access): bool {
+            if ($access->access_type === 'project') {
+                return (int) $access->project_id === (int) $project->getKey();
+            }
 
-        if (! $project) {
-            return false;
-        }
-
-        if ($access->access_type === 'project') {
-            return (int) $access->project_id === (int) $project->getKey();
-        }
-
-        return $access->access_type === 'business_unit'
-            && (int) $access->business_unit_id === (int) $project->business_unit_id;
+            return $access->access_type === 'business_unit'
+                && (int) $access->business_unit_id === (int) $project->business_unit_id;
+        });
     }
 
     private function accessSources(User $user, AzureSubscription $subscription): array
