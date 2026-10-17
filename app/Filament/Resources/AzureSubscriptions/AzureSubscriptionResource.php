@@ -28,6 +28,10 @@ class AzureSubscriptionResource extends Resource
 
     public static function canViewAny(): bool
     {
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
         $user = auth()->guard('web')->user();
         return $user instanceof User && app(AccessAuthorizationService::class)->hasAnyResourceAccess($user);
     }
@@ -39,18 +43,30 @@ class AzureSubscriptionResource extends Resource
 
     public static function canView($record): bool
     {
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
         $user = auth()->guard('web')->user();
         return $user instanceof User && app(AccessAuthorizationService::class)->hasResourceAccess($user, $record);
     }
 
     public static function canEdit($record): bool
     {
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
         $user = auth()->guard('web')->user();
         return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.edit', $record);
     }
 
     public static function canDelete($record): bool
     {
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
         $user = auth()->guard('web')->user();
         return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.delete', $record);
     }
@@ -61,6 +77,10 @@ class AzureSubscriptionResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return parent::getEloquentQuery();
+        }
+
         $user = auth()->guard('web')->user();
         if (! $user instanceof User) {
             return parent::getEloquentQuery()->whereRaw('1 = 0');
@@ -73,5 +93,5 @@ class AzureSubscriptionResource extends Resource
     public static function infolist(Schema $schema): Schema { return AzureSubscriptionInfolist::configure($schema); }
     public static function table(Table $table): Table { return AzureSubscriptionsTable::configure($table); }
     public static function getRelations(): array { return [BillingResourcesRelationManager::class]; }
-    public static function getPages(): array { return ['index' => ListAzureSubscriptions::route('/'), 'create' => CreateAzureSubscription::route('/create'), 'view' => ViewAzureSubscription::route('/{record}'), 'edit' => EditAzureSubscription::route('/{record}/edit')]; }
+    public static function getPages(): array { return ['index' => ListAzureSubscriptions::route('/'), 'create' => CreateAzureSubscription::route('/create'),'view'=>ViewAzureSubscription::route('/{record}'),'edit'=>EditAzureSubscription::route('/{record}/edit')]; }
 }
