@@ -16,47 +16,35 @@
         \App\Enums\AccessRequestStatus::Rejected => 'Rejected',
         default => 'Not decided',
     };
-    $decisionDotClass = match ($status) {
-        \App\Enums\AccessRequestStatus::Approved,
-        \App\Enums\AccessRequestStatus::Revoked => 'bg-primary-500',
-        \App\Enums\AccessRequestStatus::Rejected => 'bg-danger-500',
-        default => 'bg-gray-300 dark:bg-gray-600',
-    };
-    $decisionRingClass = match ($status) {
-        \App\Enums\AccessRequestStatus::Approved,
-        \App\Enums\AccessRequestStatus::Revoked => 'ring-primary-500/15',
-        \App\Enums\AccessRequestStatus::Rejected => 'ring-danger-500/15',
-        default => 'ring-gray-300/30 dark:ring-gray-600/30',
-    };
 @endphp
 
-<div class="overflow-x-auto py-2">
-    <div class="relative min-w-[760px] px-4">
-        <div class="pointer-events-none absolute left-[16.666%] right-[50%] top-4 h-0.5 bg-gray-950 dark:bg-white"></div>
-        <div class="pointer-events-none absolute left-[50%] right-[16.666%] top-4 h-0.5 {{ $decided ? 'bg-gray-950 dark:bg-white' : 'bg-gray-300 dark:bg-gray-600' }}"></div>
+<div style="width:100%; overflow-x:auto; padding:8px 0 12px;">
+    <div style="position:relative; min-width:760px; padding:0 8px;">
+        <div style="position:absolute; left:calc(16.6667% + 8px); right:calc(50% - 8px); top:8px; height:2px; background:#111827;"></div>
+        <div style="position:absolute; left:calc(50% - 8px); right:calc(16.6667% + 8px); top:8px; height:2px; background:{{ $decided ? '#111827' : '#d1d5db' }};"></div>
 
-        <div class="grid grid-cols-3 gap-8">
-            <div class="relative text-left">
-                <div class="relative z-10 flex items-center gap-2">
-                    <span class="h-4 w-4 shrink-0 rounded-full bg-primary-500 ring-4 ring-primary-500/15"></span>
-                    <span class="font-semibold text-gray-950 dark:text-white">Submitted</span>
+        <div style="display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:32px; position:relative;">
+            <div style="min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; position:relative; z-index:1;">
+                    <span style="display:block; width:16px; height:16px; flex:0 0 16px; border-radius:9999px; background:var(--primary-500,#f59e0b); box-shadow:0 0 0 4px color-mix(in srgb, var(--primary-500,#f59e0b) 15%, transparent);"></span>
+                    <span style="font-weight:600; color:rgb(17 24 39);">Submitted</span>
                 </div>
-                <div class="mt-2 pl-6 text-sm text-gray-500 dark:text-gray-400">
+                <div style="margin:8px 0 0 24px; font-size:14px; color:rgb(107 114 128);">
                     {{ $record->created_at?->format('d M Y, H:i:s') ?? '—' }}
                 </div>
             </div>
 
-            <div class="relative text-left">
-                <div class="relative z-10 flex items-center gap-2">
-                    <span class="h-4 w-4 shrink-0 rounded-full bg-primary-500 ring-4 ring-primary-500/15"></span>
-                    <span class="font-semibold text-gray-950 dark:text-white">Awaiting approval</span>
+            <div style="min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; position:relative; z-index:1;">
+                    <span style="display:block; width:16px; height:16px; flex:0 0 16px; border-radius:9999px; background:var(--primary-500,#f59e0b); box-shadow:0 0 0 4px color-mix(in srgb, var(--primary-500,#f59e0b) 15%, transparent);"></span>
+                    <span style="font-weight:600; color:rgb(17 24 39);">Awaiting approval</span>
                 </div>
-                <div class="mt-2 pl-6 text-sm text-gray-500 dark:text-gray-400">
+                <div style="margin:8px 0 0 24px; font-size:14px; color:rgb(107 114 128);">
                     @if ($approvers->isNotEmpty())
-                        <div class="mb-1">Eligible approvers</div>
-                        <ul class="m-0 list-disc pl-4">
+                        <div style="margin-bottom:4px;">Eligible approvers</div>
+                        <ul style="margin:0; padding-left:16px;">
                             @foreach ($approvers as $approver)
-                                <li>{{ $approver->name }} <span class="opacity-75">({{ $approver->email }})</span></li>
+                                <li>{{ $approver->name }} <span style="opacity:.75;">({{ $approver->email }})</span></li>
                             @endforeach
                         </ul>
                     @else
@@ -65,12 +53,12 @@
                 </div>
             </div>
 
-            <div class="relative text-left">
-                <div class="relative z-10 flex items-center gap-2">
-                    <span class="h-4 w-4 shrink-0 rounded-full {{ $decisionDotClass }} ring-4 {{ $decisionRingClass }}"></span>
-                    <span class="font-semibold text-gray-950 dark:text-white">{{ $decisionLabel }}</span>
+            <div style="min-width:0;">
+                <div style="display:flex; align-items:center; gap:8px; position:relative; z-index:1;">
+                    <span style="display:block; width:16px; height:16px; flex:0 0 16px; border-radius:9999px; background:{{ match ($status) { \App\Enums\AccessRequestStatus::Approved, \App\Enums\AccessRequestStatus::Revoked => 'var(--primary-500,#f59e0b)', \App\Enums\AccessRequestStatus::Rejected => '#ef4444', default => '#d1d5db' } }}; box-shadow:0 0 0 4px rgba(107,114,128,.12);"></span>
+                    <span style="font-weight:600; color:rgb(17 24 39);">{{ $decisionLabel }}</span>
                 </div>
-                <div class="mt-2 pl-6 text-sm text-gray-500 dark:text-gray-400">
+                <div style="margin:8px 0 0 24px; font-size:14px; color:rgb(107 114 128);">
                     @if ($record->decided_at)
                         <div>{{ $record->decided_at->format('d M Y, H:i:s') }}</div>
                         @if ($record->decided_by_id && $record->decided_by_type)
@@ -80,11 +68,11 @@
                                     : \App\Models\User::query()->find($record->decided_by_id);
                             @endphp
                             @if ($decisionMaker)
-                                <div class="mt-1">By: {{ $decisionMaker->name }}</div>
+                                <div style="margin-top:4px;">By: {{ $decisionMaker->name }}</div>
                             @endif
                         @endif
                         @if ($record->decision_reason)
-                            <div class="mt-2 text-gray-700 dark:text-gray-300">Reason: {{ $record->decision_reason }}</div>
+                            <div style="margin-top:8px; color:rgb(55 65 81);">Reason: {{ $record->decision_reason }}</div>
                         @endif
                     @else
                         Not decided yet.
