@@ -3,8 +3,11 @@
 namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RoleResource;
+use App\Models\Role;
 use App\Services\RolePermissionService;
+use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
+use Illuminate\Auth\Access\AuthorizationException;
 
 class EditRole extends EditRecord
 {
@@ -58,7 +61,17 @@ class EditRole extends EditRecord
 
     protected function getHeaderActions(): array
     {
-        return [\Filament\Actions\DeleteAction::make()->disabled(fn () => $this->record->is_system_role)];
+        return [
+            DeleteAction::make()
+                ->visible(fn (): bool => RoleResource::canDelete($this->record))
+                ->using(function (Role $record): bool {
+                    if (! RoleResource::canDelete($record)) {
+                        throw new AuthorizationException('You are not authorized to delete this role.');
+                    }
+
+                    return (bool) $record->delete();
+                }),
+        ];
     }
 
     /** @return array<int|string> */
