@@ -19,20 +19,20 @@
 <div class="access-request-stepper">
     <style>
         .access-request-stepper {
-            --step-line: #d1d5db;
-            --step-muted: #6b7280;
-            --step-text: #111827;
+            --step-line: var(--gray-300);
+            --step-muted: var(--gray-600);
+            --step-text: var(--gray-950);
             --step-surface: #ffffff;
-            --step-border: #e5e7eb;
+            --step-border: var(--gray-200);
             --step-accent: var(--primary-600);
         }
 
         .dark .access-request-stepper {
-            --step-line: #4b5563;
-            --step-muted: #9ca3af;
-            --step-text: #f3f4f6;
-            --step-surface: #111827;
-            --step-border: #374151;
+            --step-line: var(--gray-700);
+            --step-muted: var(--gray-400);
+            --step-text: var(--gray-50);
+            --step-surface: var(--gray-900);
+            --step-border: var(--gray-700);
         }
 
         .access-request-stepper__track {
@@ -88,8 +88,8 @@
         }
 
         .access-request-stepper__node--rejected {
-            border-color: #ef4444;
-            background: #ef4444;
+            border-color: var(--danger-600);
+            background: var(--danger-600);
             color: #ffffff;
         }
 
