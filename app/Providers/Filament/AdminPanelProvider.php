@@ -71,25 +71,25 @@ class AdminPanelProvider extends PanelProvider
                         $label = $project && $businessUnit ? $businessUnit->name.' / '.$project->name : 'Unassigned subscriptions';
                         return NavigationGroup::make($label)->icon(Heroicon::OutlinedCloud)->collapsible()->extraSidebarAttributes(['class' => 'ccod-sidebar-project-group'])->items(
                             $items->sortBy(fn (AzureSubscription $item): string => $item->display_name)
-                                ->map(fn (AzureSubscription $item) => NavigationItem::make($item->display_name)->icon(Heroicon::OutlinedKey)->url(AzureSubscriptionResource::getUrl('view', ['record' => $item])))
+                                ->map(fn (AzureSubscription $item) => NavigationItem::make($item->display_name)->icon(Heroicon::OutlinedKey)->url(AzureSubscriptionResource::getUrl('view', ['record' => $item]))->isActiveWhen(fn (): bool => request()->url() === AzureSubscriptionResource::getUrl('view', ['record' => $item])))
                                 ->all()
                         );
                     })->values()->all();
 
                 $management = [];
                 if ($user instanceof User) {
-                    if ($authz->hasPermission($user, 'users.view')) $management[] = NavigationItem::make('Users')->icon(Heroicon::OutlinedUsers)->url(UserResource::getUrl());
-                    if ($authz->hasPermission($user, 'subscriptions.assign_business_unit')) $management[] = NavigationItem::make('Business Units')->icon(Heroicon::OutlinedUserGroup)->url(TeamResource::getUrl());
-                    if ($authz->hasPermission($user, 'projects.view')) $management[] = NavigationItem::make('Projects')->icon(Heroicon::OutlinedRectangleStack)->url(ProjectResource::getUrl());
-                    if ($authz->hasPermission($user, 'subscriptions.view')) $management[] = NavigationItem::make('Subscriptions')->icon(Heroicon::OutlinedCloud)->url(AzureSubscriptionResource::getUrl());
-                    if ($authz->hasPermission($user, 'roles.view')) $management[] = NavigationItem::make('Roles & Permissions')->icon(Heroicon::OutlinedShieldCheck)->url(RoleResource::getUrl());
-                    if ($authz->hasPermission($user, 'users.access_requests.view')) $management[] = NavigationItem::make('Access Requests')->icon(Heroicon::OutlinedKey)->url(AccessRequestResource::getUrl());
+                    if ($authz->hasPermission($user, 'users.view')) $management[] = NavigationItem::make('Users')->icon(Heroicon::OutlinedUsers)->url(UserResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.users.*'));
+                    if ($authz->hasPermission($user, 'subscriptions.assign_business_unit')) $management[] = NavigationItem::make('Business Units')->icon(Heroicon::OutlinedUserGroup)->url(TeamResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.teams.*'));
+                    if ($authz->hasPermission($user, 'projects.view')) $management[] = NavigationItem::make('Projects')->icon(Heroicon::OutlinedRectangleStack)->url(ProjectResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.projects.*'));
+                    if ($authz->hasPermission($user, 'subscriptions.view')) $management[] = NavigationItem::make('Subscriptions')->icon(Heroicon::OutlinedCloud)->url(AzureSubscriptionResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.azure-subscriptions.*'));
+                    if ($authz->hasPermission($user, 'roles.view')) $management[] = NavigationItem::make('Roles & Permissions')->icon(Heroicon::OutlinedShieldCheck)->url(RoleResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.roles.*'));
+                    if ($authz->hasPermission($user, 'users.access_requests.view')) $management[] = NavigationItem::make('Access Requests')->icon(Heroicon::OutlinedKey)->url(AccessRequestResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*'));
                 }
 
                 $baseItems = [];
                 if ($user instanceof User) $baseItems[] = NavigationItem::make('Dashboard')->icon(Heroicon::OutlinedHome)->url(Dashboard::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'));
                 $baseItems[] = NavigationItem::make('Notifications')->icon(Heroicon::OutlinedBell)->url(ClientNotifications::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.notifications'));
-                if ($user instanceof User && $authz->hasPermission($user, 'documentation.view')) $baseItems[] = NavigationItem::make('Documentation')->icon(Heroicon::OutlinedDocumentText)->url(DocumentationResource::getUrl());
+                if ($user instanceof User && $authz->hasPermission($user, 'documentation.view')) $baseItems[] = NavigationItem::make('Documentation')->icon(Heroicon::OutlinedDocumentText)->url(DocumentationResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.documentations.*'));
 
                 $base = NavigationGroup::make()->items($baseItems);
                 $all = [$base, ...$groups];
