@@ -1,6 +1,1 @@
 @import '../../../../vendor/filament/filament/resources/css/theme.css';
-
-@source '../../../../app/Filament/**/*';
-@source '../../../../resources/views/filament/**/*';
-@source '../../../../vendor/lara-zeus/activity-timeline/resources/views/**/*.blade.php';
-@source '../../../../vendor/lara-zeus/activity-timeline/resources/views/themes/**/*.blade.php';
