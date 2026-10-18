@@ -90,6 +90,14 @@ class AccessRequestResource extends Resource
     public static function infolist(Schema $schema): Schema
     {
         return $schema->columns(1)->components([
+            Section::make('Approval workflow')
+                ->columnSpanFull()
+                ->schema([
+                    ViewEntry::make('workflow')
+                        ->view('filament.infolists.entries.access-request-timeline')
+                        ->hiddenLabel()
+                        ->columnSpanFull(),
+                ]),
             Section::make('Request')
                 ->columns(2)
                 ->columnSpanFull()
@@ -104,14 +112,6 @@ class AccessRequestResource extends Resource
                     TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
                     TextEntry::make('status')->badge(),
                     TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
-                ]),
-            Section::make('Approval workflow')
-                ->columnSpanFull()
-                ->schema([
-                    ViewEntry::make('workflow')
-                        ->view('filament.infolists.entries.access-request-timeline')
-                        ->hiddenLabel()
-                        ->columnSpanFull(),
                 ]),
         ]);
     }
