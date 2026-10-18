@@ -12,144 +12,277 @@
             : \App\Models\User::query()->find($record->decided_by_id))
         : null;
     $isDecided = $record->decided_at !== null;
+    $isApproved = in_array($record->status, [\App\Enums\AccessRequestStatus::Approved, \App\Enums\AccessRequestStatus::Revoked], true);
+    $isRejected = $record->status === \App\Enums\AccessRequestStatus::Rejected;
 @endphp
 
-<div class="access-request-timeline">
+<div class="access-request-stepper">
     <style>
-        .access-request-timeline {
-            --timeline-line: rgb(209 213 219);
-            --timeline-complete: rgb(17 24 39);
-            --timeline-muted: rgb(107 114 128);
-            --timeline-accent: rgb(var(--primary-600));
+        .access-request-stepper {
+            --step-line: rgb(209 213 219);
+            --step-muted: rgb(107 114 128);
+            --step-text: rgb(17 24 39);
+            --step-surface: rgb(249 250 251);
+            --step-border: rgb(229 231 235);
+            --step-accent: rgb(var(--primary-600));
+            width: 100%;
         }
 
-        .dark .access-request-timeline {
-            --timeline-line: rgb(75 85 99);
-            --timeline-complete: rgb(229 231 235);
-            --timeline-muted: rgb(156 163 175);
+        .dark .access-request-stepper {
+            --step-line: rgb(75 85 99);
+            --step-muted: rgb(156 163 175);
+            --step-text: rgb(243 244 246);
+            --step-surface: rgb(31 41 55);
+            --step-border: rgb(55 65 81);
         }
 
-        .access-request-timeline__item {
-            position: relative;
+        .access-request-stepper__track {
             display: grid;
-            grid-template-columns: 1.5rem minmax(0, 1fr);
-            column-gap: 0.75rem;
-            padding-bottom: 1.25rem;
+            grid-template-columns: 1fr 1fr 1fr;
+            align-items: start;
+            position: relative;
         }
 
-        .access-request-timeline__item:last-child {
-            padding-bottom: 0;
-        }
-
-        .access-request-timeline__rail {
+        .access-request-stepper__connector {
             position: absolute;
-            top: 1.1rem;
-            bottom: 0;
-            left: 0.6875rem;
-            width: 1px;
-            background: var(--timeline-line);
+            top: 0.8125rem;
+            left: calc(16.666667% + 0.75rem);
+            right: calc(16.666667% + 0.75rem);
+            height: 2px;
+            background: var(--step-line);
         }
 
-        .access-request-timeline__item--complete .access-request-timeline__rail {
-            background: var(--timeline-complete);
+        .access-request-stepper__connector--complete {
+            background: var(--step-accent);
         }
 
-        .access-request-timeline__dot {
+        .access-request-stepper__stage {
             position: relative;
             z-index: 1;
-            width: 0.75rem;
-            height: 0.75rem;
-            margin-top: 0.25rem;
-            border: 2px solid var(--timeline-line);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+            padding: 0 0.75rem;
+        }
+
+        .access-request-stepper__node {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 1.625rem;
+            height: 1.625rem;
+            border: 2px solid var(--step-line);
             border-radius: 9999px;
-            background: var(--timeline-line);
+            background: var(--step-surface);
+            color: var(--step-muted);
+            box-shadow: 0 0 0 4px var(--step-surface);
         }
 
-        .access-request-timeline__item--complete .access-request-timeline__dot,
-        .access-request-timeline__item--current .access-request-timeline__dot {
-            border-color: var(--timeline-accent);
-            background: var(--timeline-accent);
+        .access-request-stepper__node--complete,
+        .access-request-stepper__node--current {
+            border-color: var(--step-accent);
+            background: var(--step-accent);
+            color: white;
         }
 
-        .access-request-timeline__title {
+        .access-request-stepper__node--rejected {
+            border-color: rgb(239 68 68);
+            background: rgb(239 68 68);
+            color: white;
+        }
+
+        .access-request-stepper__node svg {
+            width: 0.875rem;
+            height: 0.875rem;
+        }
+
+        .access-request-stepper__heading {
+            margin-top: 0.625rem;
+            text-align: center;
             font-size: 0.875rem;
             line-height: 1.25rem;
             font-weight: 600;
-            color: rgb(17 24 39);
+            color: var(--step-text);
         }
 
-        .dark .access-request-timeline__title {
-            color: rgb(243 244 246);
-        }
-
-        .access-request-timeline__meta {
+        .access-request-stepper__status {
             margin-top: 0.125rem;
+            text-align: center;
             font-size: 0.75rem;
             line-height: 1rem;
-            color: var(--timeline-muted);
+            color: var(--step-muted);
         }
 
-        .access-request-timeline__detail {
-            margin-top: 0.375rem;
+        .access-request-stepper__cards {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .access-request-stepper__card {
+            min-width: 0;
+            padding: 0.875rem 1rem;
+            border: 1px solid var(--step-border);
+            border-radius: 0.5rem;
+            background: var(--step-surface);
+        }
+
+        .access-request-stepper__card-label {
+            font-size: 0.6875rem;
+            line-height: 1rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--step-muted);
+        }
+
+        .access-request-stepper__card-value {
+            margin-top: 0.25rem;
             font-size: 0.8125rem;
             line-height: 1.25rem;
-            color: rgb(75 85 99);
+            color: var(--step-text);
         }
 
-        .dark .access-request-timeline__detail {
-            color: rgb(209 213 219);
+        .access-request-stepper__card-value--muted {
+            color: var(--step-muted);
+        }
+
+        .access-request-stepper__approvers {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+            margin-top: 0.375rem;
+        }
+
+        .access-request-stepper__approver {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .access-request-stepper__track,
+            .access-request-stepper__cards {
+                grid-template-columns: 1fr;
+            }
+
+            .access-request-stepper__connector {
+                top: 0.8125rem;
+                bottom: 0.8125rem;
+                left: 0.8125rem;
+                right: auto;
+                width: 2px;
+                height: auto;
+            }
+
+            .access-request-stepper__stage {
+                display: grid;
+                grid-template-columns: 1.625rem minmax(0, 1fr);
+                column-gap: 0.75rem;
+                align-items: center;
+                padding: 0;
+                margin-bottom: 1rem;
+            }
+
+            .access-request-stepper__stage:last-child {
+                margin-bottom: 0;
+            }
+
+            .access-request-stepper__heading,
+            .access-request-stepper__status {
+                margin-top: 0;
+                text-align: left;
+            }
+
+            .access-request-stepper__heading {
+                grid-column: 2;
+            }
+
+            .access-request-stepper__status {
+                grid-column: 2;
+            }
+
+            .access-request-stepper__node {
+                grid-row: 1 / span 2;
+            }
         }
     </style>
 
-    <div class="access-request-timeline__item access-request-timeline__item--complete">
-        <div class="access-request-timeline__rail"></div>
-        <div class="access-request-timeline__dot"></div>
-        <div>
-            <div class="access-request-timeline__title">Submitted</div>
-            <div class="access-request-timeline__meta">
-                {{ $record->created_at?->format('d M Y, H:i:s') ?? '—' }}
-            </div>
-            <div class="access-request-timeline__detail">
-                {{ $record->user?->name ?? 'The requester' }} submitted the access request.
-            </div>
-        </div>
-    </div>
+    <div class="access-request-stepper__track">
+        <div class="access-request-stepper__connector {{ $isDecided ? 'access-request-stepper__connector--complete' : '' }}"></div>
 
-    <div class="access-request-timeline__item {{ $isDecided ? 'access-request-timeline__item--complete' : 'access-request-timeline__item--current' }}">
-        <div class="access-request-timeline__rail"></div>
-        <div class="access-request-timeline__dot"></div>
-        <div>
-            <div class="access-request-timeline__title">Awaiting approval</div>
-            <div class="access-request-timeline__meta">
-                {{ $approvers->count() }} eligible {{ $approvers->count() === 1 ? 'approver' : 'approvers' }}
+        <div class="access-request-stepper__stage">
+            <div class="access-request-stepper__node access-request-stepper__node--complete">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>
             </div>
-            <div class="access-request-timeline__detail">
-                @if ($approvers->isNotEmpty())
-                    {{ $approvers->map(fn ($approver) => $approver->name . ' (' . $approver->email . ')')->implode(', ') }}
+            <div class="access-request-stepper__heading">Submitted</div>
+            <div class="access-request-stepper__status">{{ $record->created_at?->format('d M Y, H:i:s') ?? '—' }}</div>
+        </div>
+
+        <div class="access-request-stepper__stage">
+            <div class="access-request-stepper__node {{ $isDecided ? 'access-request-stepper__node--complete' : 'access-request-stepper__node--current' }}">
+                @if ($isDecided)
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>
                 @else
-                    No eligible approvers found.
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
                 @endif
             </div>
+            <div class="access-request-stepper__heading">Awaiting approval</div>
+            <div class="access-request-stepper__status">{{ $approvers->count() }} eligible {{ $approvers->count() === 1 ? 'approver' : 'approvers' }}</div>
+        </div>
+
+        <div class="access-request-stepper__stage">
+            <div class="access-request-stepper__node {{ $isApproved ? 'access-request-stepper__node--complete' : ($isRejected ? 'access-request-stepper__node--rejected' : '') }}">
+                @if ($isApproved)
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m5 12 4 4L19 6"/></svg>
+                @elseif ($isRejected)
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg>
+                @else
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 6v6l4 2"/><circle cx="12" cy="12" r="9"/></svg>
+                @endif
+            </div>
+            <div class="access-request-stepper__heading">Decision</div>
+            <div class="access-request-stepper__status">{{ $decisionStatus }}</div>
         </div>
     </div>
 
-    <div class="access-request-timeline__item {{ $isDecided ? 'access-request-timeline__item--complete' : '' }}">
-        <div class="access-request-timeline__dot"></div>
-        <div>
-            <div class="access-request-timeline__title">Decision</div>
-            <div class="access-request-timeline__meta">{{ $decisionStatus }}</div>
+    <div class="access-request-stepper__cards">
+        <div class="access-request-stepper__card">
+            <div class="access-request-stepper__card-label">Submission</div>
+            <div class="access-request-stepper__card-value">
+                {{ $record->user?->name ?? 'The requester' }} submitted this request.
+            </div>
+        </div>
+
+        <div class="access-request-stepper__card">
+            <div class="access-request-stepper__card-label">Eligible approvers</div>
+            @if ($approvers->isNotEmpty())
+                <div class="access-request-stepper__approvers access-request-stepper__card-value">
+                    @foreach ($approvers as $approver)
+                        <div class="access-request-stepper__approver">{{ $approver->name }} · {{ $approver->email }}</div>
+                    @endforeach
+                </div>
+            @else
+                <div class="access-request-stepper__card-value access-request-stepper__card-value--muted">No eligible approvers found.</div>
+            @endif
+        </div>
+
+        <div class="access-request-stepper__card">
+            <div class="access-request-stepper__card-label">Decision details</div>
             @if ($isDecided)
-                <div class="access-request-timeline__detail">
+                <div class="access-request-stepper__card-value">
                     {{ $record->decided_at?->format('d M Y, H:i:s') }}
                     @if ($decisionModel?->name)
                         · by {{ $decisionModel->name }}
                     @endif
                     @if ($record->decision_reason)
-                        <br>{{ $record->decision_reason }}
+                        <div>{{ $record->decision_reason }}</div>
                     @endif
                 </div>
             @else
-                <div class="access-request-timeline__detail">Awaiting a decision from an eligible approver.</div>
+                <div class="access-request-stepper__card-value access-request-stepper__card-value--muted">Awaiting a decision from an eligible approver.</div>
             @endif
         </div>
     </div>
