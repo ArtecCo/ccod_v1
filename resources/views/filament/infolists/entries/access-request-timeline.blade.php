@@ -19,35 +19,36 @@
 <div class="access-request-stepper">
     <style>
         .access-request-stepper {
-            --step-line: rgb(209 213 219);
-            --step-muted: rgb(107 114 128);
-            --step-text: rgb(17 24 39);
-            --step-surface: rgb(249 250 251);
-            --step-border: rgb(229 231 235);
-            --step-accent: rgb(var(--primary-600));
-            width: 100%;
+            --step-line: #d1d5db;
+            --step-muted: #6b7280;
+            --step-text: #111827;
+            --step-surface: #ffffff;
+            --step-border: #e5e7eb;
+            --step-accent: var(--primary-600);
         }
 
         .dark .access-request-stepper {
-            --step-line: rgb(75 85 99);
-            --step-muted: rgb(156 163 175);
-            --step-text: rgb(243 244 246);
-            --step-surface: rgb(31 41 55);
-            --step-border: rgb(55 65 81);
+            --step-line: #4b5563;
+            --step-muted: #9ca3af;
+            --step-text: #f3f4f6;
+            --step-surface: #1f2937;
+            --step-border: #374151;
         }
 
         .access-request-stepper__track {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             align-items: start;
             position: relative;
+            min-height: 4.25rem;
         }
 
         .access-request-stepper__connector {
             position: absolute;
+            z-index: 0;
             top: 0.8125rem;
-            left: calc(16.666667% + 0.75rem);
-            right: calc(16.666667% + 0.75rem);
+            left: 16.666667%;
+            right: 16.666667%;
             height: 2px;
             background: var(--step-line);
         }
@@ -83,13 +84,13 @@
         .access-request-stepper__node--current {
             border-color: var(--step-accent);
             background: var(--step-accent);
-            color: white;
+            color: #ffffff;
         }
 
         .access-request-stepper__node--rejected {
-            border-color: rgb(239 68 68);
-            background: rgb(239 68 68);
-            color: white;
+            border-color: #ef4444;
+            background: #ef4444;
+            color: #ffffff;
         }
 
         .access-request-stepper__node svg {
@@ -116,7 +117,7 @@
 
         .access-request-stepper__cards {
             display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
             gap: 0.75rem;
             margin-top: 1rem;
         }
