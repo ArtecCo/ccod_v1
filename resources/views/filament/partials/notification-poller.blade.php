@@ -1,3 +1,23 @@
+@php
+    $darkPalette = \App\Support\FilamentStyling::darkModePalette();
+@endphp
+
+<style>
+    .dark {
+        --gray-50: {{ $darkPalette[50] }};
+        --gray-100: {{ $darkPalette[100] }};
+        --gray-200: {{ $darkPalette[200] }};
+        --gray-300: {{ $darkPalette[300] }};
+        --gray-400: {{ $darkPalette[400] }};
+        --gray-500: {{ $darkPalette[500] }};
+        --gray-600: {{ $darkPalette[600] }};
+        --gray-700: {{ $darkPalette[700] }};
+        --gray-800: {{ $darkPalette[800] }};
+        --gray-900: {{ $darkPalette[900] }};
+        --gray-950: {{ $darkPalette[950] }};
+    }
+</style>
+
 <script data-navigate-once>
     (() => {
         if (window.__ccodNotificationPoller) {
