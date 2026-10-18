@@ -77,6 +77,11 @@ class FilamentStyling
         return self::settings()?->dark_mode_theme ?? 'black';
     }
 
+    public static function darkModePalette(): array
+    {
+        return self::themePalette(self::settings()?->dark_mode_theme ?? 'gray');
+    }
+
     private static function assetUrl(?string $path): ?string
     {
         if (! $path) {
