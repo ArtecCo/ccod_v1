@@ -6,5 +6,5 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function (): void {
     Route::get('/data', [ClientPortalNotificationController::class, 'index'])->name('index');
     Route::post('/{notification}/read', [ClientPortalNotificationController::class, 'read'])->name('read');
-    Route::post('/read-all', [ClientPortalNotificationController::class, 'readAll'])->name('read-all');
+    Route::post('/read-all', [ClientPortalNotificationController::class, 'readAll'])->name('mark-all-read');
 });
