@@ -9,12 +9,12 @@
         .ccod-notifications__count { display:inline-flex; min-width:1.5rem; height:1.5rem; align-items:center; justify-content:center; margin-left:.4rem; padding:0 .4rem; border-radius:9999px; background:rgb(245 158 11); color:white; font-size:.75rem; font-weight:700; line-height:1; vertical-align:middle; }
         .ccod-notifications__mark-read { border:1px solid rgb(209 213 219); border-radius:.5rem; background:white; padding:.5rem .75rem; color:rgb(55 65 81); font-size:.875rem; font-weight:600; line-height:1.25rem; cursor:pointer; }
         .ccod-notifications__mark-read:disabled { cursor:not-allowed; opacity:.5; }
-        .dark .ccod-notifications__mark-read { border-color:rgb(55 65 81); background:rgb(31 41 55); color:rgb(229 231 235); }
+        .dark .ccod-notifications__mark-read { border-color:rgb(55 65 81); background:var(--gray-900); color:rgb(229 231 235); }
         .ccod-notifications__panel { overflow:hidden; border:1px solid rgb(229 231 235); border-radius:.75rem; background:white; box-shadow:0 1px 2px rgba(0,0,0,.04); }
-        .dark .ccod-notifications__panel { border-color:rgb(55 65 81); background:rgb(17 24 39); }
+        .dark .ccod-notifications__panel { border-color:rgb(55 65 81); background:var(--gray-900); }
         .ccod-notifications__loading,.ccod-notifications__empty { padding:3.5rem 1.5rem; text-align:center; }
         .ccod-notifications__empty-icon { display:flex; width:3rem; height:3rem; align-items:center; justify-content:center; margin:0 auto .875rem; border-radius:9999px; background:rgb(243 244 246); color:rgb(107 114 128); }
-        .dark .ccod-notifications__empty-icon { background:rgb(31 41 55); color:rgb(156 163 175); }
+        .dark .ccod-notifications__empty-icon { background:var(--gray-800); color:rgb(156 163 175); }
         .ccod-notifications__empty-title { margin:0; font-size:.875rem; font-weight:700; }
         .ccod-notifications__empty-text { margin:.25rem 0 0; color:rgb(107 114 128); font-size:.875rem; }
         .dark .ccod-notifications__empty-text { color:rgb(156 163 175); }
@@ -30,7 +30,7 @@
         .ccod-notifications__icon--success { background:rgb(240 253 244); color:rgb(22 163 74); }
         .ccod-notifications__icon--warning { background:rgb(255 251 235); color:rgb(217 119 6); }
         .ccod-notifications__icon--critical { background:rgb(254 242 242); color:rgb(220 38 38); }
-        .dark .ccod-notifications__icon { background:rgb(31 41 55); color:rgb(156 163 175); }
+        .dark .ccod-notifications__icon { background:var(--gray-800); color:rgb(156 163 175); }
         .dark .ccod-notifications__row--unread .ccod-notifications__icon--info { background:rgba(37,99,235,.16); color:rgb(96 165 250); }
         .dark .ccod-notifications__row--unread .ccod-notifications__icon--success { background:rgba(22,163,74,.16); color:rgb(74 222 128); }
         .dark .ccod-notifications__row--unread .ccod-notifications__icon--warning { background:rgba(217,119,6,.16); color:rgb(251 191 36); }
@@ -48,7 +48,7 @@
         .ccod-notifications__type,
         .ccod-notifications__severity { display:inline-flex; align-items:center; border-radius:.375rem; padding:.2rem .45rem; font-size:.75rem; font-weight:700; line-height:1rem; }
         .ccod-notifications__type { background:rgb(243 244 246); color:rgb(75 85 99); }
-        .dark .ccod-notifications__type { background:rgb(31 41 55); color:rgb(209 231 219); }
+        .dark .ccod-notifications__type { background:var(--gray-800); color:rgb(209 231 219); }
         .ccod-notifications__severity--info { background:rgb(239 246 255); color:rgb(37 99 235); }
         .ccod-notifications__severity--success { background:rgb(240 253 244); color:rgb(22 163 74); }
         .ccod-notifications__severity--warning { background:rgb(255 251 235); color:rgb(180 83 9); }
@@ -185,41 +185,44 @@
             },
 
             async openNotification(notification) {
-                if (notification.read_at === null) {
-                    try {
-                        const response = await fetch(`{{ url('/notifications') }}/${notification.id}/read`, {
-                            method: 'POST',
-                            headers: {
-                                'Accept': 'application/json',
-                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
-                            },
-                            credentials: 'same-origin',
-                        });
-                        if (response.ok) {
-                            notification.read_at = new Date().toISOString();
-                            this.unreadCount = Math.max(0, this.unreadCount - 1);
-                        }
-                    } catch (error) {
-                        console.error(error);
-                    }
+                if (notification.read_at) {
+                    if (notification.data.action_url) window.location.href = notification.data.action_url;
+                    return;
                 }
-                if (notification.data.action_url) window.location.href = notification.data.action_url;
+                try {
+                    const response = await fetch('{{ url('/notifications') }}/' + notification.id + '/read', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        },
+                        credentials: 'same-origin',
+                    });
+                    if (!response.ok) throw new Error('Notification update failed.');
+                    notification.read_at = new Date().toISOString();
+                    this.unreadCount = Math.max(0, this.unreadCount - 1);
+                    if (notification.data.action_url) window.location.href = notification.data.action_url;
+                } catch (error) {
+                    console.error(error);
+                }
             },
 
             async markAllRead() {
                 if (this.unreadCount === 0) return;
                 try {
-                    const response = await fetch('{{ route('notifications.read-all') }}', {
+                    const response = await fetch('{{ route('notifications.mark-all-read') }}', {
                         method: 'POST',
                         headers: {
                             'Accept': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                         credentials: 'same-origin',
                     });
-                    if (!response.ok) throw new Error('Unable to mark notifications as read.');
-                    const readAt = new Date().toISOString();
-                    this.notifications.forEach(notification => notification.read_at = notification.read_at || readAt);
+                    if (!response.ok) throw new Error('Notification update failed.');
+                    const now = new Date().toISOString();
+                    this.notifications.forEach(notification => {
+                        if (!notification.read_at) notification.read_at = now;
+                    });
                     this.unreadCount = 0;
                 } catch (error) {
                     console.error(error);
@@ -227,11 +230,11 @@
             },
 
             formatType(type) {
-                return (type || 'general').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+                return (type || 'general').replaceAll('_', ' ').replace(/\b\w/g, char => char.toUpperCase());
             },
 
             formatSeverity(severity) {
-                return (severity || 'info').replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
+                return (severity || 'info').charAt(0).toUpperCase() + (severity || 'info').slice(1);
             },
 
             formatDate(value) {
