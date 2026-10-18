@@ -31,7 +31,7 @@
             --step-line: #4b5563;
             --step-muted: #9ca3af;
             --step-text: #f3f4f6;
-            --step-surface: #1f2937;
+            --step-surface: #111827;
             --step-border: #374151;
         }
 
@@ -279,7 +279,7 @@
                         · by {{ $decisionModel->name }}
                     @endif
                     @if ($record->decision_reason)
-                        <div>{{ $record->decision_reason }}</div>
+                        <div>Decision reason: {{ $record->decision_reason }}</div>
                     @endif
                 </div>
             @else
