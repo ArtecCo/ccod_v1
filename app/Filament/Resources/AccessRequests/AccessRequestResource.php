@@ -107,14 +107,6 @@ class AccessRequestResource extends Resource
                 : User::query()->find($record->decided_by_id);
         }
 
-        $decisionStatus = $record instanceof AccessRequest
-            ? match ($record->status) {
-                AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'Approved',
-                AccessRequestStatus::Rejected => 'Rejected',
-                default => 'Awaiting decision',
-            }
-            : 'Awaiting decision';
-
         $decisionColor = $record instanceof AccessRequest
             ? match ($record->status) {
                 AccessRequestStatus::Approved, AccessRequestStatus::Revoked => 'success',
@@ -174,48 +166,46 @@ class AccessRequestResource extends Resource
             ],
         ];
 
-        return $schema
-            ->state(['activities' => $activities])
-            ->columns(1)
-            ->components([
-                Section::make('Request')
-                    ->columns(2)
-                    ->columnSpanFull()
-                    ->schema([
-                        TextEntry::make('user.name')->label('Requester'),
-                        TextEntry::make('user.email')->label('Email'),
-                        TextEntry::make('target_name')->label('Target'),
-                        TextEntry::make('target_type')->label('Target type')->badge(),
-                        TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
-                        TextEntry::make('duration')->label('Duration'),
-                        TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
-                        TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
-                        TextEntry::make('status')->badge(),
-                        TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
-                    ]),
-                ActivitySection::make('activities')
-                    ->label('Approval workflow')
-                    ->description('Request submission, eligible approvers, and the final decision.')
-                    ->columnSpanFull()
-                    ->schema([
-                        ActivityTitle::make('title'),
-                        ActivityDescription::make('description'),
-                        ActivityDate::make('created_at'),
-                        ActivityIcon::make('status')
-                            ->icon(fn (?string $state): ?string => match ($state) {
-                                'submitted' => 'heroicon-o-paper-airplane',
-                                'completed' => 'heroicon-o-check-circle',
-                                'decision' => $decisionIcon,
-                                default => 'heroicon-o-clock',
-                            })
-                            ->color(fn (?string $state): ?string => match ($state) {
-                                'submitted' => 'primary',
-                                'completed' => 'success',
-                                'decision' => $decisionColor,
-                                default => 'gray',
-                            }),
-                    ]),
-            ]);
+        return $schema->columns(1)->components([
+            Section::make('Request')
+                ->columns(2)
+                ->columnSpanFull()
+                ->schema([
+                    TextEntry::make('user.name')->label('Requester'),
+                    TextEntry::make('user.email')->label('Email'),
+                    TextEntry::make('target_name')->label('Target'),
+                    TextEntry::make('target_type')->label('Target type')->badge(),
+                    TextEntry::make('requested_role')->label('Requested role')->formatStateUsing(fn ($state): string => Role::query()->where('slug', $state instanceof \BackedEnum ? $state->value : $state)->value('name') ?? (string) $state),
+                    TextEntry::make('duration')->label('Duration'),
+                    TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
+                    TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
+                    TextEntry::make('status')->badge(),
+                    TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
+                ]),
+            ActivitySection::make('activities')
+                ->label('Approval workflow')
+                ->description('Request submission, eligible approvers, and the final decision.')
+                ->columnSpanFull()
+                ->state($activities)
+                ->schema([
+                    ActivityTitle::make('title'),
+                    ActivityDescription::make('description'),
+                    ActivityDate::make('created_at'),
+                    ActivityIcon::make('status')
+                        ->icon(fn (?string $state): ?string => match ($state) {
+                            'submitted' => 'heroicon-o-paper-airplane',
+                            'completed' => 'heroicon-o-check-circle',
+                            'decision' => $decisionIcon,
+                            default => 'heroicon-o-clock',
+                        })
+                        ->color(fn (?string $state): ?string => match ($state) {
+                            'submitted' => 'primary',
+                            'completed' => 'success',
+                            'decision' => $decisionColor,
+                            default => 'gray',
+                        }),
+                ]),
+        ]);
     }
 
     public static function table(Table $table): Table
