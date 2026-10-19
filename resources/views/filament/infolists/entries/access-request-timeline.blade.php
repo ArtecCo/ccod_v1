@@ -279,7 +279,7 @@
                         · by {{ $decisionModel->name }}
                     @endif
                     @if ($record->decision_reason)
-                        <div>Decision reason: {{ $record->decision_reason }}</div>
+                        <div><strong>Decision reason:</strong> {{ $record->decision_reason }}</div>
                     @endif
                 </div>
             @else
