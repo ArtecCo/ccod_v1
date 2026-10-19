@@ -2,22 +2,16 @@
 
 declare(strict_types=1);
 
-/*
- * CCOD VM Boot Notification
- *
- * Intended to be executed by Windows Task Scheduler at system startup.
- * This script deliberately does not use the Laravel application connection.
- */
-
-const DB_HOST = 'localhost';
+const DB_HOST = '127.0.0.1';
 const DB_PORT = 3306;
 const DB_NAME = 'cloud_ops_dashboard';
 const DB_USER = 'ccod_system_tasks';
-const DB_PASSWORD = 'tasks_ccod.system';
+const DB_PASSWORD = 'YOUR_STRONG_PASSWORD';
 
-const TIMEZONE = 'Asia/Kolkata';
+const UTC_TIMEZONE = 'UTC';
+const IST_TIMEZONE = 'Asia/Kolkata';
 
-date_default_timezone_set(TIMEZONE);
+date_default_timezone_set(IST_TIMEZONE);
 
 function getBootTime(): DateTimeImmutable
 {
@@ -34,19 +28,23 @@ function getBootTime(): DateTimeImmutable
 
     $output = trim($output);
 
-    $bootTime = DateTimeImmutable::createFromFormat(
+    // Windows VM clock is UTC.
+    $bootTimeUtc = DateTimeImmutable::createFromFormat(
         'Y-m-d H:i:s',
         $output,
-        new DateTimeZone(TIMEZONE)
+        new DateTimeZone(UTC_TIMEZONE)
     );
 
-    if (! $bootTime) {
+    if (! $bootTimeUtc) {
         throw new RuntimeException(
             'Unable to parse Windows boot time: ' . $output
         );
     }
 
-    return $bootTime;
+    // Convert the actual UTC boot time to Indian Standard Time.
+    return $bootTimeUtc->setTimezone(
+        new DateTimeZone(IST_TIMEZONE)
+    );
 }
 
 function createUuid(): string
@@ -67,7 +65,9 @@ $pdo = null;
 try {
     $bootTime = getBootTime();
 
-    $bootTimeText = $bootTime->format('d F Y, H:i:s T');
+    $bootTimeText = $bootTime->format(
+        'd F Y, h:i:s A \I\S\T'
+    );
 
     $pdo = new PDO(
         sprintf(
@@ -92,12 +92,34 @@ try {
 
     $insert = $pdo->prepare(
         'INSERT INTO notifications
-            (id, type, notifiable_type, notifiable_id, data, read_at, created_at, updated_at)
+            (
+                id,
+                type,
+                notifiable_type,
+                notifiable_id,
+                data,
+                read_at,
+                created_at,
+                updated_at
+            )
          VALUES
-            (:id, :type, :notifiable_type, :notifiable_id, :data, NULL, :created_at, :updated_at)'
+            (
+                :id,
+                :type,
+                :notifiable_type,
+                :notifiable_id,
+                :data,
+                NULL,
+                :created_at,
+                :updated_at
+            )'
     );
 
-    $now = new DateTimeImmutable('now', new DateTimeZone(TIMEZONE));
+    // Database timestamps are stored using the VM's UTC clock.
+    $nowUtc = new DateTimeImmutable(
+        'now',
+        new DateTimeZone(UTC_TIMEZONE)
+    );
 
     $data = json_encode(
         [
@@ -122,8 +144,8 @@ try {
             'notifiable_type' => 'App\\Models\\User',
             'notifiable_id' => $user['id'],
             'data' => $data,
-            'created_at' => $now->format('Y-m-d H:i:s'),
-            'updated_at' => $now->format('Y-m-d H:i:s'),
+            'created_at' => $nowUtc->format('Y-m-d H:i:s'),
+            'updated_at' => $nowUtc->format('Y-m-d H:i:s'),
         ]);
 
         $count++;
@@ -132,8 +154,11 @@ try {
     $pdo->commit();
 
     echo sprintf(
-        "[%s] Boot notification created for %d active user(s). Boot time: %s\n",
-        $now->format('Y-m-d H:i:s'),
+        "[%s IST] Boot notification created for %d active user(s). Boot time: %s\n",
+        (new DateTimeImmutable(
+            'now',
+            new DateTimeZone(IST_TIMEZONE)
+        ))->format('Y-m-d H:i:s'),
         $count,
         $bootTimeText
     );
@@ -149,8 +174,11 @@ try {
     file_put_contents(
         __DIR__ . DIRECTORY_SEPARATOR . 'vm-boot-notification-error.log',
         sprintf(
-            "[%s] %s\n%s\n\n",
-            date('Y-m-d H:i:s'),
+            "[%s IST] %s\n%s\n\n",
+            (new DateTimeImmutable(
+                'now',
+                new DateTimeZone(IST_TIMEZONE)
+            ))->format('Y-m-d H:i:s'),
             $e->getMessage(),
             $e->getTraceAsString()
         ),
