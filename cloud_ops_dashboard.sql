@@ -907,7 +907,7 @@ CREATE TABLE `audit_logs` (
 
 CREATE TABLE `azure_alerts` (
   `id` bigint(20) UNSIGNED NOT NULL,
-  `azure_alert_id` varchar(1024) DEFAULT NULL,
+  `azure_alert_id` varchar(768) DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `severity` varchar(10) NOT NULL,
   `affected_resource` text DEFAULT NULL,
@@ -3157,7 +3157,7 @@ ALTER TABLE `audit_logs`
 --
 ALTER TABLE `azure_alerts`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `azure_alerts_azure_alert_id_unique` (`azure_alert_id`) USING HASH,
+  ADD UNIQUE KEY `azure_alerts_azure_alert_id_unique` (`azure_alert_id`),
   ADD KEY `azure_alerts_subscription_id_index` (`subscription_id`),
   ADD KEY `azure_alerts_severity_index` (`severity`),
   ADD KEY `azure_alerts_fire_time_index` (`fire_time`),
