@@ -15,7 +15,7 @@ class ProjectInfolist
             TextEntry::make('businessUnit.name')->label('Business Unit'),
             TextEntry::make('description')->placeholder('—')->columnSpanFull(),
             RepeatableEntry::make('subscriptionAssignments')->label('Environment subscriptions')->schema([
-                TextEntry::make('environment')->label('Environment')->formatStateUsing(fn($state): string => strtoupper((string) $state))->badge(),
+                TextEntry::make('environment')->label('Tags')->formatStateUsing(fn($state): string => strtoupper((string) $state))->badge(),
                 TextEntry::make('subscription.display_name')->label('Subscription'),
                 TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
             ])->columns(3)->columnSpanFull(),
