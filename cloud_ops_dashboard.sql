@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Oct 13, 2026 at 04:57 PM
+-- Generation Time: Oct 19, 2026 at 02:20 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.5.11
 
@@ -31,7 +31,7 @@ CREATE TABLE `access_requests` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `target_type` varchar(255) NOT NULL DEFAULT 'subscription',
-  `team_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `business_unit_id` bigint(20) UNSIGNED DEFAULT NULL,
   `subscription_id` varchar(100) DEFAULT NULL,
   `target_name` varchar(255) NOT NULL,
   `requested_role` varchar(255) NOT NULL,
@@ -51,11 +51,10 @@ CREATE TABLE `access_requests` (
 -- Dumping data for table `access_requests`
 --
 
-INSERT INTO `access_requests` (`id`, `user_id`, `target_type`, `team_id`, `subscription_id`, `target_name`, `requested_role`, `reason`, `duration`, `requested_until`, `status`, `decided_by_type`, `decided_by_id`, `decided_at`, `decision_reason`, `created_at`, `updated_at`) VALUES
-(1, 2, 'subscription', NULL, '2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'AA-SMS3-NA-PBAP-Prod', 'restricted_reader', 'For Daily health checks as a part of L1 team', 'time_bound', '2026-10-10 16:40:00', 'approved', 'App\\Models\\User', 1, '2026-10-10 11:13:03', 'Testing expiry', '2026-10-10 09:23:58', '2026-10-10 11:13:03'),
-(2, 2, 'subscription', NULL, '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'MA-SKX-eXtra-Production-Stage-Prod', 'restricted_reader', 'Need access to perform daily health operations.', 'permanent', NULL, 'revoked', 'App\\Models\\User', 1, '2026-10-10 10:09:22', 'Approved for DHC', '2026-10-10 09:57:31', '2026-10-10 10:09:22'),
-(3, 2, 'subscription', NULL, 'd26dd531-2174-4c45-a240-032e0d05dfa0', 'AA-GPM-BoschCloudPrinting-Prod', 'restricted_contributor', 'For report generation', 'time_bound', '2026-10-10 16:33:00', 'pending', NULL, NULL, NULL, NULL, '2026-10-10 11:02:26', '2026-10-10 11:02:26'),
-(4, 3, 'subscription', NULL, 'c12d79d2-0655-4caa-839e-fc47e019271c', 'OT-RBIN-GS-EXIMPortal-Prod', 'restricted_owner', 'For monthly patching activity.', 'permanent', NULL, 'revoked', 'App\\Models\\User', 1, '2026-10-11 13:19:46', 'Activity completed.', '2026-10-11 13:18:04', '2026-10-11 13:19:46');
+INSERT INTO `access_requests` (`id`, `user_id`, `target_type`, `business_unit_id`, `subscription_id`, `target_name`, `requested_role`, `reason`, `duration`, `requested_until`, `status`, `decided_by_type`, `decided_by_id`, `decided_at`, `decision_reason`, `created_at`, `updated_at`) VALUES
+(5, 5, 'subscription', NULL, '5784d84d-05ea-4a9c-b625-7d0183e9240b', 'AA-BDO-IN-BoschRewards-QA', 'test-role', 'Testing access control', 'permanent', NULL, 'approved', 'App\\Models\\User', 1, '2026-10-18 07:37:08', 'Approved', '2026-10-17 14:13:35', '2026-10-18 07:37:08'),
+(6, 5, 'subscription', NULL, '6c389f01-77d0-4c2c-b846-8dfa36987531', 'EAP Sandbox', 'admin', 'Access workflow testing.', 'permanent', NULL, 'pending', NULL, NULL, NULL, NULL, '2026-10-19 03:18:18', '2026-10-19 03:18:18'),
+(7, 5, 'subscription', NULL, '0e6dc52f-1c64-4d5a-9396-29e37fa41079', 'AA-AS-EIT2-Prod', 'operator', 'Approvers list test', 'permanent', NULL, 'pending', NULL, NULL, NULL, NULL, '2026-10-19 03:19:50', '2026-10-19 03:19:50');
 
 -- --------------------------------------------------------
 
@@ -619,7 +618,246 @@ INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `su
 (529, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-13 06:25:37', '2026-10-13 06:25:37'),
 (530, 'Access', 'Authentication session ended.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/developer\\/logout\",\"route\":\"filament.developer.auth.logout\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"tags\":[\"authentication\",\"logout\"]}', 'Logout', NULL, '2026-10-13 06:29:14', '2026-10-13 06:29:14'),
 (531, 'Access', 'Authentication failed.', NULL, NULL, NULL, NULL, '{\"success\":false,\"failure_reason\":\"Authentication credentials did not authenticate.\",\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"identifier_type\":\"email\",\"tags\":[\"authentication\",\"failure\"],\"risk\":\"high\"}', 'Login Failed', NULL, '2026-10-13 06:29:27', '2026-10-13 06:29:27'),
-(532, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-13 06:29:34', '2026-10-13 06:29:34');
+(532, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-13 06:29:34', '2026-10-13 06:29:34'),
+(533, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-13 10:06:17', '2026-10-13 10:06:17'),
+(534, 'Models', 'AzureAlert #1 created', 'App\\Models\\AzureAlert', 1, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(535, 'Models', 'AzureAlert #2 created', 'App\\Models\\AzureAlert', 2, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(536, 'Models', 'AzureAlert #3 created', 'App\\Models\\AzureAlert', 3, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(537, 'Models', 'AzureAlert #4 created', 'App\\Models\\AzureAlert', 4, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(538, 'Models', 'AzureAlert #5 created', 'App\\Models\\AzureAlert', 5, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(539, 'Models', 'AzureAlert #6 created', 'App\\Models\\AzureAlert', 6, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(540, 'Models', 'AzureAlert #7 created', 'App\\Models\\AzureAlert', 7, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(541, 'Models', 'AzureAlert #8 created', 'App\\Models\\AzureAlert', 8, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(542, 'Models', 'AzureAlert #9 created', 'App\\Models\\AzureAlert', 9, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(543, 'Models', 'AzureAlert #10 created', 'App\\Models\\AzureAlert', 10, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(544, 'Models', 'AzureAlert #11 created', 'App\\Models\\AzureAlert', 11, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(545, 'Models', 'AzureAlert #12 created', 'App\\Models\\AzureAlert', 12, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(546, 'Models', 'AzureAlert #13 created', 'App\\Models\\AzureAlert', 13, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(547, 'Models', 'AzureAlert #14 created', 'App\\Models\\AzureAlert', 14, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(548, 'Models', 'AzureAlert #15 created', 'App\\Models\\AzureAlert', 15, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01');
+INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `subject_id`, `causer_type`, `causer_id`, `properties`, `event`, `batch_uuid`, `created_at`, `updated_at`) VALUES
+(549, 'Models', 'AzureAlert #16 created', 'App\\Models\\AzureAlert', 16, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(550, 'Models', 'AzureAlert #17 created', 'App\\Models\\AzureAlert', 17, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(551, 'Models', 'AzureAlert #18 created', 'App\\Models\\AzureAlert', 18, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(552, 'Models', 'AzureAlert #19 created', 'App\\Models\\AzureAlert', 19, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(553, 'Models', 'AzureAlert #20 created', 'App\\Models\\AzureAlert', 20, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(554, 'Models', 'AzureAlert #21 created', 'App\\Models\\AzureAlert', 21, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(555, 'Models', 'AzureAlert #22 created', 'App\\Models\\AzureAlert', 22, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(556, 'Models', 'AzureAlert #23 created', 'App\\Models\\AzureAlert', 23, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(557, 'Models', 'AzureAlert #24 created', 'App\\Models\\AzureAlert', 24, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(558, 'Models', 'AzureAlert #25 created', 'App\\Models\\AzureAlert', 25, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(559, 'Models', 'AzureAlert #26 created', 'App\\Models\\AzureAlert', 26, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(560, 'Models', 'AzureAlert #27 created', 'App\\Models\\AzureAlert', 27, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(561, 'Models', 'AzureAlert #28 created', 'App\\Models\\AzureAlert', 28, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(562, 'Models', 'AzureAlert #29 created', 'App\\Models\\AzureAlert', 29, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(563, 'Models', 'AzureAlert #30 created', 'App\\Models\\AzureAlert', 30, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(564, 'Models', 'AzureAlert #31 created', 'App\\Models\\AzureAlert', 31, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(565, 'Models', 'AzureAlert #32 created', 'App\\Models\\AzureAlert', 32, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(566, 'Models', 'AzureAlert #33 created', 'App\\Models\\AzureAlert', 33, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(567, 'Models', 'AzureAlert #34 created', 'App\\Models\\AzureAlert', 34, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(568, 'Models', 'AzureAlert #35 created', 'App\\Models\\AzureAlert', 35, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(569, 'Models', 'AzureAlert #36 created', 'App\\Models\\AzureAlert', 36, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(570, 'Models', 'AzureAlert #37 created', 'App\\Models\\AzureAlert', 37, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(571, 'Models', 'AzureAlert #38 created', 'App\\Models\\AzureAlert', 38, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(572, 'Models', 'AzureAlert #39 created', 'App\\Models\\AzureAlert', 39, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(573, 'Models', 'AzureAlert #40 created', 'App\\Models\\AzureAlert', 40, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(574, 'Models', 'AzureAlert #41 created', 'App\\Models\\AzureAlert', 41, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(575, 'Models', 'AzureAlert #42 created', 'App\\Models\\AzureAlert', 42, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(576, 'Models', 'AzureAlert #43 created', 'App\\Models\\AzureAlert', 43, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(577, 'Models', 'AzureAlert #44 created', 'App\\Models\\AzureAlert', 44, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(578, 'Models', 'AzureAlert #45 created', 'App\\Models\\AzureAlert', 45, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(579, 'Models', 'AzureAlert #46 created', 'App\\Models\\AzureAlert', 46, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(580, 'Models', 'AzureAlert #47 created', 'App\\Models\\AzureAlert', 47, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(581, 'Models', 'AzureAlert #48 created', 'App\\Models\\AzureAlert', 48, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(582, 'Models', 'AzureAlert #49 created', 'App\\Models\\AzureAlert', 49, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(583, 'Models', 'AzureAlert #50 created', 'App\\Models\\AzureAlert', 50, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(584, 'Models', 'AzureAlert #51 created', 'App\\Models\\AzureAlert', 51, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(585, 'Models', 'AzureAlert #52 created', 'App\\Models\\AzureAlert', 52, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(586, 'Models', 'AzureAlert #53 created', 'App\\Models\\AzureAlert', 53, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(587, 'Models', 'AzureAlert #54 created', 'App\\Models\\AzureAlert', 54, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(588, 'Models', 'AzureAlert #55 created', 'App\\Models\\AzureAlert', 55, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(589, 'Models', 'AzureAlert #56 created', 'App\\Models\\AzureAlert', 56, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(590, 'Models', 'AzureAlert #57 created', 'App\\Models\\AzureAlert', 57, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(591, 'Models', 'AzureAlert #58 created', 'App\\Models\\AzureAlert', 58, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(592, 'Models', 'AzureAlert #59 created', 'App\\Models\\AzureAlert', 59, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(593, 'Models', 'AzureAlert #60 created', 'App\\Models\\AzureAlert', 60, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(594, 'Models', 'AzureAlert #61 created', 'App\\Models\\AzureAlert', 61, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(595, 'Models', 'AzureAlert #62 created', 'App\\Models\\AzureAlert', 62, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(596, 'Models', 'AzureAlert #63 created', 'App\\Models\\AzureAlert', 63, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(597, 'Models', 'AzureAlert #64 created', 'App\\Models\\AzureAlert', 64, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(598, 'Models', 'AzureAlert #65 created', 'App\\Models\\AzureAlert', 65, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(599, 'Models', 'AzureAlert #66 created', 'App\\Models\\AzureAlert', 66, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(600, 'Models', 'AzureAlert #67 created', 'App\\Models\\AzureAlert', 67, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(601, 'Models', 'AzureAlert #68 created', 'App\\Models\\AzureAlert', 68, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(602, 'Models', 'AzureAlert #69 created', 'App\\Models\\AzureAlert', 69, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(603, 'Models', 'AzureAlert #70 created', 'App\\Models\\AzureAlert', 70, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(604, 'Models', 'AzureAlert #71 created', 'App\\Models\\AzureAlert', 71, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(605, 'Models', 'AzureAlert #72 created', 'App\\Models\\AzureAlert', 72, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(606, 'Models', 'AzureAlert #73 created', 'App\\Models\\AzureAlert', 73, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(607, 'Models', 'AzureAlert #74 created', 'App\\Models\\AzureAlert', 74, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(608, 'Models', 'AzureAlert #75 created', 'App\\Models\\AzureAlert', 75, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(609, 'Models', 'SubscriptionWebUrl #3 updated', 'App\\Models\\SubscriptionWebUrl', 3, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:31', '2026-10-13 13:07:31'),
+(610, 'Models', 'SubscriptionWebUrl #4 updated', 'App\\Models\\SubscriptionWebUrl', 4, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:35', '2026-10-13 13:07:35'),
+(611, 'Models', 'SubscriptionWebUrl #5 updated', 'App\\Models\\SubscriptionWebUrl', 5, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:40', '2026-10-13 13:07:40'),
+(612, 'Models', 'SubscriptionWebUrl #6 updated', 'App\\Models\\SubscriptionWebUrl', 6, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:42', '2026-10-13 13:07:42'),
+(613, 'Models', 'SubscriptionWebUrl #7 updated', 'App\\Models\\SubscriptionWebUrl', 7, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:45', '2026-10-13 13:07:45'),
+(614, 'Models', 'SubscriptionWebUrl #8 updated', 'App\\Models\\SubscriptionWebUrl', 8, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:47', '2026-10-13 13:07:47'),
+(615, 'Models', 'SubscriptionWebUrl #9 updated', 'App\\Models\\SubscriptionWebUrl', 9, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:49', '2026-10-13 13:07:49'),
+(616, 'Models', 'SubscriptionWebUrl #10 updated', 'App\\Models\\SubscriptionWebUrl', 10, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:51', '2026-10-13 13:07:51'),
+(617, 'Models', 'SubscriptionWebUrl #12 updated', 'App\\Models\\SubscriptionWebUrl', 12, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:07:59', '2026-10-13 13:07:59'),
+(618, 'Models', 'SubscriptionWebUrl #13 updated', 'App\\Models\\SubscriptionWebUrl', 13, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:08:06', '2026-10-13 13:08:06'),
+(619, 'Models', 'SubscriptionWebUrl #14 updated', 'App\\Models\\SubscriptionWebUrl', 14, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:08:18', '2026-10-13 13:08:18'),
+(620, 'Models', 'SubscriptionWebUrl #15 updated', 'App\\Models\\SubscriptionWebUrl', 15, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:08:28', '2026-10-13 13:08:28'),
+(621, 'Models', 'SubscriptionWebUrl #17 updated', 'App\\Models\\SubscriptionWebUrl', 17, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:08:38', '2026-10-13 13:08:38'),
+(622, 'Models', 'SubscriptionWebUrl #18 updated', 'App\\Models\\SubscriptionWebUrl', 18, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:08:48', '2026-10-13 13:08:48'),
+(623, 'Models', 'SubscriptionWebUrl #19 updated', 'App\\Models\\SubscriptionWebUrl', 19, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:08:58', '2026-10-13 13:08:58'),
+(624, 'Models', 'SubscriptionWebUrl #20 updated', 'App\\Models\\SubscriptionWebUrl', 20, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:08', '2026-10-13 13:09:08'),
+(625, 'Models', 'SubscriptionWebUrl #21 updated', 'App\\Models\\SubscriptionWebUrl', 21, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:18', '2026-10-13 13:09:18'),
+(626, 'Models', 'SubscriptionWebUrl #22 updated', 'App\\Models\\SubscriptionWebUrl', 22, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:29', '2026-10-13 13:09:29'),
+(627, 'Models', 'SubscriptionWebUrl #23 updated', 'App\\Models\\SubscriptionWebUrl', 23, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:39', '2026-10-13 13:09:39'),
+(628, 'Models', 'SubscriptionWebUrl #24 updated', 'App\\Models\\SubscriptionWebUrl', 24, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:49', '2026-10-13 13:09:49'),
+(629, 'Models', 'SubscriptionWebUrl #25 updated', 'App\\Models\\SubscriptionWebUrl', 25, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:52', '2026-10-13 13:09:52'),
+(630, 'Models', 'SubscriptionWebUrl #27 updated', 'App\\Models\\SubscriptionWebUrl', 27, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:55', '2026-10-13 13:09:55'),
+(631, 'Models', 'SubscriptionWebUrl #28 updated', 'App\\Models\\SubscriptionWebUrl', 28, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:09:59', '2026-10-13 13:09:59'),
+(632, 'Models', 'SubscriptionWebUrl #29 updated', 'App\\Models\\SubscriptionWebUrl', 29, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:09', '2026-10-13 13:10:09'),
+(633, 'Models', 'SubscriptionWebUrl #30 updated', 'App\\Models\\SubscriptionWebUrl', 30, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:19', '2026-10-13 13:10:19'),
+(634, 'Models', 'SubscriptionWebUrl #31 updated', 'App\\Models\\SubscriptionWebUrl', 31, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:29', '2026-10-13 13:10:29'),
+(635, 'Models', 'SubscriptionWebUrl #32 updated', 'App\\Models\\SubscriptionWebUrl', 32, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:39', '2026-10-13 13:10:39'),
+(636, 'Models', 'SubscriptionWebUrl #43 updated', 'App\\Models\\SubscriptionWebUrl', 43, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:46', '2026-10-13 13:10:46'),
+(637, 'Models', 'SubscriptionWebUrl #44 updated', 'App\\Models\\SubscriptionWebUrl', 44, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:49', '2026-10-13 13:10:49'),
+(638, 'Models', 'SubscriptionWebUrl #45 updated', 'App\\Models\\SubscriptionWebUrl', 45, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:53', '2026-10-13 13:10:53'),
+(639, 'Models', 'SubscriptionWebUrl #46 updated', 'App\\Models\\SubscriptionWebUrl', 46, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 13:10:56', '2026-10-13 13:10:56'),
+(640, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-13 22:38:14', '2026-10-13 22:38:14'),
+(641, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-13 22:38:37', '2026-10-13 22:38:37'),
+(642, 'Notifications', 'Client portal notification \"Test notification\" delivered to 4 active user(s).', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"type\":\"general\",\"severity\":\"info\",\"recipient_count\":4,\"all_users\":true,\"team_count\":0,\"selected_user_count\":0,\"tags\":[\"notification\",\"client_portal\",\"sent\"]}', 'Notification Sent', NULL, '2026-10-13 22:39:00', '2026-10-13 22:39:00'),
+(643, 'Models', 'Documentation #2 updated', 'App\\Models\\Documentation', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 22:41:33', '2026-10-13 22:41:33'),
+(644, 'Models', 'Documentation #2 updated', 'App\\Models\\Documentation', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 22:42:46', '2026-10-13 22:42:46'),
+(645, 'Models', 'Documentation #2 updated', 'App\\Models\\Documentation', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 22:43:42', '2026-10-13 22:43:42'),
+(646, 'Models', 'Documentation #2 updated', 'App\\Models\\Documentation', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 22:44:05', '2026-10-13 22:44:05'),
+(647, 'Models', 'Documentation #2 updated', 'App\\Models\\Documentation', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-13 22:44:49', '2026-10-13 22:44:49'),
+(648, 'Maintenance', 'Maintenance mode was enabled. Public application access is now blocked.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"maintenance_mode\":true,\"scope\":\"public_application\",\"tags\":[\"maintenance\",\"enabled\"]}', 'Maintenance Mode Enabled', NULL, '2026-10-13 22:47:22', '2026-10-13 22:47:22'),
+(649, 'Maintenance', 'Maintenance mode was disabled. Public application access is now available.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"maintenance_mode\":false,\"scope\":\"public_application\",\"tags\":[\"maintenance\",\"disabled\"]}', 'Maintenance Mode Disabled', NULL, '2026-10-13 22:47:29', '2026-10-13 22:47:29'),
+(650, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-15 00:18:03', '2026-10-15 00:18:03'),
+(651, 'Models', 'Role #6 created', 'App\\Models\\Role', 6, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 09:02:27', '2026-10-15 09:02:27'),
+(652, 'Models', 'User #5 created', 'App\\Models\\User', 5, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 09:03:28', '2026-10-15 09:03:28'),
+(655, 'Models', 'Project #6 created', 'App\\Models\\Project', 6, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 09:07:04', '2026-10-15 09:07:04'),
+(656, 'Models', 'ProjectSubscription #7 updated', 'App\\Models\\ProjectSubscription', 7, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 09:17:48', '2026-10-15 09:17:48'),
+(657, 'Models', 'ProjectSubscription #1 updated', 'App\\Models\\ProjectSubscription', 1, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 09:17:48', '2026-10-15 09:17:48'),
+(658, 'Models', 'Project #5 deleted', 'App\\Models\\Project', 5, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"deleted\"]}', 'Deleted', NULL, '2026-10-15 09:27:31', '2026-10-15 09:27:31'),
+(659, 'Models', 'ProjectSubscription #4 updated', 'App\\Models\\ProjectSubscription', 4, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 09:27:48', '2026-10-15 09:27:48'),
+(660, 'Models', 'ProjectSubscription #2 updated', 'App\\Models\\ProjectSubscription', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 09:27:48', '2026-10-15 09:27:48'),
+(661, 'Models', 'ProjectSubscription #5 updated', 'App\\Models\\ProjectSubscription', 5, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 09:27:48', '2026-10-15 09:27:48'),
+(662, 'Models', 'Project #4 updated', 'App\\Models\\Project', 4, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 09:27:48', '2026-10-15 09:27:48'),
+(663, 'Models', 'Project #2 deleted', 'App\\Models\\Project', 2, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"deleted\"]}', 'Deleted', NULL, '2026-10-15 10:21:38', '2026-10-15 10:21:38'),
+(664, 'Models', 'Project #7 created', 'App\\Models\\Project', 7, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:22:23', '2026-10-15 10:22:23'),
+(665, 'Models', 'Project #7 updated', 'App\\Models\\Project', 7, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 10:22:42', '2026-10-15 10:22:42'),
+(666, 'Models', 'SettingsProperty #1049 created', 'Spatie\\LaravelSettings\\Models\\SettingsProperty', 1049, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:28:27', '2026-10-15 10:28:27'),
+(667, 'Models', 'ProjectSubscription #8 created', 'App\\Models\\ProjectSubscription', 8, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:29:29', '2026-10-15 10:29:29'),
+(668, 'Models', 'ProjectSubscription #9 created', 'App\\Models\\ProjectSubscription', 9, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:29:29', '2026-10-15 10:29:29'),
+(669, 'Models', 'ProjectSubscription #10 created', 'App\\Models\\ProjectSubscription', 10, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:30:26', '2026-10-15 10:30:26'),
+(670, 'Models', 'ProjectSubscription #11 created', 'App\\Models\\ProjectSubscription', 11, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:30:26', '2026-10-15 10:30:26'),
+(671, 'Models', 'Project #8 created', 'App\\Models\\Project', 8, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:31:35', '2026-10-15 10:31:35'),
+(672, 'Models', 'ProjectSubscription #12 created', 'App\\Models\\ProjectSubscription', 12, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:32:26', '2026-10-15 10:32:26'),
+(673, 'Models', 'ProjectSubscription #13 created', 'App\\Models\\ProjectSubscription', 13, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:32:26', '2026-10-15 10:32:26'),
+(674, 'Models', 'ProjectSubscription #14 created', 'App\\Models\\ProjectSubscription', 14, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:32:26', '2026-10-15 10:32:26'),
+(675, 'Models', 'Project #9 created', 'App\\Models\\Project', 9, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:33:19', '2026-10-15 10:33:19'),
+(676, 'Models', 'ProjectSubscription #15 created', 'App\\Models\\ProjectSubscription', 15, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:33:19', '2026-10-15 10:33:19'),
+(677, 'Models', 'ProjectSubscription #16 created', 'App\\Models\\ProjectSubscription', 16, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:33:19', '2026-10-15 10:33:19'),
+(678, 'Models', 'Project #10 created', 'App\\Models\\Project', 10, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:34:04', '2026-10-15 10:34:04'),
+(679, 'Models', 'ProjectSubscription #17 created', 'App\\Models\\ProjectSubscription', 17, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:34:04', '2026-10-15 10:34:04'),
+(680, 'Models', 'ProjectSubscription #18 created', 'App\\Models\\ProjectSubscription', 18, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:34:04', '2026-10-15 10:34:04'),
+(681, 'Models', 'Project #11 created', 'App\\Models\\Project', 11, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:34:34', '2026-10-15 10:34:34'),
+(682, 'Models', 'ProjectSubscription #19 created', 'App\\Models\\ProjectSubscription', 19, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:34:34', '2026-10-15 10:34:34');
+INSERT INTO `activity_log` (`id`, `log_name`, `description`, `subject_type`, `subject_id`, `causer_type`, `causer_id`, `properties`, `event`, `batch_uuid`, `created_at`, `updated_at`) VALUES
+(683, 'Models', 'Project #3 updated', 'App\\Models\\Project', 3, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 10:37:44', '2026-10-15 10:37:44'),
+(684, 'Models', 'Project #12 created', 'App\\Models\\Project', 12, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(685, 'Models', 'ProjectSubscription #20 created', 'App\\Models\\ProjectSubscription', 20, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(686, 'Models', 'ProjectSubscription #21 created', 'App\\Models\\ProjectSubscription', 21, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(687, 'Models', 'ProjectSubscription #22 created', 'App\\Models\\ProjectSubscription', 22, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(688, 'Models', 'User #6 created', 'App\\Models\\User', 6, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:40:09', '2026-10-15 10:40:09'),
+(689, 'Models', 'Project #13 created', 'App\\Models\\Project', 13, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:49:34', '2026-10-15 10:49:34'),
+(690, 'Models', 'ProjectSubscription #23 created', 'App\\Models\\ProjectSubscription', 23, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:49:34', '2026-10-15 10:49:34'),
+(691, 'Models', 'Project #14 created', 'App\\Models\\Project', 14, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:50:31', '2026-10-15 10:50:31'),
+(692, 'Models', 'ProjectSubscription #24 created', 'App\\Models\\ProjectSubscription', 24, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:50:31', '2026-10-15 10:50:31'),
+(693, 'Models', 'Project #15 created', 'App\\Models\\Project', 15, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:52:33', '2026-10-15 10:52:33'),
+(694, 'Models', 'ProjectSubscription #25 created', 'App\\Models\\ProjectSubscription', 25, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 10:52:33', '2026-10-15 10:52:33'),
+(695, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-15 11:09:58', '2026-10-15 11:09:58'),
+(696, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko\\/20100101 Firefox\\/140.0\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-15 11:24:28', '2026-10-15 11:24:28'),
+(697, 'Notifications', 'Client portal notification \"Test notification\" delivered to 3 active user(s).', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko\\/20100101 Firefox\\/140.0\",\"type\":\"general\",\"severity\":\"info\",\"recipient_count\":3,\"all_users\":true,\"team_count\":0,\"selected_user_count\":0,\"tags\":[\"notification\",\"client_portal\",\"sent\"]}', 'Notification Sent', NULL, '2026-10-15 11:24:54', '2026-10-15 11:24:54'),
+(698, 'Notifications', 'Client portal notification \"Test notification 2\" delivered to 3 active user(s).', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko\\/20100101 Firefox\\/140.0\",\"type\":\"maintenance\",\"severity\":\"danger\",\"recipient_count\":3,\"all_users\":true,\"team_count\":0,\"selected_user_count\":0,\"tags\":[\"notification\",\"client_portal\",\"sent\"]}', 'Notification Sent', NULL, '2026-10-15 11:25:47', '2026-10-15 11:25:47'),
+(699, 'Models', 'Documentation #6 created', 'App\\Models\\Documentation', 6, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 11:27:54', '2026-10-15 11:27:54'),
+(700, 'Models', 'Documentation #6 updated', 'App\\Models\\Documentation', 6, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 11:28:15', '2026-10-15 11:28:15'),
+(701, 'Models', 'Documentation #6 deleted', 'App\\Models\\Documentation', 6, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"deleted\"]}', 'Deleted', NULL, '2026-10-15 11:28:28', '2026-10-15 11:28:28'),
+(702, 'Models', 'SubscriptionWebUrl #47 created', 'App\\Models\\SubscriptionWebUrl', 47, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 11:31:06', '2026-10-15 11:31:06'),
+(703, 'Models', 'SubscriptionWebUrl #47 updated', 'App\\Models\\SubscriptionWebUrl', 47, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 11:31:20', '2026-10-15 11:31:20'),
+(704, 'Models', 'SubscriptionWebUrl #47 updated', 'App\\Models\\SubscriptionWebUrl', 47, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 11:31:32', '2026-10-15 11:31:32'),
+(705, 'Models', 'SubscriptionWebUrl #47 deleted', 'App\\Models\\SubscriptionWebUrl', 47, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"deleted\"]}', 'Deleted', NULL, '2026-10-15 11:34:21', '2026-10-15 11:34:21'),
+(708, 'Models', 'User #5 updated', 'App\\Models\\User', 5, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 13:05:07', '2026-10-15 13:05:07'),
+(711, 'Models', 'User #5 updated', 'App\\Models\\User', 5, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-15 13:07:28', '2026-10-15 13:07:28'),
+(713, 'Models', 'UserResourceAccess #17 created', 'App\\Models\\UserResourceAccess', 17, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 13:18:00', '2026-10-15 13:18:00'),
+(714, 'Models', 'UserRoleAssignment #10 created', 'App\\Models\\UserRoleAssignment', 10, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-15 13:18:00', '2026-10-15 13:18:00'),
+(715, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko\\/20100101 Firefox\\/140.0\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-15 13:19:08', '2026-10-15 13:19:08'),
+(716, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-16 00:59:08', '2026-10-16 00:59:08'),
+(717, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-16 01:49:49', '2026-10-16 01:49:49'),
+(718, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 02:56:23', '2026-10-17 02:56:23'),
+(719, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 02:57:15', '2026-10-17 02:57:15'),
+(720, 'Models', 'Documentation #7 created', 'App\\Models\\Documentation', 7, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 04:06:38', '2026-10-17 04:06:38'),
+(721, 'Models', 'Permission #23 updated', 'App\\Models\\Permission', 23, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 06:17:22', '2026-10-17 06:17:22'),
+(722, 'Models', 'Permission #24 updated', 'App\\Models\\Permission', 24, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 06:20:52', '2026-10-17 06:20:52'),
+(723, 'Models', 'Permission #25 updated', 'App\\Models\\Permission', 25, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 06:20:52', '2026-10-17 06:20:52'),
+(724, 'Models', 'Permission #26 updated', 'App\\Models\\Permission', 26, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 06:49:12', '2026-10-17 06:49:12'),
+(725, 'Models', 'Role #6 deleted', 'App\\Models\\Role', 6, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"deleted\"]}', 'Deleted', NULL, '2026-10-17 09:31:39', '2026-10-17 09:31:39'),
+(726, 'Models', 'Role #7 created', 'App\\Models\\Role', 7, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 09:33:39', '2026-10-17 09:33:39'),
+(727, 'Models', 'UserRoleAssignment #11 created', 'App\\Models\\UserRoleAssignment', 11, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 09:34:00', '2026-10-17 09:34:00'),
+(728, 'Models', 'Role #7 deleted', 'App\\Models\\Role', 7, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"deleted\"]}', 'Deleted', NULL, '2026-10-17 10:24:37', '2026-10-17 10:24:37'),
+(729, 'Models', 'Role #8 created', 'App\\Models\\Role', 8, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 10:25:05', '2026-10-17 10:25:05'),
+(730, 'Models', 'UserRoleAssignment #12 created', 'App\\Models\\UserRoleAssignment', 12, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 10:25:21', '2026-10-17 10:25:21'),
+(731, 'Models', 'Documentation #8 created', 'App\\Models\\Documentation', 8, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 11:59:13', '2026-10-17 11:59:13'),
+(732, 'Models', 'Documentation #9 created', 'App\\Models\\Documentation', 9, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 12:03:02', '2026-10-17 12:03:02'),
+(733, 'Maintenance', 'The updater detected available application or dependency updates.', NULL, NULL, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"package_count\":7,\"tags\":[\"updater\",\"updates_available\"]}', 'Updates Available', NULL, '2026-10-17 12:03:56', '2026-10-17 12:03:56'),
+(734, 'Maintenance', 'The updater detected available application or dependency updates.', NULL, NULL, NULL, NULL, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\",\"method\":\"GET\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Symfony\",\"package_count\":7,\"tags\":[\"updater\",\"updates_available\"]}', 'Updates Available', NULL, '2026-10-17 12:04:01', '2026-10-17 12:04:01'),
+(735, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 12:20:44', '2026-10-17 12:20:44'),
+(736, 'Notifications', 'Client portal notification \"Queue test\" queued for 3 active user(s).', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"type\":\"general\",\"severity\":\"info\",\"recipient_count\":3,\"all_users\":true,\"team_count\":0,\"selected_user_count\":0,\"tags\":[\"notification\",\"client_portal\",\"queued\"]}', 'Notification Queued', NULL, '2026-10-17 12:21:26', '2026-10-17 12:21:26'),
+(737, 'Notifications', 'Client portal notification \"Queue test 2\" queued for 3 active user(s).', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"type\":\"general\",\"severity\":\"info\",\"recipient_count\":3,\"all_users\":true,\"team_count\":0,\"selected_user_count\":0,\"tags\":[\"notification\",\"client_portal\",\"queued\"]}', 'Notification Queued', NULL, '2026-10-17 12:22:55', '2026-10-17 12:22:55'),
+(738, 'Models', 'Documentation #10 created', 'App\\Models\\Documentation', 10, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 12:25:06', '2026-10-17 12:25:06'),
+(739, 'Access', 'Authentication session ended.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/developer\\/logout\",\"route\":\"filament.developer.auth.logout\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"tags\":[\"authentication\",\"logout\"]}', 'Logout', NULL, '2026-10-17 12:29:30', '2026-10-17 12:29:30'),
+(740, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 12:29:48', '2026-10-17 12:29:48'),
+(741, 'Access', 'Authentication session ended.', NULL, NULL, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/logout\",\"route\":\"filament.admin.auth.logout\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"tags\":[\"authentication\",\"logout\"]}', 'Logout', NULL, '2026-10-17 12:38:37', '2026-10-17 12:38:37'),
+(742, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 12:38:58', '2026-10-17 12:38:58'),
+(743, 'Models', 'UserRoleAssignment #12 updated', 'App\\Models\\UserRoleAssignment', 12, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 13:26:11', '2026-10-17 13:26:11'),
+(744, 'Models', 'Documentation #11 created', 'App\\Models\\Documentation', 11, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 13:55:55', '2026-10-17 13:55:55'),
+(745, 'Models', 'Permission #55 updated', 'App\\Models\\Permission', 55, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 14:10:17', '2026-10-17 14:10:17'),
+(746, 'Access', 'Authentication session ended.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/developer\\/logout\",\"route\":\"filament.developer.auth.logout\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"tags\":[\"authentication\",\"logout\"]}', 'Logout', NULL, '2026-10-17 14:11:06', '2026-10-17 14:11:06'),
+(747, 'Access', 'Authentication failed.', NULL, NULL, NULL, NULL, '{\"success\":false,\"failure_reason\":\"Authentication credentials did not authenticate.\",\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"identifier_type\":\"email\",\"tags\":[\"authentication\",\"failure\"],\"risk\":\"high\"}', 'Login Failed', NULL, '2026-10-17 14:11:23', '2026-10-17 14:11:23'),
+(748, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 14:11:28', '2026-10-17 14:11:28'),
+(749, 'Access', 'Authentication session ended.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/logout\",\"route\":\"filament.admin.auth.logout\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"tags\":[\"authentication\",\"logout\"]}', 'Logout', NULL, '2026-10-17 14:11:38', '2026-10-17 14:11:38'),
+(750, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-17 14:11:46', '2026-10-17 14:11:46'),
+(751, 'Models', 'Access request #5 created', 'App\\Models\\AccessRequest', 5, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 14:13:35', '2026-10-17 14:13:35'),
+(752, 'Models', 'Permission #83 created', 'App\\Models\\Permission', 83, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 14:33:52', '2026-10-17 14:33:52'),
+(753, 'Models', 'Permission #84 created', 'App\\Models\\Permission', 84, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-17 14:33:52', '2026-10-17 14:33:52'),
+(754, 'Models', 'UserRoleAssignment #12 updated', 'App\\Models\\UserRoleAssignment', 12, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-17 15:09:11', '2026-10-17 15:09:11'),
+(755, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-18 01:59:04', '2026-10-18 01:59:04'),
+(756, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-18 07:27:39', '2026-10-18 07:27:39'),
+(757, 'Models', 'UserResourceAccess #18 created', 'App\\Models\\UserResourceAccess', 18, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-18 07:27:56', '2026-10-18 07:27:56'),
+(758, 'Models', 'UserRoleAssignment #13 created', 'App\\Models\\UserRoleAssignment', 13, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-18 07:37:08', '2026-10-18 07:37:08'),
+(759, 'Models', 'Access grant #4 created', 'App\\Models\\UserAccessGrant', 4, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-18 07:37:08', '2026-10-18 07:37:08'),
+(760, 'Models', 'Access request #5 updated', 'App\\Models\\AccessRequest', 5, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-18 07:37:08', '2026-10-18 07:37:08'),
+(761, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-18 08:09:30', '2026-10-18 08:09:30'),
+(762, 'Notifications', 'Client portal notification \"Notification for job test\" queued for 3 active user(s).', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"type\":\"general\",\"severity\":\"info\",\"recipient_count\":3,\"all_users\":true,\"team_count\":0,\"selected_user_count\":0,\"tags\":[\"notification\",\"client_portal\",\"queued\"]}', 'Notification Queued', NULL, '2026-10-18 08:23:56', '2026-10-18 08:23:56'),
+(763, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"developers\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-18 23:16:36', '2026-10-18 23:16:36'),
+(764, 'Access', 'Authentication failed.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":false,\"failure_reason\":\"Authentication credentials did not authenticate.\",\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"identifier_type\":\"email\",\"tags\":[\"authentication\",\"failure\"],\"risk\":\"high\"}', 'Login Failed', NULL, '2026-10-18 23:16:59', '2026-10-18 23:16:59'),
+(765, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-18 23:17:08', '2026-10-18 23:17:08'),
+(766, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-19 00:47:52', '2026-10-19 00:47:52'),
+(767, 'Access', 'Authentication session ended.', NULL, NULL, 'App\\Models\\Developer', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/logout\",\"route\":\"filament.admin.auth.logout\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"tags\":[\"authentication\",\"logout\"]}', 'Logout', NULL, '2026-10-19 00:56:04', '2026-10-19 00:56:04'),
+(768, 'Access', 'Authentication failed.', NULL, NULL, NULL, NULL, '{\"success\":false,\"failure_reason\":\"Authentication credentials did not authenticate.\",\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"identifier_type\":\"email\",\"tags\":[\"authentication\",\"failure\"],\"risk\":\"high\"}', 'Login Failed', NULL, '2026-10-19 00:56:12', '2026-10-19 00:56:12'),
+(769, 'Access', 'Authentication failed.', NULL, NULL, NULL, NULL, '{\"success\":false,\"failure_reason\":\"Authentication credentials did not authenticate.\",\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"identifier_type\":\"email\",\"tags\":[\"authentication\",\"failure\"],\"risk\":\"high\"}', 'Login Failed', NULL, '2026-10-19 00:56:20', '2026-10-19 00:56:20'),
+(770, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-19 00:56:25', '2026-10-19 00:56:25'),
+(771, 'Models', 'Access request #6 created', 'App\\Models\\AccessRequest', 6, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-19 03:18:18', '2026-10-19 03:18:18'),
+(772, 'Models', 'UserResourceAccess #19 created', 'App\\Models\\UserResourceAccess', 19, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-19 03:19:00', '2026-10-19 03:19:00'),
+(773, 'Models', 'UserRoleAssignment #14 created', 'App\\Models\\UserRoleAssignment', 14, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-19 03:19:00', '2026-10-19 03:19:00'),
+(774, 'Models', 'Access request #7 created', 'App\\Models\\AccessRequest', 7, 'App\\Models\\User', 5, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"created\"]}', 'Created', NULL, '2026-10-19 03:19:50', '2026-10-19 03:19:50'),
+(775, 'Models', 'User #6 updated', 'App\\Models\\User', 6, 'App\\Models\\User', 1, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\\/537.36 (KHTML, like Gecko) Chrome\\/154.0.0.0 Safari\\/537.36\",\"tags\":[\"model\",\"updated\"]}', 'Updated', NULL, '2026-10-19 03:21:22', '2026-10-19 03:21:22'),
+(776, 'Access', 'Authentication succeeded.', NULL, NULL, 'App\\Models\\User', 6, '{\"success\":true,\"url\":\"http:\\/\\/localhost:8000\\/livewire-27bd2a03\\/update\",\"route\":\"default-livewire.update\",\"method\":\"POST\",\"ip\":\"127.0.0.1\",\"user_agent\":\"Mozilla\\/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko\\/20100101 Firefox\\/140.0\",\"guard\":\"web\",\"remember\":false,\"tags\":[\"authentication\",\"login\"]}', 'Login', NULL, '2026-10-19 03:21:45', '2026-10-19 03:21:45');
 
 -- --------------------------------------------------------
 
@@ -636,15 +874,6 @@ CREATE TABLE `applications` (
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `applications`
---
-
-INSERT INTO `applications` (`id`, `project_id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(4, 2, 'eFOCuS', 'eFOCuS application environments.', 1, '2026-10-09 14:11:26', '2026-10-09 14:11:26'),
-(5, 2, 'Extra', 'Extra application environments.', 1, '2026-10-09 14:11:26', '2026-10-09 14:11:26'),
-(6, 2, 'CloudPrinting', 'CloudPrinting application environments.', 1, '2026-10-09 14:11:26', '2026-10-09 14:11:26');
 
 -- --------------------------------------------------------
 
@@ -669,6 +898,113 @@ CREATE TABLE `audit_logs` (
   `method` varchar(10) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `azure_alerts`
+--
+
+CREATE TABLE `azure_alerts` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `azure_alert_id` varchar(1024) DEFAULT NULL,
+  `name` varchar(255) NOT NULL,
+  `severity` varchar(10) NOT NULL,
+  `affected_resource` text DEFAULT NULL,
+  `target_resource_type` varchar(255) DEFAULT NULL,
+  `alert_condition` varchar(50) DEFAULT NULL,
+  `user_response` varchar(50) DEFAULT NULL,
+  `monitor_service` varchar(255) DEFAULT NULL,
+  `signal_type` varchar(255) DEFAULT NULL,
+  `fire_time` datetime DEFAULT NULL,
+  `last_modified_time` datetime DEFAULT NULL,
+  `subscription_id` varchar(100) NOT NULL,
+  `target_resource_group` varchar(255) DEFAULT NULL,
+  `suppression_status` varchar(50) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `azure_alerts`
+--
+
+INSERT INTO `azure_alerts` (`id`, `azure_alert_id`, `name`, `severity`, `affected_resource`, `target_resource_type`, `alert_condition`, `user_response`, `monitor_service`, `signal_type`, `fire_time`, `last_modified_time`, `subscription_id`, `target_resource_group`, `suppression_status`, `created_at`, `updated_at`) VALUES
+(1, 'c6cd1b35720140c1923a81c4ec782d8d3ca4ab9e378258188d35402904ef11a7', 'AA-Prod-DB-aapremrsvm01-HighDTU', 'Sev1', '/subscriptions/8a8c77f4-cb44-47ad-b56a-6682d97b36bb/resourcegroups/aa_rg01/providers/microsoft.sql/servers/aapremrsvm01/databases/aapremrsvm01', 'microsoft.sql/servers/databases', 'Fired', 'New', 'Platform', 'Metrics', '2026-10-13 16:44:28', '2026-10-13 16:44:28', '8a8c77f4-cb44-47ad-b56a-6682d97b36bb', 'aa_rg01', 'None', '2026-10-13 11:51:00', '2026-10-13 11:51:00'),
+(2, 'cc70f502d4df59223956b29d89809ff006bd579d474d7e64d1078e54d27fbbfb', 'miconic qa - 2woapi-miconic-qa-app-insights', 'Sev1', '/subscriptions/50d41c25-8668-4497-8925-766161f0cddb/resourcegroups/miconi-qa-rg-1/providers/microsoft.insights/components/miconic-qa-app-insights', 'microsoft.insights/components', 'Fired', 'New', 'Platform', 'Metrics', '2026-10-13 16:43:44', '2026-10-13 16:43:44', '50d41c25-8668-4497-8925-766161f0cddb', 'miconi-qa-rg-1', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(3, '045df36574884b30b682df2c2a27e68b7e53578c1dfab83db3051033c7f4bd41', 'miconic qa - internal-miconic-qa-app-insights', 'Sev1', '/subscriptions/50d41c25-8668-4497-8925-766161f0cddb/resourcegroups/miconi-qa-rg-1/providers/microsoft.insights/components/miconic-qa-app-insights', 'microsoft.insights/components', 'Fired', 'New', 'Platform', 'Metrics', '2026-10-13 16:42:43', '2026-10-13 16:42:43', '50d41c25-8668-4497-8925-766161f0cddb', 'miconi-qa-rg-1', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(4, '140202826a962c9670c5dfb550bd3bae494bed851925b5ec054879ab6082835b', 'boschrewards-dbdtu-iboschrewards', 'Sev3', '/subscriptions/dca0a650-722e-4755-bbce-f2b7f6ed0f9f/resourcegroups/iboschresources/providers/microsoft.sql/servers/iboschdbs/databases/iboschrewards', 'microsoft.sql/servers/databases', 'Fired', 'New', 'Platform', 'Metrics', '2026-10-13 16:41:45', '2026-10-13 16:41:45', 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'iboschresources', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(5, '258551c46516481cb45749b77121d3e04ab6562ddd3727d894a9b00ab6053642', 'EFOCUSQSQL02 - VM has been deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqsql02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(6, '2c2477d050ceea2464e74b45df510b66773df93eea63ae1feb4fd59307bbfa4b', 'EFOCUSQRDS02 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqrds02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(7, 'a8d7a8cd9f8a0d2c01221217d29b36504e68c4653090db84a2a03591a1b78f06', 'EFOCUSQSQL02 - VM has been deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqsql02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(8, '87e439fda3803a9b77c7e9c85c5206eb971804a83ddfb6ab71344ca29b33b4a4', 'EFOCUSQSQL02 - VM has been deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqsql02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(9, '5e187f6431f88492fa77d8e4a95ac7d45f644a889bae36462d0b877266c176c6', 'EFOCUSQRDS02 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqrds02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(10, '14c9df0fde74a4c12148254bd23cd5fa283b6c28fede8d2e6206b9d067acfc63', 'EFOCUSNAS05 - VM has been deallocated - Critical', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas05', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(11, '62992f3161feb7d300b540644b116f261ce701f6c52e3fe63268a7fd9f465963', 'EFOCUSQRDS02 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqrds02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(12, '23072a9846b29fc088e2350fda831b365a6f163e3c5cac02ffe91064c0955bb8', 'EFOCUSQNAS06 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas06', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(13, '7e096edbd8ad6e8555d281872f34fa23ca81d655f6551acf379067e7d20757d4', 'EFOCUSQNAS06 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas06', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:49', '2026-10-13 15:41:49', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(14, 'ab758e7dc348b736e4f3e7a0a1365bea04062a806e44e7657eb2679a2da2dd8c', 'EFOCUSQNAS06 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas06', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:48', '2026-10-13 15:41:48', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(15, '939bc3083a5420436d84e8522168ddd7262e9d3468f31f52ffb03cac1ac969ac', 'EFOCUSNAS05 - VM has been deallocated - Critical', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas05', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:41:48', '2026-10-13 15:41:48', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(16, '444cc881373cb3500077a2a8761a274bd4ea0b6dd5ccb1d93da9a146c4fa9df9', 'BoschRewards-Info_Planned Monthly DTU update activity', 'Sev4', '/subscriptions/dca0a650-722e-4755-bbce-f2b7f6ed0f9f/resourcegroups/iboschresources/providers/microsoft.sql/servers/iboschdbs/elasticpools/iboschelastic', 'microsoft.sql/servers/elasticpools', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 15:26:09', '2026-10-13 15:26:09', 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'iboschresources', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(17, '3ab075d962d2387a00e0b411276e7ee7f120ec310319cca457d8975591d9a30b', 'cmsprod-cms-prod-appinsights01', 'Sev1', '/subscriptions/fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8/resourcegroups/claims-management-production-rg01/providers/microsoft.insights/components/cms-prod-appinsights01', 'microsoft.insights/components', 'Fired', 'New', 'Platform', 'Metrics', '2026-10-13 14:37:18', '2026-10-13 14:37:18', 'fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', 'claims-management-production-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(18, '19ae1b1f866f56682ab83d59595995426d7506e7fbdf5b7837bf356d21180892', 'AGW01-RequestPerHour-ExtraPROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 14:15:04', '2026-10-13 14:15:04', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(19, '615c9d821598774c254519b20ec53196881853dd0e2857d722c80fd0aa5ea33a', 'AG-request-per-hour-Extra-QA-platform', 'Sev1', '/subscriptions/c080fc5b-797d-45db-b089-01cc05f9a758/resourcegroups/extra-qa-rg01/providers/microsoft.network/applicationgateways/extra-qa-appgw-platform01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 13:51:39', '2026-10-13 13:51:39', 'c080fc5b-797d-45db-b089-01cc05f9a758', 'extra-qa-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(20, 'e245c75ab6b207a0374d82597d497b77df898870cafb9b9c2c7ff56b4160c37a', 'EFOCUSQRDS02 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqrds02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:31:51', '2026-10-13 13:31:51', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(21, 'f5626e96d7a1c45c4d508c293f6aa490bdac30aa093fd12705f15ca6166bd656', 'EFOCUSQSQL02 - VM has been deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqsql02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:31:51', '2026-10-13 13:31:51', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(22, '8f762606259920ac0f33fce38142dd385b15a1de4b3dc899b4afbdf1d76c08f2', 'EFOCUSQSQL02 - VM has been deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqsql02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:31:51', '2026-10-13 13:31:51', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(23, 'e90de8b40939078fd7c6754fe6767f7bbf5684348077f6829d0b54d99d90d5ab', 'EFOCUSQRDS02 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqrds02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:51', '2026-10-13 13:26:51', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(24, '8928efc82234d80c2537c4c11e4f288bb3c6b08891801e2bd5b6b4a82d97d204', 'EFOCUSQNAS06 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas06', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(25, '7d6dda29d70ebb05873bb3e7dbb73befe96c7ea7347f602d9dec83141083efcf', 'EFOCUSQNAS06 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas06', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(26, '2cadf8f73660fafe798cead2c698078f56a8e6ed3863f5120446a1d727d9bcfd', 'EFOCUSNAS05 - VM has been deallocated - Critical', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas05', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(27, '80a171e392f096e80db9f6fdd0de9c0a4fcd68e1b45c5d1abb60921efaf04be0', 'EFOCUSQNAS06 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas06', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(28, '19e6d33b40cb81aa6fb59bfefc72c63e4b2b636d24184e702f63f7f36f6aee82', 'EFOCUSNAS05 - VM has been deallocated - Critical', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas05', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(29, '8cd4544ed7a9bd499e1df587534fbd1a0c95e08da3e99148408af04657a7f75a', 'EFOCUSQRDS02 - VM has been Deallocated - Warning', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqrds02', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(30, '5837048793ad997ab84b29a6a988b9d90577b85de252a8612083163653d56966', 'EFOCUSNAS05 - VM has been deallocated - Critical', 'Sev4', '/subscriptions/7498780e-1785-465f-9d50-c8ac1e929376/resourcegroups/efocus-qty-compute-rg02/providers/microsoft.compute/virtualmachines/efocusqnas05', 'microsoft.compute/virtualmachines', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 13:26:50', '2026-10-13 13:26:50', '7498780e-1785-465f-9d50-c8ac1e929376', 'efocus-qty-compute-rg02', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(31, '63db90e6c8a12d97f5a00c136c13592da5c632397559319f871f9d6e3bfdae85', 'AGW01-RequestPerHour-ExtraPROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 13:15:05', '2026-10-13 13:15:05', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(32, '54e5024006261dd8d23828f1cb88ae6deb2fc5799e921f5ee2dbb69da921d736', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:59:31', '2026-10-13 12:59:31', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(33, '12343712c766ff7c4eda8f1282ab50486deacd1d09a39918b52acafcfa63f9f7', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:59:25', '2026-10-13 12:59:25', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(34, '50803a18f35f37009ca18df77ef38530abd29fc5266d8978daf65a7047d07a95', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:49:23', '2026-10-13 12:49:23', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(35, 'bbd68ca7713fb6b3288fbb504022f0e8a8904d93c62adf1d598f985b5e1f29de', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:39:35', '2026-10-13 12:39:35', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(36, '3d14acac2609f550c7d67695b293433f250b9c8780101d1d38304ef263ea3f20', 'AGw01-requestPerHour-extra-PROD', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:36:33', '2026-10-13 12:36:33', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(37, '1f037987d23d81b549447ec965118163b31ae0bd56a4b965323c9204f45ae444', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:34:39', '2026-10-13 12:34:39', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(38, 'add9c7ad22177131c6ca422cdc222fd2c203c1838443cc843ec4d38585342d47', 'AGW01-RequestPerHour-ExtraPROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:15:04', '2026-10-13 12:15:04', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(39, '4b1ef7c76a564f8dad0727fda7fa7c186a51d82dbd219d13a607150276c81df2', 'AGw02-requestPerHour-extra-PROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 12:14:08', '2026-10-13 12:14:08', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(40, '50ece6f5ea2fca3c8b8a24a4550f9ce12f007df4e4b62b072c72e6018f1324e8', 'extraplatform-prod-appgw01-401error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 11:58:44', '2026-10-13 11:58:44', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(41, '4c14d2bd1e3905d7f907a885f5eeeeed65e4bd6cb621ed033a826508595d8146', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 11:54:20', '2026-10-13 11:54:20', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(42, 'ab0b26b1d1bb4213a0361babd3836597fc0bbd8b8bc2673fabc2f4c181107bcc', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 11:44:23', '2026-10-13 11:44:23', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(43, '10f32bf942ddfbabb031fd783a764cd253b42b7bb73fafa9217e6253a4161416', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 11:39:33', '2026-10-13 11:39:33', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(44, '76ac69e9da674528e771f6bd0ac7d67e3b6d3c8d1d75c43b4885a30c29419dc3', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 11:34:22', '2026-10-13 11:34:22', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(45, '6a307fae3e7df07a753e07cc4b3b9abc9f41c4e0990d2abe72ee486f1b3a4fbd', 'Defender-SecureScore-Below-85', 'Sev2', '/subscriptions/8c9dacf9-577b-4129-b900-2c6c9e39c3dd', 'microsoft.resources/subscriptions', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 10:51:08', '2026-10-13 10:51:08', '8c9dacf9-577b-4129-b900-2c6c9e39c3dd', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(46, '333b29f109c44539831069471cfe236ddf53aa81c8f8e394f506d4de7d9c17c4', 'Security Score below 80', 'Sev2', '/subscriptions/77839ff3-b3aa-42b0-b490-55830c14bd3a', 'microsoft.resources/subscriptions', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 10:17:44', '2026-10-13 10:17:44', '77839ff3-b3aa-42b0-b490-55830c14bd3a', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(47, '0fdb2862261d2440c22c7f50837ab91864aea1530ac51126457809a18af2afa0', 'AGW01-RequestPerHour-ExtraPROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 09:15:05', '2026-10-13 09:15:05', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(48, '682f62e8a62fd1e67453c5f19407848372a39d0f908b0f6c221bd11fec3030f8', 'AG-request-per-hour-Extra-QA-platform', 'Sev1', '/subscriptions/c080fc5b-797d-45db-b089-01cc05f9a758/resourcegroups/extra-qa-rg01/providers/microsoft.network/applicationgateways/extra-qa-appgw-platform01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 08:54:10', '2026-10-13 08:54:10', 'c080fc5b-797d-45db-b089-01cc05f9a758', 'extra-qa-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(49, 'e26a5ffddf4670f4f9f18895a5224c0f4cf15cbcde37d0171e6c3059dd107a1b', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 08:44:21', '2026-10-13 08:44:21', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(50, '94746a308df22ecd9149297b72df57bf99401cefe2b71ed049dd1f57ba4a63ce', 'Defender-SecureScore-Below-85', 'Sev2', '/subscriptions/c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'microsoft.resources/subscriptions', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 08:39:28', '2026-10-13 08:39:28', 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(51, '0c4f71a9b1d3b949581601927cf5144ecc92469aea8dd83061960d348078d3c2', 'AGW01-RequestPerHour-ExtraPROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 08:22:37', '2026-10-13 08:22:37', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(52, 'bac91bdc31ecba24bbe8b95b0a6607adad3623211309d8ae2f5b7e1d03092473', 'extraplatform-prod-appgw01-403error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 08:05:21', '2026-10-13 08:05:21', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(53, '1723c02a0941ffecc652db36264c0132583bb28734af914c79d968293e62d259', 'AG-request-per-hour-Extra-QA-platform', 'Sev1', '/subscriptions/c080fc5b-797d-45db-b089-01cc05f9a758/resourcegroups/extra-qa-rg01/providers/microsoft.network/applicationgateways/extra-qa-appgw-platform01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 07:59:10', '2026-10-13 07:59:10', 'c080fc5b-797d-45db-b089-01cc05f9a758', 'extra-qa-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(54, 'be3ed261c99bb83f49c31e6f605cf664dc8a6e254dda8614c366a499f2a9f520', 'AG-request-per-hour-Extra-QA-platform', 'Sev1', '/subscriptions/c080fc5b-797d-45db-b089-01cc05f9a758/resourcegroups/extra-qa-rg01/providers/microsoft.network/applicationgateways/extra-qa-appgw-platform01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 06:59:12', '2026-10-13 06:59:12', 'c080fc5b-797d-45db-b089-01cc05f9a758', 'extra-qa-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(55, '6da188fe2d461f8fff898601906ec210d002fd2ef658a859874c2d3def22e0fa', 'Security Alert_EAP', 'Sev2', '/subscriptions/6c389f01-77d0-4c2c-b846-8dfa36987531', 'microsoft.resources/subscriptions', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 06:29:28', '2026-10-13 06:29:28', '6c389f01-77d0-4c2c-b846-8dfa36987531', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(56, 'ccd97130a46744abe44bacdde83557de022ebd0b676ab10ed52540f3a60d8827', 'Defender-SecureScore-Below-80', 'Sev2', '/subscriptions/c12d79d2-0655-4caa-839e-fc47e019271c', 'microsoft.resources/subscriptions', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 06:04:26', '2026-10-13 06:04:26', 'c12d79d2-0655-4caa-839e-fc47e019271c', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(57, '27d9c1d7dbf216aa855c997041ccbaa35d06b687e01eb60ffc4464b3d2fa0b05', 'extraplatform-prod-appgw02-403Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 05:58:18', '2026-10-13 05:58:18', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(58, '272a57e4188d30e3e0134613be83f0fc2eb37e1268fda8bddfcab9613f19c5c1', 'extraplatform-prod-appgw02-403Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 05:43:20', '2026-10-13 05:43:20', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(59, '24d6a98c31dfd134b6456036d7472ee55e3a98b855d669e45f0d1c670a7bc97f', 'extraplatform-prod-appgw02-503Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 05:34:35', '2026-10-13 05:34:35', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(60, '0eeafdafe6d5ed3469b2d9e13a948dd59db639d0357367fa4fbc18bddd9e245d', 'Defender-SecureScore-Below-85', 'Sev2', '/subscriptions/1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', 'microsoft.resources/subscriptions', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 05:30:35', '2026-10-13 05:30:35', '1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(61, '599726feb04886523747526e86b0c7a6020751cef9aa82060a6b83a2a671c682', 'extraplatform-prod-appgw02-403Error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 05:05:50', '2026-10-13 05:05:50', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(62, '7b29309b98f741b8b5da46dd443bc47638200d355d45a82ae9b4b77489712062', 'extraplatform-prod-AllWindows-DiskAlert', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.operationalinsights/workspaces/extraplatform-prod-loganalytics', 'microsoft.operationalinsights/workspaces', 'Fired', 'New', 'Log Analytics', 'Log search', '2026-10-13 03:53:02', '2026-10-13 03:53:02', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'Suppressed', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(63, '75aa69a45f1ca6ac84b3d718d863a75061015f181fbbdfc1ec4c6c61c82178c4', 'extraplatform-prod-AllWindows-DiskAlert', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.operationalinsights/workspaces/extraplatform-prod-loganalytics', 'microsoft.operationalinsights/workspaces', 'Fired', 'New', 'Log Analytics', 'Log search', '2026-10-13 03:47:51', '2026-10-13 03:47:51', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(64, '7fc5cba3c90bf9cc1f3d327e6a5cd4fcaa32e92e6abc63f38145553a9771ff93', 'boschrewrdshttpreqappsvc', 'Sev3', '/subscriptions/dca0a650-722e-4755-bbce-f2b7f6ed0f9f/resourcegroups/iboschresources/providers/microsoft.web/sites/iboschcouponrewardswcfmobile', 'microsoft.web/sites', 'Fired', 'New', 'Platform', 'Metrics', '2026-10-13 02:43:14', '2026-10-13 02:43:14', 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'iboschresources', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(65, 'c7df65195b1514d888c9549b00e8aec813c2fd14047492ca03ba7be55b9142a1', 'AGw02-requestPerHour-extra-PROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 02:14:09', '2026-10-13 02:14:09', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(66, 'be37e10ab2f324be1bbaf94cac1df3771bb57a7f87b68295a96a8b81f8cd4d41', 'AGw02-requestPerHour-extra-PROD', 'Sev2', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 01:14:08', '2026-10-13 01:14:08', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(67, 'efd03d3d5eca1d0adc538dc20e8c4c20b4472ac47950e6cadcb86847b616aa1a', 'BoschRewards-Info_Planned Monthly DTU update activity', 'Sev4', '/subscriptions/dca0a650-722e-4755-bbce-f2b7f6ed0f9f/resourcegroups/iboschresources/providers/microsoft.sql/servers/iboschdbs/elasticpools/iboschelastic', 'microsoft.sql/servers/elasticpools', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-13 00:31:08', '2026-10-13 00:31:08', 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'iboschresources', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(68, '208e0cbfd03853ec030ee6cb9ad07928fd2d48e58f4f4aecfaffa6eb2e88d6b8', 'Rate-Limited for admin and customer login', 'Sev0', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw02', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-13 00:03:02', '2026-10-13 00:03:02', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(69, 'c6cf7515fc7bf5a4153a05eae3c7679dbcc4950cf2257ffcdfaac7bd4cec2261', 'AAextraplatform-Prod-Servicehealth', 'Sev4', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'microsoft.resources/subscriptions', 'Fired', 'New', 'ServiceHealth', 'Service health', '2026-10-12 23:42:37', '2026-10-12 23:42:37', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(70, 'a54d24e0f83ec8f22038f59d8dfaa06d9638c046c8a5067f41294ef5d45866f2', 'AA Extra- Dev - Service Health alert', 'Sev4', '/subscriptions/77839ff3-b3aa-42b0-b490-55830c14bd3a', 'microsoft.resources/subscriptions', 'Fired', 'New', 'ServiceHealth', 'Service health', '2026-10-12 23:39:58', '2026-10-12 23:39:58', '77839ff3-b3aa-42b0-b490-55830c14bd3a', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(71, '877e1875d7b34b19506d6862b19279d1e099b189d1c1a45df861d6622aed3581', 'AAextraplatform-QA-Servicehealth', 'Sev4', '/subscriptions/c080fc5b-797d-45db-b089-01cc05f9a758', 'microsoft.resources/subscriptions', 'Fired', 'New', 'ServiceHealth', 'Service health', '2026-10-12 23:35:34', '2026-10-12 23:35:34', 'c080fc5b-797d-45db-b089-01cc05f9a758', NULL, 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(72, '9e3ce32eadf6e5bf68a735cb010599e816c9736a7ff3e1d3499d51cebd377e93', 'extraplatform-prod-appgw01-403error', 'Sev1', '/subscriptions/1c119a3d-5a21-4652-8e7f-e8b55c8635f5/resourcegroups/extraplatform-prod-emea-rg01/providers/microsoft.network/applicationgateways/extraplatform-prod-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-12 22:08:32', '2026-10-12 22:08:32', '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'extraplatform-prod-emea-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(73, '1e0b928447a2e7e7595bc5d036db0123ab2a88ad9782e89a4348c77e8be90fb9', 'Exim - Prod-Administrative activities', 'Sev4', '/subscriptions/c12d79d2-0655-4caa-839e-fc47e019271c/resourcegroups/exim-interface-prd/providers/microsoft.apimanagement/service/exim-interface-prd-apim', 'microsoft.apimanagement/service', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-12 20:36:47', '2026-10-12 20:36:47', 'c12d79d2-0655-4caa-839e-fc47e019271c', 'exim-interface-prd', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(74, '9999cb5bda104e4e94d6593f4b703a1a63db9b5233371230e1cf982001f9788f', 'Exim- Administrative Activity logs', 'Sev4', '/subscriptions/c12d79d2-0655-4caa-839e-fc47e019271c/resourcegroups/exim-interface-prd/providers/microsoft.apimanagement/service/exim-interface-prd-apim', 'microsoft.apimanagement/service', 'Fired', 'New', 'ActivityLog Administrative', 'Activity log', '2026-10-12 20:36:47', '2026-10-12 20:36:47', 'c12d79d2-0655-4caa-839e-fc47e019271c', 'exim-interface-prd', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01'),
+(75, 'dd4498f73ee5ce9c002b7d0d3b3970893efd4b3798c266d4c5fca9cecd6f47f8', 'extraplatform-qa-appgw01-404error', 'Sev3', '/subscriptions/c080fc5b-797d-45db-b089-01cc05f9a758/resourcegroups/extra-qa-rg01/providers/microsoft.network/applicationgateways/extraplatform-qa-appgw01', 'microsoft.network/applicationgateways', 'Fired', 'New', 'Log Alerts V2', 'Log search', '2026-10-12 19:01:02', '2026-10-12 19:01:02', 'c080fc5b-797d-45db-b089-01cc05f9a758', 'extra-qa-rg01', 'None', '2026-10-13 11:51:01', '2026-10-13 11:51:01');
 
 -- --------------------------------------------------------
 
@@ -814,8 +1150,8 @@ INSERT INTO `azure_subscriptions` (`subscription_id`, `display_name`, `applicati
 ('02ab4266-3406-48d4-bfbc-76605dde11d7', 'RBIN-BDO-web-mobile-PROD', NULL, NULL, NULL, 'Degraded', 53.35, 972.31, '2026-09-26 15:38:20'),
 ('0e6dc52f-1c64-4d5a-9396-29e37fa41079', 'AA-AS-EIT2-Prod', NULL, NULL, NULL, 'Healthy', 91.07, 23014.95, '2026-09-26 15:36:48'),
 ('12db631f-5ab4-4237-9fa6-6d92de7a53e8', 'OT-RBIN-BCS1-InsiderLens-Prod', NULL, NULL, NULL, 'Warning', 80.00, 290.37, '2026-09-26 15:38:09'),
-('19fb36f7-0105-4d68-be29-02c3934a2abc', 'AA-GPM-BoschCloudPrinting-QA', 6, 'QA', NULL, 'Healthy', 89.63, 1511.27, '2026-10-09 19:41:26'),
-('1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'MA-SKX-eXtra-Production-Stage-Prod', 5, 'PROD', NULL, 'Warning', 84.92, 5863.72, '2026-10-09 19:41:26'),
+('19fb36f7-0105-4d68-be29-02c3934a2abc', 'AA-GPM-BoschCloudPrinting-QA', NULL, 'QA', NULL, 'Healthy', 89.63, 1511.27, '2026-10-09 19:41:26'),
+('1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'MA-SKX-eXtra-Production-Stage-Prod', NULL, 'PROD', NULL, 'Warning', 84.92, 5863.72, '2026-10-09 19:41:26'),
 ('1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', 'AA-ICO-IN-Azure-QA', NULL, NULL, NULL, 'Warning', 80.43, 261.75, '2026-09-26 15:37:01'),
 ('219ccbf6-e35b-4758-961a-ede690403d86', 'Hamro-Bosch', NULL, NULL, NULL, 'Healthy', 86.96, 132.08, '2026-09-26 15:39:07'),
 ('2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'AA-SMS3-NA-PBAP-Prod', NULL, NULL, NULL, 'Warning', 80.95, 1694.31, '2026-09-26 15:37:59'),
@@ -825,15 +1161,15 @@ INSERT INTO `azure_subscriptions` (`subscription_id`, `display_name`, `applicati
 ('5b46ccc6-604b-4c5c-81c2-96b133061773', 'AA-SMS3-NA-BAP5.0-Dev', NULL, NULL, NULL, 'Healthy', 87.29, 503.93, '2026-09-26 15:37:52'),
 ('6b8e63a8-5397-4d83-9b49-164067a4e892', 'XC_Production_XC/ENG-Bp_866512', NULL, NULL, NULL, 'Degraded', 0.00, 0.00, '2026-09-26 15:36:35'),
 ('6c389f01-77d0-4c2c-b846-8dfa36987531', 'EAP Sandbox', NULL, NULL, NULL, 'Healthy', 90.51, 148.75, '2026-09-26 15:39:20'),
-('7498780e-1785-465f-9d50-c8ac1e929376', 'AA-ICO-IN-eFOCuS-QA', 4, 'QA', NULL, 'Healthy', 91.47, 426.17, '2026-10-09 19:41:26'),
-('77839ff3-b3aa-42b0-b490-55830c14bd3a', 'MA-SKX-eXtra-Dev-Stage-Dev', 5, 'DEV', NULL, 'Warning', 78.57, 1167.13, '2026-10-09 19:41:26'),
+('7498780e-1785-465f-9d50-c8ac1e929376', 'AA-ICO-IN-eFOCuS-QA', NULL, 'QA', NULL, 'Healthy', 91.47, 426.17, '2026-10-09 19:41:26'),
+('77839ff3-b3aa-42b0-b490-55830c14bd3a', 'MA-SKX-eXtra-Dev-Stage-Dev', NULL, 'DEV', NULL, 'Warning', 78.57, 1167.13, '2026-10-09 19:41:26'),
 ('8a8c77f4-cb44-47ad-b56a-6682d97b36bb', 'AA-ICO-IN-AA-Dashboard-Prod', NULL, NULL, NULL, 'Healthy', 87.12, 1494.64, '2026-09-26 15:37:32'),
 ('8c9dacf9-577b-4129-b900-2c6c9e39c3dd', 'Hamro Bosch Prod', NULL, NULL, NULL, 'Warning', 82.61, 323.00, '2026-09-26 15:39:13'),
 ('a77eebf3-17a1-4378-90bf-2c96b1028137', 'AA-SMS3-NA-QA', NULL, NULL, NULL, 'Healthy', 90.48, 1370.51, '2026-09-26 15:38:03'),
-('c080fc5b-797d-45db-b089-01cc05f9a758', 'MA-SKX-eXtra-Promo-Stage-QA', 5, 'QA', NULL, 'Healthy', 87.57, 3900.99, '2026-10-09 19:41:26'),
+('c080fc5b-797d-45db-b089-01cc05f9a758', 'MA-SKX-eXtra-Promo-Stage-QA', NULL, 'QA', NULL, 'Healthy', 87.57, 3900.99, '2026-10-09 19:41:26'),
 ('c12d79d2-0655-4caa-839e-fc47e019271c', 'OT-RBIN-GS-EXIMPortal-Prod', NULL, NULL, NULL, 'Degraded', 69.05, 465.59, '2026-09-26 15:38:42'),
-('c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'AA-ICO-IN-eFOCuS-Prod', 4, 'PROD', NULL, 'Healthy', 92.26, 2391.48, '2026-10-09 19:41:26'),
-('d26dd531-2174-4c45-a240-032e0d05dfa0', 'AA-GPM-BoschCloudPrinting-Prod', 6, 'PROD', NULL, 'Warning', 75.85, 4243.84, '2026-10-09 19:41:26'),
+('c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'AA-ICO-IN-eFOCuS-Prod', NULL, 'PROD', NULL, 'Healthy', 92.26, 2391.48, '2026-10-09 19:41:26'),
+('d26dd531-2174-4c45-a240-032e0d05dfa0', 'AA-GPM-BoschCloudPrinting-Prod', NULL, 'PROD', NULL, 'Warning', 75.85, 4243.84, '2026-10-09 19:41:26'),
 ('d357b6e3-c707-4e36-8681-ba7ef9e30e8a', 'BD-PIP1-HardenedImages-Prod', NULL, NULL, NULL, 'Degraded', 0.00, 0.00, '2026-09-26 15:36:41'),
 ('dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'AA-ICO-IN-BoschRewards-Prod', NULL, NULL, NULL, 'Healthy', 94.94, 3325.95, '2026-09-26 15:37:19'),
 ('e6800a5e-47c7-47df-8bf8-fc2c616e1442', 'CI-DAE1.5-ASCWorkShop-QA', NULL, NULL, NULL, 'Degraded', 0.00, 0.00, '2026-09-26 15:36:54'),
@@ -1536,6 +1872,30 @@ INSERT INTO `billing_resources` (`resource_id`, `subscription_id`, `name`, `reso
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `business_units`
+--
+
+CREATE TABLE `business_units` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `business_units`
+--
+
+INSERT INTO `business_units` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'MA-BDO', 'MA-BDO Team - Business, App & Security', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
+(2, 'RBIN', 'RBIN Projects', '2026-10-08 10:55:55', '2026-10-08 10:55:55'),
+(3, 'Others', 'Other Subscriptions', '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
+(4, 'MA', 'Mobility Aftermarket', '2026-10-10 10:17:30', '2026-10-10 10:17:30');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `cache`
 --
 
@@ -1550,9 +1910,9 @@ CREATE TABLE `cache` (
 --
 
 INSERT INTO `cache` (`key`, `value`, `expiration`) VALUES
-('ccod-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6', 'i:2;', 1791892826),
-('ccod-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6:timer', 'i:1791892826;', 1791892826),
-('ccod-cache-settings.App\\Settings\\StylingSettings', 's:655:\"O:28:\"App\\Settings\\StylingSettings\":15:{s:10:\"brand_name\";s:4:\"CCOD\";s:10:\"logo_light\";s:53:\"branding/8Xc3AklNf8s3Oq4838h4Cy7QIzdAakWt8YeVCYZo.png\";s:9:\"logo_dark\";s:53:\"branding/Wn3DHqP0ClHFSqry3kLpzSTskBH8bbm2OD4Av4A9.png\";s:7:\"favicon\";s:53:\"branding/DvMn4qkpi5yeO7K0yIde37uYBTepTIFn85iERIBM.png\";s:13:\"primary_color\";s:5:\"amber\";s:13:\"success_color\";s:5:\"green\";s:13:\"warning_color\";s:3:\"red\";s:12:\"danger_color\";s:3:\"red\";s:10:\"info_color\";s:4:\"cyan\";s:10:\"gray_color\";s:4:\"gray\";s:13:\"custom_colors\";a:0:{}s:13:\"corner_radius\";s:8:\"0.375rem\";s:16:\"light_mode_theme\";s:4:\"zinc\";s:15:\"dark_mode_theme\";s:5:\"black\";s:24:\"_settingsLoadedFromCache\";b:1;}\";', 2107254276);
+('ccod-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6', 'i:1;', 1792399965),
+('ccod-cache-livewire-rate-limiter:16d36dff9abd246c67dfac3e63b993a169af77e6:timer', 'i:1792399965;', 1792399965),
+('ccod-cache-settings.App\\Settings\\StylingSettings', 's:655:\"O:28:\"App\\Settings\\StylingSettings\":15:{s:10:\"brand_name\";s:4:\"CCOD\";s:10:\"logo_light\";s:53:\"branding/8Xc3AklNf8s3Oq4838h4Cy7QIzdAakWt8YeVCYZo.png\";s:9:\"logo_dark\";s:53:\"branding/Wn3DHqP0ClHFSqry3kLpzSTskBH8bbm2OD4Av4A9.png\";s:7:\"favicon\";s:53:\"branding/DvMn4qkpi5yeO7K0yIde37uYBTepTIFn85iERIBM.png\";s:13:\"primary_color\";s:5:\"amber\";s:13:\"success_color\";s:5:\"green\";s:13:\"warning_color\";s:3:\"red\";s:12:\"danger_color\";s:3:\"red\";s:10:\"info_color\";s:4:\"cyan\";s:10:\"gray_color\";s:4:\"gray\";s:13:\"custom_colors\";a:0:{}s:13:\"corner_radius\";s:8:\"0.375rem\";s:16:\"light_mode_theme\";s:4:\"zinc\";s:15:\"dark_mode_theme\";s:5:\"black\";s:24:\"_settingsLoadedFromCache\";b:1;}\";', 2107690958);
 
 -- --------------------------------------------------------
 
@@ -1612,10 +1972,15 @@ CREATE TABLE `documentations` (
 --
 
 INSERT INTO `documentations` (`id`, `title`, `slug`, `content`, `author_id`, `created_at`, `updated_at`) VALUES
-(2, 'Project Details', 'project-details', 'This is a test document created to store project details for the **subscription.**\n\n> This is a quote test.\n\n* Hello 1\n* Hello 2\n* Hello 3', 1, '2026-10-09 16:02:31', '2026-10-09 16:02:31'),
+(2, 'Project Details', 'project-details', 'This is a test document created to store project details for the **subscription.**\n\n# Header 1\n## Header 2\n### Header 3\n#### Header 4\n##### Header 5\n##### Header 6\n\n*Some text in italics*\n\n~~Strikethrough text~~\n\n> This is a quote.\n\nUnordered list:\n\n* Hello 1\n* Hello 2\n* Hello 3\n\nOrdered list:\n\n1. Hello 1\n2. Hello 2\n3. Hello 3\n\n| Column 1 | column 2 |\n|--|--|\n| Row 1 | Row 2 |\n\n```\nprint(\"Hello! World\");\n```\n\n**Link:**\n\n[Link to google search](https://google.com)\n\nImage:\n\n\n![](http://localhost:8000/storage/PTFgRTOsdc0IfJIYZRKTawhtOHRurIiKs1yI5BGc.png)', 1, '2026-10-09 16:02:31', '2026-10-13 22:44:49'),
 (3, 'New document for Audit test', 'audit-test-doc', 'This is a new document created merely for audit testing.', 1, '2026-10-10 02:47:15', '2026-10-10 02:47:15'),
 (4, 'Test article again', 'test-article-again', 'This is ', 1, '2026-10-11 03:30:11', '2026-10-11 03:30:11'),
-(5, 'Test document creation', 'test-document-creation', 'This document was created to check session persistence', 1, '2026-10-13 02:13:15', '2026-10-13 02:13:15');
+(5, 'Test document creation', 'test-document-creation', 'This document was created to check session persistence', 1, '2026-10-13 02:13:15', '2026-10-13 02:13:15'),
+(7, 'Role permission test note', 'role-permission-test-note', 'This note was created to test the role permission settings', 5, '2026-10-17 04:06:38', '2026-10-17 04:06:38'),
+(8, 'Commit before notification queue implementation', 'commit-before-notification-queue-implementation', 'da2dfa870025f8420f7e01a830b2dc0e0dacab64 - Show assigned users when blocking role deletion ', 1, '2026-10-17 11:59:13', '2026-10-17 11:59:13'),
+(9, 'Starting the notification worker', 'starting-the-notification-worker', 'php artisan queue:work database', 1, '2026-10-17 12:03:02', '2026-10-17 12:03:02'),
+(10, 'Commit before auth and fetching check', 'commit-before-auth-and-fetching-check', 'This commit 145f4c5d1bbccd6caf2bb46956d6f8f936b52821 implements the notification queue and is right before the authorization and db fetch was improvised.', 1, '2026-10-17 12:25:06', '2026-10-17 12:25:06'),
+(11, 'View role page fix commit', 'view-role-page-fix-commit', 'a20f0f6c9fcb64cccec0b6fa58e5ee07d80171c5', 1, '2026-10-17 13:55:55', '2026-10-17 13:55:55');
 
 -- --------------------------------------------------------
 
@@ -1648,13 +2013,6 @@ CREATE TABLE `jobs` (
   `available_at` int(10) UNSIGNED NOT NULL,
   `created_at` int(10) UNSIGNED NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `jobs`
---
-
-INSERT INTO `jobs` (`id`, `queue`, `payload`, `attempts`, `reserved_at`, `available_at`, `created_at`) VALUES
-(1, 'default', '{\"uuid\":\"b184729c-4d7f-4795-b49d-42cb3de68c72\",\"displayName\":\"TomaszBoloz\\\\LaravelUpdater\\\\Jobs\\\\RunTask\",\"job\":\"Illuminate\\\\Queue\\\\CallQueuedHandler@call\",\"maxTries\":1,\"maxExceptions\":null,\"failOnTimeout\":false,\"backoff\":null,\"timeout\":3600,\"retryUntil\":null,\"data\":{\"commandName\":\"TomaszBoloz\\\\LaravelUpdater\\\\Jobs\\\\RunTask\",\"command\":\"O:39:\\\"TomaszBoloz\\\\LaravelUpdater\\\\Jobs\\\\RunTask\\\":17:{s:4:\\\"task\\\";s:5:\\\"check\\\";s:7:\\\"package\\\";N;s:3:\\\"job\\\";N;s:10:\\\"connection\\\";N;s:5:\\\"queue\\\";N;s:12:\\\"messageGroup\\\";N;s:12:\\\"deduplicator\\\";N;s:5:\\\"delay\\\";N;s:11:\\\"afterCommit\\\";N;s:10:\\\"middleware\\\";a:0:{}s:7:\\\"chained\\\";a:0:{}s:15:\\\"chainConnection\\\";N;s:10:\\\"chainQueue\\\";N;s:19:\\\"chainCatchCallbacks\\\";N;s:5:\\\"tries\\\";i:1;s:7:\\\"timeout\\\";i:3600;s:9:\\\"uniqueFor\\\";i:3600;}\",\"batchId\":null},\"createdAt\":1791621911,\"delay\":null}', 0, NULL, 1791621911, 1791621911);
 
 -- --------------------------------------------------------
 
@@ -1767,7 +2125,21 @@ INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (39, '2026_10_11_000006_add_light_mode_theme_to_styling_settings', 26),
 (40, '2026_10_12_000001_create_maintenance_settings', 27),
 (41, '2026_10_13_000001_create_subscription_web_urls_table', 28),
-(42, '2026_10_13_000002_add_is_active_to_subscription_web_urls_table', 29);
+(42, '2026_10_13_000002_add_is_active_to_subscription_web_urls_table', 29),
+(43, '2026_10_13_000002_create_azure_alerts_table', 30),
+(44, '2026_10_14_010000_rename_teams_to_business_units', 31),
+(45, '2026_10_15_000001_create_rbac_tables', 32),
+(46, '2026_10_15_010000_implement_resource_access_hierarchy', 33),
+(47, '2026_10_15_020000_add_tags_to_project_subscriptions', 34),
+(48, '2026_10_15_030000_add_documentation_permissions', 35),
+(49, '2026_10_15_040000_create_tab_access_settings', 35),
+(50, '2026_10_15_040000_remove_is_active_from_projects_table', 36),
+(51, '2026_10_16_000001_sync_rbac_permissions_to_spec', 37),
+(52, '2026_10_16_000002_seed_updated_rbac_roles', 37),
+(53, '2026_10_16_000003_backfill_implicit_view_permissions', 37),
+(54, '2026_10_16_000004_seed_managed_permission_catalog', 37),
+(55, '2026_10_16_000005_repair_managed_rbac_permissions', 38),
+(56, '2026_10_17_000001_repair_system_role_permission_assignments', 38);
 
 -- --------------------------------------------------------
 
@@ -1798,19 +2170,25 @@ INSERT INTO `notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `
 ('165512c9-1820-4ea1-b610-23b1ecc70df9', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Announcement - Info\",\"message\":\"This is a informational announcement\",\"type\":\"announcement\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:43:21', '2026-10-11 13:16:39'),
 ('16a28eef-48db-462f-bd75-b708cc2385dd', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Access request pending\",\"message\":\"MA-BDO Contributor requested Restricted Owner access to OT-RBIN-GS-EXIMPortal-Prod.\",\"type\":\"access_request\",\"severity\":\"warning\",\"action_url\":\"http:\\/\\/localhost:8000\\/access-requests\\/4\",\"action_label\":\"Review request\"}', '2026-10-11 13:18:28', '2026-10-11 13:18:04', '2026-10-11 13:18:28'),
 ('16bf87ca-ed58-427a-96fc-352a94f0cfa6', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Scheduled maintenance\",\"message\":\"System is under maintenance and can be inaccessible.\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:12:34', '2026-10-11 13:12:27', '2026-10-11 13:12:34'),
+('16eb32b7-43f0-4284-be50-4685cd57b177', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Queue test\",\"message\":\"This notification is being sent to test the new queue notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-17 12:21:39', '2026-10-17 12:21:31', '2026-10-17 12:21:39'),
 ('1a448a48-3d0d-4a9c-8e7e-279de5aa11d4', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Announcement - Critical\",\"message\":\"Critical announcement\",\"type\":\"announcement\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', '2026-10-11 12:04:59', '2026-10-11 11:54:39', '2026-10-11 12:04:59'),
 ('1dda1d08-a7d2-43d7-8dd5-2cb894a5de07', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"General - Warning\",\"message\":\"This is a general warning\",\"type\":\"general\",\"severity\":\"warning\",\"action_url\":null,\"action_label\":null}', '2026-10-11 11:32:24', '2026-10-11 11:32:21', '2026-10-11 11:32:24'),
 ('1e11f866-aefe-4955-8cd3-849eaa2439ef', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification 3\",\"message\":\"This is a polling test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 02:15:30', '2026-10-10 14:13:20', '2026-10-11 02:15:30'),
 ('1fba3db9-4e55-415e-9d0b-488692e70a4b', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"New polling test notification\",\"message\":\"This is polling test notification\",\"type\":\"announcement\",\"severity\":\"success\",\"action_url\":null,\"action_label\":null}', '2026-10-11 02:15:33', '2026-10-10 14:08:02', '2026-10-11 02:15:33'),
 ('26143971-2772-46f8-a010-8f4d9ccaf53a', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"critical test\",\"message\":\"critical test\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', '2026-10-11 11:46:48', '2026-10-11 11:46:15', '2026-10-11 11:46:48'),
+('2fdb81b3-df51-45fa-81a4-998f483d008f', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 5, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-15 13:23:44', '2026-10-15 11:24:54', '2026-10-15 13:23:44'),
+('363fa2c4-6dff-435d-b7c9-dab942d0c701', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 6, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-15 11:24:54', '2026-10-15 11:24:54'),
+('374f4b6b-c13c-46aa-9c71-43fa2382b817', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 5, '{\"title\":\"Test notification 2\",\"message\":\"This is another test notification\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', '2026-10-15 13:23:44', '2026-10-15 11:25:47', '2026-10-15 13:23:44'),
 ('3b814e33-6f9d-41d5-a700-16bccc2ce93c', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Announcement - Critical\",\"message\":\"Critical announcement\",\"type\":\"announcement\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:54:39', '2026-10-11 11:54:39'),
 ('3e89c849-3150-437b-8534-e02241dd67dd', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Scheduled maintenance\",\"message\":\"System is under maintenance and can be inaccessible.\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 13:12:27', '2026-10-11 13:12:27'),
 ('40aad116-b627-4d8d-8b53-df73b2a7d388', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"mainer\",\"message\":\"htdh\",\"type\":\"maintenance\",\"severity\":\"warning\",\"action_url\":null,\"action_label\":null}', '2026-10-11 11:45:39', '2026-10-11 11:45:26', '2026-10-11 11:45:39'),
 ('40d1f599-7161-4b0c-a0ec-89d8b3df60cd', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Announcement - Critical\",\"message\":\"Critical announcement\",\"type\":\"announcement\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:54:39', '2026-10-11 13:16:39'),
 ('414b0205-8f79-4b42-8bba-5dc638fd3f58', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":\"https:\\/\\/google.com\\/\",\"action_label\":\"Report this action\"}', '2026-10-11 08:49:01', '2026-10-11 03:19:50', '2026-10-11 08:49:01'),
 ('511e39f0-f3cf-4f86-9a70-294a52686474', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"New polling test notification\",\"message\":\"This is polling test notification\",\"type\":\"announcement\",\"severity\":\"success\",\"action_url\":null,\"action_label\":null}', '2026-10-11 08:49:01', '2026-10-10 14:08:02', '2026-10-11 08:49:01'),
+('531b436f-c351-4842-b1a6-d345bbfd5d30', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 6, '{\"title\":\"Queue test\",\"message\":\"This notification is being sent to test the new queue notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-17 12:21:32', '2026-10-17 12:21:32'),
 ('5e265943-f8a0-47a9-9076-d2066129e49a', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Announcement - Info\",\"message\":\"This is a informational announcement\",\"type\":\"announcement\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 11:44:28', '2026-10-11 11:43:21', '2026-10-11 11:44:28'),
 ('6087f911-5842-4dc0-9ad1-deefaa2fc5f0', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"General - Information\",\"message\":\"This is a general notification with information level severity.\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:30:21', '2026-10-11 13:16:39'),
+('635a8159-ed04-4c69-a1a2-bc4f5f303c55', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 5, '{\"title\":\"Queue test 2\",\"message\":\"This is another notification for queue test\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-17 12:29:56', '2026-10-17 12:22:57', '2026-10-17 12:29:56'),
 ('6945db06-625b-47f1-8791-a848f0947099', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Test notification 3\",\"message\":\"This is a polling test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 08:49:01', '2026-10-10 14:13:20', '2026-10-11 08:49:01'),
 ('722c429b-10ed-4d80-b5b7-28f04a4186ed', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Announcement - Info\",\"message\":\"This is an announcement with information level severity\",\"type\":\"announcement\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:31:22', '2026-10-11 13:16:39'),
 ('74182db1-0165-4e58-943b-8c9bff4a684a', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 12:59:53', '2026-10-11 12:59:35', '2026-10-11 12:59:53'),
@@ -1822,10 +2200,16 @@ INSERT INTO `notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `
 ('8b1df45e-8df2-4a8c-ba1e-89085d91754d', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 13:00:10', '2026-10-11 13:16:39'),
 ('8f0b5d56-bcd5-4c59-ac19-3b237bf070e9', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"critical test\",\"message\":\"critical test\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:46:15', '2026-10-11 11:46:15'),
 ('90e9923f-e1c3-44c5-aef5-3b65f28ae126', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 13:00:10', '2026-10-11 13:00:10'),
+('91eebdb5-4d59-45da-becb-5eb6ebc882b0', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification 2\",\"message\":\"This is another test notification\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', '2026-10-15 11:25:55', '2026-10-15 11:25:47', '2026-10-15 11:25:55'),
 ('923b40f4-31b5-4589-ab41-3fb49a8db939', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Scheduled maintenance\",\"message\":\"System is under maintenance and can be inaccessible.\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 13:12:27', '2026-10-11 13:16:39'),
 ('94d1a07f-6de0-4465-8c32-0b84341344c7', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"General - Critical\",\"message\":\"This is a critical general notification\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:44:46', '2026-10-11 11:44:46'),
+('9908dc1c-207f-4d89-a269-c94a23ea728b', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-13 22:39:00', '2026-10-13 22:39:00'),
+('9ba15cf8-d748-4aca-b5b6-a6bdcbea6d12', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 6, '{\"title\":\"Notification for job test\",\"message\":\"This notification was sent to test jobs.\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-18 08:26:02', '2026-10-18 08:26:02'),
 ('9c0ad8f5-828c-4772-afeb-6237f70a47ea', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Access request approved\",\"message\":\"Your request for Restricted Reader access to AA-SMS3-NA-PBAP-Prod was approved with access until 2026-10-10 22:10:00.\",\"type\":\"access_request\",\"severity\":\"success\",\"action_url\":\"http:\\/\\/localhost:8000\\/developer\\/access-requests\\/1\",\"action_label\":\"View request\"}', '2026-10-10 11:13:36', '2026-10-10 11:13:03', '2026-10-10 11:13:36'),
+('9e8aadc5-492b-43b4-ae16-06e5aa0dff18', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 5, '{\"title\":\"Notification for job test\",\"message\":\"This notification was sent to test jobs.\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-19 01:39:04', '2026-10-18 08:26:02', '2026-10-19 01:39:04'),
+('a2577ab6-d32f-4e38-a5cf-76080e09e82c', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 6, '{\"title\":\"Test notification 2\",\"message\":\"This is another test notification\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-15 11:25:47', '2026-10-15 11:25:47'),
 ('a281668d-3899-46f3-866c-e56f55fd17ea', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"maintenance\",\"severity\":\"danger\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:00:24', '2026-10-11 13:00:10', '2026-10-11 13:00:24'),
+('a6a219cc-fbfb-46d0-b631-b83d8fddcb3e', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-13 22:39:00', '2026-10-13 22:39:00'),
 ('a6c4e84f-3ce2-4668-99e9-3137ca37f159', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"General - Information\",\"message\":\"This is a general notification with information level severity.\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:30:21', '2026-10-11 11:30:21'),
 ('a838e9d0-21bb-4c08-9590-345948056183', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"General - Information\",\"message\":\"This is a general notification with information level severity.\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 11:36:15', '2026-10-11 11:30:18', '2026-10-11 11:36:15'),
 ('a960b295-b43d-48eb-9f0d-355ccab360b9', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"General - Info\",\"message\":\"This is general information\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:42:35', '2026-10-11 11:42:35'),
@@ -1834,16 +2218,23 @@ INSERT INTO `notifications` (`id`, `type`, `notifiable_type`, `notifiable_id`, `
 ('b4a21afb-2245-4383-a4b0-7145f79d8e5e', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":\"https:\\/\\/google.com\\/\",\"action_label\":\"Report this action\"}', '2026-10-11 03:22:56', '2026-10-11 03:19:50', '2026-10-11 03:22:56'),
 ('b99ee8e8-3b1b-41d1-a8d8-abe3663f2b62', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"General - Warning\",\"message\":\"This is a general warning\",\"type\":\"general\",\"severity\":\"warning\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:32:22', '2026-10-11 13:16:39'),
 ('c1de386a-83a3-41ee-b752-90cad5be1824', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification 2\",\"message\":\"This is the second polling test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 02:15:32', '2026-10-10 14:09:02', '2026-10-11 02:15:32'),
+('c466bee8-9a46-4c64-9939-b8eb3b0c7e3c', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-13 22:39:09', '2026-10-13 22:38:59', '2026-10-13 22:39:09'),
 ('c7318a3d-46b2-4071-9886-1eea4f48925b', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"General - Critical\",\"message\":\"This is a critical general notification\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', '2026-10-11 11:45:08', '2026-10-11 11:44:46', '2026-10-11 11:45:08'),
 ('cd350297-13a9-4859-9261-14b1f3153d72', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Access request approved\",\"message\":\"Your request for Restricted Reader access to MA-SKX-eXtra-Production-Stage-Prod was approved.\",\"type\":\"access_request\",\"severity\":\"success\",\"action_url\":\"http:\\/\\/localhost:8000\\/access-requests\\/2\",\"action_label\":\"View request\"}', '2026-10-10 10:09:53', '2026-10-10 10:09:22', '2026-10-10 10:09:53'),
 ('cdda6ac9-8e99-41f3-a2c4-cca5bd045392', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"General - Critical\",\"message\":\"This is a critical general notification\",\"type\":\"general\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:44:46', '2026-10-11 13:16:39'),
 ('cf5e618d-9b55-4f0a-843e-fc74820f6a63', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"Test message\",\"message\":\"This is a test message\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 12:57:27', '2026-10-11 13:16:39'),
+('d134163f-1f9a-404f-b2e1-181aed96bbae', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Notification for job test\",\"message\":\"This notification was sent to test jobs.\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-18 09:00:49', '2026-10-18 08:25:58', '2026-10-18 09:00:49'),
 ('d713705f-1c6f-4c82-95d8-90ef3faf3867', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Announcement - Info\",\"message\":\"This is an announcement with information level severity\",\"type\":\"announcement\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:31:22', '2026-10-11 11:31:22'),
 ('d8d9139f-20a5-41ec-ac5a-fc4ec64aeeeb', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Announcement - Info\",\"message\":\"This is a informational announcement\",\"type\":\"announcement\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:43:21', '2026-10-11 11:43:21'),
+('dc2e0ec3-34f8-423d-aa50-1b4bbbf79374', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 6, '{\"title\":\"Queue test 2\",\"message\":\"This is another notification for queue test\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-17 12:22:57', '2026-10-17 12:22:57'),
 ('e5e5aff3-024b-4311-a339-16a80b9c60e0', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Access request pending\",\"message\":\"MA-BDO User requested Restricted Contributor access to AA-GPM-BoschCloudPrinting-Prod.\",\"type\":\"access_request\",\"severity\":\"warning\",\"action_url\":\"http:\\/\\/localhost:8000\\/access-requests\\/3\",\"action_label\":\"Review request\"}', '2026-10-10 11:40:20', '2026-10-10 11:02:26', '2026-10-10 11:40:20'),
+('e635f664-b0f4-45e5-ba3d-5430257f2603', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Queue test 2\",\"message\":\"This is another notification for queue test\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-17 12:24:14', '2026-10-17 12:22:57', '2026-10-17 12:24:14'),
+('e9102bf8-69b3-49a8-a7dd-c2d03842c671', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 5, '{\"title\":\"Queue test\",\"message\":\"This notification is being sent to test the new queue notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-17 12:29:56', '2026-10-17 12:21:31', '2026-10-17 12:29:56'),
 ('ec0f7987-5918-46ca-8823-f3356d972fed', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"General - Warning\",\"message\":\"This is a general warning\",\"type\":\"general\",\"severity\":\"warning\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-11 11:32:21', '2026-10-11 11:32:21'),
 ('f2edc8c7-c848-45f2-a2b4-acc172204395', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Access request pending\",\"message\":\"MA-BDO User requested Restricted Reader access to MA-SKX-eXtra-Production-Stage-Prod.\",\"type\":\"access_request\",\"severity\":\"warning\",\"action_url\":\"http:\\/\\/localhost:8000\\/access-requests\\/2\",\"action_label\":\"Review request\"}', '2026-10-10 10:00:11', '2026-10-10 09:57:31', '2026-10-10 10:00:11'),
 ('f88e5652-13ae-435c-88f7-f740f8459bdd', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 2, '{\"title\":\"Subscription access revoked\",\"message\":\"Your access to MA-SKX-eXtra-Production-Stage-Prod has been revoked.\",\"type\":\"access_revoked\",\"severity\":\"critical\",\"action_url\":null,\"action_label\":null}', '2026-10-10 11:54:58', '2026-10-10 11:54:35', '2026-10-10 11:54:58'),
+('f90c9ccf-8aad-41d7-9ecf-8cc890318aaa', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 4, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', NULL, '2026-10-13 22:39:00', '2026-10-13 22:39:00'),
+('f94a623d-7174-422b-9350-a18fff39cb75', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Test notification\",\"message\":\"This is a test notification\",\"type\":\"general\",\"severity\":\"info\",\"action_url\":null,\"action_label\":null}', '2026-10-15 11:25:26', '2026-10-15 11:24:54', '2026-10-15 11:25:26'),
 ('f9f9809e-6cd5-4cf5-9dc0-0d323ba9243b', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 3, '{\"title\":\"mainer\",\"message\":\"htdh\",\"type\":\"maintenance\",\"severity\":\"warning\",\"action_url\":null,\"action_label\":null}', '2026-10-11 13:16:39', '2026-10-11 11:45:26', '2026-10-11 13:16:39'),
 ('fe8f3138-2c9f-4004-ba98-6046fefec54f', 'App\\Notifications\\ClientPortalNotification', 'App\\Models\\User', 1, '{\"title\":\"Access request pending\",\"message\":\"MA-BDO User requested Restricted Reader access to AA-SMS3-NA-PBAP-Prod.\",\"type\":\"access_request\",\"severity\":\"warning\",\"action_url\":\"http:\\/\\/localhost:8000\\/access-requests\\/1\",\"action_label\":\"Review request\"}', '2026-10-10 10:01:23', '2026-10-10 09:23:58', '2026-10-10 10:01:23');
 
@@ -1905,6 +2296,302 @@ CREATE TABLE `password_reset_tokens` (
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `permissions`
+--
+
+CREATE TABLE `permissions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `category` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `permissions`
+--
+
+INSERT INTO `permissions` (`id`, `name`, `slug`, `category`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Open home route', 'dashboard.view', 'Dashboard', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(2, 'View dashboard metrics', 'dashboard.metrics.view', 'Dashboard', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(3, 'View dashboard widgets', 'dashboard.widgets.view', 'Dashboard', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(4, 'Export dashboard data', 'dashboard.export', 'Dashboard', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(5, 'View projects', 'projects.view', 'Projects', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(6, 'Create projects', 'projects.create', 'Projects', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(7, 'Update/Edit projects', 'projects.edit', 'Projects', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(8, 'Delete projects', 'projects.delete', 'Projects', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(9, 'View applications', 'applications.view', 'Projects & Applications', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(10, 'Create applications', 'applications.create', 'Projects & Applications', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(11, 'Edit applications', 'applications.edit', 'Projects & Applications', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(12, 'Delete applications', 'applications.delete', 'Projects & Applications', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(13, 'View environments', 'environments.view', 'Environments & Subscriptions', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(14, 'Create environments', 'environments.create', 'Environments & Subscriptions', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(15, 'Edit environments', 'environments.edit', 'Environments & Subscriptions', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(16, 'Delete environments', 'environments.delete', 'Environments & Subscriptions', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(17, 'View subscription', 'subscriptions.view', 'Subscriptions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(18, 'Create subscription', 'subscriptions.create', 'Subscriptions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(19, 'Edit subscription', 'subscriptions.edit', 'Subscriptions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(20, 'Delete subscription', 'subscriptions.delete', 'Subscriptions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(21, 'Assign subscriptions to environments', 'subscriptions.assign_environment', 'Environments & Subscriptions', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(22, 'Assign subscriptions to business units', 'subscriptions.assign_business_unit', 'Environments & Subscriptions', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(23, 'View cost', 'cost.view', 'Cost', NULL, 1, '2026-10-15 00:39:28', '2026-10-17 06:17:22'),
+(24, 'View cost breakdown', 'cost.breakdown.view', 'Cost', NULL, 1, '2026-10-15 00:39:28', '2026-10-17 06:20:52'),
+(25, 'Export cost', 'cost.export', 'Cost', NULL, 1, '2026-10-15 00:39:28', '2026-10-17 06:20:52'),
+(26, 'Manage cost settings', 'cost.settings.manage', 'Cost', NULL, 1, '2026-10-15 00:39:28', '2026-10-17 06:49:12'),
+(27, 'View resources', 'resources.view', 'Resources', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(28, 'View resource metrics', 'resources.metrics.view', 'Resources', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(29, 'Export resources', 'resources.export', 'Resources', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(30, 'View alerts', 'alerts.view', 'Alerts', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(31, 'Acknowledge alerts', 'alerts.acknowledge', 'Monitoring & Alerts', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(32, 'Close alerts', 'alerts.close', 'Monitoring & Alerts', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(33, 'Configure alert settings', 'alerts.settings.manage', 'Monitoring & Alerts', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(34, 'Trigger monitoring checks', 'monitoring.checks.trigger', 'Monitoring & Alerts', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(35, 'View monitoring history', 'monitoring.history.view', 'Monitoring & Alerts', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(36, 'View tickets', 'tickets.view', 'Tickets', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(37, 'Create tickets', 'tickets.create', 'Tickets', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(38, 'Update/Edit tickets', 'tickets.update', 'Tickets', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(39, 'Assign tickets', 'tickets.assign', 'Tickets', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(40, 'Close tickets', 'tickets.close', 'Tickets', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(41, 'Export tickets', 'tickets.export', 'Tickets', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(42, 'View URLs', 'urls.view', 'URLs', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(43, 'Add URL', 'urls.create', 'URLs', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(44, 'Update/Edit URL', 'urls.edit', 'URLs', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(45, 'Delete URL', 'urls.delete', 'URLs', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(46, 'Trigger URL checks', 'urls.check.trigger', 'Web URL Monitoring', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(47, 'View URL check history', 'urls.history.view', 'Web URL Monitoring', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(48, 'View security', 'security.view', 'Security', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(49, 'View security scores', 'security.scores.view', 'Security', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(50, 'Configure security settings', 'security.settings.manage', 'Security', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(51, 'View users', 'users.view', 'Users', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(52, 'Create users', 'users.create', 'Users', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(53, 'Update/Edit users', 'users.edit', 'Users', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(54, 'Disable users', 'users.disable', 'Users', NULL, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(55, 'Manage access requests', 'users.roles.assign', 'Roles & Permissions', NULL, 1, '2026-10-15 00:39:28', '2026-10-17 14:10:17'),
+(56, 'Assign scopes', 'users.scopes.assign', 'Users', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(57, 'View roles and permissions', 'roles.view', 'Roles & Permissions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(58, 'Create roles', 'roles.create', 'Roles & Permissions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(59, 'Update/Edit roles', 'roles.edit', 'Roles & Permissions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(60, 'Delete roles', 'roles.delete', 'Roles & Permissions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(61, 'Assign permissions', 'roles.permissions.assign', 'Roles & Permissions', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(62, 'Assign role scopes', 'roles.scopes.assign', 'Roles & Permissions', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(63, 'View system settings', 'system.settings.view', 'Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(64, 'Modify system settings', 'system.settings.manage', 'Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(65, 'Manage integrations', 'system.integrations.manage', 'Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(66, 'Manage audit logs', 'system.audit.manage', 'Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(67, 'Manage system configuration', 'system.configuration.manage', 'Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(68, 'Manage authorization configuration', 'authorization.configuration.manage', 'Super Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(69, 'Manage built-in roles', 'authorization.system_roles.manage', 'Super Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(70, 'Manage system-level security settings', 'authorization.security.manage', 'Super Administration', NULL, 1, '2026-10-15 00:39:28', '2026-10-16 06:25:44'),
+(71, 'View documents', 'documentation.view', 'Documentation', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(72, 'Create documents', 'documentation.create', 'Documentation', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(73, 'Edit documents', 'documentation.edit', 'Documentation', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(74, 'Delete documents', 'documentation.delete', 'Documentation', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(75, 'Manual Sync', 'subscriptions.sync', 'Subscriptions', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(76, 'Export alerts', 'alerts.export', 'Alerts', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(77, 'Manual Sync', 'alerts.sync', 'Alerts', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(78, 'Manual Sync', 'resources.sync', 'Resources', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(79, 'Export security', 'security.export', 'Security', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(80, 'Manual Sync', 'security.sync', 'Security', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(81, 'Export URLs', 'urls.export', 'URLs', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(82, 'Delete users', 'users.delete', 'Users', NULL, 1, '2026-10-17 09:40:29', '2026-10-17 09:40:29'),
+(83, 'View access requests', 'users.access_requests.view', 'Access Requests', NULL, 1, '2026-10-17 14:33:52', '2026-10-17 14:33:52'),
+(84, 'Take decision', 'users.access_requests.decide', 'Access Requests', NULL, 1, '2026-10-17 14:33:52', '2026-10-17 14:33:52');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `permission_role`
+--
+
+CREATE TABLE `permission_role` (
+  `role_id` bigint(20) UNSIGNED NOT NULL,
+  `permission_id` bigint(20) UNSIGNED NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `permission_role`
+--
+
+INSERT INTO `permission_role` (`role_id`, `permission_id`) VALUES
+(1, 1),
+(1, 2),
+(1, 3),
+(1, 5),
+(1, 9),
+(1, 13),
+(1, 17),
+(1, 23),
+(1, 24),
+(1, 27),
+(1, 28),
+(1, 30),
+(1, 35),
+(1, 36),
+(1, 42),
+(1, 47),
+(1, 48),
+(1, 49),
+(1, 71),
+(2, 1),
+(2, 2),
+(2, 3),
+(2, 5),
+(2, 9),
+(2, 13),
+(2, 17),
+(2, 23),
+(2, 24),
+(2, 25),
+(2, 27),
+(2, 28),
+(2, 29),
+(2, 30),
+(2, 31),
+(2, 32),
+(2, 34),
+(2, 35),
+(2, 36),
+(2, 37),
+(2, 38),
+(2, 39),
+(2, 40),
+(2, 42),
+(2, 46),
+(2, 47),
+(2, 48),
+(2, 49),
+(2, 71),
+(3, 1),
+(3, 2),
+(3, 3),
+(3, 5),
+(3, 9),
+(3, 13),
+(3, 17),
+(3, 23),
+(3, 24),
+(3, 27),
+(3, 28),
+(3, 30),
+(3, 35),
+(3, 36),
+(3, 37),
+(3, 42),
+(3, 47),
+(3, 48),
+(3, 49),
+(3, 71),
+(4, 5),
+(4, 17),
+(4, 23),
+(4, 25),
+(4, 27),
+(4, 29),
+(4, 30),
+(4, 36),
+(4, 41),
+(4, 42),
+(4, 44),
+(4, 48),
+(4, 51),
+(4, 57),
+(4, 76),
+(4, 79),
+(4, 83),
+(4, 84),
+(5, 5),
+(5, 6),
+(5, 7),
+(5, 8),
+(5, 17),
+(5, 19),
+(5, 20),
+(5, 23),
+(5, 24),
+(5, 25),
+(5, 26),
+(5, 27),
+(5, 29),
+(5, 30),
+(5, 36),
+(5, 37),
+(5, 38),
+(5, 39),
+(5, 40),
+(5, 41),
+(5, 42),
+(5, 43),
+(5, 44),
+(5, 45),
+(5, 48),
+(5, 51),
+(5, 52),
+(5, 53),
+(5, 57),
+(5, 58),
+(5, 59),
+(5, 60),
+(5, 71),
+(5, 72),
+(5, 73),
+(5, 74),
+(5, 75),
+(5, 76),
+(5, 77),
+(5, 78),
+(5, 79),
+(5, 80),
+(5, 81),
+(5, 82),
+(5, 83),
+(5, 84),
+(8, 5),
+(8, 6),
+(8, 7),
+(8, 8),
+(8, 17),
+(8, 19),
+(8, 20),
+(8, 23),
+(8, 24),
+(8, 25),
+(8, 26),
+(8, 27),
+(8, 29),
+(8, 30),
+(8, 36),
+(8, 37),
+(8, 38),
+(8, 39),
+(8, 40),
+(8, 41),
+(8, 42),
+(8, 43),
+(8, 44),
+(8, 45),
+(8, 48),
+(8, 57),
+(8, 58),
+(8, 59),
+(8, 60),
+(8, 71),
+(8, 72),
+(8, 73),
+(8, 74),
+(8, 75),
+(8, 76),
+(8, 77),
+(8, 78),
+(8, 79),
+(8, 80),
+(8, 81);
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `pill_colors`
 --
 
@@ -1946,9 +2633,9 @@ INSERT INTO `pill_colors` (`id`, `key`, `color`, `created_at`, `updated_at`) VAL
 
 CREATE TABLE `projects` (
   `id` bigint(20) UNSIGNED NOT NULL,
+  `business_unit_id` bigint(20) UNSIGNED DEFAULT NULL,
   `name` varchar(255) NOT NULL,
   `description` text DEFAULT NULL,
-  `is_active` tinyint(1) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -1957,8 +2644,93 @@ CREATE TABLE `projects` (
 -- Dumping data for table `projects`
 --
 
-INSERT INTO `projects` (`id`, `name`, `description`, `is_active`, `created_at`, `updated_at`) VALUES
-(2, 'MA-BDO', 'MA-BDO applications and Azure environments.', 1, '2026-10-09 14:11:26', '2026-10-09 14:11:26');
+INSERT INTO `projects` (`id`, `business_unit_id`, `name`, `description`, `created_at`, `updated_at`) VALUES
+(3, 1, 'eFOCuS', 'eFOCuS application environments.', '2026-10-15 01:51:36', '2026-10-17 12:57:30'),
+(4, 4, 'Extra', 'Extra application environments.', '2026-10-15 01:51:36', '2026-10-15 09:27:48'),
+(6, 4, 'Cloud printing', 'MA Cloud printing project', '2026-10-15 09:07:04', '2026-10-15 09:07:04'),
+(7, 1, 'Hamro Bosch', 'Hamro Bosch application for Nepal', '2026-10-15 10:22:23', '2026-10-17 12:57:30'),
+(8, 1, 'Miconic', 'MA-BDO Miconic Application', '2026-10-15 10:31:35', '2026-10-17 12:57:30'),
+(9, 1, 'Bosch Rewards', 'MA-BDO Bosch Rewards Application', '2026-10-15 10:33:19', '2026-10-17 12:57:30'),
+(10, 1, 'CMS', 'Claims Management Applications for MA-BDO', '2026-10-15 10:34:04', '2026-10-17 12:57:30'),
+(11, 1, 'Dashboard', 'MA-BDO AA Dashboard', '2026-10-15 10:34:34', '2026-10-17 12:57:30'),
+(12, 4, 'Autoparts', 'MA Autoparts Application', '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(13, 2, 'InsiderLens', 'InsiderLens Application', '2026-10-15 10:49:34', '2026-10-15 10:49:34'),
+(14, 2, 'Exim Portal', 'Exim Portal', '2026-10-15 10:50:31', '2026-10-15 10:50:31'),
+(15, 2, 'Associate Connect', 'Associate Connect app for Bosch employees', '2026-10-15 10:52:33', '2026-10-15 10:52:33');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `project_subscriptions`
+--
+
+CREATE TABLE `project_subscriptions` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `project_id` bigint(20) UNSIGNED NOT NULL,
+  `subscription_id` varchar(100) NOT NULL,
+  `environment` varchar(20) DEFAULT NULL,
+  `tags` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin DEFAULT NULL CHECK (json_valid(`tags`)),
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `project_subscriptions`
+--
+
+INSERT INTO `project_subscriptions` (`id`, `project_id`, `subscription_id`, `environment`, `tags`, `created_at`, `updated_at`) VALUES
+(2, 4, '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'prod', '[]', '2026-10-15 01:51:36', '2026-10-15 09:27:48'),
+(3, 3, '7498780e-1785-465f-9d50-c8ac1e929376', 'qa', '[\"qa\"]', '2026-10-15 01:51:36', '2026-10-15 01:51:36'),
+(4, 4, '77839ff3-b3aa-42b0-b490-55830c14bd3a', 'dev', '[]', '2026-10-15 01:51:36', '2026-10-15 09:27:48'),
+(5, 4, 'c080fc5b-797d-45db-b089-01cc05f9a758', 'qa', '[]', '2026-10-15 01:51:36', '2026-10-15 09:27:48'),
+(6, 3, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'prod', '[\"prod\"]', '2026-10-15 01:51:36', '2026-10-15 01:51:36'),
+(8, 7, '8c9dacf9-577b-4129-b900-2c6c9e39c3dd', NULL, '[\"prod\"]', '2026-10-15 10:29:29', '2026-10-15 10:29:29'),
+(9, 7, '219ccbf6-e35b-4758-961a-ede690403d86', NULL, '[\"qa\"]', '2026-10-15 10:29:29', '2026-10-15 10:29:29'),
+(10, 6, 'd26dd531-2174-4c45-a240-032e0d05dfa0', NULL, '[\"prod\"]', '2026-10-15 10:30:25', '2026-10-15 10:30:25'),
+(11, 6, '19fb36f7-0105-4d68-be29-02c3934a2abc', NULL, '[\"prod\"]', '2026-10-15 10:30:26', '2026-10-15 10:30:26'),
+(12, 8, '4172676b-8a9c-44e0-b2ab-727057b691b7', NULL, '[\"prod\"]', '2026-10-15 10:32:26', '2026-10-15 10:32:26'),
+(13, 8, '50d41c25-8668-4497-8925-766161f0cddb', NULL, '[\"qa\"]', '2026-10-15 10:32:26', '2026-10-15 10:32:26'),
+(14, 8, 'fc152cdb-dc60-44e7-bbee-412c719cb49a', NULL, '[\"dev\"]', '2026-10-15 10:32:26', '2026-10-15 10:32:26'),
+(15, 9, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', NULL, '[\"prod\"]', '2026-10-15 10:33:19', '2026-10-15 10:33:19'),
+(16, 9, '5784d84d-05ea-4a9c-b625-7d0183e9240b', NULL, '[\"qa\"]', '2026-10-15 10:33:19', '2026-10-15 10:33:19'),
+(17, 10, 'fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', NULL, '[\"prod\"]', '2026-10-15 10:34:04', '2026-10-15 10:34:04'),
+(18, 10, '1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', NULL, '[\"qa\"]', '2026-10-15 10:34:04', '2026-10-15 10:34:04'),
+(19, 11, '8a8c77f4-cb44-47ad-b56a-6682d97b36bb', NULL, '[\"prod\"]', '2026-10-15 10:34:34', '2026-10-15 10:34:34'),
+(20, 12, '2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', NULL, '[\"prod\"]', '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(21, 12, 'a77eebf3-17a1-4378-90bf-2c96b1028137', NULL, '[\"qa\"]', '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(22, 12, '5b46ccc6-604b-4c5c-81c2-96b133061773', NULL, '[\"dev\"]', '2026-10-15 10:39:22', '2026-10-15 10:39:22'),
+(23, 13, '12db631f-5ab4-4237-9fa6-6d92de7a53e8', NULL, '[\"prod\"]', '2026-10-15 10:49:34', '2026-10-15 10:49:34'),
+(24, 14, 'c12d79d2-0655-4caa-839e-fc47e019271c', NULL, '[\"prod\"]', '2026-10-15 10:50:31', '2026-10-15 10:50:31'),
+(25, 15, '02ab4266-3406-48d4-bfbc-76605dde11d7', NULL, '[\"prod\"]', '2026-10-15 10:52:33', '2026-10-15 10:52:33');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `roles`
+--
+
+CREATE TABLE `roles` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `description` text DEFAULT NULL,
+  `is_system_role` tinyint(1) NOT NULL DEFAULT 0,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `roles`
+--
+
+INSERT INTO `roles` (`id`, `name`, `slug`, `description`, `is_system_role`, `is_active`, `created_at`, `updated_at`) VALUES
+(1, 'Viewer', 'viewer', 'Read-only access to assigned resources.', 1, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(2, 'Operator', 'operator', 'Operational access to assigned resources.', 1, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(3, 'Customer', 'customer', 'Customer-facing access to assigned resources and tickets.', 1, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(4, 'Admin', 'admin', 'Administrative access to assigned resources.', 1, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(5, 'Super Admin', 'super_admin', 'Authorization and system administration.', 1, 1, '2026-10-15 00:39:28', '2026-10-15 00:39:28'),
+(8, 'Test role', 'test-role', 'This is a test role', 0, 1, '2026-10-17 10:25:05', '2026-10-17 10:25:05');
 
 -- --------------------------------------------------------
 
@@ -1980,8 +2752,9 @@ CREATE TABLE `sessions` (
 --
 
 INSERT INTO `sessions` (`id`, `user_id`, `ip_address`, `user_agent`, `payload`, `last_activity`) VALUES
-('DZLViiclk1boODlx0zmP7wr6QtYUOA0ZPva0Sft1', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', 'YTo4OntzOjY6Il90b2tlbiI7czo0MDoiMTdrQmNqTExpelowbFNFYUhhS01ZOWhNWVdVRHE3U01PTGxPdzVHciI7czozOiJ1cmwiO2E6MDp7fXM6OToiX3ByZXZpb3VzIjthOjI6e3M6MzoidXJsIjtzOjM3OiJodHRwOi8vbG9jYWxob3N0OjgwMDAvZGV2ZWxvcGVyL3VzZXJzIjtzOjU6InJvdXRlIjtzOjQwOiJmaWxhbWVudC5kZXZlbG9wZXIucmVzb3VyY2VzLnVzZXJzLmluZGV4Ijt9czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo1NzoibG9naW5fZGV2ZWxvcGVyc181OWJhMzZhZGRjMmIyZjk0MDE1ODBmMDE0YzdmNThlYTRlMzA5ODlkIjtpOjE7czoyNDoicGFzc3dvcmRfaGFzaF9kZXZlbG9wZXJzIjtzOjY0OiIxODgxNWEzMmIwNTdkMmZlMDEwYTQ3MDJkNWYyZjk2MWM3YWI1YWI3ZjgxNDVlMmM2ODQwYTEzZmRjYTkzNTdhIjtzOjY6InRhYmxlcyI7YToyOntzOjQwOiJiZTQ4YjExMGY5M2Y0Njk0ZmJhNjFhNzMxMWE3ODUxZF9jb2x1bW5zIjthOjk6e2k6MDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMDoiY3JlYXRlZF9hdCI7czo1OiJsYWJlbCI7czo0OiJUaW1lIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MDt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjg6ImxvZ19uYW1lIjtzOjU6ImxhYmVsIjtzOjg6IkNhdGVnb3J5IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MDt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjU6ImV2ZW50IjtzOjU6ImxhYmVsIjtzOjU6IkV2ZW50IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MDt9aTozO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjExOiJkZXNjcmlwdGlvbiI7czo1OiJsYWJlbCI7czoxMToiRGVzY3JpcHRpb24iO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjowO31pOjQ7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTE6ImNhdXNlci5uYW1lIjtzOjU6ImxhYmVsIjtzOjU6IkFjdG9yIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MDt9aTo1O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE4OiJwcm9wZXJ0aWVzLnN1Y2Nlc3MiO3M6NToibGFiZWwiO3M6NjoiUmVzdWx0IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MDt9aTo2O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjI1OiJwcm9wZXJ0aWVzLmZhaWx1cmVfcmVhc29uIjtzOjU6ImxhYmVsIjtzOjE0OiJGYWlsdXJlIFJlYXNvbiI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjE7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtiOjA7fWk6NzthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoyMjoicHJvcGVydGllcy5zdGF0dXNfY29kZSI7czo1OiJsYWJlbCI7czo0OiJIVFRQIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MDt9aTo4O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE3OiJwcm9wZXJ0aWVzLm1ldGhvZCI7czo1OiJsYWJlbCI7czo2OiJNZXRob2QiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjowO319czo0MDoiZTY0NDgzM2Y0ZTRlMDg3MTIzMTVkYTcxYjMzZmFjZDJfY29sdW1ucyI7YTo2OntpOjA7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6NDoibmFtZSI7czo1OiJsYWJlbCI7czo0OiJOYW1lIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo1OiJlbWFpbCI7czo1OiJsYWJlbCI7czo1OiJFbWFpbCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjI7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6NDoicm9sZSI7czo1OiJsYWJlbCI7czo0OiJSb2xlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MzthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo5OiJpc19hY3RpdmUiO3M6NToibGFiZWwiO3M6NjoiQWN0aXZlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMDoidGVhbXMubmFtZSI7czo1OiJsYWJlbCI7czo1OiJUZWFtcyI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjU7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTA6ImNyZWF0ZWRfYXQiO3M6NToibGFiZWwiO3M6MTU6IkFjdGl2YXRpb24gRGF0ZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO319fXM6ODoiZmlsYW1lbnQiO2E6MDp7fX0=', 1791894712),
-('GwY8M7OotdbaEYF0IA2qCFXbEP7GBF2i4BHMuaiq', 1, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', 'YTo2OntzOjY6Il90b2tlbiI7czo0MDoiZTN2WlY3dnVHWWNwa3d3bkVVOVRlNnBwSzJaVlhRbU1PMkxNVEJRViI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9ub3RpZmljYXRpb25zL2RhdGEiO3M6NToicm91dGUiO3M6MTk6Im5vdGlmaWNhdGlvbnMuaW5kZXgiO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aToxO3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjY0OiJlZWYxYzNlNzcxZmUwYjA5NTk1YTZlZjVhNmUxNDEzMWQ1NWVjYmJlOWU1MzgyNDliMjNmYmJlNTRmY2Q1M2RmIjtzOjY6InRhYmxlcyI7YTozOntzOjQwOiI0NmJmOWVhYjc5M2UwNWVlZGU3YTBhZDgwMjgyNTI3Y19jb2x1bW5zIjthOjc6e2k6MDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMToiYnVkZ2V0X25hbWUiO3M6NToibGFiZWwiO3M6NjoiQnVkZ2V0IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo2OiJhbW91bnQiO3M6NToibGFiZWwiO3M6MTM6IkJ1ZGdldCBBbW91bnQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEzOiJjdXJyZW50X3NwZW5kIjtzOjU6ImxhYmVsIjtzOjEyOiJBY3R1YWwgU3BlbmQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTozO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE0OiJmb3JlY2FzdF9zcGVuZCI7czo1OiJsYWJlbCI7czo4OiJGb3JlY2FzdCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjQ7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTA6InRpbWVfZ3JhaW4iO3M6NToibGFiZWwiO3M6NjoiUGVyaW9kIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMDoic3RhcnRfZGF0ZSI7czo1OiJsYWJlbCI7czoxMDoiU3RhcnQgZGF0ZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjY7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6ODoiZW5kX2RhdGUiO3M6NToibGFiZWwiO3M6ODoiRW5kIGRhdGUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fXM6NDA6IjgwYzAzZGZiMTg2N2RkZWEyOTJlNWI0MThmMTc0YjhmX2NvbHVtbnMiO2E6NDp7aTowO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjQ6Im5hbWUiO3M6NToibGFiZWwiO3M6MTM6IlJlc291cmNlIE5hbWUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEzOiJyZXNvdXJjZV90eXBlIjtzOjU6ImxhYmVsIjtzOjQ6IlR5cGUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjY6InJlZ2lvbiI7czo1OiJsYWJlbCI7czo4OiJMb2NhdGlvbiI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjM7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6ODoiY29zdF9ldXIiO3M6NToibGFiZWwiO3M6NDoiQ29zdCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO319czo0MDoiZmM3NTExOGMxZTEzMTZlODYwMWM4ZWJmY2E2NWE3MmFfY29sdW1ucyI7YToxMzp7aTowO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjM6InVybCI7czo1OiJsYWJlbCI7czozOiJVUkwiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjk6ImlzX2FjdGl2ZSI7czo1OiJsYWJlbCI7czo2OiJBY3RpdmUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjc6ImlzX2xpdmUiO3M6NToibGFiZWwiO3M6NDoiTGl2ZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjM7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTE6Imh0dHBfc3RhdHVzIjtzOjU6ImxhYmVsIjtzOjQ6IkhUVFAiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTo0O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE2OiJyZXNwb25zZV90aW1lX21zIjtzOjU6ImxhYmVsIjtzOjg6IlJlc3BvbnNlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMDoic3NsX3N0YXR1cyI7czo1OiJsYWJlbCI7czozOiJTU0wiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTo2O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEyOiJzc2xfcHJvdmlkZXIiO3M6NToibGFiZWwiO3M6MTI6IlNTTCBQcm92aWRlciI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjA7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjE7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtiOjE7fWk6NzthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMToic3NsX3N1YmplY3QiO3M6NToibGFiZWwiO3M6MTE6IlNTTCBTdWJqZWN0IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo4O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEwOiJzc2xfaXNzdWVyIjtzOjU6ImxhYmVsIjtzOjEwOiJTU0wgSXNzdWVyIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo5O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE0OiJzc2xfdmFsaWRfZnJvbSI7czo1OiJsYWJlbCI7czoxNDoiU1NMIFZhbGlkIEZyb20iO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjowO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjoxO31pOjEwO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE0OiJzc2xfZXhwaXJlc19hdCI7czo1OiJsYWJlbCI7czoxMToiU1NMIEV4cGlyZXMiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjowO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjoxO31pOjExO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE4OiJzc2xfZGF5c19yZW1haW5pbmciO3M6NToibGFiZWwiO3M6ODoiU1NMIERheXMiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxMjthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxNToibGFzdF9jaGVja2VkX2F0IjtzOjU6ImxhYmVsIjtzOjEyOiJMYXN0IENoZWNrZWQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fX19', 1791897274);
+('2IO8yAbmNrjZ7nDPeojwCGB0gZrrZNCz86sSkHn7', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:140.0) Gecko/20100101 Firefox/140.0', 'YTozOntzOjY6Il90b2tlbiI7czo0MDoiaHJ4YkVyYmdoYWg2WFFCblU0NnluZ2t1QjY1YUN1blk1TXBUbXBvVSI7czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9ub3RpZmljYXRpb25zL2RhdGEiO3M6NToicm91dGUiO3M6MTk6Im5vdGlmaWNhdGlvbnMuaW5kZXgiO31zOjY6Il9mbGFzaCI7YToyOntzOjM6Im9sZCI7YTowOnt9czozOiJuZXciO2E6MDp7fX19', 1792409310),
+('COOC3lVrxbWpwWMSnjZP6d0kq2RDMVRfdFJB2EUu', NULL, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', 'YTo0OntzOjY6Il90b2tlbiI7czo0MDoiZjBDQUJjNGFZN1FXZ1hkekNBMzJnU2d6b1BMVnJpUzVOYVJYVXZaTyI7czozOiJ1cmwiO2E6MTp7czo4OiJpbnRlbmRlZCI7czoyMToiaHR0cDovL2xvY2FsaG9zdDo4MDAwIjt9czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6Mjc6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9sb2dpbiI7czo1OiJyb3V0ZSI7czoyNToiZmlsYW1lbnQuYWRtaW4uYXV0aC5sb2dpbiI7fXM6NjoiX2ZsYXNoIjthOjI6e3M6Mzoib2xkIjthOjA6e31zOjM6Im5ldyI7YTowOnt9fX0=', 1792412417),
+('wrNVNiHAjjJk7wiWMdRkqJr7yeo6aeBGnuanh9NV', 5, '127.0.0.1', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/154.0.0.0 Safari/537.36', 'YTo3OntzOjY6Il90b2tlbiI7czo0MDoiZVRCY2tMQ3poSkVueWFVTlJvalI2czhEbWFvdjNLWEF2T0U1dDZ1SyI7czo2OiJfZmxhc2giO2E6Mjp7czozOiJvbGQiO2E6MDp7fXM6MzoibmV3IjthOjA6e319czo5OiJfcHJldmlvdXMiO2E6Mjp7czozOiJ1cmwiO3M6NDA6Imh0dHA6Ly9sb2NhbGhvc3Q6ODAwMC9ub3RpZmljYXRpb25zL2RhdGEiO3M6NToicm91dGUiO3M6MTk6Im5vdGlmaWNhdGlvbnMuaW5kZXgiO31zOjUwOiJsb2dpbl93ZWJfNTliYTM2YWRkYzJiMmY5NDAxNTgwZjAxNGM3ZjU4ZWE0ZTMwOTg5ZCI7aTo1O3M6MTc6InBhc3N3b3JkX2hhc2hfd2ViIjtzOjY0OiJlZjdhN2IxMjE4N2YyZmE2MjdkODRiMjQ0OGRmNTQ2NjgzZWM0MmUxYzdhN2RhMGFkZTQ0MmFmYWY5ZmI2N2U1IjtzOjY6InRhYmxlcyI7YTo3OntzOjQwOiJjNGM3YWZiY2Y1ZjBkMWZmZjZkNTcxNDgwODJiOTU1ZF9jb2x1bW5zIjthOjY6e2k6MDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMjoiZGlzcGxheV9uYW1lIjtzOjU6ImxhYmVsIjtzOjEyOiJTdWJzY3JpcHRpb24iO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE1OiJzdWJzY3JpcHRpb25faWQiO3M6NToibGFiZWwiO3M6MTU6IlN1YnNjcmlwdGlvbiBJRCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjI7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTM6ImhlYWx0aF9zdGF0dXMiO3M6NToibGFiZWwiO3M6NjoiSGVhbHRoIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTozO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE0OiJzZWN1cml0eV9zY29yZSI7czo1OiJsYWJlbCI7czoxNDoiU2VjdXJpdHkgU2NvcmUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjowO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjoxO31pOjQ7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTM6Im10ZF9zcGVuZF9ldXIiO3M6NToibGFiZWwiO3M6OToiTVREIFNwZW5kIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo1O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjExOiJsYXN0X3N5bmNlZCI7czo1OiJsYWJlbCI7czoxMToiTGFzdCBTeW5jZWQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fXM6NDA6IjQ2YmY5ZWFiNzkzZTA1ZWVkZTdhMGFkODAyODI1MjdjX2NvbHVtbnMiO2E6Nzp7aTowO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjExOiJidWRnZXRfbmFtZSI7czo1OiJsYWJlbCI7czo2OiJCdWRnZXQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjY6ImFtb3VudCI7czo1OiJsYWJlbCI7czoxMzoiQnVkZ2V0IEFtb3VudCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjI7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTM6ImN1cnJlbnRfc3BlbmQiO3M6NToibGFiZWwiO3M6MTI6IkFjdHVhbCBTcGVuZCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjM7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTQ6ImZvcmVjYXN0X3NwZW5kIjtzOjU6ImxhYmVsIjtzOjg6IkZvcmVjYXN0IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NDthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMDoidGltZV9ncmFpbiI7czo1OiJsYWJlbCI7czo2OiJQZXJpb2QiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTo1O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEwOiJzdGFydF9kYXRlIjtzOjU6ImxhYmVsIjtzOjEwOiJTdGFydCBkYXRlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NjthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo4OiJlbmRfZGF0ZSI7czo1OiJsYWJlbCI7czo4OiJFbmQgZGF0ZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO319czo0MDoiODBjMDNkZmIxODY3ZGRlYTI5MmU1YjQxOGYxNzRiOGZfY29sdW1ucyI7YTo0OntpOjA7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6NDoibmFtZSI7czo1OiJsYWJlbCI7czoxMzoiUmVzb3VyY2UgTmFtZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjE7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTM6InJlc291cmNlX3R5cGUiO3M6NToibGFiZWwiO3M6NDoiVHlwZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjI7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6NjoicmVnaW9uIjtzOjU6ImxhYmVsIjtzOjg6IkxvY2F0aW9uIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MzthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo4OiJjb3N0X2V1ciI7czo1OiJsYWJlbCI7czo0OiJDb3N0IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fX1zOjQwOiIyMTE5MjNiYWQ0ZjkzN2MzOTY4ZGZhNzEzYzk1Nzk2Ml9jb2x1bW5zIjthOjExOntpOjA7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6NDoibmFtZSI7czo1OiJsYWJlbCI7czoxMDoiQWxlcnQgTmFtZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjE7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6ODoic2V2ZXJpdHkiO3M6NToibGFiZWwiO3M6ODoiU2V2ZXJpdHkiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE3OiJhZmZlY3RlZF9yZXNvdXJjZSI7czo1OiJsYWJlbCI7czoxNzoiQWZmZWN0ZWQgUmVzb3VyY2UiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTozO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjIwOiJ0YXJnZXRfcmVzb3VyY2VfdHlwZSI7czo1OiJsYWJlbCI7czoyMDoiVGFyZ2V0IFJlc291cmNlIFR5cGUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjowO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjoxO31pOjQ7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTE6InNpZ25hbF90eXBlIjtzOjU6ImxhYmVsIjtzOjExOiJTaWduYWwgVHlwZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjU7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTU6Im1vbml0b3Jfc2VydmljZSI7czo1OiJsYWJlbCI7czoxNToiTW9uaXRvciBTZXJ2aWNlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo2O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjIxOiJ0YXJnZXRfcmVzb3VyY2VfZ3JvdXAiO3M6NToibGFiZWwiO3M6MTQ6IlJlc291cmNlIEdyb3VwIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo3O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE4OiJzdXBwcmVzc2lvbl9zdGF0dXMiO3M6NToibGFiZWwiO3M6MTE6IlN1cHByZXNzaW9uIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo4O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE1OiJhbGVydF9jb25kaXRpb24iO3M6NToibGFiZWwiO3M6OToiQ29uZGl0aW9uIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6OTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czo5OiJmaXJlX3RpbWUiO3M6NToibGFiZWwiO3M6OToiRmlyZSBUaW1lIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6MTA7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTg6Imxhc3RfbW9kaWZpZWRfdGltZSI7czo1OiJsYWJlbCI7czoxMzoiTGFzdCBNb2RpZmllZCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO319czo0MDoiZmM3NTExOGMxZTEzMTZlODYwMWM4ZWJmY2E2NWE3MmFfY29sdW1ucyI7YToxMzp7aTowO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjM6InVybCI7czo1OiJsYWJlbCI7czozOiJVUkwiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjk6ImlzX2FjdGl2ZSI7czo1OiJsYWJlbCI7czo2OiJBY3RpdmUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjc6ImlzX2xpdmUiO3M6NToibGFiZWwiO3M6NDoiTGl2ZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjM7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTE6Imh0dHBfc3RhdHVzIjtzOjU6ImxhYmVsIjtzOjQ6IkhUVFAiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTo0O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE2OiJyZXNwb25zZV90aW1lX21zIjtzOjU6ImxhYmVsIjtzOjg6IlJlc3BvbnNlIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MTtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MDtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO047fWk6NTthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMDoic3NsX3N0YXR1cyI7czo1OiJsYWJlbCI7czozOiJTU0wiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aTo2O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEyOiJzc2xfcHJvdmlkZXIiO3M6NToibGFiZWwiO3M6MTI6IlNTTCBQcm92aWRlciI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjA7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjE7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtiOjE7fWk6NzthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxMToic3NsX3N1YmplY3QiO3M6NToibGFiZWwiO3M6MTE6IlNTTCBTdWJqZWN0IjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo4O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEwOiJzc2xfaXNzdWVyIjtzOjU6ImxhYmVsIjtzOjEwOiJTU0wgSXNzdWVyIjtzOjg6ImlzSGlkZGVuIjtiOjA7czo5OiJpc1RvZ2dsZWQiO2I6MDtzOjEyOiJpc1RvZ2dsZWFibGUiO2I6MTtzOjI0OiJpc1RvZ2dsZWRIaWRkZW5CeURlZmF1bHQiO2I6MTt9aTo5O2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE0OiJzc2xfdmFsaWRfZnJvbSI7czo1OiJsYWJlbCI7czoxNDoiU1NMIFZhbGlkIEZyb20iO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjowO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjoxO31pOjEwO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE0OiJzc2xfZXhwaXJlc19hdCI7czo1OiJsYWJlbCI7czoxMToiU1NMIEV4cGlyZXMiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjowO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjoxO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7YjoxO31pOjExO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjE4OiJzc2xfZGF5c19yZW1haW5pbmciO3M6NToibGFiZWwiO3M6ODoiU1NMIERheXMiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxMjthOjc6e3M6NDoidHlwZSI7czo2OiJjb2x1bW4iO3M6NDoibmFtZSI7czoxNToibGFzdF9jaGVja2VkX2F0IjtzOjU6ImxhYmVsIjtzOjEyOiJMYXN0IENoZWNrZWQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fXM6NDA6IjQ2YTAzMWJlOTY2NThlOWMyMmRmYzEyNTM3YTNjN2MwX2NvbHVtbnMiO2E6NDp7aTowO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjQ6Im5hbWUiO3M6NToibGFiZWwiO3M6MTM6IlJlc291cmNlIE5hbWUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToxO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjEzOiJyZXNvdXJjZV90eXBlIjtzOjU6ImxhYmVsIjtzOjQ6IlR5cGUiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9aToyO2E6Nzp7czo0OiJ0eXBlIjtzOjY6ImNvbHVtbiI7czo0OiJuYW1lIjtzOjY6InJlZ2lvbiI7czo1OiJsYWJlbCI7czo4OiJMb2NhdGlvbiI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjM7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6ODoiY29zdF9ldXIiO3M6NToibGFiZWwiO3M6NDoiQ29zdCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO319czo0MDoiMTRlYzRlZDNmZGQwOTlkZGI1NjYzYzdhMGU5N2FiMjlfY29sdW1ucyI7YTo1OntpOjA7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6OToidXNlci5uYW1lIjtzOjU6ImxhYmVsIjtzOjk6IlJlcXVlc3RlciI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjE7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTE6InRhcmdldF9uYW1lIjtzOjU6ImxhYmVsIjtzOjY6IlRhcmdldCI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjI7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTQ6InJlcXVlc3RlZF9yb2xlIjtzOjU6ImxhYmVsIjtzOjE0OiJSZXF1ZXN0ZWQgcm9sZSI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjM7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6Njoic3RhdHVzIjtzOjU6ImxhYmVsIjtzOjY6IlN0YXR1cyI7czo4OiJpc0hpZGRlbiI7YjowO3M6OToiaXNUb2dnbGVkIjtiOjE7czoxMjoiaXNUb2dnbGVhYmxlIjtiOjA7czoyNDoiaXNUb2dnbGVkSGlkZGVuQnlEZWZhdWx0IjtOO31pOjQ7YTo3OntzOjQ6InR5cGUiO3M6NjoiY29sdW1uIjtzOjQ6Im5hbWUiO3M6MTA6ImNyZWF0ZWRfYXQiO3M6NToibGFiZWwiO3M6MTA6IkNyZWF0ZWQgYXQiO3M6ODoiaXNIaWRkZW4iO2I6MDtzOjk6ImlzVG9nZ2xlZCI7YjoxO3M6MTI6ImlzVG9nZ2xlYWJsZSI7YjowO3M6MjQ6ImlzVG9nZ2xlZEhpZGRlbkJ5RGVmYXVsdCI7Tjt9fX1zOjg6ImZpbGFtZW50IjthOjA6e319', 1792409301);
 
 -- --------------------------------------------------------
 
@@ -2004,22 +2777,23 @@ CREATE TABLE `settings` (
 --
 
 INSERT INTO `settings` (`id`, `group`, `name`, `locked`, `payload`, `created_at`, `updated_at`) VALUES
-(1, 'styling', 'brand_name', 0, '\"CCOD\"', '2026-10-11 10:03:38', '2026-10-13 06:54:36'),
-(2, 'styling', 'logo_light', 0, '\"branding\\/8Xc3AklNf8s3Oq4838h4Cy7QIzdAakWt8YeVCYZo.png\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(3, 'styling', 'logo_dark', 0, '\"branding\\/Wn3DHqP0ClHFSqry3kLpzSTskBH8bbm2OD4Av4A9.png\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(4, 'styling', 'favicon', 0, '\"branding\\/DvMn4qkpi5yeO7K0yIde37uYBTepTIFn85iERIBM.png\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
+(1, 'styling', 'brand_name', 0, '\"CCOD\"', '2026-10-11 10:03:38', '2026-10-18 08:12:38'),
+(2, 'styling', 'logo_light', 0, '\"branding\\/8Xc3AklNf8s3Oq4838h4Cy7QIzdAakWt8YeVCYZo.png\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(3, 'styling', 'logo_dark', 0, '\"branding\\/Wn3DHqP0ClHFSqry3kLpzSTskBH8bbm2OD4Av4A9.png\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(4, 'styling', 'favicon', 0, '\"branding\\/DvMn4qkpi5yeO7K0yIde37uYBTepTIFn85iERIBM.png\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
 (5, 'styling', 'font_family', 0, '\"Inter\"', '2026-10-11 10:03:39', '2026-10-11 10:03:39'),
-(6, 'styling', 'primary_color', 0, '\"amber\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(7, 'styling', 'success_color', 0, '\"green\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(8, 'styling', 'warning_color', 0, '\"red\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(9, 'styling', 'danger_color', 0, '\"red\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(10, 'styling', 'info_color', 0, '\"cyan\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(11, 'styling', 'gray_color', 0, '\"gray\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(12, 'styling', 'corner_radius', 0, '\"0.375rem\"', '2026-10-11 10:03:39', '2026-10-13 06:54:36'),
-(79, 'styling', 'custom_colors', 0, '[]', '2026-10-11 11:20:10', '2026-10-13 06:54:36'),
-(176, 'styling', 'dark_mode_theme', 0, '\"black\"', '2026-10-11 12:03:36', '2026-10-13 06:54:36'),
-(203, 'styling', 'light_mode_theme', 0, '\"zinc\"', '2026-10-11 12:22:49', '2026-10-13 06:54:36'),
-(933, 'maintenance', 'enabled', 0, 'false', '2026-10-12 23:52:19', '2026-10-12 23:52:19');
+(6, 'styling', 'primary_color', 0, '\"amber\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(7, 'styling', 'success_color', 0, '\"green\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(8, 'styling', 'warning_color', 0, '\"red\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(9, 'styling', 'danger_color', 0, '\"red\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(10, 'styling', 'info_color', 0, '\"cyan\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(11, 'styling', 'gray_color', 0, '\"gray\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(12, 'styling', 'corner_radius', 0, '\"0.375rem\"', '2026-10-11 10:03:39', '2026-10-18 08:12:38'),
+(79, 'styling', 'custom_colors', 0, '[]', '2026-10-11 11:20:10', '2026-10-18 08:12:38'),
+(176, 'styling', 'dark_mode_theme', 0, '\"black\"', '2026-10-11 12:03:36', '2026-10-18 08:12:38'),
+(203, 'styling', 'light_mode_theme', 0, '\"zinc\"', '2026-10-11 12:22:49', '2026-10-18 08:12:38'),
+(933, 'maintenance', 'enabled', 0, 'false', '2026-10-12 23:52:19', '2026-10-13 22:47:29'),
+(1049, 'tab_access', 'restricted_tab_behavior', 0, '\"disabled\"', '2026-10-15 10:28:27', '2026-10-15 10:28:27');
 
 -- --------------------------------------------------------
 
@@ -2084,65 +2858,41 @@ CREATE TABLE `subscription_web_urls` (
 --
 
 INSERT INTO `subscription_web_urls` (`id`, `subscription_id`, `url`, `url_hash`, `is_active`, `is_live`, `http_status`, `response_time_ms`, `ssl_status`, `ssl_provider`, `ssl_subject`, `ssl_issuer`, `ssl_valid_from`, `ssl_expires_at`, `ssl_days_remaining`, `last_checked_at`, `last_check_error`, `created_at`, `updated_at`) VALUES
-(3, '2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'https://liferay.boschautoparts.com', '1e5bc447da4ef20430309cdef2b1b9cb903f80fd3400994ebf18759d288a5dc3', 1, 1, 200, 6184, '1', 'DigiCert Inc', 'boschautoparts.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-03 00:00:00', '2026-11-02 23:59:59', 20, '2026-10-13 11:03:42', NULL, '2026-10-13 05:05:51', '2026-10-13 05:33:42'),
-(4, '5b46ccc6-604b-4c5c-81c2-96b133061773', 'https://liferaydev.boschautoparts.com', '870e685248bb3f563667c7924211cdf3d0da5f3759a41d721e544ceed5c00d97', 1, 1, 200, 2257, '1', 'DigiCert Inc', 'liferaydev.boschautoparts.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-04-09 00:00:00', '2026-10-24 23:59:59', 11, '2026-10-13 11:03:47', NULL, '2026-10-13 05:07:55', '2026-10-13 05:33:47'),
-(5, 'a77eebf3-17a1-4378-90bf-2c96b1028137', 'https://liferayqa.boschautoparts.com', '5769bf05043e14506d34406e32b0559289cf0b524fef1b56c7721ab50ee4160c', 1, 1, 200, 2501, '1', 'DigiCert Inc', 'liferaydev.boschautoparts.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-04-09 00:00:00', '2026-10-24 23:59:59', 11, '2026-10-13 11:03:52', NULL, '2026-10-13 05:08:14', '2026-10-13 05:33:52'),
-(6, '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'https://www.extra-program.com', '7b4d5169c6d1512f5085e030a55cfb43aace1991209c24ce1966686b95835123', 1, 1, 200, 1072, '1', 'DigiCert Inc', 'extra-bonus.dk', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-10-27 00:00:00', '2026-10-26 23:59:59', 13, '2026-10-13 11:03:54', NULL, '2026-10-13 05:15:06', '2026-10-13 05:33:54'),
-(7, '77839ff3-b3aa-42b0-b490-55830c14bd3a', 'https://keyunit-dev.extra-platform.com', '2bda09e04cad7d44653cefdca73d60bcdc148c84aab0eeef13609e2c45f6d131', 1, 1, 200, 1089, '1', 'DigiCert Inc', '*.extra-platform.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 11:03:56', NULL, '2026-10-13 05:15:15', '2026-10-13 05:33:56'),
-(8, 'c080fc5b-797d-45db-b089-01cc05f9a758', 'https://mx-qa.extra-platform.com', 'c23ad5ace0ba3949ef64b4c6be4c6409cbe9f076a35d9c1a24b825033909cb08', 1, 1, 200, 1303, '1', 'DigiCert Inc', '*.extra-platform.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 11:03:58', NULL, '2026-10-13 05:15:25', '2026-10-13 05:33:58'),
-(9, 'd26dd531-2174-4c45-a240-032e0d05dfa0', 'https://labelprint.bosch.tech/spectrum-server/security/login.jsp', '12f1db0616a0d58420086009b37dbb658e9a532c1a1619df9f3cd0d12d63333e', 1, 1, 200, 2102, '1', 'DigiCert Inc', 'labelprint.bosch.tech', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-02-17 00:00:00', '2027-02-16 23:59:59', 126, '2026-10-13 11:04:02', NULL, '2026-10-13 05:15:56', '2026-10-13 05:34:02'),
-(10, '19fb36f7-0105-4d68-be29-02c3934a2abc', 'https://labelprint-q.bosch.tech/spectrum-server/security/login.jsp', '79fbe1f0efd0ee0d6fd89aabc3ac950a50effc1f9c35024603d90e679d6c922a', 1, 1, 200, 1069, '1', 'DigiCert Inc', 'labelprint-q.bosch.tech', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-04 00:00:00', '2026-11-03 23:59:59', 21, '2026-10-13 11:04:05', NULL, '2026-10-13 05:16:10', '2026-10-13 05:34:05'),
+(3, '2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'https://liferay.boschautoparts.com', '1e5bc447da4ef20430309cdef2b1b9cb903f80fd3400994ebf18759d288a5dc3', 1, 1, 200, 9020, '1', 'DigiCert Inc', 'boschautoparts.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-03 00:00:00', '2026-11-02 23:59:59', 20, '2026-10-13 18:37:29', NULL, '2026-10-13 05:05:51', '2026-10-13 13:07:29'),
+(4, '5b46ccc6-604b-4c5c-81c2-96b133061773', 'https://liferaydev.boschautoparts.com', '870e685248bb3f563667c7924211cdf3d0da5f3759a41d721e544ceed5c00d97', 1, 1, 200, 2693, '1', 'DigiCert Inc', 'liferaydev.boschautoparts.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-04-09 00:00:00', '2026-10-24 23:59:59', 11, '2026-10-13 18:37:35', NULL, '2026-10-13 05:07:55', '2026-10-13 13:07:35'),
+(5, 'a77eebf3-17a1-4378-90bf-2c96b1028137', 'https://liferayqa.boschautoparts.com', '5769bf05043e14506d34406e32b0559289cf0b524fef1b56c7721ab50ee4160c', 1, 1, 200, 2762, '1', 'DigiCert Inc', 'liferaydev.boschautoparts.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-04-09 00:00:00', '2026-10-24 23:59:59', 11, '2026-10-13 18:37:40', NULL, '2026-10-13 05:08:14', '2026-10-13 13:07:40'),
+(6, '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'https://www.extra-program.com', '7b4d5169c6d1512f5085e030a55cfb43aace1991209c24ce1966686b95835123', 1, 1, 200, 1304, '1', 'DigiCert Inc', 'extra-bonus.dk', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-10-27 00:00:00', '2026-10-26 23:59:59', 13, '2026-10-13 18:37:42', NULL, '2026-10-13 05:15:06', '2026-10-13 13:07:42'),
+(7, '77839ff3-b3aa-42b0-b490-55830c14bd3a', 'https://keyunit-dev.extra-platform.com', '2bda09e04cad7d44653cefdca73d60bcdc148c84aab0eeef13609e2c45f6d131', 1, 1, 200, 1366, '1', 'DigiCert Inc', '*.extra-platform.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 18:37:45', NULL, '2026-10-13 05:15:15', '2026-10-13 13:07:45'),
+(8, 'c080fc5b-797d-45db-b089-01cc05f9a758', 'https://mx-qa.extra-platform.com', 'c23ad5ace0ba3949ef64b4c6be4c6409cbe9f076a35d9c1a24b825033909cb08', 1, 1, 200, 1428, '1', 'DigiCert Inc', '*.extra-platform.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 18:37:47', NULL, '2026-10-13 05:15:25', '2026-10-13 13:07:47'),
+(9, 'd26dd531-2174-4c45-a240-032e0d05dfa0', 'https://labelprint.bosch.tech/spectrum-server/security/login.jsp', '12f1db0616a0d58420086009b37dbb658e9a532c1a1619df9f3cd0d12d63333e', 1, 1, 200, 1112, '1', 'DigiCert Inc', 'labelprint.bosch.tech', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-02-17 00:00:00', '2027-02-16 23:59:59', 126, '2026-10-13 18:37:49', NULL, '2026-10-13 05:15:56', '2026-10-13 13:07:49'),
+(10, '19fb36f7-0105-4d68-be29-02c3934a2abc', 'https://labelprint-q.bosch.tech/spectrum-server/security/login.jsp', '79fbe1f0efd0ee0d6fd89aabc3ac950a50effc1f9c35024603d90e679d6c922a', 1, 1, 200, 1078, '1', 'DigiCert Inc', 'labelprint-q.bosch.tech', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-04 00:00:00', '2026-11-03 23:59:59', 21, '2026-10-13 18:37:51', NULL, '2026-10-13 05:16:10', '2026-10-13 13:07:51'),
 (11, '02ab4266-3406-48d4-bfbc-76605dde11d7', 'https://boschassociateconnect.com', 'ff7ba952d65eb014d125c72dc37b2600f6a763981affdccb71fcc145c34ffb4e', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 05:18:12', '2026-10-13 05:18:12'),
-(12, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'https://www.boschrewards.in', '26142c724ec096e75364aadd104bf7ed784412a46b30fe521e62cbd7e95c4cde', 1, 1, 200, 5125, '1', 'DigiCert Inc', '*.boschrewards.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 11:04:12', NULL, '2026-10-13 05:20:42', '2026-10-13 05:34:12'),
-(13, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'https://www.boschserviceportal.com', 'ac896515e8c72ee6e5bc9d376bd82d1bf49829d37df12539062837f798981f4e', 1, 1, 200, 5685, '1', 'DigiCert Inc', '*.boschserviceportal.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 11:04:20', NULL, '2026-10-13 05:20:51', '2026-10-13 05:34:20'),
-(14, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'https://iboschrewards.azurewebsites.net/Home/HealthCheck', '41e63a20127b717acdd0e01cec41592f0ac7bff9616c8d2f610ac9322cef03c0', 1, 0, NULL, 10266, '1', 'Microsoft Corporation', '*.azurewebsites.net', 'Microsoft TLS G2 RSA CA OCSP 16', '2026-08-28 19:52:37', '2027-02-24 19:52:37', 134, '2026-10-13 11:04:32', 'cURL error 28: Operation timed out after 10013 milliseconds with 0 bytes received (see https://curl.se/libcurl/c/libcurl-errors.html) for https://iboschrewards.azurewebsites.net/Home/HealthCheck', '2026-10-13 05:20:58', '2026-10-13 05:34:32'),
-(15, '1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', 'https://qa.bosch-cms.com', 'a45dd3683ded7741a77eb3aa80196ea53572af812efb4b96b04b5584feb51974', 1, 1, 200, 2226, '1', 'DigiCert Inc', '*.bosch-cms.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-25 00:00:00', '2026-11-24 23:59:59', 42, '2026-10-13 11:04:35', NULL, '2026-10-13 05:22:32', '2026-10-13 05:34:35'),
-(17, 'fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', 'https://bosch-cms.com', '41963d82ec47dfd6b451778bc68a5edefcb92649796cc14bbe6cf80435bdbf72', 1, 1, 200, 2293, '1', 'DigiCert Inc', '*.bosch-cms.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-25 00:00:00', '2026-11-24 23:59:59', 42, '2026-10-13 11:04:39', NULL, '2026-10-13 05:23:01', '2026-10-13 05:34:39'),
-(18, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'https://boschefocus.com:5138', '5fb4d6c084e2d991a723e13bb1d09cdf911fe2c051efbf93f87b89887ce7ff69', 1, 1, 200, 1527, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:04:42', NULL, '2026-10-13 05:24:19', '2026-10-13 05:34:42'),
-(19, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'https://boschefocus.com:5141', '303183e49fde21d176c30c63e2b349c1f5d5feafc12add39714d2d5bc6be91de', 1, 1, 200, 1550, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:04:46', NULL, '2026-10-13 05:24:24', '2026-10-13 05:34:46'),
-(20, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'https://boschefocus.com:8080/DynamicsNAV90/WebClient/Default.aspx', 'caff7ae61afcb372b531dc31486f03b2a911e06e9052965c8469adcf8f2b7620', 1, 1, 401, 1881, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:04:49', NULL, '2026-10-13 05:24:30', '2026-10-13 05:34:49'),
-(21, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://boschefocus.com:8443/WebInterface/login.html', '195cdf0962182990937fe9a7a86fd3504d15c4c5c96c658b5676604b4f3fa340', 1, 0, 502, 1827, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:04:52', NULL, '2026-10-13 05:24:39', '2026-10-13 05:34:52'),
-(22, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://quality.boschefocus.com:8080/DynamicsNAV90/WebClient/Default.aspx', '4dcc60fed6cc06af1869e3a0fe4e090c957d5fb6fb26ef75d8fbc6d478d1e5a9', 1, 0, 502, 1977, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:04:56', NULL, '2026-10-13 05:25:06', '2026-10-13 05:34:56'),
-(23, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://quality.boschefocus.com:5138', 'd82d4997bacb332b71f3c51d60fa44d47b9cb5d4a14d520a6ca813976ef3bde2', 1, 1, 200, 1536, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:04:59', NULL, '2026-10-13 05:25:10', '2026-10-13 05:34:59'),
-(24, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://quality.boschefocus.com:5141', '68381710b8b008541fa5092274fcc2ab73849b977031a6e48c5998067bf5e8e7', 1, 1, 200, 1505, '1', 'DigiCert Inc', '*.boschefocus.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2025-11-19 00:00:00', '2026-11-18 23:59:59', 36, '2026-10-13 11:05:02', NULL, '2026-10-13 05:25:14', '2026-10-13 05:35:02'),
-(25, '219ccbf6-e35b-4758-961a-ede690403d86', 'https://qa.hamro.boschaftermarket.in/swagger/index.html', '27ee40a04bab6e84d5a06a94acb48d55a5e36fe034fa9d85bdd09fbc6cde0364', 1, 1, 200, 2683, '1', 'DigiCert Inc', '*.hamro.boschaftermarket.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-08-14 00:00:00', '2027-02-28 23:59:59', 138, '2026-10-13 11:05:06', NULL, '2026-10-13 05:25:44', '2026-10-13 05:35:06'),
-(27, '8c9dacf9-577b-4129-b900-2c6c9e39c3dd', 'https://hamro.boschaftermarket.in/swagger/index.html', '28c5b4e32d51b074d7d17f06be6db3e65573209a4bf531f7b9ad8e3c6124fc39', 1, 1, 200, 1746, '1', 'DigiCert Inc', '*.hamro.boschaftermarket.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-08-14 00:00:00', '2027-02-28 23:59:59', 138, '2026-10-13 11:05:09', NULL, '2026-10-13 05:26:57', '2026-10-13 05:35:09'),
-(28, '12db631f-5ab4-4237-9fa6-6d92de7a53e8', 'https://boschinsites.com/insiderlens', 'c6d22873993ccf9f2aad41a37f2572e7bf9b647ccd95c2dc800c8c8afff3eecc', 1, 1, 200, 2309, '1', 'GoDaddy.com, Inc.', 'boschinsites.com', 'Go Daddy Secure Certificate Authority - G2', '2025-11-16 07:02:28', '2026-12-17 19:19:37', 65, '2026-10-13 11:05:13', NULL, '2026-10-13 05:27:15', '2026-10-13 05:35:13'),
-(29, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-INTERNAL.MICONIC.IN', '73712c2addbfb5d3a63646826ef4578db6d07b25dd4bd2984595b17927bead0f', 1, 1, 200, 4431, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:19', NULL, '2026-10-13 05:27:43', '2026-10-13 05:35:19'),
-(30, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-WEBAPI.MICONIC.IN', '236a99aea31e4556e7559edd2d96a07269d105cbc14bf25a083f9597f70a94ea', 1, 1, 200, 2390, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:24', NULL, '2026-10-13 05:27:54', '2026-10-13 05:35:24'),
-(31, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-WSAPI.MICONIC.IN', '9cc076258de107be093d3b838a687e5433a99b2cf7d216807b1894b568d2beb1', 1, 1, 200, 2010, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:27', NULL, '2026-10-13 05:28:11', '2026-10-13 05:35:27'),
-(32, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-2WOAPI.MICONIC.IN', '9a9eeb88a04c7c14fa27ee1c5115bacd8e81d5a34f2de96d2be681bed061a275', 1, 1, 200, 2044, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:31', NULL, '2026-10-13 05:28:19', '2026-10-13 05:35:31'),
+(12, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'https://www.boschrewards.in', '26142c724ec096e75364aadd104bf7ed784412a46b30fe521e62cbd7e95c4cde', 1, 1, 200, 5043, '1', 'DigiCert Inc', '*.boschrewards.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 18:37:59', NULL, '2026-10-13 05:20:42', '2026-10-13 13:07:59'),
+(13, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'https://www.boschserviceportal.com', 'ac896515e8c72ee6e5bc9d376bd82d1bf49829d37df12539062837f798981f4e', 1, 1, 200, 5241, '1', 'DigiCert Inc', '*.boschserviceportal.com', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-05-28 00:00:00', '2026-12-12 23:59:59', 60, '2026-10-13 18:38:06', NULL, '2026-10-13 05:20:51', '2026-10-13 13:08:06'),
+(14, 'dca0a650-722e-4755-bbce-f2b7f6ed0f9f', 'https://iboschrewards.azurewebsites.net/Home/HealthCheck', '41e63a20127b717acdd0e01cec41592f0ac7bff9616c8d2f610ac9322cef03c0', 1, 0, NULL, 10405, '1', 'Microsoft Corporation', '*.azurewebsites.net', 'Microsoft TLS G2 RSA CA OCSP 04', '2026-10-13 14:22:06', '2027-01-21 13:22:06', 99, '2026-10-13 18:38:18', 'cURL error 28: Operation timed out after 10001 milliseconds with 0 bytes received (see https://curl.se/libcurl/c/libcurl-errors.html) for https://iboschrewards.azurewebsites.net/Home/HealthCheck', '2026-10-13 05:20:58', '2026-10-13 13:08:18'),
+(15, '1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', 'https://qa.bosch-cms.com', 'a45dd3683ded7741a77eb3aa80196ea53572af812efb4b96b04b5584feb51974', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:38:28', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://qa.bosch-cms.com', '2026-10-13 05:22:32', '2026-10-13 13:08:28'),
+(17, 'fdac5c1a-5d9c-4ed0-944f-54c8a3e49bf8', 'https://bosch-cms.com', '41963d82ec47dfd6b451778bc68a5edefcb92649796cc14bbe6cf80435bdbf72', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:38:38', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://bosch-cms.com', '2026-10-13 05:23:01', '2026-10-13 13:08:38'),
+(18, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'https://boschefocus.com:5138', '5fb4d6c084e2d991a723e13bb1d09cdf911fe2c051efbf93f87b89887ce7ff69', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:38:48', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://boschefocus.com:5138', '2026-10-13 05:24:19', '2026-10-13 13:08:48'),
+(19, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'https://boschefocus.com:5141', '303183e49fde21d176c30c63e2b349c1f5d5feafc12add39714d2d5bc6be91de', 1, 0, NULL, 5002, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:38:58', 'cURL error 28: Connection timed out after 5000 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://boschefocus.com:5141', '2026-10-13 05:24:24', '2026-10-13 13:08:58'),
+(20, 'c97e52b5-1c64-44c4-9ac2-36ab44b2ece5', 'https://boschefocus.com:8080/DynamicsNAV90/WebClient/Default.aspx', 'caff7ae61afcb372b531dc31486f03b2a911e06e9052965c8469adcf8f2b7620', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:39:08', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://boschefocus.com:8080/DynamicsNAV90/WebClient/Default.aspx', '2026-10-13 05:24:30', '2026-10-13 13:09:08'),
+(21, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://boschefocus.com:8443/WebInterface/login.html', '195cdf0962182990937fe9a7a86fd3504d15c4c5c96c658b5676604b4f3fa340', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:39:18', 'cURL error 28: Connection timed out after 5000 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://boschefocus.com:8443/WebInterface/login.html', '2026-10-13 05:24:39', '2026-10-13 13:09:18'),
+(22, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://quality.boschefocus.com:8080/DynamicsNAV90/WebClient/Default.aspx', '4dcc60fed6cc06af1869e3a0fe4e090c957d5fb6fb26ef75d8fbc6d478d1e5a9', 1, 0, NULL, 5002, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:39:29', 'cURL error 28: Connection timed out after 5000 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://quality.boschefocus.com:8080/DynamicsNAV90/WebClient/Default.aspx', '2026-10-13 05:25:06', '2026-10-13 13:09:29'),
+(23, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://quality.boschefocus.com:5138', 'd82d4997bacb332b71f3c51d60fa44d47b9cb5d4a14d520a6ca813976ef3bde2', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:39:39', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://quality.boschefocus.com:5138', '2026-10-13 05:25:10', '2026-10-13 13:09:39'),
+(24, '7498780e-1785-465f-9d50-c8ac1e929376', 'https://quality.boschefocus.com:5141', '68381710b8b008541fa5092274fcc2ab73849b977031a6e48c5998067bf5e8e7', 1, 0, NULL, 5002, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:39:49', 'cURL error 28: Connection timed out after 5000 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://quality.boschefocus.com:5141', '2026-10-13 05:25:14', '2026-10-13 13:09:49'),
+(25, '219ccbf6-e35b-4758-961a-ede690403d86', 'https://qa.hamro.boschaftermarket.in/swagger/index.html', '27ee40a04bab6e84d5a06a94acb48d55a5e36fe034fa9d85bdd09fbc6cde0364', 1, 1, 200, 1922, '1', 'DigiCert Inc', '*.hamro.boschaftermarket.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-08-14 00:00:00', '2027-02-28 23:59:59', 138, '2026-10-13 18:39:52', NULL, '2026-10-13 05:25:44', '2026-10-13 13:09:52'),
+(27, '8c9dacf9-577b-4129-b900-2c6c9e39c3dd', 'https://hamro.boschaftermarket.in/swagger/index.html', '28c5b4e32d51b074d7d17f06be6db3e65573209a4bf531f7b9ad8e3c6124fc39', 1, 1, 200, 2054, '1', 'DigiCert Inc', '*.hamro.boschaftermarket.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-08-14 00:00:00', '2027-02-28 23:59:59', 138, '2026-10-13 18:39:55', NULL, '2026-10-13 05:26:57', '2026-10-13 13:09:55'),
+(28, '12db631f-5ab4-4237-9fa6-6d92de7a53e8', 'https://boschinsites.com/insiderlens', 'c6d22873993ccf9f2aad41a37f2572e7bf9b647ccd95c2dc800c8c8afff3eecc', 1, 1, 200, 2405, '1', 'GoDaddy.com, Inc.', 'boschinsites.com', 'Go Daddy Secure Certificate Authority - G2', '2025-11-16 07:02:28', '2026-12-17 19:19:37', 65, '2026-10-13 18:39:59', NULL, '2026-10-13 05:27:15', '2026-10-13 13:09:59'),
+(29, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-INTERNAL.MICONIC.IN', '73712c2addbfb5d3a63646826ef4578db6d07b25dd4bd2984595b17927bead0f', 1, 0, NULL, 5002, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:40:09', 'cURL error 28: Connection timed out after 5000 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://q-internal.miconic.in', '2026-10-13 05:27:43', '2026-10-13 13:10:09'),
+(30, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-WEBAPI.MICONIC.IN', '236a99aea31e4556e7559edd2d96a07269d105cbc14bf25a083f9597f70a94ea', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:40:19', 'cURL error 28: Connection timed out after 5000 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://q-webapi.miconic.in', '2026-10-13 05:27:54', '2026-10-13 13:10:19'),
+(31, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-WSAPI.MICONIC.IN', '9cc076258de107be093d3b838a687e5433a99b2cf7d216807b1894b568d2beb1', 1, 0, NULL, 5004, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:40:29', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://q-wsapi.miconic.in', '2026-10-13 05:28:11', '2026-10-13 13:10:29'),
+(32, '50d41c25-8668-4497-8925-766161f0cddb', 'https://Q-2WOAPI.MICONIC.IN', '9a9eeb88a04c7c14fa27ee1c5115bacd8e81d5a34f2de96d2be681bed061a275', 1, 0, NULL, 5003, '0', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 18:40:39', 'cURL error 28: Connection timed out after 5001 milliseconds (see https://curl.se/libcurl/c/libcurl-errors.html) for https://q-2woapi.miconic.in', '2026-10-13 05:28:19', '2026-10-13 13:10:39'),
 (33, 'fc152cdb-dc60-44e7-bbee-412c719cb49a', 'https://dev-wsapi.miconic.in', '8cdfcb04710596ea40e1b0555b8bd90ebab83d300ac47c35b07bc4ac92cb332e', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 05:28:37', '2026-10-13 05:28:37'),
 (34, 'fc152cdb-dc60-44e7-bbee-412c719cb49a', 'https://dev-webapi.miconic.in', '2d79e10d0d8d09e3d72005a34a3a1eea046f746f791fd926b716ed52a17a5c36', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 05:28:45', '2026-10-13 05:31:46'),
 (42, 'fc152cdb-dc60-44e7-bbee-412c719cb49a', 'https://dev-2woapi.miconic.in', '0ef646374e5cbe64684696e275e649c86b8b485deec62ebf6a5dc11cc7fe9751', 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-13 05:31:00', '2026-10-13 05:31:44'),
-(43, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://INTERNAL.MICONIC.IN', 'c1ed27584ae21830943c2225ce32a214dac52e9b9212fec34189f1210481e759', 1, 1, 200, 4180, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:37', NULL, '2026-10-13 05:32:04', '2026-10-13 05:35:37'),
-(44, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://WSAPI.MICONIC.IN', '8624d5122d9a4e70d22aa322278e51f588654b3bdcaf9706fd5eede934a8f38b', 1, 1, 200, 2029, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:41', NULL, '2026-10-13 05:32:12', '2026-10-13 05:35:41'),
-(45, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://2WOAPI.MICONIC.IN', '9bf331b305b2ba447e7cba4a254f8bf227ae7d781570fad77fe42d1edfdb4875', 1, 1, 200, 2295, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:45', NULL, '2026-10-13 05:32:22', '2026-10-13 05:35:45'),
-(46, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://WEBAPI.MICONIC.IN', '686703b46d96936a6ef4732eaaf07318ef0c8424092151f0861d2d25dd783963', 1, 1, 200, 2106, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 11:05:48', NULL, '2026-10-13 05:32:29', '2026-10-13 05:35:48');
-
--- --------------------------------------------------------
-
---
--- Table structure for table `teams`
---
-
-CREATE TABLE `teams` (
-  `id` bigint(20) UNSIGNED NOT NULL,
-  `name` varchar(255) NOT NULL,
-  `description` text DEFAULT NULL,
-  `created_at` timestamp NULL DEFAULT NULL,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Dumping data for table `teams`
---
-
-INSERT INTO `teams` (`id`, `name`, `description`, `created_at`, `updated_at`) VALUES
-(1, 'MA-BDO', 'MA-BDO Team - Business, App & Security', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
-(2, 'RBIN', 'RBIN Projects', '2026-10-08 10:55:55', '2026-10-08 10:55:55'),
-(3, 'Others', 'Other Subscriptions', '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
-(4, 'MA', 'Mobility Aftermarket', '2026-10-10 10:17:30', '2026-10-10 10:17:30');
+(43, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://INTERNAL.MICONIC.IN', 'c1ed27584ae21830943c2225ce32a214dac52e9b9212fec34189f1210481e759', 1, 1, 200, 4272, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 18:40:46', NULL, '2026-10-13 05:32:04', '2026-10-13 13:10:46'),
+(44, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://WSAPI.MICONIC.IN', '8624d5122d9a4e70d22aa322278e51f588654b3bdcaf9706fd5eede934a8f38b', 1, 1, 200, 2103, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 18:40:49', NULL, '2026-10-13 05:32:12', '2026-10-13 13:10:49'),
+(45, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://2WOAPI.MICONIC.IN', '9bf331b305b2ba447e7cba4a254f8bf227ae7d781570fad77fe42d1edfdb4875', 1, 1, 200, 2102, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 18:40:53', NULL, '2026-10-13 05:32:22', '2026-10-13 13:10:53'),
+(46, '4172676b-8a9c-44e0-b2ab-727057b691b7', 'https://WEBAPI.MICONIC.IN', '686703b46d96936a6ef4732eaaf07318ef0c8424092151f0861d2d25dd783963', 1, 1, 200, 1920, '1', 'DigiCert Inc', '*.miconic.in', 'DigiCert Global G2 TLS RSA SHA256 2020 CA1', '2026-01-06 00:00:00', '2027-01-05 23:59:59', 84, '2026-10-13 18:40:56', NULL, '2026-10-13 05:32:29', '2026-10-13 13:10:56');
 
 -- --------------------------------------------------------
 
@@ -2151,7 +2901,7 @@ INSERT INTO `teams` (`id`, `name`, `description`, `created_at`, `updated_at`) VA
 --
 
 CREATE TABLE `team_subscription` (
-  `team_id` bigint(20) UNSIGNED NOT NULL,
+  `business_unit_id` bigint(20) UNSIGNED NOT NULL,
   `subscription_id` varchar(100) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -2161,7 +2911,7 @@ CREATE TABLE `team_subscription` (
 -- Dumping data for table `team_subscription`
 --
 
-INSERT INTO `team_subscription` (`team_id`, `subscription_id`, `created_at`, `updated_at`) VALUES
+INSERT INTO `team_subscription` (`business_unit_id`, `subscription_id`, `created_at`, `updated_at`) VALUES
 (1, '1cf3b1cf-65eb-4ef0-a2bc-916e10d7e719', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
 (1, '219ccbf6-e35b-4758-961a-ede690403d86', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
 (1, '4172676b-8a9c-44e0-b2ab-727057b691b7', '2026-10-08 10:49:27', '2026-10-08 10:49:27'),
@@ -2198,7 +2948,7 @@ INSERT INTO `team_subscription` (`team_id`, `subscription_id`, `created_at`, `up
 --
 
 CREATE TABLE `team_user` (
-  `team_id` bigint(20) UNSIGNED NOT NULL,
+  `business_unit_id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
@@ -2208,13 +2958,13 @@ CREATE TABLE `team_user` (
 -- Dumping data for table `team_user`
 --
 
-INSERT INTO `team_user` (`team_id`, `user_id`, `created_at`, `updated_at`) VALUES
+INSERT INTO `team_user` (`business_unit_id`, `user_id`, `created_at`, `updated_at`) VALUES
 (1, 1, '2026-10-11 12:58:27', '2026-10-11 12:58:27'),
-(1, 2, '2026-10-11 09:02:06', '2026-10-11 09:02:06'),
-(1, 3, '2026-10-11 09:01:35', '2026-10-11 09:01:35'),
 (2, 1, '2026-10-11 12:58:41', '2026-10-11 12:58:41'),
+(2, 6, '2026-10-15 10:40:09', '2026-10-15 10:40:09'),
 (3, 1, '2026-10-08 14:02:58', '2026-10-08 14:02:58'),
-(4, 1, '2026-10-11 12:59:02', '2026-10-11 12:59:02');
+(4, 1, '2026-10-11 12:59:02', '2026-10-11 12:59:02'),
+(4, 5, '2026-10-15 09:03:28', '2026-10-15 09:03:28');
 
 -- --------------------------------------------------------
 
@@ -2240,10 +2990,9 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `name`, `email`, `email_verified_at`, `password`, `role`, `is_active`, `remember_token`, `created_at`, `updated_at`) VALUES
-(1, 'JRA9COB', 'jra9cob@bosch.com', NULL, '$2y$12$gvrkcj5.HqEO.vMZyYvLFej075vWSkG.DOyfDfY2utnExYWjvFsyW', 'global_owner', 1, NULL, '2026-10-08 08:48:28', '2026-10-09 09:18:45'),
-(2, 'MA-BDO Owner', 'mabdo@bosch.com', NULL, '$2y$12$Aq2yWGSEFLqoQSQo08A6mesY3P2zvioNNSEJGnWzAUojuOKcIozD6', 'restricted_owner', 1, NULL, '2026-10-08 10:50:52', '2026-10-13 01:15:28'),
-(3, 'MA-BDO Contributor', 'mabdo-contri@bosch.com', NULL, '$2y$12$W6kl9gyZzt35ayQwZZ47HelcY5ebFxlIk2GcgXnK8eG77OiEKHDo2', 'restricted_contributor', 1, NULL, '2026-10-11 09:01:35', '2026-10-11 09:02:54'),
-(4, 'Test user', 'test@bosch.com', NULL, '$2y$12$k9i5v1xCp6xv7ijtW7/F7uTkPo3FsSn2WmHEmgXtp4ZdhyksFHLbG', 'restricted_reader', 1, NULL, '2026-10-13 01:20:05', '2026-10-13 01:20:05');
+(1, 'JRA9COB', 'jra9cob@bosch.com', NULL, '$2y$12$gvrkcj5.HqEO.vMZyYvLFej075vWSkG.DOyfDfY2utnExYWjvFsyW', 'super_admin', 1, NULL, '2026-10-08 08:48:28', '2026-10-09 09:18:45'),
+(5, 'Test user', 'test@bosch.com', NULL, '$2y$12$606eOq4Z3bNgsiKQqlnGC.zB7nFl2BSZ6iQj3bxgAlWBUJzA5l2mW', 'restricted_reader', 1, NULL, '2026-10-15 09:03:28', '2026-10-15 13:07:28'),
+(6, 'Another test user', 'anothertest@bosch.com', NULL, '$2y$12$FPD7xIJ2pIHlcIf9eLS3fu.XJsgZMNz1bHOQeBu6e0fdzvqEe.MVC', 'restricted_reader', 1, NULL, '2026-10-15 10:40:09', '2026-10-19 03:21:22');
 
 -- --------------------------------------------------------
 
@@ -2255,7 +3004,7 @@ CREATE TABLE `user_access_grants` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `user_id` bigint(20) UNSIGNED NOT NULL,
   `target_type` varchar(255) NOT NULL DEFAULT 'subscription',
-  `team_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `business_unit_id` bigint(20) UNSIGNED DEFAULT NULL,
   `subscription_id` varchar(100) DEFAULT NULL,
   `target_name` varchar(255) NOT NULL,
   `role` varchar(255) NOT NULL,
@@ -2272,10 +3021,75 @@ CREATE TABLE `user_access_grants` (
 -- Dumping data for table `user_access_grants`
 --
 
-INSERT INTO `user_access_grants` (`id`, `user_id`, `target_type`, `team_id`, `subscription_id`, `target_name`, `role`, `granted_by_type`, `granted_by_id`, `source_request_id`, `starts_at`, `expires_at`, `created_at`, `updated_at`) VALUES
-(1, 2, 'subscription', NULL, '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'MA-SKX-eXtra-Production-Stage-Prod', 'restricted_reader', 'App\\Models\\User', 1, 2, '2026-10-10 10:09:22', NULL, '2026-10-10 10:09:22', '2026-10-10 10:09:22'),
-(2, 2, 'subscription', NULL, '2ac2c1f8-60ec-4523-9c64-8fdf8bc2a75b', 'AA-SMS3-NA-PBAP-Prod', 'restricted_reader', 'App\\Models\\User', 1, 1, '2026-10-10 11:13:03', '2026-10-10 16:40:00', '2026-10-10 11:13:03', '2026-10-10 11:13:03'),
-(3, 3, 'subscription', NULL, 'c12d79d2-0655-4caa-839e-fc47e019271c', 'OT-RBIN-GS-EXIMPortal-Prod', 'restricted_owner', 'App\\Models\\User', 1, 4, '2026-10-11 13:18:56', NULL, '2026-10-11 13:18:56', '2026-10-11 13:18:56');
+INSERT INTO `user_access_grants` (`id`, `user_id`, `target_type`, `business_unit_id`, `subscription_id`, `target_name`, `role`, `granted_by_type`, `granted_by_id`, `source_request_id`, `starts_at`, `expires_at`, `created_at`, `updated_at`) VALUES
+(4, 5, 'subscription', NULL, '5784d84d-05ea-4a9c-b625-7d0183e9240b', 'AA-BDO-IN-BoschRewards-QA', 'test-role', 'App\\Models\\User', 1, 5, '2026-10-18 07:37:08', NULL, '2026-10-18 07:37:08', '2026-10-18 07:37:08');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_resource_access`
+--
+
+CREATE TABLE `user_resource_access` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `access_type` varchar(30) NOT NULL,
+  `business_unit_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `project_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `subscription_id` varchar(100) DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `user_resource_access`
+--
+
+INSERT INTO `user_resource_access` (`id`, `user_id`, `access_type`, `business_unit_id`, `project_id`, `subscription_id`, `created_at`, `updated_at`) VALUES
+(1, 1, 'business_unit', 4, NULL, NULL, '2026-10-15 01:51:36', '2026-10-15 01:51:36'),
+(2, 1, 'business_unit', 1, NULL, NULL, '2026-10-15 01:51:36', '2026-10-15 01:51:36'),
+(3, 1, 'business_unit', 3, NULL, NULL, '2026-10-15 01:51:36', '2026-10-15 01:51:36'),
+(4, 1, 'business_unit', 2, NULL, NULL, '2026-10-15 01:51:36', '2026-10-15 01:51:36'),
+(17, 5, 'business_unit', 4, NULL, NULL, '2026-10-15 13:18:00', '2026-10-15 13:18:00'),
+(18, 5, 'subscription', NULL, NULL, '5784d84d-05ea-4a9c-b625-7d0183e9240b', '2026-10-18 07:27:56', '2026-10-18 07:27:56'),
+(19, 6, 'business_unit', 1, NULL, NULL, '2026-10-19 03:19:00', '2026-10-19 03:19:00');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_role_assignments`
+--
+
+CREATE TABLE `user_role_assignments` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `user_id` bigint(20) UNSIGNED NOT NULL,
+  `role_id` bigint(20) UNSIGNED NOT NULL,
+  `resource_access_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `scope_type` varchar(255) NOT NULL,
+  `business_unit_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `project_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `application_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `environment` varchar(255) DEFAULT NULL,
+  `subscription_id` varchar(255) DEFAULT NULL,
+  `granted_by_user_id` bigint(20) UNSIGNED DEFAULT NULL,
+  `starts_at` timestamp NULL DEFAULT NULL,
+  `expires_at` timestamp NULL DEFAULT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `user_role_assignments`
+--
+
+INSERT INTO `user_role_assignments` (`id`, `user_id`, `role_id`, `resource_access_id`, `scope_type`, `business_unit_id`, `project_id`, `application_id`, `environment`, `subscription_id`, `granted_by_user_id`, `starts_at`, `expires_at`, `created_at`, `updated_at`) VALUES
+(1, 1, 5, 1, 'business_unit', 4, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-15 00:39:29', '2026-10-15 00:39:29'),
+(2, 1, 5, 2, 'business_unit', 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-15 00:39:29', '2026-10-15 00:39:29'),
+(3, 1, 5, 3, 'business_unit', 3, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-15 00:39:29', '2026-10-15 00:39:29'),
+(4, 1, 5, 4, 'business_unit', 2, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-15 00:39:29', '2026-10-15 00:39:29'),
+(12, 5, 8, 17, 'business_unit', NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-17 10:25:21', '2026-10-17 15:09:11'),
+(13, 5, 8, 18, 'subscription', NULL, NULL, NULL, NULL, NULL, 1, '2026-10-18 07:37:08', NULL, '2026-10-18 07:37:08', '2026-10-18 07:37:08'),
+(14, 6, 4, 19, 'business_unit', NULL, NULL, NULL, NULL, NULL, NULL, '2026-10-19 03:18:55', NULL, '2026-10-19 03:19:00', '2026-10-19 03:19:00');
 
 -- --------------------------------------------------------
 
@@ -2297,14 +3111,6 @@ CREATE TABLE `user_subscription_access_overrides` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
--- Dumping data for table `user_subscription_access_overrides`
---
-
-INSERT INTO `user_subscription_access_overrides` (`id`, `user_id`, `subscription_id`, `override`, `revoked_by_type`, `revoked_by_id`, `revoked_at`, `reason`, `created_at`, `updated_at`) VALUES
-(1, 2, '1c119a3d-5a21-4652-8e7f-e8b55c8635f5', 'revoked', 'App\\Models\\User', 1, '2026-10-10 11:54:35', 'Task completed', '2026-10-10 11:54:35', '2026-10-10 11:54:35'),
-(2, 3, 'c12d79d2-0655-4caa-839e-fc47e019271c', 'revoked', 'App\\Models\\User', 1, '2026-10-11 13:19:46', 'Activity completed.', '2026-10-11 13:19:46', '2026-10-11 13:19:46');
-
---
 -- Indexes for dumped tables
 --
 
@@ -2313,10 +3119,10 @@ INSERT INTO `user_subscription_access_overrides` (`id`, `user_id`, `subscription
 --
 ALTER TABLE `access_requests`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `access_requests_team_id_foreign` (`team_id`),
+  ADD KEY `access_requests_team_id_foreign` (`business_unit_id`),
   ADD KEY `access_requests_status_created_at_index` (`status`,`created_at`),
   ADD KEY `access_requests_user_id_status_index` (`user_id`,`status`),
-  ADD KEY `access_requests_target_type_team_id_index` (`target_type`,`team_id`),
+  ADD KEY `access_requests_target_type_team_id_index` (`target_type`,`business_unit_id`),
   ADD KEY `access_requests_target_type_subscription_id_index` (`target_type`,`subscription_id`),
   ADD KEY `access_requests_decided_by_type_decided_by_id_index` (`decided_by_type`,`decided_by_id`);
 
@@ -2345,6 +3151,17 @@ ALTER TABLE `audit_logs`
   ADD KEY `audit_logs_event_created_at_index` (`event`,`created_at`),
   ADD KEY `audit_logs_subject_type_subject_id_index` (`subject_type`,`subject_id`),
   ADD KEY `audit_logs_user_id_created_at_index` (`user_id`,`created_at`);
+
+--
+-- Indexes for table `azure_alerts`
+--
+ALTER TABLE `azure_alerts`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `azure_alerts_azure_alert_id_unique` (`azure_alert_id`) USING HASH,
+  ADD KEY `azure_alerts_subscription_id_index` (`subscription_id`),
+  ADD KEY `azure_alerts_severity_index` (`severity`),
+  ADD KEY `azure_alerts_fire_time_index` (`fire_time`),
+  ADD KEY `azure_alerts_last_modified_time_index` (`last_modified_time`);
 
 --
 -- Indexes for table `azure_budgets`
@@ -2382,6 +3199,13 @@ ALTER TABLE `billing_resources`
   ADD KEY `billing_resources_subscription_name_index` (`subscription_id`,`name`),
   ADD KEY `billing_resources_subscription_type_index` (`subscription_id`,`resource_type`),
   ADD KEY `billing_resources_subscription_region_index` (`subscription_id`,`region`);
+
+--
+-- Indexes for table `business_units`
+--
+ALTER TABLE `business_units`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `teams_name_unique` (`name`);
 
 --
 -- Indexes for table `cache`
@@ -2469,6 +3293,21 @@ ALTER TABLE `password_reset_tokens`
   ADD PRIMARY KEY (`email`);
 
 --
+-- Indexes for table `permissions`
+--
+ALTER TABLE `permissions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `permissions_slug_unique` (`slug`),
+  ADD KEY `permissions_category_index` (`category`);
+
+--
+-- Indexes for table `permission_role`
+--
+ALTER TABLE `permission_role`
+  ADD PRIMARY KEY (`role_id`,`permission_id`),
+  ADD KEY `permission_role_permission_id_foreign` (`permission_id`);
+
+--
 -- Indexes for table `pill_colors`
 --
 ALTER TABLE `pill_colors`
@@ -2480,7 +3319,24 @@ ALTER TABLE `pill_colors`
 --
 ALTER TABLE `projects`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `projects_name_unique` (`name`);
+  ADD UNIQUE KEY `projects_name_unique` (`name`),
+  ADD KEY `projects_business_unit_id_foreign` (`business_unit_id`);
+
+--
+-- Indexes for table `project_subscriptions`
+--
+ALTER TABLE `project_subscriptions`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `project_subscriptions_subscription_unique` (`subscription_id`),
+  ADD UNIQUE KEY `project_subscriptions_project_subscription_unique` (`project_id`,`subscription_id`);
+
+--
+-- Indexes for table `roles`
+--
+ALTER TABLE `roles`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `roles_name_unique` (`name`),
+  ADD UNIQUE KEY `roles_slug_unique` (`slug`);
 
 --
 -- Indexes for table `sessions`
@@ -2517,24 +3373,17 @@ ALTER TABLE `subscription_web_urls`
   ADD KEY `subscription_web_urls_subscription_id_is_active_index` (`subscription_id`,`is_active`);
 
 --
--- Indexes for table `teams`
---
-ALTER TABLE `teams`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `teams_name_unique` (`name`);
-
---
 -- Indexes for table `team_subscription`
 --
 ALTER TABLE `team_subscription`
-  ADD PRIMARY KEY (`team_id`,`subscription_id`),
+  ADD PRIMARY KEY (`business_unit_id`,`subscription_id`),
   ADD KEY `team_subscription_subscription_id_foreign` (`subscription_id`);
 
 --
 -- Indexes for table `team_user`
 --
 ALTER TABLE `team_user`
-  ADD PRIMARY KEY (`team_id`,`user_id`),
+  ADD PRIMARY KEY (`business_unit_id`,`user_id`),
   ADD KEY `team_user_user_id_foreign` (`user_id`);
 
 --
@@ -2551,9 +3400,41 @@ ALTER TABLE `user_access_grants`
   ADD PRIMARY KEY (`id`),
   ADD KEY `user_access_grants_source_request_id_foreign` (`source_request_id`),
   ADD KEY `user_access_grants_user_id_target_type_index` (`user_id`,`target_type`),
-  ADD KEY `user_access_grants_team_id_expires_at_index` (`team_id`,`expires_at`),
+  ADD KEY `user_access_grants_team_id_expires_at_index` (`business_unit_id`,`expires_at`),
   ADD KEY `user_access_grants_subscription_id_expires_at_index` (`subscription_id`,`expires_at`),
   ADD KEY `user_access_grants_granted_by_type_granted_by_id_index` (`granted_by_type`,`granted_by_id`);
+
+--
+-- Indexes for table `user_resource_access`
+--
+ALTER TABLE `user_resource_access`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_resource_access_business_unit_id_foreign` (`business_unit_id`),
+  ADD KEY `user_resource_access_project_id_foreign` (`project_id`),
+  ADD KEY `user_resource_access_user_id_access_type_index` (`user_id`,`access_type`),
+  ADD KEY `user_resource_access_access_type_business_unit_id_index` (`access_type`,`business_unit_id`),
+  ADD KEY `user_resource_access_access_type_project_id_index` (`access_type`,`project_id`),
+  ADD KEY `user_resource_access_access_type_subscription_id_index` (`access_type`,`subscription_id`),
+  ADD KEY `user_resource_access_subscription_id_foreign` (`subscription_id`);
+
+--
+-- Indexes for table `user_role_assignments`
+--
+ALTER TABLE `user_role_assignments`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `user_role_assignments_role_id_foreign` (`role_id`),
+  ADD KEY `user_role_assignments_business_unit_id_foreign` (`business_unit_id`),
+  ADD KEY `user_role_assignments_project_id_foreign` (`project_id`),
+  ADD KEY `user_role_assignments_application_id_foreign` (`application_id`),
+  ADD KEY `user_role_assignments_granted_by_user_id_foreign` (`granted_by_user_id`),
+  ADD KEY `user_role_assignments_subscription_id_foreign` (`subscription_id`),
+  ADD KEY `user_role_assignments_user_id_role_id_index` (`user_id`,`role_id`),
+  ADD KEY `user_role_assignments_scope_type_business_unit_id_index` (`scope_type`,`business_unit_id`),
+  ADD KEY `user_role_assignments_scope_type_project_id_index` (`scope_type`,`project_id`),
+  ADD KEY `user_role_assignments_scope_type_application_id_index` (`scope_type`,`application_id`),
+  ADD KEY `user_role_assignments_scope_type_environment_index` (`scope_type`,`environment`),
+  ADD KEY `user_role_assignments_scope_type_subscription_id_index` (`scope_type`,`subscription_id`),
+  ADD KEY `user_role_assignments_resource_access_id_index` (`resource_access_id`);
 
 --
 -- Indexes for table `user_subscription_access_overrides`
@@ -2572,13 +3453,13 @@ ALTER TABLE `user_subscription_access_overrides`
 -- AUTO_INCREMENT for table `access_requests`
 --
 ALTER TABLE `access_requests`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `activity_log`
 --
 ALTER TABLE `activity_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=533;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=777;
 
 --
 -- AUTO_INCREMENT for table `applications`
@@ -2593,10 +3474,22 @@ ALTER TABLE `audit_logs`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `azure_alerts`
+--
+ALTER TABLE `azure_alerts`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+
+--
 -- AUTO_INCREMENT for table `azure_budgets`
 --
 ALTER TABLE `azure_budgets`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=76;
+
+--
+-- AUTO_INCREMENT for table `business_units`
+--
+ALTER TABLE `business_units`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `developers`
@@ -2608,7 +3501,7 @@ ALTER TABLE `developers`
 -- AUTO_INCREMENT for table `documentations`
 --
 ALTER TABLE `documentations`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `failed_jobs`
@@ -2620,7 +3513,7 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `jobs`
 --
 ALTER TABLE `jobs`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=12;
 
 --
 -- AUTO_INCREMENT for table `log_settings`
@@ -2632,13 +3525,19 @@ ALTER TABLE `log_settings`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=57;
 
 --
 -- AUTO_INCREMENT for table `notification_rules`
 --
 ALTER TABLE `notification_rules`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+
+--
+-- AUTO_INCREMENT for table `permissions`
+--
+ALTER TABLE `permissions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=85;
 
 --
 -- AUTO_INCREMENT for table `pill_colors`
@@ -2650,13 +3549,25 @@ ALTER TABLE `pill_colors`
 -- AUTO_INCREMENT for table `projects`
 --
 ALTER TABLE `projects`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
+
+--
+-- AUTO_INCREMENT for table `project_subscriptions`
+--
+ALTER TABLE `project_subscriptions`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+
+--
+-- AUTO_INCREMENT for table `roles`
+--
+ALTER TABLE `roles`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `settings`
 --
 ALTER TABLE `settings`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=991;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1092;
 
 --
 -- AUTO_INCREMENT for table `shiplog_releases`
@@ -2668,25 +3579,31 @@ ALTER TABLE `shiplog_releases`
 -- AUTO_INCREMENT for table `subscription_web_urls`
 --
 ALTER TABLE `subscription_web_urls`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=47;
-
---
--- AUTO_INCREMENT for table `teams`
---
-ALTER TABLE `teams`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=48;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
 
 --
 -- AUTO_INCREMENT for table `user_access_grants`
 --
 ALTER TABLE `user_access_grants`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `user_resource_access`
+--
+ALTER TABLE `user_resource_access`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=20;
+
+--
+-- AUTO_INCREMENT for table `user_role_assignments`
+--
+ALTER TABLE `user_role_assignments`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `user_subscription_access_overrides`
@@ -2702,7 +3619,7 @@ ALTER TABLE `user_subscription_access_overrides`
 -- Constraints for table `access_requests`
 --
 ALTER TABLE `access_requests`
-  ADD CONSTRAINT `access_requests_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `access_requests_team_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `access_requests_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
@@ -2749,6 +3666,26 @@ ALTER TABLE `notification_rules`
   ADD CONSTRAINT `notification_rules_updated_by_foreign` FOREIGN KEY (`updated_by`) REFERENCES `developers` (`id`) ON DELETE SET NULL;
 
 --
+-- Constraints for table `permission_role`
+--
+ALTER TABLE `permission_role`
+  ADD CONSTRAINT `permission_role_permission_id_foreign` FOREIGN KEY (`permission_id`) REFERENCES `permissions` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `permission_role_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `projects`
+--
+ALTER TABLE `projects`
+  ADD CONSTRAINT `projects_business_unit_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `project_subscriptions`
+--
+ALTER TABLE `project_subscriptions`
+  ADD CONSTRAINT `project_subscriptions_project_id_foreign` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `project_subscriptions_subscription_id_foreign` FOREIGN KEY (`subscription_id`) REFERENCES `azure_subscriptions` (`subscription_id`) ON DELETE CASCADE;
+
+--
 -- Constraints for table `subscription_web_urls`
 --
 ALTER TABLE `subscription_web_urls`
@@ -2759,13 +3696,13 @@ ALTER TABLE `subscription_web_urls`
 --
 ALTER TABLE `team_subscription`
   ADD CONSTRAINT `team_subscription_subscription_id_foreign` FOREIGN KEY (`subscription_id`) REFERENCES `azure_subscriptions` (`subscription_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `team_subscription_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `team_subscription_team_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `team_user`
 --
 ALTER TABLE `team_user`
-  ADD CONSTRAINT `team_user_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `team_user_team_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `team_user_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
@@ -2773,8 +3710,30 @@ ALTER TABLE `team_user`
 --
 ALTER TABLE `user_access_grants`
   ADD CONSTRAINT `user_access_grants_source_request_id_foreign` FOREIGN KEY (`source_request_id`) REFERENCES `access_requests` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `user_access_grants_team_id_foreign` FOREIGN KEY (`team_id`) REFERENCES `teams` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `user_access_grants_team_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `user_access_grants_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_resource_access`
+--
+ALTER TABLE `user_resource_access`
+  ADD CONSTRAINT `user_resource_access_business_unit_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_resource_access_project_id_foreign` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_resource_access_subscription_id_foreign` FOREIGN KEY (`subscription_id`) REFERENCES `azure_subscriptions` (`subscription_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_resource_access_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `user_role_assignments`
+--
+ALTER TABLE `user_role_assignments`
+  ADD CONSTRAINT `user_role_assignments_application_id_foreign` FOREIGN KEY (`application_id`) REFERENCES `applications` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_role_assignments_business_unit_id_foreign` FOREIGN KEY (`business_unit_id`) REFERENCES `business_units` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_role_assignments_granted_by_user_id_foreign` FOREIGN KEY (`granted_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
+  ADD CONSTRAINT `user_role_assignments_project_id_foreign` FOREIGN KEY (`project_id`) REFERENCES `projects` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_role_assignments_resource_access_id_foreign` FOREIGN KEY (`resource_access_id`) REFERENCES `user_resource_access` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_role_assignments_role_id_foreign` FOREIGN KEY (`role_id`) REFERENCES `roles` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_role_assignments_subscription_id_foreign` FOREIGN KEY (`subscription_id`) REFERENCES `azure_subscriptions` (`subscription_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `user_role_assignments_user_id_foreign` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `user_subscription_access_overrides`
