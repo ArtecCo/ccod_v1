@@ -91,12 +91,8 @@ class AccessAuthorizationService
     {
         if ($approver->getKey() === $request->user_id) return false;
         if ($this->isSuperAdmin($approver)) return true;
-        $target = match ($request->target_type instanceof AccessRequestTargetType ? $request->target_type->value : (string) $request->target_type) {
-            'project' => Project::query()->find($request->project_id),
-            'subscription' => AzureSubscription::query()->whereKey($request->subscription_id)->first(),
-            default => BusinessUnit::query()->find($request->business_unit_id),
-        };
-        return $target !== null && $this->hasPermission($approver, 'users.access_requests.decide', $target);
+
+        return $this->hasPermission($approver, 'users.access_requests.decide');
     }
 
     public function canRevokeSubscriptionAccess(User|Developer $actor, User $targetUser, AzureSubscription $subscription): bool
@@ -109,13 +105,12 @@ class AccessAuthorizationService
 
     public function approvers(AccessRequest $request): Collection
     {
-        $target = match ($request->target_type instanceof AccessRequestTargetType ? $request->target_type->value : (string) $request->target_type) {
-            'project' => Project::query()->find($request->project_id),
-            'subscription' => AzureSubscription::query()->whereKey($request->subscription_id)->first(),
-            default => BusinessUnit::query()->find($request->business_unit_id),
-        };
-        if (! $target) return collect();
-        return User::query()->where('is_active', true)->where('id', '<>', $request->user_id)->get()->filter(fn (User $user): bool => $this->isSuperAdmin($user) || $this->hasPermission($user, 'users.access_requests.decide', $target))->values();
+        return User::query()
+            ->where('is_active', true)
+            ->where('id', '<>', $request->user_id)
+            ->get()
+            ->filter(fn (User $user): bool => $this->isSuperAdmin($user) || $this->hasPermission($user, 'users.access_requests.decide'))
+            ->values();
     }
 
     public function roleWeight(Role $role): int { return match ($role->slug) { 'viewer' => 10, 'customer' => 15, 'operator' => 20, 'admin' => 30, 'super_admin' => 40, default => $role->permissions()->count(), }; }
