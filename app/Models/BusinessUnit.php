@@ -18,12 +18,6 @@ class BusinessUnit extends Model
         'description',
     ];
 
-    public function users(): BelongsToMany
-    {
-        return $this->belongsToMany(User::class, 'team_user', 'business_unit_id', 'user_id')
-            ->withTimestamps();
-    }
-
     public function subscriptions(): BelongsToMany
     {
         return $this->belongsToMany(
