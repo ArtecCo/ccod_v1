@@ -3,12 +3,8 @@
 namespace App\Filament\Pages;
 
 use App\Enums\AccessRequestDuration;
-use App\Enums\AccessRequestTargetType;
-use App\Models\AzureSubscription;
-use App\Models\BusinessUnit;
-use App\Models\Role;
 use App\Models\User;
-use App\Models\UserAccessGrant;
+use App\Models\UserGroup;
 use App\Services\AccessAuthorizationService;
 use App\Services\AccessRequestService;
 use Filament\Actions\Action;
@@ -21,7 +17,6 @@ use Filament\Pages\Page;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 
 class Profile extends Page
@@ -41,143 +36,75 @@ class Profile extends Page
         return auth()->guard('web')->user();
     }
 
-    public function getTeams(): Collection
+    public function getUserGroups(): Collection
     {
-        return $this->getUser()->businessUnits()->with('subscriptions')->orderBy('name')->get();
-    }
-
-    public function getSubscriptions(): Collection
-    {
-        return app(AccessAuthorizationService::class)->accessibleSubscriptions($this->getUser());
-    }
-
-    public function getGrants(): Collection
-    {
-        return UserAccessGrant::query()
-            ->where('user_id', $this->getUser()->getKey())
-            ->where('starts_at', '<=', now())
-            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()))
-            ->orderByDesc('starts_at')
+        return $this->getUser()
+            ->userGroups()
+            ->with(['role', 'projects'])
+            ->where(function ($query): void {
+                $query->whereNull('user_group_user.starts_at')
+                    ->orWhere('user_group_user.starts_at', '<=', now());
+            })
+            ->where(function ($query): void {
+                $query->whereNull('user_group_user.expires_at')
+                    ->orWhere('user_group_user.expires_at', '>', now());
+            })
+            ->orderBy('name')
             ->get();
     }
 
-    public function effectiveRoleForTeam(int $teamId): ?string
+    public function getRequestableUserGroups(): Collection
     {
-        return app(AccessAuthorizationService::class)
-            ->effectiveRole($this->getUser(), AccessRequestTargetType::Team, $teamId)
-            ?->name;
-    }
-
-    public function effectiveRoleForSubscription(string $subscriptionId): ?string
-    {
-        return app(AccessAuthorizationService::class)
-            ->effectiveRole($this->getUser(), AccessRequestTargetType::Subscription, $subscriptionId)
-            ?->name;
-    }
-
-    /**
-     * Return only Business Units for which the user has no current resource access.
-     */
-    public function getRequestableBusinessUnits(): Collection
-    {
-        $authorization = app(AccessAuthorizationService::class);
         $user = $this->getUser();
+        $authorization = app(AccessAuthorizationService::class);
 
-        return BusinessUnit::query()
+        return UserGroup::query()
+            ->with('role')
+            ->whereHas('role', fn ($query) => $query->where('is_active', true))
             ->orderBy('name')
             ->get()
-            ->reject(fn (BusinessUnit $businessUnit): bool => $authorization->hasResourceAccess($user, $businessUnit))
+            ->filter(fn (UserGroup $group): bool => $authorization->canRequestUserGroup($user, $group))
             ->values();
-    }
-
-    /**
-     * Return only Azure subscriptions for which the user has no current resource access.
-     * Revoked subscriptions are not considered current access and therefore remain requestable.
-     */
-    public function getRequestableSubscriptions(): Collection
-    {
-        $authorization = app(AccessAuthorizationService::class);
-        $user = $this->getUser();
-        $accessibleIds = $authorization->accessibleSubscriptions($user)
-            ->pluck('subscription_id')
-            ->map(fn ($id): string => (string) $id)
-            ->all();
-
-        return AzureSubscription::query()
-            ->whereNotIn('subscription_id', $accessibleIds)
-            ->orderBy('display_name')
-            ->get();
     }
 
     public function content(Schema $schema): Schema
     {
-        $u = $this->getUser();
-        $bus = $this->getTeams();
-        $grants = $this->getGrants();
-        $subs = $this->getSubscriptions();
-        $roles = $u->roleAssignments()->with('role')->get()->pluck('role.name')->filter()->unique()->implode(', ');
+        $user = $this->getUser();
+        $groups = $this->getUserGroups();
 
         return $schema->components([
             Section::make('Account overview')
-                ->description('Your identity and current role assignments.')
+                ->description('Your identity and current User Group membership.')
                 ->schema([
-                    Grid::make(4)->schema([
-                        TextEntry::make('account_name')->label('Account')->state($u->name),
-                        TextEntry::make('roles')->label('Roles')->state($roles ?: 'No role assignments')->badge(),
-                        TextEntry::make('business_unit_count')->label('Business Units')->state((string) $bus->count()),
-                        TextEntry::make('grant_count')->label('Active grants')->state((string) $grants->count()),
+                    Grid::make(3)->schema([
+                        TextEntry::make('account_name')->label('Account')->state($user->name),
+                        TextEntry::make('email')->label('Email')->state($user->email),
+                        TextEntry::make('group_count')->label('User Groups')->state((string) $groups->count()),
                     ]),
                 ])
                 ->columnSpanFull(),
             Section::make('Personal information')
                 ->schema([
                     Grid::make(3)->schema([
-                        TextEntry::make('name')->label('Name')->state($u->name),
-                        TextEntry::make('email')->label('Email')->state($u->email),
-                        TextEntry::make('joined')->label('Date joined')->state($u->created_at?->format('d M Y, H:i')),
+                        TextEntry::make('name')->label('Name')->state($user->name),
+                        TextEntry::make('email_address')->label('Email')->state($user->email),
+                        TextEntry::make('joined')->label('Date joined')->state($user->created_at?->format('d M Y, H:i')),
                     ]),
                 ])
                 ->columnSpanFull(),
-            Section::make('Business Units and effective access')
-                ->schema($bus->isEmpty()
-                    ? [TextEntry::make('none')->hiddenLabel()->state('You are not currently assigned to a Business Unit.')]
-                    : $bus->flatMap(function (BusinessUnit $bu) use ($subs): array {
-                        $rows = [
+            Section::make('User Groups')
+                ->description('Your access and role are determined by your active User Group memberships.')
+                ->schema($groups->isEmpty()
+                    ? [TextEntry::make('none')->hiddenLabel()->state('You are not currently a member of any User Group.')]
+                    : $groups->map(fn (UserGroup $group): Section => Section::make($group->name)
+                        ->schema([
                             Grid::make(2)->schema([
-                                TextEntry::make('bu_'.$bu->id.'_name')->label('Business Unit')->state($bu->name),
-                                TextEntry::make('bu_'.$bu->id.'_role')->label('Effective role')->state($this->effectiveRoleForTeam($bu->id) ?? 'No access')->badge(),
+                                TextEntry::make('role_'.$group->id)->label('Role')->state($group->role->name)->badge(),
+                                TextEntry::make('projects_'.$group->id)->label('Projects')->state($group->projects->pluck('name')->implode(', ') ?: 'No projects assigned'),
                             ]),
-                        ];
-
-                        foreach ($bu->subscriptions->whereIn('subscription_id', $subs->pluck('subscription_id')->all()) as $s) {
-                            $rows[] = Grid::make(2)->schema([
-                                TextEntry::make('bu_'.$bu->id.'_s_'.$s->subscription_id)->label('Subscription')->state($s->display_name),
-                                TextEntry::make('bu_'.$bu->id.'_r_'.$s->subscription_id)->label('Effective role')->state($this->effectiveRoleForSubscription($s->subscription_id) ?? 'No access')->badge(),
-                            ]);
-                        }
-
-                        return [Section::make($bu->name)->schema($rows)->collapsible()->collapsed()];
-                    })->all())
-                ->columnSpanFull(),
-            Section::make('Accessible subscriptions')
-                ->schema($subs->isEmpty()
-                    ? [TextEntry::make('none')->hiddenLabel()->state('You do not currently have access to any Azure subscriptions.')]
-                    : $subs->map(fn (AzureSubscription $s): Grid => Grid::make(3)->schema([
-                        TextEntry::make('s_'.$s->subscription_id)->label('Subscription')->state($s->display_name),
-                        TextEntry::make('id_'.$s->subscription_id)->label('Subscription ID')->state($s->subscription_id),
-                        TextEntry::make('r_'.$s->subscription_id)->label('Effective role')->state($s->access_role?->name ?? 'No access')->badge(),
-                    ]))->all())
-                ->collapsible()
-                ->collapsed()
-                ->columnSpanFull(),
-            Section::make('Access grants')
-                ->schema($grants->isEmpty()
-                    ? [TextEntry::make('none')->hiddenLabel()->state('No active additional grants.')]
-                    : $grants->map(fn (UserAccessGrant $g): Grid => Grid::make(3)->schema([
-                        TextEntry::make('g_'.$g->id.'_target')->label('Target')->state($g->target_name),
-                        TextEntry::make('g_'.$g->id.'_role')->label('Role')->state(Role::query()->where('slug', $g->role)->value('name') ?? $g->role)->badge(),
-                        TextEntry::make('g_'.$g->id.'_duration')->label('Duration')->state($g->expires_at ? 'Time-bound' : 'Permanent')->badge(),
-                    ]))->all())
+                        ])
+                        ->collapsible()
+                        ->collapsed())->all())
                 ->columnSpanFull(),
         ]);
     }
@@ -193,34 +120,18 @@ class Profile extends Page
                 ->label('Request access')
                 ->icon('heroicon-o-key')
                 ->form([
-                    Select::make('target_type')
-                        ->label('Access to')
-                        ->options([
-                            AccessRequestTargetType::Team->value => 'Business Unit',
-                            AccessRequestTargetType::Subscription->value => 'Azure subscription',
-                        ])
-                        ->default(AccessRequestTargetType::Subscription->value)
-                        ->live()
-                        ->required(),
-                    Select::make('business_unit_id')
-                        ->label('Business Unit')
-                        ->options(fn (): array => $this->getRequestableBusinessUnits()->pluck('name', 'id')->all())
+                    Select::make('user_group_id')
+                        ->label('User Group')
+                        ->options(fn (): array => $this->getRequestableUserGroups()
+                            ->mapWithKeys(fn (UserGroup $group): array => [$group->id => $group->name.' — '.$group->role->name])
+                            ->all())
                         ->searchable()
                         ->preload()
-                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value)
-                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Team->value),
-                    Select::make('subscription_id')
-                        ->label('Azure subscription')
-                        ->options(fn (): array => $this->getRequestableSubscriptions()->pluck('display_name', 'subscription_id')->all())
-                        ->searchable()
-                        ->preload()
-                        ->visible(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value)
-                        ->required(fn ($get): bool => $get('target_type') === AccessRequestTargetType::Subscription->value),
-                    Select::make('requested_role')
-                        ->label('Requested role')
-                        ->options(fn (): array => Role::query()->where('is_active', true)->where('slug', '<>', 'super_admin')->orderBy('name')->pluck('name', 'id')->all())
                         ->required(),
-                    Textarea::make('reason')->label('Reason')->required()->rows(4),
+                    Textarea::make('reason')
+                        ->label('Reason')
+                        ->required()
+                        ->rows(4),
                     Select::make('duration')
                         ->label('Access duration')
                         ->options([
@@ -237,20 +148,14 @@ class Profile extends Page
                         ->required(fn ($get): bool => $get('duration') === AccessRequestDuration::TimeBound->value),
                 ])
                 ->action(function (array $data): void {
-                    $type = AccessRequestTargetType::from($data['target_type']);
-                    $target = $type === AccessRequestTargetType::Team
-                        ? BusinessUnit::query()->findOrFail($data['business_unit_id'])
-                        : AzureSubscription::query()->whereKey($data['subscription_id'])->firstOrFail();
-                    $role = Role::query()->findOrFail($data['requested_role']);
+                    $group = UserGroup::query()->findOrFail($data['user_group_id']);
 
-                    app(AccessRequestService::class)->create(
+                    app(AccessRequestService::class)->createForUserGroup(
                         $this->getUser(),
-                        $type,
-                        $target,
-                        $role,
+                        $group,
                         $data['reason'],
                         AccessRequestDuration::from($data['duration']),
-                        isset($data['requested_until']) ? Carbon::parse($data['requested_until']) : null,
+                        isset($data['requested_until']) ? new \DateTimeImmutable($data['requested_until']) : null,
                     );
 
                     Notification::make()->title('Access request submitted')->success()->send();
