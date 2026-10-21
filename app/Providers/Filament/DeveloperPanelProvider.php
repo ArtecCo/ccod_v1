@@ -18,6 +18,7 @@ use App\Filament\Resources\Projects\ProjectResource;
 use App\Filament\Resources\QueueJobs\QueueJobResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
+use App\Filament\Resources\UserGroups\UserGroupResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Widgets\DeveloperOverview;
 use App\Support\FilamentStyling;
@@ -74,6 +75,7 @@ class DeveloperPanelProvider extends PanelProvider
                 ProjectResource::class,
                 RoleResource::class,
                 TeamResource::class,
+                UserGroupResource::class,
                 UserResource::class,
                 QueueJobResource::class,
                 FailedJobResource::class,
@@ -145,7 +147,7 @@ aside.fi-sidebar div::-webkit-scrollbar {
     background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Keep grouped team subscriptions as independent items, without Filament\'s connecting guide. */
+/* Keep grouped team subscriptions as independent items, without Filament's connecting guide. */
 .fi-sidebar-item-grouped-border {
     display: none !important;
 }
