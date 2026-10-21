@@ -23,7 +23,6 @@ class UserInfolist
                     IconEntry::make('is_active')->boolean()->label('Active'),
                     TextEntry::make('created_at')->dateTime()->label('Activation Date'),
                     TextEntry::make('userGroups.name')->label('User Groups')->listWithLineBreaks()->placeholder('None'),
-                    TextEntry::make('businessUnits.name')->label('Business Units')->listWithLineBreaks()->placeholder('None'),
                 ]),
         ]);
     }
