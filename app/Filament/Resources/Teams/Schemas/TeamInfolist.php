@@ -12,7 +12,6 @@ class TeamInfolist
         return $schema->components([
             TextEntry::make('name'),
             TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-            TextEntry::make('users.name')->label('Users')->listWithLineBreaks(),
             TextEntry::make('projects.name')->label('Projects')->listWithLineBreaks(),
             TextEntry::make('created_at')->dateTime(),
             TextEntry::make('updated_at')->dateTime(),
