@@ -10,6 +10,7 @@ use App\Models\Developer;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\UserGroup;
 use App\Models\UserResourceAccess;
 use App\Models\UserRoleAssignment;
 use App\Models\UserSubscriptionAccessOverride;
@@ -20,14 +21,25 @@ class AccessAuthorizationService
 {
     private array $assignmentCache = [];
     private array $permissionAssignmentCache = [];
+    private array $groupCache = [];
 
     public function hasPermission(User $user, string $permission, BusinessUnit|Project|AzureSubscription|null $target = null): bool
     {
         $assignments = $this->permissionAssignments($user, $permission);
-        if ($target === null) return $assignments->isNotEmpty();
-        if ($assignments->contains(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin')) return true;
-        foreach ($assignments as $assignment) if ($this->resourceAccessApplies($assignment->resourceAccess, $target)) return true;
-        return false;
+
+        if ($target === null) {
+            return $assignments->isNotEmpty();
+        }
+
+        if ($assignments->contains(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin')) {
+            return true;
+        }
+
+        if ($assignments->contains(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $target))) {
+            return true;
+        }
+
+        return $this->groupPermissionsApply($user, $permission, $target);
     }
 
     public function effectiveRole(User $user, AccessRequestTargetType|string $targetType, BusinessUnit|Project|AzureSubscription|int|string $target): ?Role
@@ -35,21 +47,65 @@ class AccessAuthorizationService
         $target = $this->resolveTarget($targetType, $target);
         $assignments = $this->activeAssignments($user);
         $superAdminRole = $assignments->first(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin')?->role;
-        if ($superAdminRole !== null) return $superAdminRole;
-        return $assignments->filter(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $target))->sortByDesc(fn ($assignment) => $this->roleWeight($assignment->role))->first()?->role;
+
+        if ($superAdminRole !== null) {
+            return $superAdminRole;
+        }
+
+        $directRole = $assignments
+            ->filter(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $target))
+            ->sortByDesc(fn (UserRoleAssignment $assignment): int => $this->roleWeight($assignment->role))
+            ->first()?->role;
+
+        $groupRole = $this->groups($user)
+            ->filter(fn (UserGroup $group): bool => $this->groupApplies($group, $target))
+            ->sortByDesc(fn (UserGroup $group): int => $this->roleWeight($group->role))
+            ->first()?->role;
+
+        return collect([$directRole, $groupRole])
+            ->filter()
+            ->sortByDesc(fn (Role $role): int => $this->roleWeight($role))
+            ->first();
     }
 
-    public function hasAnyResourceAccess(User $user): bool { return $this->isSuperAdmin($user) || $this->activeAssignments($user)->contains(fn (UserRoleAssignment $assignment): bool => $assignment->resourceAccess !== null); }
-    public function hasResourceAccess(User $user, BusinessUnit|Project|AzureSubscription $target): bool { return $this->isSuperAdmin($user) || $this->activeAssignments($user)->contains(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $target)); }
+    public function hasAnyResourceAccess(User $user): bool
+    {
+        return $this->isSuperAdmin($user)
+            || $this->activeAssignments($user)->contains(fn (UserRoleAssignment $assignment): bool => $assignment->resourceAccess !== null)
+            || $this->groups($user)->contains(fn (UserGroup $group): bool => $group->projects->isNotEmpty());
+    }
+
+    public function hasResourceAccess(User $user, BusinessUnit|Project|AzureSubscription $target): bool
+    {
+        if ($this->isSuperAdmin($user)) {
+            return true;
+        }
+
+        if ($this->activeAssignments($user)->contains(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $target))) {
+            return true;
+        }
+
+        return $this->groups($user)->contains(fn (UserGroup $group): bool => $this->groupApplies($group, $target));
+    }
 
     public function accessibleSubscriptionQuery(User $user): Builder
     {
         $assignments = $this->activeAssignments($user);
         $superAdminAssignment = $assignments->first(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin');
         $query = AzureSubscription::query()->with('projects.businessUnit')->orderBy('display_name');
-        if ($superAdminAssignment !== null) return $query;
-        $revokedIds = UserSubscriptionAccessOverride::query()->where('user_id', $user->getKey())->where('override', 'revoked')->pluck('subscription_id');
-        return $query->whereNotIn('subscription_id', $revokedIds)->where(function (Builder $query) use ($assignments): void {
+
+        if ($superAdminAssignment !== null) {
+            return $query;
+        }
+
+        $revokedIds = UserSubscriptionAccessOverride::query()
+            ->where('user_id', $user->getKey())
+            ->where('override', 'revoked')
+            ->pluck('subscription_id');
+
+        $groups = $this->groups($user);
+
+        return $query->whereNotIn('subscription_id', $revokedIds)->where(function (Builder $query) use ($assignments, $groups): void {
             foreach ($assignments as $assignment) {
                 $access = $assignment->resourceAccess;
                 if ($access === null) continue;
@@ -60,6 +116,12 @@ class AccessAuthorizationService
                     default => null,
                 };
             }
+
+            foreach ($groups as $group) {
+                foreach ($group->projects as $project) {
+                    $query->orWhereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereKey($project->getKey()));
+                }
+            }
         });
     }
 
@@ -68,15 +130,29 @@ class AccessAuthorizationService
         $assignments = $this->activeAssignments($user);
         $superAdminAssignment = $assignments->first(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin');
         $subscriptions = $this->accessibleSubscriptionQuery($user)->get();
+        $groups = $this->groups($user);
+
         if ($superAdminAssignment !== null) {
             $role = $superAdminAssignment->role;
-            return $subscriptions->map(function (AzureSubscription $subscription) use ($role): AzureSubscription { $subscription->setAttribute('access_role', $role); $subscription->setAttribute('access_sources', ['global: Super Admin']); $subscription->setAttribute('access_revoked', false); return $subscription; });
+            return $subscriptions->map(function (AzureSubscription $subscription) use ($role): AzureSubscription {
+                $subscription->setAttribute('access_role', $role);
+                $subscription->setAttribute('access_sources', ['global: Super Admin']);
+                $subscription->setAttribute('access_revoked', false);
+                return $subscription;
+            });
         }
-        return $subscriptions->map(function (AzureSubscription $subscription) use ($assignments): AzureSubscription {
+
+        return $subscriptions->map(function (AzureSubscription $subscription) use ($assignments, $groups): AzureSubscription {
             $applicable = $assignments->filter(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessApplies($assignment->resourceAccess, $subscription));
-            $roleAssignment = $applicable->sortByDesc(fn (UserRoleAssignment $assignment): int => $this->roleWeight($assignment->role))->first();
-            $sources = $applicable->map(fn (UserRoleAssignment $assignment): string => $assignment->resourceAccess->access_type . ': ' . $assignment->role->name)->unique()->values()->all();
-            $subscription->setAttribute('access_role', $roleAssignment?->role); $subscription->setAttribute('access_sources', $sources); $subscription->setAttribute('access_revoked', false); return $subscription;
+            $directRole = $applicable->sortByDesc(fn (UserRoleAssignment $assignment): int => $this->roleWeight($assignment->role))->first()?->role;
+            $groupMatches = $groups->filter(fn (UserGroup $group): bool => $this->groupApplies($group, $subscription));
+            $groupRole = $groupMatches->sortByDesc(fn (UserGroup $group): int => $this->roleWeight($group->role))->first()?->role;
+            $role = collect([$directRole, $groupRole])->filter()->sortByDesc(fn (Role $item): int => $this->roleWeight($item))->first();
+            $sources = $applicable->map(fn (UserRoleAssignment $assignment): string => $assignment->resourceAccess->access_type . ': ' . $assignment->role->name)->merge($groupMatches->map(fn (UserGroup $group): string => 'group: ' . $group->name . ' (' . $group->role->name . ')'))->unique()->values()->all();
+            $subscription->setAttribute('access_role', $role);
+            $subscription->setAttribute('access_sources', $sources);
+            $subscription->setAttribute('access_revoked', false);
+            return $subscription;
         })->values();
     }
 
@@ -133,6 +209,40 @@ class AccessAuthorizationService
         $key = (int) $user->getKey() . ':' . $permission;
         if (! isset($this->permissionAssignmentCache[$key])) $this->permissionAssignmentCache[$key] = $this->activeAssignments($user)->filter(fn (UserRoleAssignment $assignment): bool => $assignment->role->permissions->contains(fn ($item): bool => $item->slug === $permission && $item->is_active));
         return $this->permissionAssignmentCache[$key];
+    }
+
+    private function groups(User $user): Collection
+    {
+        $userId = (int) $user->getKey();
+        if (! isset($this->groupCache[$userId])) {
+            $this->groupCache[$userId] = UserGroup::query()
+                ->with(['role.permissions', 'projects'])
+                ->whereHas('users', fn (Builder $query): Builder => $query->whereKey($userId))
+                ->get();
+        }
+
+        return $this->groupCache[$userId];
+    }
+
+    private function groupPermissionsApply(User $user, string $permission, BusinessUnit|Project|AzureSubscription $target): bool
+    {
+        return $this->groups($user)->contains(function (UserGroup $group) use ($permission, $target): bool {
+            return $group->role->permissions->contains(fn ($item): bool => $item->slug === $permission && $item->is_active)
+                && $this->groupApplies($group, $target);
+        });
+    }
+
+    private function groupApplies(UserGroup $group, BusinessUnit|Project|AzureSubscription $target): bool
+    {
+        if ($target instanceof BusinessUnit) {
+            return false;
+        }
+
+        if ($target instanceof Project) {
+            return $group->projects->contains(fn (Project $project): bool => (int) $project->getKey() === (int) $target->getKey());
+        }
+
+        return $target->projects->contains(fn (Project $project): bool => $group->projects->contains(fn (Project $groupProject): bool => (int) $groupProject->getKey() === (int) $project->getKey()));
     }
 
     private function resolveTarget(AccessRequestTargetType|string $type, BusinessUnit|Project|AzureSubscription|int|string $target): BusinessUnit|Project|AzureSubscription

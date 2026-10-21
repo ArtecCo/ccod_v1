@@ -17,4 +17,5 @@ class Project extends Model
     public function businessUnit(): BelongsTo { return $this->belongsTo(BusinessUnit::class); }
     public function subscriptionAssignments(): HasMany { return $this->hasMany(ProjectSubscription::class); }
     public function subscriptions(): BelongsToMany { return $this->belongsToMany(AzureSubscription::class,'project_subscriptions','project_id','subscription_id','id','subscription_id')->withPivot('environment'); }
+    public function userGroups(): BelongsToMany { return $this->belongsToMany(UserGroup::class, 'project_user_group')->withTimestamps(); }
 }
