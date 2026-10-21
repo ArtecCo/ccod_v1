@@ -76,19 +76,11 @@ class Profile extends Page
             Section::make('Account overview')
                 ->description('Your identity and current User Group membership.')
                 ->schema([
-                    Grid::make(3)->schema([
+                    Grid::make(4)->schema([
                         TextEntry::make('account_name')->label('Account')->state($user->name),
                         TextEntry::make('email')->label('Email')->state($user->email),
-                        TextEntry::make('group_count')->label('User Groups')->state((string) $groups->count()),
-                    ]),
-                ])
-                ->columnSpanFull(),
-            Section::make('Personal information')
-                ->schema([
-                    Grid::make(3)->schema([
-                        TextEntry::make('name')->label('Name')->state($user->name),
-                        TextEntry::make('email_address')->label('Email')->state($user->email),
                         TextEntry::make('joined')->label('Date joined')->state($user->created_at?->format('d M Y, H:i')),
+                        TextEntry::make('group_count')->label('User Groups')->state((string) $groups->count()),
                     ]),
                 ])
                 ->columnSpanFull(),
