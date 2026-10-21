@@ -9,6 +9,7 @@ use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Filament\Resources\Projects\ProjectResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
+use App\Filament\Resources\UserGroups\UserGroupResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
 use App\Models\User;
@@ -79,6 +80,7 @@ class AdminPanelProvider extends PanelProvider
                 $management = [];
                 if ($user instanceof User) {
                     if ($authz->hasPermission($user, 'users.view')) $management[] = NavigationItem::make('Users')->icon(Heroicon::OutlinedUsers)->url(UserResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.users.*'));
+                    if ($authz->hasPermission($user, 'users.edit')) $management[] = NavigationItem::make('User Groups')->icon(Heroicon::OutlinedUserGroup)->url(UserGroupResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.user-groups.*'));
                     if ($authz->hasPermission($user, 'subscriptions.assign_business_unit')) $management[] = NavigationItem::make('Business Units')->icon(Heroicon::OutlinedUserGroup)->url(TeamResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.teams.*'));
                     if ($authz->hasPermission($user, 'projects.view')) $management[] = NavigationItem::make('Projects')->icon(Heroicon::OutlinedRectangleStack)->url(ProjectResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.projects.*'));
                     if ($authz->hasPermission($user, 'subscriptions.view')) $management[] = NavigationItem::make('Subscriptions')->icon(Heroicon::OutlinedCloud)->url(AzureSubscriptionResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.azure-subscriptions.*'));
