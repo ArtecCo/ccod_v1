@@ -19,6 +19,14 @@ use Illuminate\Support\Collection;
 
 class AccessAuthorizationService
 {
+    private const ROLE_WEIGHTS = [
+        'viewer' => 10,
+        'customer' => 15,
+        'operator' => 20,
+        'admin' => 30,
+        'super_admin' => 40,
+    ];
+
     private array $assignmentCache = [];
     private array $permissionAssignmentCache = [];
     private array $groupCache = [];
@@ -183,7 +191,11 @@ class AccessAuthorizationService
         return User::query()->where('is_active', true)->where('id', '<>', $request->user_id)->get()->filter(fn (User $user): bool => $this->isSuperAdmin($user) || $this->hasPermission($user, 'users.access_requests.decide', $target))->values();
     }
 
-    public function roleWeight(Role $role): int { return match ($role->slug) { 'viewer' => 10, 'customer' => 15, 'operator' => 20, 'admin' => 30, 'super_admin' => 40, default => $role->permissions()->count(), }; }
+    public function roleWeight(Role $role): int
+    {
+        return self::ROLE_WEIGHTS[$role->slug] ?? 0;
+    }
+
     public function isSuperAdmin(User $user): bool { return $this->activeAssignments($user)->contains(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin'); }
 
     private function hasPermissionForUserGroup(User $user, string $permission, UserGroup $group): bool
