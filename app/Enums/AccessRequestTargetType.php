@@ -4,16 +4,10 @@ namespace App\Enums;
 
 enum AccessRequestTargetType: string
 {
-    case Team = 'team';
-    case Subscription = 'subscription';
     case UserGroup = 'user_group';
 
     public function label(): string
     {
-        return match ($this) {
-            self::Team => 'Team',
-            self::Subscription => 'Subscription',
-            self::UserGroup => 'User Group',
-        };
+        return self::UserGroup->value === $this->value ? 'User Group' : 'User Group';
     }
 }
