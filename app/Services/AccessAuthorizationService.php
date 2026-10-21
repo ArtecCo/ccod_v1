@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\AccessRequest;
 use App\Models\AzureSubscription;
 use App\Models\BusinessUnit;
-use App\Models\Developer;
 use App\Models\Project;
 use App\Models\Role;
 use App\Models\User;
@@ -78,7 +77,7 @@ class AccessAuthorizationService
         $groups = $this->groups($user);
 
         if ($groups->isEmpty()) {
-            return $query->whereKey('__no_group_access__');
+            return $query->where('subscription_id', '__no_group_access__');
         }
 
         return $query->where(function (Builder $query) use ($groups): void {
@@ -93,11 +92,10 @@ class AccessAuthorizationService
     public function accessibleSubscriptions(User $user): Collection
     {
         $subscriptions = $this->accessibleSubscriptionQuery($user)->get();
+        $groups = $this->groups($user);
 
         if ($this->isSuperAdmin($user)) {
-            $role = $this->groups($user)
-                ->sortByDesc(fn (UserGroup $group): int => $this->roleWeight($group->role))
-                ->first()?->role;
+            $role = $groups->sortByDesc(fn (UserGroup $group): int => $this->roleWeight($group->role))->first()?->role;
 
             return $subscriptions->map(function (AzureSubscription $subscription) use ($role): AzureSubscription {
                 $subscription->setAttribute('access_role', $role);
@@ -105,8 +103,6 @@ class AccessAuthorizationService
                 return $subscription;
             });
         }
-
-        $groups = $this->groups($user);
 
         return $subscriptions->map(function (AzureSubscription $subscription) use ($groups): AzureSubscription {
             $matches = $groups->filter(fn (UserGroup $group): bool => $this->groupApplies($group, $subscription));
@@ -132,12 +128,10 @@ class AccessAuthorizationService
         return ! $group->users()
             ->whereKey($user->getKey())
             ->where(function (Builder $query): void {
-                $query->whereNull('user_group_user.starts_at')
-                    ->orWhere('user_group_user.starts_at', '<=', now());
+                $query->whereNull('user_group_user.starts_at')->orWhere('user_group_user.starts_at', '<=', now());
             })
             ->where(function (Builder $query): void {
-                $query->whereNull('user_group_user.expires_at')
-                    ->orWhere('user_group_user.expires_at', '>', now());
+                $query->whereNull('user_group_user.expires_at')->orWhere('user_group_user.expires_at', '>', now());
             })
             ->exists();
     }
@@ -169,7 +163,7 @@ class AccessAuthorizationService
 
         return User::query()
             ->where('is_active', true)
-            ->whereKeyNot($request->user_id)
+            ->where('id', '<>', $request->user_id)
             ->get()
             ->filter(fn (User $user): bool => $this->canApprove($user, $request))
             ->values();
@@ -195,12 +189,10 @@ class AccessAuthorizationService
                 ->whereHas('users', function (Builder $query) use ($userId): void {
                     $query->whereKey($userId)
                         ->where(function (Builder $q): void {
-                            $q->whereNull('user_group_user.starts_at')
-                                ->orWhere('user_group_user.starts_at', '<=', now());
+                            $q->whereNull('user_group_user.starts_at')->orWhere('user_group_user.starts_at', '<=', now());
                         })
                         ->where(function (Builder $q): void {
-                            $q->whereNull('user_group_user.expires_at')
-                                ->orWhere('user_group_user.expires_at', '>', now());
+                            $q->whereNull('user_group_user.expires_at')->orWhere('user_group_user.expires_at', '>', now());
                         });
                 })
                 ->whereHas('role', fn (Builder $query): Builder => $query->where('is_active', true))
@@ -214,9 +206,7 @@ class AccessAuthorizationService
     {
         $firstProjectIds = $first->projects->pluck('id');
 
-        return $second->projects->contains(
-            fn (Project $project): bool => $firstProjectIds->contains($project->getKey())
-        );
+        return $second->projects->contains(fn (Project $project): bool => $firstProjectIds->contains($project->getKey()));
     }
 
     private function groupApplies(UserGroup $group, BusinessUnit|Project|AzureSubscription $target): bool
@@ -226,16 +216,10 @@ class AccessAuthorizationService
         }
 
         if ($target instanceof Project) {
-            return $group->projects->contains(
-                fn (Project $project): bool => (int) $project->getKey() === (int) $target->getKey()
-            );
+            return $group->projects->contains(fn (Project $project): bool => (int) $project->getKey() === (int) $target->getKey());
         }
 
-        return $target->projects->contains(
-            fn (Project $project): bool => $group->projects->contains(
-                fn (Project $groupProject): bool => (int) $groupProject->getKey() === (int) $project->getKey()
-            )
-        );
+        return $target->projects->contains(fn (Project $project): bool => $group->projects->contains(fn (Project $groupProject): bool => (int) $groupProject->getKey() === (int) $project->getKey()));
     }
 
     private function resolveTarget(string $targetType, BusinessUnit|Project|AzureSubscription|int|string $target): BusinessUnit|Project|AzureSubscription
