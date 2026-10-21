@@ -8,6 +8,6 @@ enum AccessRequestTargetType: string
 
     public function label(): string
     {
-        return self::UserGroup->value === $this->value ? 'User Group' : 'User Group';
+        return 'User Group';
     }
 }
