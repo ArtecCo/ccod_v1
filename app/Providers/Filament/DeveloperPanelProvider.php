@@ -146,8 +146,6 @@ aside.fi-sidebar div::-webkit-scrollbar {
 .dark .fi-sidebar::after {
     background-color: rgba(255, 255, 255, 0.12) !important;
 }
-
-/* Keep grouped team subscriptions as independent items, without Filament's connecting guide. */
 .fi-sidebar-item-grouped-border {
     display: none !important;
 }
