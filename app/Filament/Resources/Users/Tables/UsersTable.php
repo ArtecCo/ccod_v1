@@ -15,39 +15,15 @@ class UsersTable
     {
         return $table
             ->columns([
-                TextColumn::make('name')
-                    ->label('User')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('medium'),
-                TextColumn::make('email')
-                    ->searchable()
-                    ->sortable()
-                    ->copyable(),
-                TextColumn::make('roles')
-                    ->label('Roles')
-                    ->state(fn ($record): array => $record->roleAssignments
-                        ->map(fn ($assignment) => $assignment->role?->name)
-                        ->filter()
-                        ->unique()
-                        ->values()
-                        ->all())
-                    ->badge()
-                    ->separator(', ')
-                    ->wrap(),
-                IconColumn::make('is_active')
-                    ->boolean()
-                    ->label('Active')
-                    ->alignCenter(),
-                TextColumn::make('businessUnits.name')
-                    ->label('Business Units')
+                TextColumn::make('name')->label('User')->searchable()->sortable()->weight('medium'),
+                TextColumn::make('email')->searchable()->sortable()->copyable(),
+                TextColumn::make('userGroups.name')
+                    ->label('User Groups')
                     ->listWithLineBreaks()
                     ->wrap(),
-                TextColumn::make('created_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->label('Activation Date')
-                    ->sinceTooltip(),
+                IconColumn::make('is_active')->boolean()->label('Active')->alignCenter(),
+                TextColumn::make('businessUnits.name')->label('Business Units')->listWithLineBreaks()->wrap(),
+                TextColumn::make('created_at')->dateTime()->sortable()->label('Activation Date')->sinceTooltip(),
             ])
             ->striped()
             ->defaultSort('created_at', 'desc')
