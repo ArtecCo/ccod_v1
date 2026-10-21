@@ -48,13 +48,14 @@ class UserGroupResource extends Resource
 
     private static function canManage(): bool
     {
-        if (auth()->guard('developers')->user() instanceof Developer) {
+        if (auth()->guard('developers')->user()?->is_active === true) {
             return true;
         }
 
         $user = auth()->guard('web')->user();
 
         return $user instanceof User
+            && $user->is_active
             && app(AccessAuthorizationService::class)->hasPermission($user, 'users.edit');
     }
 }
