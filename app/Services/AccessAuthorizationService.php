@@ -201,7 +201,18 @@ class AccessAuthorizationService
     private function hasPermissionForUserGroup(User $user, string $permission, UserGroup $group): bool
     {
         if ($this->permissionAssignments($user, $permission)->contains(fn (UserRoleAssignment $assignment): bool => $assignment->role->slug === 'super_admin')) return true;
-        return $this->permissionAssignments($user, $permission)->contains(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessAppliesToGroup($assignment->resourceAccess, $group));
+        if ($this->permissionAssignments($user, $permission)->contains(fn (UserRoleAssignment $assignment): bool => $this->resourceAccessAppliesToGroup($assignment->resourceAccess, $group))) return true;
+
+        return $this->groups($user)->contains(function (UserGroup $approverGroup) use ($permission, $group): bool {
+            return $approverGroup->role->permissions->contains(fn ($item): bool => $item->slug === $permission && $item->is_active)
+                && $this->groupsOverlap($approverGroup, $group);
+        });
+    }
+
+    private function groupsOverlap(UserGroup $first, UserGroup $second): bool
+    {
+        $firstProjectIds = $first->projects->pluck('id');
+        return $second->projects->contains(fn (Project $project): bool => $firstProjectIds->contains($project->getKey()));
     }
 
     private function activeAssignments(User $user): Collection
