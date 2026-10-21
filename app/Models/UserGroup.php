@@ -11,19 +11,15 @@ class UserGroup extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'name',
-        'role_id',
-    ];
+    protected $fillable = ['name', 'role_id'];
 
-    public function role(): BelongsTo
-    {
-        return $this->belongsTo(Role::class);
-    }
+    public function role(): BelongsTo { return $this->belongsTo(Role::class); }
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'user_group_user')->withTimestamps();
+        return $this->belongsToMany(User::class, 'user_group_user')
+            ->withPivot(['starts_at', 'expires_at'])
+            ->withTimestamps();
     }
 
     public function projects(): BelongsToMany
