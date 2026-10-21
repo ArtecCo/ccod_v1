@@ -141,7 +141,17 @@ class AccessAuthorizationService
 
     public function canRequestUserGroup(User $user, UserGroup $group): bool
     {
-        return $user->is_active && ! $group->users()->whereKey($user->getKey())->exists();
+        if (! $user->is_active || ! $group->role()->where('is_active', true)->exists()) return false;
+
+        return ! $group->users()
+            ->whereKey($user->getKey())
+            ->where(function (Builder $query): void {
+                $query->whereNull('user_group_user.starts_at')->orWhere('user_group_user.starts_at', '<=', now());
+            })
+            ->where(function (Builder $query): void {
+                $query->whereNull('user_group_user.expires_at')->orWhere('user_group_user.expires_at', '>', now());
+            })
+            ->exists();
     }
 
     public function canApprove(User $approver, AccessRequest $request): bool
