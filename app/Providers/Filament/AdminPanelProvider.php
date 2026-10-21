@@ -12,6 +12,7 @@ use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\UserGroups\UserGroupResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\AzureSubscription;
+use App\Models\Developer;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use App\Support\FilamentStyling;
@@ -51,6 +52,7 @@ class AdminPanelProvider extends PanelProvider
             ->maxContentWidth(\Filament\Support\Enums\Width::Full)
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $user = auth()->guard('web')->user();
+                $developer = auth()->guard('developers')->user();
                 $authz = app(AccessAuthorizationService::class);
                 $subscriptions = $user ? $authz->accessibleSubscriptions($user) : collect();
 
@@ -88,6 +90,10 @@ class AdminPanelProvider extends PanelProvider
                     if ($authz->hasPermission($user, 'users.access_requests.view')) $management[] = NavigationItem::make('Access Requests')->icon(Heroicon::OutlinedKey)->url(AccessRequestResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*'));
                 }
 
+                if ($developer instanceof Developer && $developer->is_active) {
+                    $management[] = NavigationItem::make('User Groups')->icon(Heroicon::OutlinedUserGroup)->url(UserGroupResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.user-groups.*'));
+                }
+
                 $baseItems = [];
                 if ($user instanceof User) $baseItems[] = NavigationItem::make('Dashboard')->icon(Heroicon::OutlinedHome)->url(Dashboard::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.dashboard'));
                 $baseItems[] = NavigationItem::make('Notifications')->icon(Heroicon::OutlinedBell)->url(ClientNotifications::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.pages.notifications'));
@@ -102,7 +108,7 @@ class AdminPanelProvider extends PanelProvider
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([Dashboard::class, ClientNotifications::class, \App\Filament\Pages\Profile::class])
-            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\Widgets')
             ->widgets([AccountWidget::class])
             ->middleware([EncryptCookies::class, AddQueuedCookiesToResponse::class, StartSession::class, AuthenticateSession::class, ShareErrorsFromSession::class, VerifyCsrfToken::class, SubstituteBindings::class, DisableBladeIconComponents::class, DispatchServingFilamentEvent::class])
             ->authMiddleware([Authenticate::class])
