@@ -17,8 +17,6 @@ class AccessRequest extends Model
         'user_id',
         'user_group_id',
         'target_type',
-        'business_unit_id',
-        'subscription_id',
         'target_name',
         'requested_role',
         'reason',
@@ -39,24 +37,6 @@ class AccessRequest extends Model
     public function userGroup(): BelongsTo
     {
         return $this->belongsTo(UserGroup::class);
-    }
-
-    public function businessUnit(): BelongsTo
-    {
-        return $this->belongsTo(BusinessUnit::class);
-    }
-
-    /**
-     * @deprecated Use businessUnit(). Kept temporarily for compatibility.
-     */
-    public function team(): BelongsTo
-    {
-        return $this->businessUnit();
-    }
-
-    public function subscription(): BelongsTo
-    {
-        return $this->belongsTo(AzureSubscription::class, 'subscription_id', 'subscription_id');
     }
 
     protected function casts(): array
