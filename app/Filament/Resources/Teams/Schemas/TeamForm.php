@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Teams\Schemas;
 
-use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -14,7 +13,6 @@ class TeamForm
         return $schema->components([
             TextInput::make('name')->required()->maxLength(255),
             Textarea::make('description')->rows(3)->columnSpanFull(),
-            Select::make('users')->label('Users')->relationship('users','name')->multiple()->searchable()->preload()->columnSpanFull(),
             Select::make('projects')->label('Projects')->relationship('projects','name')->multiple()->searchable()->preload()->columnSpanFull(),
         ]);
     }
