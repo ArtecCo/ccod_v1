@@ -1,5 +1,7 @@
 <?php
 
+namespace App\Enums;
+
 enum AccessRequestTargetType: string
 {
     case Team = 'team';
