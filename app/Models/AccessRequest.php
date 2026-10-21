@@ -15,6 +15,7 @@ class AccessRequest extends Model
 
     protected $fillable = [
         'user_id',
+        'user_group_id',
         'target_type',
         'business_unit_id',
         'subscription_id',
@@ -33,6 +34,11 @@ class AccessRequest extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function userGroup(): BelongsTo
+    {
+        return $this->belongsTo(UserGroup::class);
     }
 
     public function businessUnit(): BelongsTo
