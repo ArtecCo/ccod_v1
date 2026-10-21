@@ -15,7 +15,6 @@ class TeamsTable
     {
         return $table->columns([
             TextColumn::make('name')->searchable()->sortable(),
-            TextColumn::make('users_count')->counts('users')->label('Users')->sortable(),
             TextColumn::make('projects_count')->counts('projects')->label('Projects')->sortable(),
             TextColumn::make('updated_at')->dateTime()->sortable(),
         ])->groups([Group::make('name')->label('Business Unit')])->striped(false)->recordActions([ViewAction::make(),EditAction::make()])->toolbarActions([XlsxExportAction::make()]);
