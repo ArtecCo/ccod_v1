@@ -80,11 +80,18 @@ class AccessAuthorizationService
             return $query->where('subscription_id', '__no_group_access__');
         }
 
-        return $query->where(function (Builder $query) use ($groups): void {
-            foreach ($groups as $group) {
-                foreach ($group->projects as $project) {
-                    $query->orWhereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereKey($project->getKey()));
-                }
+        $projects = $groups
+            ->flatMap(fn (UserGroup $group): Collection => $group->projects)
+            ->unique(fn (Project $project): int|string => $project->getKey())
+            ->values();
+
+        if ($projects->isEmpty()) {
+            return $query->where('subscription_id', '__no_group_access__');
+        }
+
+        return $query->where(function (Builder $query) use ($projects): void {
+            foreach ($projects as $project) {
+                $query->orWhereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereKey($project->getKey()));
             }
         });
     }
