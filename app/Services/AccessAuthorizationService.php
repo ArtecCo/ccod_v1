@@ -90,8 +90,6 @@ class AccessAuthorizationService
             return $query->where('subscription_id', '__no_group_access__');
         }
 
-        // Keep access filtering in SQL and use one relationship predicate rather
-        // than generating one OR EXISTS clause for every accessible project.
         return $query->whereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $projectIds));
     }
 
@@ -110,8 +108,26 @@ class AccessAuthorizationService
             });
         }
 
-        return $subscriptions->map(function (AzureSubscription $subscription) use ($groups): AzureSubscription {
-            $matches = $groups->filter(fn (UserGroup $group): bool => $this->groupApplies($group, $subscription));
+        // Build a project -> groups index once. This preserves the exact
+        // intersection semantics while avoiding a group-by-group scan for
+        // every subscription in large result sets.
+        $groupsByProject = [];
+        foreach ($groups as $group) {
+            foreach ($group->projects as $project) {
+                $groupsByProject[(string) $project->getKey()][] = $group;
+            }
+        }
+
+        return $subscriptions->map(function (AzureSubscription $subscription) use ($groupsByProject): AzureSubscription {
+            $matchesById = [];
+
+            foreach ($subscription->projects as $project) {
+                foreach ($groupsByProject[(string) $project->getKey()] ?? [] as $group) {
+                    $matchesById[(string) $group->getKey()] = $group;
+                }
+            }
+
+            $matches = collect(array_values($matchesById));
             $role = $matches->sortByDesc(fn (UserGroup $group): int => $this->roleWeight($group->role))->first()?->role;
             $sources = $matches
                 ->map(fn (UserGroup $group): string => 'group: '.$group->name.' ('.$group->role->name.')')
@@ -169,29 +185,22 @@ class AccessAuthorizationService
 
         $requestedProjectIds = $request->userGroup->projects()->pluck('projects.id');
 
-        if ($requestedProjectIds->isEmpty()) {
-            // A super admin is still allowed to approve, matching canApprove().
-            return User::query()
-                ->where('is_active', true)
-                ->whereKeyNot($request->user_id)
-                ->whereHas('userGroups', function (Builder $groupQuery): void {
-                    $groupQuery->whereHas('role', fn (Builder $roleQuery): Builder => $roleQuery->where('slug', 'super_admin')->where('is_active', true));
-                })
-                ->get()
-                ->values();
-        }
-
         return User::query()
             ->where('is_active', true)
-            ->whereKeyNot($request->user_id)
+            ->where('id', '<>', $request->user_id)
             ->whereHas('userGroups', function (Builder $groupQuery) use ($requestedProjectIds): void {
                 $groupQuery->where(function (Builder $query) use ($requestedProjectIds): void {
-                    $query->whereHas('role', fn (Builder $roleQuery): Builder => $roleQuery->where('slug', 'super_admin')->where('is_active', true))
+                    $query->whereHas('role', fn (Builder $roleQuery): Builder => $roleQuery
+                        ->where('slug', 'super_admin')
+                        ->where('is_active', true))
                         ->orWhere(function (Builder $query) use ($requestedProjectIds): void {
                             $query->whereHas('role.permissions', fn (Builder $permissionQuery): Builder => $permissionQuery
                                 ->where('permissions.slug', 'users.access_requests.decide')
                                 ->where('permissions.is_active', true))
-                                ->whereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $requestedProjectIds));
+                                ->when($requestedProjectIds->isNotEmpty(), fn (Builder $query): Builder => $query->whereHas(
+                                    'projects',
+                                    fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $requestedProjectIds),
+                                ), fn (Builder $query): Builder => $query->whereRaw('1 = 0'));
                         });
                 });
 
