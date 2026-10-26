@@ -10,6 +10,8 @@ use Throwable;
 
 class NotificationService
 {
+    private const RECIPIENT_CHUNK_SIZE = 250;
+
     public function __construct(
         private readonly AuditLogger $auditLogger,
     ) {}
@@ -26,21 +28,6 @@ class NotificationService
         array $userIds = [],
         ?int $userId = null,
     ): int {
-        $recipients = collect();
-
-        if ($allUsers) {
-            $recipients = $recipients->merge(User::query()->where('is_active', true)->get());
-        }
-
-        if ($teamIds !== []) {
-            $recipients = $recipients->merge(
-                User::query()
-                    ->where('is_active', true)
-                    ->whereHas('teams', fn ($query) => $query->whereIn('teams.id', $teamIds))
-                    ->get(),
-            );
-        }
-
         $selectedUserIds = collect($userIds)
             ->filter(fn ($id): bool => is_numeric($id))
             ->map(fn ($id): int => (int) $id)
@@ -49,16 +36,20 @@ class NotificationService
             ->values()
             ->all();
 
-        if ($selectedUserIds !== []) {
-            $recipients = $recipients->merge(
-                User::query()
-                    ->where('is_active', true)
-                    ->whereIn('id', $selectedUserIds)
-                    ->get(),
-            );
-        }
+        $recipientQuery = User::query()->where('is_active', true);
 
-        $recipients = $recipients->unique(fn (User $user): int => $user->getKey())->values();
+        if (! $allUsers && $teamIds !== [] && $selectedUserIds !== []) {
+            $recipientQuery->where(function ($query) use ($teamIds, $selectedUserIds): void {
+                $query->whereHas('teams', fn ($teamQuery) => $teamQuery->whereIn('teams.id', $teamIds))
+                    ->orWhereIn('id', $selectedUserIds);
+            });
+        } elseif (! $allUsers && $teamIds !== []) {
+            $recipientQuery->whereHas('teams', fn ($query) => $query->whereIn('teams.id', $teamIds));
+        } elseif (! $allUsers && $selectedUserIds !== []) {
+            $recipientQuery->whereIn('id', $selectedUserIds);
+        } elseif (! $allUsers) {
+            $recipientQuery->whereRaw('1 = 0');
+        }
 
         $notification = new ClientPortalNotification(
             title: $title,
@@ -70,12 +61,20 @@ class NotificationService
         );
 
         $queued = 0;
+        $recipientCount = 0;
 
         try {
-            $recipients->each(function (User $user) use ($notification, &$queued): void {
-                $user->notify($notification);
-                $queued++;
-            });
+            $recipientQuery
+                ->select('users.*')
+                ->orderBy('users.id')
+                ->chunkById(self::RECIPIENT_CHUNK_SIZE, function (Collection $users) use ($notification, &$queued, &$recipientCount): void {
+                    $recipientCount += $users->count();
+
+                    foreach ($users as $user) {
+                        $user->notify($notification);
+                        $queued++;
+                    }
+                });
 
             $this->auditLogger->log(
                 event: 'Notification Queued',
@@ -85,6 +84,7 @@ class NotificationService
                     'type' => $type,
                     'severity' => $severity,
                     'recipient_count' => $queued,
+                    'resolved_recipient_count' => $recipientCount,
                     'all_users' => $allUsers,
                     'team_count' => count($teamIds),
                     'selected_user_count' => count($selectedUserIds),
@@ -102,7 +102,7 @@ class NotificationService
                 properties: [
                     'type' => $type,
                     'severity' => $severity,
-                    'recipient_count' => $recipients->count(),
+                    'recipient_count' => $recipientCount,
                     'queued_count' => $queued,
                     'all_users' => $allUsers,
                     'team_count' => count($teamIds),

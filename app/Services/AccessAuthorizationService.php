@@ -80,20 +80,17 @@ class AccessAuthorizationService
             return $query->where('subscription_id', '__no_group_access__');
         }
 
-        $projects = $groups
-            ->flatMap(fn (UserGroup $group): Collection => $group->projects)
-            ->unique(fn (Project $project): int|string => $project->getKey())
-            ->values();
+        $projectIds = $groups
+            ->flatMap(fn (UserGroup $group): Collection => $group->projects->pluck('id'))
+            ->unique()
+            ->values()
+            ->all();
 
-        if ($projects->isEmpty()) {
+        if ($projectIds === []) {
             return $query->where('subscription_id', '__no_group_access__');
         }
 
-        return $query->where(function (Builder $query) use ($projects): void {
-            foreach ($projects as $project) {
-                $query->orWhereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereKey($project->getKey()));
-            }
-        });
+        return $query->whereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $projectIds));
     }
 
     public function accessibleSubscriptions(User $user): Collection
@@ -111,8 +108,23 @@ class AccessAuthorizationService
             });
         }
 
-        return $subscriptions->map(function (AzureSubscription $subscription) use ($groups): AzureSubscription {
-            $matches = $groups->filter(fn (UserGroup $group): bool => $this->groupApplies($group, $subscription));
+        $groupsByProject = [];
+        foreach ($groups as $group) {
+            foreach ($group->projects as $project) {
+                $groupsByProject[(string) $project->getKey()][] = $group;
+            }
+        }
+
+        return $subscriptions->map(function (AzureSubscription $subscription) use ($groupsByProject): AzureSubscription {
+            $matchesById = [];
+
+            foreach ($subscription->projects as $project) {
+                foreach ($groupsByProject[(string) $project->getKey()] ?? [] as $group) {
+                    $matchesById[(string) $group->getKey()] = $group;
+                }
+            }
+
+            $matches = collect(array_values($matchesById));
             $role = $matches->sortByDesc(fn (UserGroup $group): int => $this->roleWeight($group->role))->first()?->role;
             $sources = $matches
                 ->map(fn (UserGroup $group): string => 'group: '.$group->name.' ('.$group->role->name.')')
@@ -168,11 +180,34 @@ class AccessAuthorizationService
             return collect();
         }
 
+        $requestedProjectIds = $request->userGroup->projects()->pluck('projects.id');
+
         return User::query()
             ->where('is_active', true)
             ->where('id', '<>', $request->user_id)
+            ->whereHas('userGroups', function (Builder $groupQuery) use ($requestedProjectIds): void {
+                $groupQuery->where(function (Builder $query) use ($requestedProjectIds): void {
+                    $query->whereHas('role', fn (Builder $roleQuery): Builder => $roleQuery
+                        ->where('slug', 'super_admin')
+                        ->where('is_active', true))
+                        ->orWhere(function (Builder $query) use ($requestedProjectIds): void {
+                            $query->whereHas('role.permissions', fn (Builder $permissionQuery): Builder => $permissionQuery
+                                ->where('permissions.slug', 'users.access_requests.decide')
+                                ->where('permissions.is_active', true))
+                                ->when($requestedProjectIds->isNotEmpty(), fn (Builder $query): Builder => $query->whereHas(
+                                    'projects',
+                                    fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $requestedProjectIds),
+                                ), fn (Builder $query): Builder => $query->whereRaw('1 = 0'));
+                        });
+                });
+
+                $groupQuery->where(function (Builder $query): void {
+                    $query->whereNull('user_group_user.starts_at')->orWhere('user_group_user.starts_at', '<=', now());
+                })->where(function (Builder $query): void {
+                    $query->whereNull('user_group_user.expires_at')->orWhere('user_group_user.expires_at', '>', now());
+                });
+            })
             ->get()
-            ->filter(fn (User $user): bool => $this->canApprove($user, $request))
             ->values();
     }
 
