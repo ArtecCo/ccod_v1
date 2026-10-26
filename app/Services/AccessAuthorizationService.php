@@ -80,20 +80,19 @@ class AccessAuthorizationService
             return $query->where('subscription_id', '__no_group_access__');
         }
 
-        $projects = $groups
-            ->flatMap(fn (UserGroup $group): Collection => $group->projects)
-            ->unique(fn (Project $project): int|string => $project->getKey())
-            ->values();
+        $projectIds = $groups
+            ->flatMap(fn (UserGroup $group): Collection => $group->projects->pluck('id'))
+            ->unique()
+            ->values()
+            ->all();
 
-        if ($projects->isEmpty()) {
+        if ($projectIds === []) {
             return $query->where('subscription_id', '__no_group_access__');
         }
 
-        return $query->where(function (Builder $query) use ($projects): void {
-            foreach ($projects as $project) {
-                $query->orWhereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereKey($project->getKey()));
-            }
-        });
+        // Keep access filtering in SQL and use one relationship predicate rather
+        // than generating one OR EXISTS clause for every accessible project.
+        return $query->whereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $projectIds));
     }
 
     public function accessibleSubscriptions(User $user): Collection
@@ -168,11 +167,41 @@ class AccessAuthorizationService
             return collect();
         }
 
+        $requestedProjectIds = $request->userGroup->projects()->pluck('projects.id');
+
+        if ($requestedProjectIds->isEmpty()) {
+            // A super admin is still allowed to approve, matching canApprove().
+            return User::query()
+                ->where('is_active', true)
+                ->whereKeyNot($request->user_id)
+                ->whereHas('userGroups', function (Builder $groupQuery): void {
+                    $groupQuery->whereHas('role', fn (Builder $roleQuery): Builder => $roleQuery->where('slug', 'super_admin')->where('is_active', true));
+                })
+                ->get()
+                ->values();
+        }
+
         return User::query()
             ->where('is_active', true)
-            ->where('id', '<>', $request->user_id)
+            ->whereKeyNot($request->user_id)
+            ->whereHas('userGroups', function (Builder $groupQuery) use ($requestedProjectIds): void {
+                $groupQuery->where(function (Builder $query) use ($requestedProjectIds): void {
+                    $query->whereHas('role', fn (Builder $roleQuery): Builder => $roleQuery->where('slug', 'super_admin')->where('is_active', true))
+                        ->orWhere(function (Builder $query) use ($requestedProjectIds): void {
+                            $query->whereHas('role.permissions', fn (Builder $permissionQuery): Builder => $permissionQuery
+                                ->where('permissions.slug', 'users.access_requests.decide')
+                                ->where('permissions.is_active', true))
+                                ->whereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $requestedProjectIds));
+                        });
+                });
+
+                $groupQuery->where(function (Builder $query): void {
+                    $query->whereNull('user_group_user.starts_at')->orWhere('user_group_user.starts_at', '<=', now());
+                })->where(function (Builder $query): void {
+                    $query->whereNull('user_group_user.expires_at')->orWhere('user_group_user.expires_at', '>', now());
+                });
+            })
             ->get()
-            ->filter(fn (User $user): bool => $this->canApprove($user, $request))
             ->values();
     }
 
