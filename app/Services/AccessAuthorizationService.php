@@ -108,9 +108,6 @@ class AccessAuthorizationService
             });
         }
 
-        // Build a project -> groups index once. This preserves the exact
-        // intersection semantics while avoiding a group-by-group scan for
-        // every subscription in large result sets.
         $groupsByProject = [];
         foreach ($groups as $group) {
             foreach ($group->projects as $project) {
