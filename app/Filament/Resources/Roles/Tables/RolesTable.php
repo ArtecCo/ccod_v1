@@ -12,7 +12,6 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Auth\Access\AuthorizationException;
 
 class RolesTable
 {
@@ -40,10 +39,6 @@ class RolesTable
                 DeleteAction::make()
                     ->visible(fn ($record): bool => RoleResource::canDelete($record))
                     ->before(function (DeleteAction $action, Role $record): void {
-                        if (! RoleResource::canDelete($record)) {
-                            throw new AuthorizationException('You are not authorized to delete this role.');
-                        }
-
                         $groups = UserGroup::query()
                             ->where('role_id', $record->getKey())
                             ->orderBy('name')
@@ -60,7 +55,7 @@ class RolesTable
                             ->persistent()
                             ->send();
 
-                        $action->halt();
+                        $action->cancel();
                     }),
             ]);
     }
