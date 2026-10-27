@@ -90,6 +90,8 @@ class SendNotification extends Page implements HasForms
                             ->label('Teams')
                             ->multiple()
                             ->searchable()
+                            ->live()
+                            ->dehydrated(true)
                             ->options(fn (): array => Team::query()->orderBy('name')->pluck('name', 'id')->all())
                             ->visible(fn (Get $get): bool => $get('audience') === 'teams')
                             ->minItems(fn (Get $get): int => $get('audience') === 'teams' ? 1 : 0),
@@ -97,6 +99,8 @@ class SendNotification extends Page implements HasForms
                             ->label('Users')
                             ->multiple()
                             ->searchable()
+                            ->live()
+                            ->dehydrated(true)
                             ->options(fn (): array => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                             ->visible(fn (Get $get): bool => $get('audience') === 'users')
                             ->minItems(fn (Get $get): int => $get('audience') === 'users' ? 1 : 0),
