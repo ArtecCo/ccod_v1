@@ -39,7 +39,7 @@ class RolesTable
                     ->visible(fn ($record): bool => RoleResource::canEdit($record)),
                 DeleteAction::make()
                     ->visible(fn ($record): bool => RoleResource::canDelete($record))
-                    ->using(function (DeleteAction $action, Role $record): bool {
+                    ->before(function (DeleteAction $action, Role $record): void {
                         if (! RoleResource::canDelete($record)) {
                             throw new AuthorizationException('You are not authorized to delete this role.');
                         }
@@ -49,20 +49,18 @@ class RolesTable
                             ->orderBy('name')
                             ->pluck('name');
 
-                        if ($groups->isNotEmpty()) {
-                            Notification::make()
-                                ->danger()
-                                ->title('Role cannot be deleted')
-                                ->body('This role is assigned to the following user group(s): ' . $groups->implode(', ') . '. Reassign or remove those groups before deleting the role.')
-                                ->persistent()
-                                ->send();
-
-                            $action->halt();
+                        if ($groups->isEmpty()) {
+                            return;
                         }
 
-                        $record->permissions()->detach();
+                        Notification::make()
+                            ->danger()
+                            ->title('Role cannot be deleted')
+                            ->body('This role is assigned to the following user group(s): ' . $groups->implode(', ') . '. Reassign or remove those groups before deleting the role.')
+                            ->persistent()
+                            ->send();
 
-                        return (bool) $record->delete();
+                        $action->halt();
                     }),
             ]);
     }
