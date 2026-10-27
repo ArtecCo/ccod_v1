@@ -58,7 +58,13 @@ class ViewAzureSubscription extends ViewRecord
         return $schema->components([
             Tabs::make('Subscription Navigation')->tabs([
                 $this->makeTab('Overview', null)->schema(fn (): array => [Section::make('Subscription Details')->schema([$this->getInfolistContentComponent()->columnSpanFull()])->columnSpanFull(), Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->columnSpanFull()])->columns(1),
-                $this->makeTab('Cost', 'cost.view')->schema(fn (): array => [Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(SubscriptionBudgetDetails::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(SubscriptionResourceCostBreakdown::class, ['record' => $this->record])->columnSpanFull()])->columns(1),
+                $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
+                    Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->columnSpanFull(),
+                    Livewire::make(SubscriptionBudgetDetails::class, ['record' => $this->record])->columnSpanFull(),
+                    $this->canViewTab('cost.breakdown.view')
+                        ? Livewire::make(SubscriptionResourceCostBreakdown::class, ['record' => $this->record])->columnSpanFull()
+                        : null,
+                ]))->columns(1),
                 $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => [Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull()])->columns(1),
                 $this->makeTab('Security', 'security.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
