@@ -70,7 +70,7 @@ class EditRole extends EditRecord
                 ->modalHeading('Delete role')
                 ->modalDescription('This action cannot be undone.')
                 ->modalSubmitActionLabel('Delete role')
-                ->action(function (): void {
+                ->before(function (DeleteAction $action): void {
                     $record = $this->record;
 
                     if (! RoleResource::canDelete($record)) {
@@ -90,13 +90,14 @@ class EditRole extends EditRecord
                             ->persistent()
                             ->send();
 
-                        return;
+                        $action->halt();
                     }
+                })
+                ->action(function (): void {
+                    $record = $this->record;
 
                     $record->permissions()->detach();
                     $record->delete();
-
-                    $this->redirect(RoleResource::getUrl('index'));
                 }),
         ];
     }
