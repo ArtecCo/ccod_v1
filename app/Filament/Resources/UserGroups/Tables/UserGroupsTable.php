@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\UserGroups\Tables;
 
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
@@ -23,6 +24,16 @@ class UserGroupsTable
             ->actions([
                 ViewAction::make(),
                 EditAction::make(),
+                DeleteAction::make()
+                    ->requiresConfirmation()
+                    ->modalHeading('Delete user group')
+                    ->modalDescription('Deleting this group will remove its user and project assignments. This action cannot be undone.')
+                    ->modalSubmitActionLabel('Delete group')
+                    ->using(function ($record): void {
+                        $record->users()->detach();
+                        $record->projects()->detach();
+                        $record->delete();
+                    }),
             ]);
     }
 }
