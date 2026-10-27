@@ -3,12 +3,8 @@
 namespace App\Filament\Resources\Roles\Tables;
 
 use App\Filament\Resources\Roles\RoleResource;
-use App\Models\Role;
-use App\Models\UserGroup;
 use App\Services\RolePermissionService;
-use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
-use Filament\Notifications\Notification;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -36,27 +32,6 @@ class RolesTable
             ->recordActions([
                 EditAction::make()
                     ->visible(fn ($record): bool => RoleResource::canEdit($record)),
-                DeleteAction::make()
-                    ->visible(fn ($record): bool => RoleResource::canDelete($record))
-                    ->before(function (DeleteAction $action, Role $record): void {
-                        $groups = UserGroup::query()
-                            ->where('role_id', $record->getKey())
-                            ->orderBy('name')
-                            ->pluck('name');
-
-                        if ($groups->isEmpty()) {
-                            return;
-                        }
-
-                        Notification::make()
-                            ->danger()
-                            ->title('Role cannot be deleted')
-                            ->body('This role is assigned to the following user group(s): ' . $groups->implode(', ') . '. Reassign or remove those groups before deleting the role.')
-                            ->persistent()
-                            ->send();
-
-                        $action->cancel();
-                    }),
             ]);
     }
 }
