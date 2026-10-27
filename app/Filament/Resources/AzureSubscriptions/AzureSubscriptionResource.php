@@ -33,7 +33,7 @@ class AzureSubscriptionResource extends Resource
         }
 
         $user = auth()->guard('web')->user();
-        return $user instanceof User && app(AccessAuthorizationService::class)->hasAnyResourceAccess($user);
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'subscriptions.view');
     }
 
     public static function canCreate(): bool

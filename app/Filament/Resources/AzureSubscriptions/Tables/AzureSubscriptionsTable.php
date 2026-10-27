@@ -22,6 +22,8 @@ class AzureSubscriptionsTable
                 TextColumn::make('mtd_spend_eur')->label('MTD Spend')->money('EUR')->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('last_synced')->label('Last Synced')->dateTime('d M Y, H:i')->sortable(),
             ])
+            ->emptyStateHeading('No projects have been assigned to your group')
+            ->emptyStateDescription('Please contact an administrator to assign a project to your user group in the Admin Panel.')
             ->filters([])
             ->recordActions([
                 ViewAction::make(),
