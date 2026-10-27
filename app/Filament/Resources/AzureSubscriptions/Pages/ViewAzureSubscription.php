@@ -64,7 +64,7 @@ class ViewAzureSubscription extends ViewRecord
                     $this->canViewTab('cost.breakdown.view')
                         ? Livewire::make(SubscriptionResourceCostBreakdown::class, ['record' => $this->record])->columnSpanFull()
                         : null,
-                ]))->columns(1),
+                ])))->columns(1),
                 $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => [Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull()])->columns(1),
                 $this->makeTab('Security', 'security.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
