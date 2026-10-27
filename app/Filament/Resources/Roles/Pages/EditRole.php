@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Roles\Pages;
 
 use App\Filament\Resources\Roles\RoleResource;
 use App\Models\Role;
+use App\Models\UserGroup;
 use App\Services\RolePermissionService;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
@@ -65,45 +66,37 @@ class EditRole extends EditRecord
         return [
             DeleteAction::make()
                 ->visible(fn (): bool => RoleResource::canDelete($this->record))
-                ->using(function (DeleteAction $action, Role $record): bool {
+                ->requiresConfirmation()
+                ->modalHeading('Delete role')
+                ->modalDescription('This action cannot be undone.')
+                ->modalSubmitActionLabel('Delete role')
+                ->action(function (): void {
+                    $record = $this->record;
+
                     if (! RoleResource::canDelete($record)) {
                         throw new AuthorizationException('You are not authorized to delete this role.');
                     }
 
-                    $assignedUsers = $record->assignments()
-                        ->where(function ($query): void {
-                            $query
-                                ->whereNull('starts_at')
-                                ->orWhere('starts_at', '<=', now());
-                        })
-                        ->where(function ($query): void {
-                            $query
-                                ->whereNull('expires_at')
-                                ->orWhere('expires_at', '>', now());
-                        })
-                        ->with('user:id,name')
-                        ->get()
-                        ->pluck('user')
-                        ->filter()
-                        ->unique('id');
+                    $groups = UserGroup::query()
+                        ->where('role_id', $record->getKey())
+                        ->orderBy('name')
+                        ->pluck('name');
 
-                    if ($assignedUsers->isNotEmpty()) {
-                        $names = $assignedUsers
-                            ->map(fn ($user): string => (string) $user->name)
-                            ->values()
-                            ->implode(', ');
-
+                    if ($groups->isNotEmpty()) {
                         Notification::make()
                             ->danger()
                             ->title('Role cannot be deleted')
-                            ->body('This role is currently assigned to: ' . $names . '. Remove the role assignment from these users before deleting it.')
+                            ->body('This role is assigned to the following user group(s): ' . $groups->implode(', ') . '. Reassign or remove those groups before deleting the role.')
                             ->persistent()
                             ->send();
 
-                        $action->halt();
+                        return;
                     }
 
-                    return (bool) $record->delete();
+                    $record->permissions()->detach();
+                    $record->delete();
+
+                    $this->redirect(RoleResource::getUrl('index'));
                 }),
         ];
     }
