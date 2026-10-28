@@ -43,61 +43,22 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     'portal_link',
                 ]))
             ->columns([
-                TextColumn::make('recommendation_name')
-                    ->label('Recommendation')
-                    ->searchable()
-                    ->sortable()
-                    ->weight('medium')
-                    ->wrap(),
-                TextColumn::make('severity')
-                    ->label('Severity')
-                    ->badge()
-                    ->color(fn (?string $state): string => match (strtolower((string) $state)) {
-                        'critical', 'high' => 'danger',
-                        'medium' => 'warning',
-                        'low' => 'gray',
-                        default => 'gray',
-                    })
-                    ->sortable(),
-                TextColumn::make('resource_id')
-                    ->label('Affected Resource')
-                    ->searchable()
-                    ->limit(60)
-                    ->tooltip(fn (?string $state): ?string => $state),
-                TextColumn::make('status_changed_at')
-                    ->label('Status Changed')
-                    ->dateTime('d M Y, H:i')
-                    ->sortable(),
-                TextColumn::make('assessment_type')
-                    ->label('Assessment Type')
-                    ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('implementation_effort')
-                    ->label('Effort')
-                    ->badge()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('user_impact')
-                    ->label('User Impact')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('status_cause')
-                    ->label('Status Cause')
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('first_evaluated_at')
-                    ->label('First Evaluated')
-                    ->dateTime('d M Y, H:i')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('remediation_description')
-                    ->label('Remediation')
-                    ->limit(70)
-                    ->wrap()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('portal_link')
-                    ->label('Azure Portal')
-                    ->url(fn (?string $state): ?string => $state)
-                    ->openUrlInNewTab()
-                    ->formatStateUsing(fn (?string $state): string => $state ? 'Open' : '—')
-                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('recommendation_name')->label('Recommendation')->searchable()->sortable()->weight('medium')->wrap(),
+                TextColumn::make('severity')->label('Severity')->badge()->color(fn (?string $state): string => match (strtolower((string) $state)) {
+                    'critical', 'high' => 'danger',
+                    'medium' => 'warning',
+                    'low' => 'gray',
+                    default => 'gray',
+                })->sortable(),
+                TextColumn::make('resource_id')->label('Affected Resource')->formatStateUsing(fn (?string $state): string => $this->resourceName($state))->searchable()->limit(60),
+                TextColumn::make('status_changed_at')->label('Status Changed')->dateTime('d M Y, H:i')->sortable(),
+                TextColumn::make('assessment_type')->label('Assessment Type')->searchable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('implementation_effort')->label('Effort')->badge()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('user_impact')->label('User Impact')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('status_cause')->label('Status Cause')->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('first_evaluated_at')->label('First Evaluated')->dateTime('d M Y, H:i')->sortable()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('remediation_description')->label('Remediation')->limit(70)->wrap()->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('portal_link')->label('Azure Portal')->url(fn (?string $state): ?string => $state)->openUrlInNewTab()->formatStateUsing(fn (?string $state): string => $state ? 'Open' : '—')->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
                 SelectFilter::make('severity')->options([
@@ -118,5 +79,17 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
             ->striped(false)
             ->recordActions([])
             ->toolbarActions([]);
+    }
+
+    private function resourceName(?string $resourceId): string
+    {
+        if (! is_string($resourceId) || trim($resourceId) === '') {
+            return '—';
+        }
+
+        $trimmed = trim($resourceId, '/');
+        $segments = array_values(array_filter(explode('/', $trimmed), static fn (string $segment): bool => $segment !== ''));
+
+        return $segments !== [] ? (string) end($segments) : $resourceId;
     }
 }
