@@ -87,6 +87,7 @@ class AzureSecurityAssessmentInfolist
                 ->schema([
                     TextEntry::make('remediation_description')
                         ->hiddenLabel()
+                        ->html()
                         ->placeholder('No remediation guidance was provided by Azure.')
                         ->columnSpanFull(),
                 ])
