@@ -23,12 +23,15 @@ class AzureSecurityAssessmentInfolist
                         TextEntry::make('assessment_type')->label('Assessment Type'),
                         TextEntry::make('implementation_effort')->label('Implementation Effort'),
                         TextEntry::make('user_impact')->label('User Impact'),
-                        TextEntry::make('resource_id')->label('Affected Resource')->copyable()->columnSpanFull(),
+                        TextEntry::make('resource_id')
+                            ->label('Affected Resource')
+                            ->copyable()
+                            ->columnSpanFull(),
                     ]),
                 ]),
             Section::make('Description')
                 ->schema([
-                    TextEntry::make('description')->hiddenLabel()->prose()->columnSpanFull(),
+                    TextEntry::make('description')->hiddenLabel()->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
             Section::make('CVEs')
@@ -36,17 +39,22 @@ class AzureSecurityAssessmentInfolist
                     TextEntry::make('cves')
                         ->hiddenLabel()
                         ->formatStateUsing(function (mixed $state): string {
-                            $cves = is_array($state) ? array_filter($state, 'is_string') : [];
+                            if (is_array($state)) {
+                                $cves = array_values(array_filter($state, 'is_string'));
+                                return $cves !== []
+                                    ? implode(', ', $cves)
+                                    : 'No CVEs identified for this recommendation.';
+                            }
 
-                            return $cves !== []
-                                ? implode(', ', $cves)
+                            return is_string($state) && $state !== ''
+                                ? $state
                                 : 'No CVEs identified for this recommendation.';
                         }),
                 ])
                 ->columnSpanFull(),
             Section::make('Remediation')
                 ->schema([
-                    TextEntry::make('remediation_description')->hiddenLabel()->prose()->columnSpanFull(),
+                    TextEntry::make('remediation_description')->hiddenLabel()->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
             Section::make('Evaluation')
@@ -58,9 +66,9 @@ class AzureSecurityAssessmentInfolist
                         TextEntry::make('status_description')->label('Status Details')->columnSpanFull(),
                         TextEntry::make('portal_link')
                             ->label('Azure Portal')
-                            ->url(fn (?string $state): ?string => $state)
+                            ->url(fn (mixed $state): ?string => is_string($state) && $state !== '' ? $state : null)
                             ->openUrlInNewTab()
-                            ->formatStateUsing(fn (?string $state): string => $state ? 'Open in Azure Portal' : '—'),
+                            ->formatStateUsing(fn (mixed $state): string => is_string($state) && $state !== '' ? 'Open in Azure Portal' : '—'),
                     ]),
                 ])
                 ->columnSpanFull(),
