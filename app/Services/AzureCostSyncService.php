@@ -17,17 +17,8 @@ class AzureCostSyncService
 
     private ?string $accessToken = null;
 
-    /**
-     * Synchronize cost data for one subscription.
-     *
-     * The first sync (or an explicitly forced historical sync) fetches the
-     * rolling 12-month window. Normal syncs only refresh the current MTD
-     * month, leaving completed months in the database untouched.
-     */
-    public function syncSubscription(
-        AzureSubscription $subscription,
-        bool $forceHistorical = false,
-    ): array {
+    public function syncSubscription(AzureSubscription $subscription, bool $forceHistorical = false): array
+    {
         $hasHistoricalData = AzureSubscriptionCost::query()
             ->where('subscription_id', $subscription->subscription_id)
             ->where('granularity', self::GRANULARITY)
@@ -40,34 +31,38 @@ class AzureCostSyncService
         return $this->syncMonthToDate($subscription);
     }
 
-    /**
-     * Refresh the rolling 12-month monthly cost history.
-     */
     public function syncHistorical(AzureSubscription $subscription): array
     {
         $now = CarbonImmutable::now();
         $from = $now->subMonths(11)->startOfMonth();
         $to = $now->endOfMonth();
 
-        $rows = $this->queryCost(
-            $subscription->subscription_id,
-            'Custom',
-            $from,
-            $to,
-        );
-
+        $rows = $this->queryCost($subscription->subscription_id, 'Custom', $from, $to);
         $indexed = [];
+        $unmappedRows = 0;
+
         foreach ($rows as $row) {
             $periodStart = $this->periodStartFromRow($row);
+            $amount = $this->numericCostFromRow($row);
 
-            if ($periodStart === null) {
+            if ($periodStart === null || $amount === null) {
+                $unmappedRows++;
                 continue;
             }
 
-            $indexed[$periodStart->toDateString()] = [
-                'amount' => (float) ($row['PreTaxCost'] ?? 0),
-                'currency' => $row['Currency'] ?? null,
-            ];
+            $key = $periodStart->toDateString();
+            $currency = $this->stringOrNull($row['Currency'] ?? null);
+
+            if (! isset($indexed[$key])) {
+                $indexed[$key] = ['amount' => 0.0, 'currency' => $currency];
+            }
+
+            $indexed[$key]['amount'] += $amount;
+            $indexed[$key]['currency'] ??= $currency;
+        }
+
+        if ($rows !== [] && $indexed === []) {
+            throw new RuntimeException('Azure returned cost rows, but no usable BillingMonth/UsageDate and PreTaxCost values could be parsed.');
         }
 
         $records = [];
@@ -75,7 +70,7 @@ class AzureCostSyncService
 
         while ($cursor->lte($now->startOfMonth())) {
             $key = $cursor->toDateString();
-            $value = $indexed[$key] ?? ['amount' => 0, 'currency' => null];
+            $value = $indexed[$key] ?? ['amount' => 0.0, 'currency' => null];
 
             $records[] = [
                 'subscription_id' => $subscription->subscription_id,
@@ -101,9 +96,9 @@ class AzureCostSyncService
 
         $current = collect($records)->last();
 
-        if ($current !== null && strtoupper((string) ($current['currency'] ?? '')) === 'EUR') {
+        if ($current !== null) {
             $subscription->forceFill([
-                'mtd_spend_eur' => $current['amount'],
+                'mtd_spend_eur' => strtoupper((string) ($current['currency'] ?? '')) === 'EUR' ? $current['amount'] : null,
                 'last_synced' => now(),
             ])->saveQuietly();
         }
@@ -113,24 +108,30 @@ class AzureCostSyncService
             'months' => count($records),
             'current_mtd' => $current['amount'] ?? null,
             'currency' => $current['currency'] ?? null,
+            'source_rows' => count($rows),
+            'unmapped_rows' => $unmappedRows,
         ];
     }
 
-    /**
-     * Refresh only the current month's MTD value.
-     */
     public function syncMonthToDate(AzureSubscription $subscription): array
     {
         $now = CarbonImmutable::now();
+        $rows = $this->queryCost($subscription->subscription_id, 'MonthToDate');
 
-        $rows = $this->queryCost(
-            $subscription->subscription_id,
-            'MonthToDate',
-        );
+        $amount = 0.0;
+        $currency = null;
 
-        $row = $rows[0] ?? null;
-        $amount = (float) ($row['PreTaxCost'] ?? 0);
-        $currency = $row['Currency'] ?? null;
+        foreach ($rows as $row) {
+            $value = $this->numericCostFromRow($row);
+            if ($value !== null) {
+                $amount += $value;
+            }
+            $currency ??= $this->stringOrNull($row['Currency'] ?? null);
+        }
+
+        if ($rows !== [] && $currency === null) {
+            throw new RuntimeException('Azure returned MTD cost rows without a Currency column/value.');
+        }
 
         AzureSubscriptionCost::query()->updateOrCreate(
             [
@@ -147,30 +148,23 @@ class AzureCostSyncService
             ],
         );
 
-        if (strtoupper((string) $currency) === 'EUR') {
-            $subscription->forceFill([
-                'mtd_spend_eur' => $amount,
-                'last_synced' => now(),
-            ])->saveQuietly();
-        }
+        $subscription->forceFill([
+            'mtd_spend_eur' => strtoupper((string) $currency) === 'EUR' ? $amount : null,
+            'last_synced' => now(),
+        ])->saveQuietly();
 
         return [
             'mode' => 'mtd',
             'months' => 1,
             'current_mtd' => $amount,
             'currency' => $currency,
+            'source_rows' => count($rows),
         ];
     }
 
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    private function queryCost(
-        string $subscriptionId,
-        string $timeframe,
-        ?CarbonImmutable $from = null,
-        ?CarbonImmutable $to = null,
-    ): array {
+    /** @return array<int, array<string, mixed>> */
+    public function queryCost(string $subscriptionId, string $timeframe, ?CarbonImmutable $from = null, ?CarbonImmutable $to = null): array
+    {
         $dataset = [
             'aggregation' => [
                 'totalCost' => [
@@ -178,7 +172,7 @@ class AzureCostSyncService
                     'function' => 'Sum',
                 ],
             ],
-            'granularity' => 'Monthly',
+            'granularity' => $timeframe === 'MonthToDate' ? 'Monthly' : 'Monthly',
         ];
 
         $payload = [
@@ -213,24 +207,35 @@ class AzureCostSyncService
 
         $properties = $response->json('properties', []);
         $columns = collect($properties['columns'] ?? [])
-            ->pluck('name')
+            ->map(fn (mixed $column): ?string => is_array($column) && is_string($column['name'] ?? null) ? $column['name'] : null)
+            ->filter()
             ->values()
             ->all();
 
         return collect($properties['rows'] ?? [])
+            ->filter(fn (mixed $values): bool => is_array($values))
             ->map(function (array $values) use ($columns): array {
                 return collect($columns)
-                    ->mapWithKeys(fn (string $column, int $index): array => [
-                        $column => $values[$index] ?? null,
-                    ])
+                    ->mapWithKeys(fn (string $column, int $index): array => [$column => $values[$index] ?? null])
                     ->all();
             })
             ->all();
     }
 
+    private function numericCostFromRow(array $row): ?float
+    {
+        foreach (['PreTaxCost', 'preTaxCost', 'totalCost'] as $key) {
+            if (isset($row[$key]) && is_numeric($row[$key])) {
+                return (float) $row[$key];
+            }
+        }
+
+        return null;
+    }
+
     private function periodStartFromRow(array $row): ?CarbonImmutable
     {
-        $value = $row['UsageDate'] ?? $row['usageDate'] ?? null;
+        $value = $row['BillingMonth'] ?? $row['billingMonth'] ?? $row['UsageDate'] ?? $row['usageDate'] ?? null;
 
         if ($value === null) {
             return null;
@@ -238,8 +243,14 @@ class AzureCostSyncService
 
         $value = (string) $value;
 
-        if (preg_match('/^\d{8}$/', $value) === 1) {
-            return CarbonImmutable::createFromFormat('Ymd', $value)->startOfMonth();
+        foreach (['Ym', 'Ymd'] as $format) {
+            if (preg_match('/^\d{'.strlen($format === 'Ym' ? 'Ym' : 'Ymd').'}$/', $value) === 1) {
+                try {
+                    return CarbonImmutable::createFromFormat($format, $value)->startOfMonth();
+                } catch (\Throwable) {
+                    // Try the next supported representation.
+                }
+            }
         }
 
         try {
@@ -247,6 +258,11 @@ class AzureCostSyncService
         } catch (\Throwable) {
             return null;
         }
+    }
+
+    private function stringOrNull(mixed $value): ?string
+    {
+        return is_string($value) && $value !== '' ? $value : null;
     }
 
     private function managementRequest(): PendingRequest
@@ -268,26 +284,20 @@ class AzureCostSyncService
         $clientSecret = config('services.azure.client_secret');
 
         if (! $tenantId || ! $clientId || ! $clientSecret) {
-            throw new RuntimeException(
-                'Azure service principal credentials are not configured. Set AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET.'
-            );
+            throw new RuntimeException('Azure service principal credentials are not configured. Set AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET.');
         }
 
-        $response = Http::asForm()
-            ->acceptJson()
-            ->timeout((int) config('services.azure.timeout', 30))
-            ->post(
-                sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $tenantId),
-                [
-                    'grant_type' => 'client_credentials',
-                    'client_id' => $clientId,
-                    'client_secret' => $clientSecret,
-                    'scope' => 'https://management.azure.com/.default',
-                ],
-            );
+        $response = Http::asForm()->acceptJson()->timeout((int) config('services.azure.timeout', 30))->post(
+            sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $tenantId),
+            [
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'scope' => 'https://management.azure.com/.default',
+            ],
+        );
 
         $response->throw();
-
         $token = $response->json('access_token');
 
         if (! is_string($token) || $token === '') {
