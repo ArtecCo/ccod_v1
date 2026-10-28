@@ -27,6 +27,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 ->select([
                     'id',
                     'assessment_id',
+                    'subscription_id',
                     'recommendation_name',
                     'state',
                     'severity',
