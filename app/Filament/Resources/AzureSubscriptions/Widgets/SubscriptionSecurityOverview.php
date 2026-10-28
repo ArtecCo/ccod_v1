@@ -58,7 +58,7 @@ class SubscriptionSecurityOverview extends BaseWidget
             ->color('gray');
 
         if (count($scoreChart) >= 2) {
-            $securityScore = $securityScore->chart($scoreChart);
+            $securityScore = $securityScore->chart($scoreChart)->chartColor('gray');
         }
 
         return [
