@@ -61,8 +61,13 @@ securityresources
 | where type =~ "microsoft.security/assessments"
 | where tostring(properties.status.code) =~ "Unhealthy"
 | extend resourceDetails = properties.resourceDetails
-| extend resourceId = tostring(properties.resourceDetails.Id)
-| extend recommendationName = tostring(properties.displayName)
+| extend resourceId = coalesce(
+    tostring(properties.resourceDetails.id),
+    tostring(properties.resourceDetails.Id),
+    tostring(properties.resourceDetails.resourceId),
+    tostring(properties.resourceDetails.ResourceId)
+)
+| extend recommendationName = coalesce(tostring(properties.displayName), tostring(properties.metadata.displayName))
 | extend statusCode = tostring(properties.status.code)
 | extend statusCause = tostring(properties.status.cause)
 | extend statusDescription = tostring(properties.status.description)
@@ -74,7 +79,7 @@ securityresources
 | extend assessmentType = tostring(properties.metadata.assessmentType)
 | extend implementationEffort = tostring(properties.metadata.implementationEffort)
 | extend userImpact = tostring(properties.metadata.userImpact)
-| extend resourceSource = tostring(properties.resourceDetails.Source)
+| extend resourceSource = coalesce(tostring(properties.resourceDetails.source), tostring(properties.resourceDetails.Source))
 | extend portalLink = tostring(properties.links.azurePortalUri)
 | extend policyDefinitionId = tostring(properties.metadata.policyDefinitionId)
 | project id, name, resourceId, resourceDetails, recommendationName, statusCode, statusCause, statusDescription, firstEvaluationDate, statusChangeDate, severity, description, remediationDescription, assessmentType, implementationEffort, userImpact, resourceSource, portalLink, policyDefinitionId, properties
@@ -131,58 +136,59 @@ KQL,
 
     private function syncOne(array $assessment, string $subscriptionId): string
     {
-        $resourceId = $assessment['resourceId'] ?? null;
         $properties = is_array($assessment['properties'] ?? null) ? $assessment['properties'] : [];
         $resourceDetails = is_array($assessment['resourceDetails'] ?? null)
             ? $assessment['resourceDetails']
             : (is_array($properties['resourceDetails'] ?? null) ? $properties['resourceDetails'] : []);
 
-        if (! is_string($resourceId) || $resourceId === '') {
-            foreach (['id', 'Id'] as $key) {
-                if (is_string($resourceDetails[$key] ?? null) && $resourceDetails[$key] !== '') {
-                    $resourceId = $resourceDetails[$key];
-                    break;
-                }
-            }
+        $resourceId = $this->firstString([
+            $assessment['resourceId'] ?? null,
+            $resourceDetails['id'] ?? null,
+            $resourceDetails['Id'] ?? null,
+            $resourceDetails['resourceId'] ?? null,
+            $resourceDetails['ResourceId'] ?? null,
+            $resourceDetails['resourceID'] ?? null,
+        ]);
+
+        if ($resourceId === null && is_array($properties['additionalData'] ?? null)) {
+            $additionalData = $properties['additionalData'];
+            $resourceId = $this->firstString([
+                $additionalData['AzureResourceId'] ?? null,
+                $additionalData['azureResourceId'] ?? null,
+                $additionalData['resourceId'] ?? null,
+                $additionalData['resourceID'] ?? null,
+            ]);
         }
 
-        if (! is_string($resourceId) || $resourceId === '') {
-            $additionalData = is_array($properties['additionalData'] ?? null) ? $properties['additionalData'] : [];
-            foreach (['AzureResourceId', 'azureResourceId', 'resourceId'] as $key) {
-                if (is_string($additionalData[$key] ?? null) && $additionalData[$key] !== '') {
-                    $resourceId = $additionalData[$key];
-                    break;
-                }
-            }
-        }
-
-        if (! is_string($resourceId) || $resourceId === '') {
-            $resourceId = $this->resourceIdFromAssessmentId((string) $assessment['id']);
-        }
+        $metadata = is_array($properties['metadata'] ?? null) ? $properties['metadata'] : [];
 
         $attributes = [
             'assessment_id' => (string) $assessment['id'],
             'subscription_id' => $subscriptionId,
-            'resource_id' => $this->stringOrNull($resourceId),
+            'resource_id' => $resourceId,
             'recommendation_id' => $this->stringOrNull($assessment['name'] ?? null),
-            'recommendation_name' => $this->stringOrNull($assessment['recommendationName'] ?? null),
-            'state' => 'Unhealthy',
-            'severity' => $this->stringOrNull($assessment['severity'] ?? null),
-            'description' => $this->stringOrNull($assessment['description'] ?? null),
-            'remediation_description' => $this->stringOrNull($assessment['remediationDescription'] ?? null),
-            'assessment_type' => $this->stringOrNull($assessment['assessmentType'] ?? null),
-            'implementation_effort' => $this->stringOrNull($assessment['implementationEffort'] ?? null),
-            'resource_source' => $this->stringOrNull($assessment['resourceSource'] ?? null),
-            'policy_definition_id' => $this->stringOrNull($assessment['policyDefinitionId'] ?? null),
-            'categories' => $this->metadataArray($assessment, 'categories'),
-            'threats' => $this->metadataArray($assessment, 'threats'),
-            'cves' => $this->extractCves($assessment),
-            'user_impact' => $this->stringOrNull($assessment['userImpact'] ?? null),
-            'status_cause' => $this->stringOrNull($assessment['statusCause'] ?? null),
-            'status_description' => $this->stringOrNull($assessment['statusDescription'] ?? null),
+            'recommendation_name' => $this->firstString([
+                $assessment['recommendationName'] ?? null,
+                $assessment['name'] ?? null,
+                $metadata['displayName'] ?? null,
+            ]),
+            'state' => $this->firstString([$assessment['statusCode'] ?? null, $properties['status']['code'] ?? null]) ?? 'Unhealthy',
+            'severity' => $this->firstString([$assessment['severity'] ?? null, $metadata['severity'] ?? null]),
+            'description' => $this->firstString([$assessment['description'] ?? null, $metadata['description'] ?? null]),
+            'remediation_description' => $this->firstString([$assessment['remediationDescription'] ?? null, $metadata['remediationDescription'] ?? null]),
+            'assessment_type' => $this->firstString([$assessment['assessmentType'] ?? null, $metadata['assessmentType'] ?? null]),
+            'implementation_effort' => $this->firstString([$assessment['implementationEffort'] ?? null, $metadata['implementationEffort'] ?? null]),
+            'resource_source' => $this->firstString([$assessment['resourceSource'] ?? null, $resourceDetails['source'] ?? null, $resourceDetails['Source'] ?? null]),
+            'policy_definition_id' => $this->firstString([$assessment['policyDefinitionId'] ?? null, $metadata['policyDefinitionId'] ?? null]),
+            'categories' => $this->metadataArray($metadata['categories'] ?? null),
+            'threats' => $this->metadataArray($metadata['threats'] ?? null),
+            'cves' => $this->extractCves($assessment, $metadata),
+            'user_impact' => $this->firstString([$assessment['userImpact'] ?? null, $metadata['userImpact'] ?? null]),
+            'status_cause' => $this->firstString([$assessment['statusCause'] ?? null, $properties['status']['cause'] ?? null]),
+            'status_description' => $this->firstString([$assessment['statusDescription'] ?? null, $properties['status']['description'] ?? null]),
             'first_evaluated_at' => $this->dateOrNull($assessment['firstEvaluationDate'] ?? null),
             'status_changed_at' => $this->dateOrNull($assessment['statusChangeDate'] ?? null),
-            'portal_link' => $this->stringOrNull($assessment['portalLink'] ?? null),
+            'portal_link' => $this->firstString([$assessment['portalLink'] ?? null, $properties['links']['azurePortalUri'] ?? null]),
             'synced_at' => now(),
         ];
 
@@ -207,39 +213,69 @@ KQL,
         return $changed ? 'updated' : 'unchanged';
     }
 
-    private function resourceIdFromAssessmentId(string $assessmentId): ?string
+    private function extractCves(array $assessment, array $metadata): ?array
     {
-        $marker = '/providers/Microsoft.Security/assessments/';
-        $position = stripos($assessmentId, $marker);
-
-        if ($position === false) {
-            return null;
+        $values = [];
+        foreach ([
+            $metadata['cves'] ?? null,
+            $metadata['CVEs'] ?? null,
+            $metadata['cve'] ?? null,
+            $metadata['CVE'] ?? null,
+        ] as $value) {
+            if (is_array($value)) {
+                foreach ($value as $item) {
+                    if (is_string($item)) {
+                        $values[] = $item;
+                    } elseif (is_array($item)) {
+                        foreach (['cveId', 'CveId', 'id', 'name'] as $key) {
+                            if (is_string($item[$key] ?? null)) {
+                                $values[] = $item[$key];
+                                break;
+                            }
+                        }
+                    }
+                }
+            } elseif (is_string($value)) {
+                $values[] = $value;
+            }
         }
 
-        $resourceId = substr($assessmentId, 0, $position);
-        return $resourceId !== '' ? $resourceId : null;
-    }
-
-    private function metadataArray(array $assessment, string $key): ?array
-    {
-        $properties = $assessment['properties'] ?? null;
-        $metadata = is_array($properties) ? ($properties['metadata'] ?? null) : null;
-        $value = is_array($metadata) ? ($metadata[$key] ?? null) : null;
-
-        return is_array($value) ? array_values($value) : null;
-    }
-
-    private function extractCves(array $assessment): ?array
-    {
         $json = json_encode($assessment['properties'] ?? null, JSON_UNESCAPED_SLASHES);
-        if (! is_string($json)) {
+        if (is_string($json)) {
+            preg_match_all('/CVE-\d{4}-\d{4,7}/i', $json, $matches);
+            $values = array_merge($values, $matches[0] ?? []);
+        }
+
+        $cves = [];
+        foreach ($values as $value) {
+            preg_match_all('/CVE-\d{4}-\d{4,7}/i', $value, $matches);
+            foreach ($matches[0] ?? [] as $cve) {
+                $cves[] = strtoupper($cve);
+            }
+        }
+
+        $cves = array_values(array_unique($cves));
+        return $cves === [] ? null : $cves;
+    }
+
+    private function metadataArray(mixed $value): ?array
+    {
+        if (! is_array($value)) {
             return null;
         }
 
-        preg_match_all('/CVE-\d{4}-\d{4,7}/i', $json, $matches);
-        $cves = array_values(array_unique(array_map('strtoupper', $matches[0] ?? [])));
+        return array_values($value);
+    }
 
-        return $cves === [] ? null : $cves;
+    private function firstString(array $values): ?string
+    {
+        foreach ($values as $value) {
+            if (is_string($value) && trim($value) !== '') {
+                return trim($value);
+            }
+        }
+
+        return null;
     }
 
     private function stringOrNull(mixed $value): ?string
