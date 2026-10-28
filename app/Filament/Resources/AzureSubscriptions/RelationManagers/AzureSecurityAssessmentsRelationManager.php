@@ -18,6 +18,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
     protected static string $relationship = 'securityAssessments';
     protected static ?string $title = 'Unhealthy Security Recommendations';
     protected static bool $isLazy = true;
+    protected static ?string $relatedResource = AzureSecurityAssessmentResource::class;
 
     public function table(Table $table): Table
     {
