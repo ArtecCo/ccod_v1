@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
+use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
@@ -35,19 +36,31 @@ class SubscriptionSecurityOverview extends BaseWidget
             ? round(((float) $latestScore->percentage_score) * 100, 2)
             : null;
 
-        $scoreChart = [];
+        $scoreHistory = collect();
 
         if ($latestScore !== null && $latestScore->initiative_name !== null) {
-            $scoreChart = $this->record->securityScores()
+            $scoreHistory = $this->record->securityScores()
                 ->where('initiative_name', $latestScore->initiative_name)
                 ->orderByDesc('captured_at')
-                ->limit(7)
-                ->get()
+                ->limit(30)
+                ->get(['percentage_score', 'captured_at'])
                 ->sortBy('captured_at')
-                ->map(fn ($score): float => round(((float) $score->percentage_score) * 100, 2))
-                ->values()
-                ->all();
+                ->values();
         }
+
+        $previousScore = $scoreHistory->count() > 1
+            ? $scoreHistory->get($scoreHistory->count() - 2)
+            : null;
+
+        $scoreDifference = $latestScore !== null && $previousScore !== null && (float) $previousScore->percentage_score !== 0.0
+            ? ((((float) $latestScore->percentage_score - (float) $previousScore->percentage_score) / abs((float) $previousScore->percentage_score)) * 100)
+            : null;
+
+        $scoreChart = $scoreHistory
+            ->map(fn (AzureSecurityScore $score): float => round(((float) $score->percentage_score) * 100, 2))
+            ->all();
+
+        $trendColor = $scoreDifference === null ? 'gray' : ($scoreDifference >= 0 ? 'success' : 'danger');
 
         $lastChangedLabel = $lastChanged !== null
             ? Carbon::parse($lastChanged)->format('d M Y, H:i')
@@ -58,7 +71,16 @@ class SubscriptionSecurityOverview extends BaseWidget
             ->color('gray');
 
         if (count($scoreChart) >= 2) {
-            $securityScore = $securityScore->chart($scoreChart)->chartColor('gray');
+            $securityScore = $securityScore->chart($scoreChart)->chartColor($trendColor);
+        }
+
+        if ($scoreDifference !== null) {
+            $securityScore = $securityScore
+                ->description(($scoreDifference >= 0 ? '+' : '') . number_format($scoreDifference, 1) . '% vs previous score')
+                ->descriptionIcon($scoreDifference >= 0
+                    ? 'heroicon-m-arrow-trending-up'
+                    : 'heroicon-m-arrow-trending-down')
+                ->descriptionColor($trendColor);
         }
 
         return [
