@@ -59,6 +59,7 @@ class AzureSecuritySyncService
                 'query' => <<<'KQL'
 securityresources
 | where type =~ "microsoft.security/assessments"
+| where tostring(properties.status.code) =~ "Unhealthy"
 | extend resourceId = tostring(properties.resourceDetails.id)
 | extend recommendationName = tostring(properties.displayName)
 | extend statusCode = tostring(properties.status.code)
@@ -114,11 +115,14 @@ KQL,
         } while ($skipToken !== null);
 
         $query = AzureSecurityAssessment::query()->where('subscription_id', $subscriptionId);
+        $stats['deleted'] = $seen === []
+            ? $query->count()
+            : (clone $query)->whereNotIn('assessment_id', $seen)->count();
+
         if ($seen === []) {
-            $stats['deleted'] = $query->count();
             $query->delete();
         } else {
-            $stats['deleted'] = $query->whereNotIn('assessment_id', $seen)->delete();
+            $query->whereNotIn('assessment_id', $seen)->delete();
         }
 
         return $stats;
@@ -132,7 +136,7 @@ KQL,
             'resource_id' => $this->stringOrNull($assessment['resourceId'] ?? null),
             'recommendation_id' => $this->stringOrNull($assessment['name'] ?? null),
             'recommendation_name' => $this->stringOrNull($assessment['recommendationName'] ?? null),
-            'state' => $this->stringOrNull($assessment['statusCode'] ?? null),
+            'state' => 'Unhealthy',
             'severity' => $this->stringOrNull($assessment['severity'] ?? null),
             'description' => $this->stringOrNull($assessment['description'] ?? null),
             'remediation_description' => $this->stringOrNull($assessment['remediationDescription'] ?? null),
@@ -142,6 +146,7 @@ KQL,
             'policy_definition_id' => $this->stringOrNull($assessment['policyDefinitionId'] ?? null),
             'categories' => $this->metadataArray($assessment, 'categories'),
             'threats' => $this->metadataArray($assessment, 'threats'),
+            'cves' => $this->extractCves($assessment),
             'user_impact' => $this->stringOrNull($assessment['userImpact'] ?? null),
             'status_cause' => $this->stringOrNull($assessment['statusCause'] ?? null),
             'status_description' => $this->stringOrNull($assessment['statusDescription'] ?? null),
@@ -179,6 +184,19 @@ KQL,
         $value = is_array($metadata) ? ($metadata[$key] ?? null) : null;
 
         return is_array($value) ? array_values($value) : null;
+    }
+
+    private function extractCves(array $assessment): ?array
+    {
+        $json = json_encode($assessment['properties'] ?? null, JSON_UNESCAPED_SLASHES);
+        if (! is_string($json)) {
+            return null;
+        }
+
+        preg_match_all('/CVE-\d{4}-\d{4,7}/i', $json, $matches);
+        $cves = array_values(array_unique(array_map('strtoupper', $matches[0] ?? [])));
+
+        return $cves === [] ? null : $cves;
     }
 
     private function stringOrNull(mixed $value): ?string
