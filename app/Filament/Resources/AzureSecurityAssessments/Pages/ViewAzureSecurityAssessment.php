@@ -15,4 +15,15 @@ class ViewAzureSecurityAssessment extends ViewRecord
     {
         return $this->record->recommendation_name ?? 'Security Recommendation';
     }
+
+    /**
+     * This resource intentionally has no index/list page. The assessment
+     * details page is reached from the subscription Security tab, so using
+     * ViewRecord's default breadcrumbs would try to generate a nonexistent
+     * resource index URL and cause a 500 during rendering.
+     */
+    public function getBreadcrumbs(): array
+    {
+        return [$this->getTitle()];
+    }
 }
