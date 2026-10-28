@@ -13,7 +13,9 @@ return new class extends Migration
 
         $this->addIndexIfMissing('azure_security_assessments', ['subscription_id', 'state', 'status_changed_at'], 'azure_security_subscription_state_changed_idx');
         $this->addIndexIfMissing('azure_security_assessments', ['subscription_id', 'state', 'severity'], 'azure_security_subscription_state_severity_idx');
-        $this->addIndexIfMissing('azure_security_assessments', ['subscription_id', 'state', 'resource_id'], 'azure_security_subscription_state_resource_idx');
+        // resource_id is a long Azure resource path. Index only the prefix needed
+        // for filtering; a full composite index exceeds MySQL's 3072-byte limit.
+        $this->addIndexIfMissing('azure_security_assessments', ['subscription_id', 'state', 'resource_id'], 'azure_security_subscription_state_resource_idx', ['resource_id' => 191]);
 
         $this->addIndexIfMissing('azure_subscription_costs', ['subscription_id', 'granularity', 'period_start'], 'azure_cost_subscription_history_idx');
         $this->addIndexIfMissing('billing_resources', ['subscription_id', 'name'], 'billing_resources_subscription_name_idx');
@@ -30,14 +32,26 @@ return new class extends Migration
         $this->dropIndexIfPresent('billing_resources', 'billing_resources_subscription_name_idx');
     }
 
-    private function addIndexIfMissing(string $table, array $columns, string $index): void
+    private function addIndexIfMissing(string $table, array $columns, string $index, array $prefixLengths = []): void
     {
         if (! Schema::hasTable($table) || $this->indexExists($table, $index)) {
             return;
         }
 
-        Schema::table($table, function (Blueprint $blueprint) use ($columns, $index): void {
-            $blueprint->index($columns, $index);
+        Schema::table($table, function (Blueprint $blueprint) use ($columns, $index, $prefixLengths): void {
+            if ($prefixLengths === []) {
+                $blueprint->index($columns, $index);
+                return;
+            }
+
+            $indexedColumns = array_map(
+                fn (string $column): string => isset($prefixLengths[$column])
+                    ? sprintf('%s(%d)', $column, $prefixLengths[$column])
+                    : $column,
+                $columns,
+            );
+
+            $blueprint->index($indexedColumns, $index);
         });
     }
 
