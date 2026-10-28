@@ -38,17 +38,24 @@ class SubscriptionSecurityOverview extends BaseWidget
         $scorePercentage = $latestScore !== null
             ? round(((float) $latestScore->percentage_score) * 100, 2)
             : null;
-        $scoreChart = $scores->map(fn ($score): float => round(((float) $score->percentage_score) * 100, 2))->all();
+        $scoreChart = $scores
+            ->map(fn ($score): float => round(((float) $score->percentage_score) * 100, 2))
+            ->all();
 
         $lastChangedLabel = $lastChanged !== null
             ? Carbon::parse($lastChanged)->format('d M Y, H:i')
             : '—';
 
+        $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
+            ->icon('heroicon-o-shield-check')
+            ->color($scorePercentage === null ? 'gray' : ($scorePercentage >= 80 ? 'success' : ($scorePercentage >= 60 ? 'warning' : 'danger')));
+
+        if (count($scoreChart) >= 2) {
+            $securityScore = $securityScore->chart($scoreChart);
+        }
+
         return [
-            Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
-                ->icon('heroicon-o-shield-check')
-                ->color($scorePercentage === null ? 'gray' : ($scorePercentage >= 80 ? 'success' : ($scorePercentage >= 60 ? 'warning' : 'danger')))
-                ->chart($scoreChart),
+            $securityScore,
             Stat::make('Unhealthy', (string) $unhealthy)
                 ->icon('heroicon-o-exclamation-triangle')
                 ->color($unhealthy > 0 ? 'danger' : 'success'),
