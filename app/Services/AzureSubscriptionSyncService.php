@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\AzureSubscription;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -55,6 +56,16 @@ class AzureSubscriptionSyncService
         }
 
         return $items;
+    }
+
+    public function get(string $url): Response
+    {
+        return $this->request()->get($url);
+    }
+
+    public function post(string $url, array $payload): Response
+    {
+        return $this->request()->post($url, $payload);
     }
 
     private function syncOne(array $data): string
