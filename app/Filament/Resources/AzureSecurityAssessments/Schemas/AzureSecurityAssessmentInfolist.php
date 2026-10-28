@@ -40,8 +40,19 @@ class AzureSecurityAssessmentInfolist
                             ->placeholder('Not provided by Azure'),
                         TextEntry::make('resource_id')
                             ->label('Affected Resource')
-                            ->copyable()
-                            ->placeholder('Not identified by Azure')
+                            ->formatStateUsing(function (mixed $state): string {
+                                if (! is_string($state) || trim($state) === '') {
+                                    return 'Not available';
+                                }
+
+                                $resourceId = trim($state, '/');
+                                $segments = explode('/', $resourceId);
+                                $resourceName = end($segments);
+
+                                return is_string($resourceName) && $resourceName !== ''
+                                    ? $resourceName
+                                    : $resourceId;
+                            })
                             ->columnSpanFull(),
                     ]),
                 ])
