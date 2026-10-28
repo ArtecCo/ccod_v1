@@ -6,10 +6,12 @@ namespace App\Filament\Resources\AzureSecurityAssessments;
 
 use App\Filament\Resources\AzureSecurityAssessments\Pages\ViewAzureSecurityAssessment;
 use App\Filament\Resources\AzureSecurityAssessments\Schemas\AzureSecurityAssessmentInfolist;
+use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Models\AzureSecurityAssessment;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use BackedEnum;
+use Filament\Resources\ParentResourceRegistration;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,9 +19,17 @@ use Illuminate\Database\Eloquent\Builder;
 class AzureSecurityAssessmentResource extends Resource
 {
     protected static ?string $model = AzureSecurityAssessment::class;
+    protected static ?string $parentResource = AzureSubscriptionResource::class;
     protected static string|BackedEnum|null $navigationIcon = null;
     protected static bool $shouldRegisterNavigation = false;
     protected static ?string $slug = 'security-assessments';
+
+    public static function getParentResourceRegistration(): ?ParentResourceRegistration
+    {
+        return AzureSubscriptionResource::asParent()
+            ->relationship('securityAssessments')
+            ->inverseRelationship('subscription');
+    }
 
     public static function canViewAny(): bool
     {
