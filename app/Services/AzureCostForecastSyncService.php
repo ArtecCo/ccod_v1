@@ -11,46 +11,81 @@ use RuntimeException;
 
 class AzureCostForecastSyncService
 {
-    private const API_VERSION = '2023-03-01';
+    private const API_VERSION = '2025-03-01';
     private ?string $accessToken = null;
 
     public function sync(AzureSubscription $subscription): bool
     {
+        $now = CarbonImmutable::now();
         $url = sprintf(
-            'https://management.azure.com/subscriptions/%s/providers/Microsoft.Consumption/forecasts',
+            'https://management.azure.com/subscriptions/%s/providers/Microsoft.CostManagement/forecast',
             $subscription->subscription_id,
         );
 
-        $response = $this->request()->get($url, [
-            'api-version' => self::API_VERSION,
-            'timeframe' => 'MonthToDate',
-            'granularity' => 'Monthly',
-        ])->throw();
+        $payload = [
+            'type' => 'Usage',
+            'dataset' => [
+                'aggregation' => [
+                    'totalCost' => [
+                        'name' => 'Cost',
+                        'function' => 'Sum',
+                    ],
+                ],
+                'granularity' => 'Daily',
+            ],
+            'includeActualCost' => false,
+            'includeFreshPartialCost' => false,
+            'timePeriod' => [
+                'from' => $now->startOfMonth()->toIso8601String(),
+                'to' => $now->endOfMonth()->toIso8601String(),
+            ],
+            'timeframe' => 'Custom',
+        ];
 
-        $rows = $response->json('value', []);
-        if (! is_array($rows)) {
-            throw new RuntimeException('Invalid Azure forecast response.');
+        $response = $this->request()->post($url, $payload);
+        if ($response->status() === 204) {
+            return false;
+        }
+        $response->throw();
+
+        $properties = $response->json('properties', []);
+        if (! is_array($properties)) {
+            throw new RuntimeException('Invalid Azure forecast response properties.');
         }
 
-        $amount = null;
+        $columns = collect($properties['columns'] ?? [])
+            ->map(fn (mixed $column): ?string => is_array($column) && is_string($column['name'] ?? null) ? $column['name'] : null)
+            ->filter()
+            ->values()
+            ->all();
+
+        $amount = 0.0;
+        $hasAmount = false;
         $currency = null;
 
-        foreach ($rows as $row) {
-            if (! is_array($row)) {
+        foreach (($properties['rows'] ?? []) as $values) {
+            if (! is_array($values)) {
                 continue;
             }
 
-            $properties = is_array($row['properties'] ?? null) ? $row['properties'] : $row;
-            $value = $properties['forecastCost'] ?? $properties['amount'] ?? $properties['forecast'] ?? null;
-            $unit = $properties['unit'] ?? $properties['currency'] ?? null;
+            $row = [];
+            foreach ($columns as $index => $column) {
+                $row[$column] = $values[$index] ?? null;
+            }
 
+            $value = $row['PreTaxCost'] ?? $row['Cost'] ?? $row['CostUSD'] ?? $row['PreTaxCostUSD'] ?? null;
             if (is_numeric($value)) {
-                $amount = (float) $value;
-                $currency = is_string($unit) && $unit !== '' ? $unit : $currency;
+                $amount += (float) $value;
+                $hasAmount = true;
+            }
+
+            $rowCurrency = $row['Currency'] ?? null;
+            if (is_string($rowCurrency) && $rowCurrency !== '') {
+                $currency ??= $rowCurrency;
             }
         }
 
-        if ($amount === null) {
+        if (! $hasAmount) {
             return false;
         }
 
@@ -70,6 +105,7 @@ class AzureCostForecastSyncService
     {
         return Http::acceptJson()
             ->withToken($this->accessToken())
+            ->withQueryParameters(['api-version' => self::API_VERSION])
             ->timeout((int) config('services.azure.timeout', 30));
     }
 
