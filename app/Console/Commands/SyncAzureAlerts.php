@@ -10,25 +10,16 @@ use Illuminate\Console\Command;
 class SyncAzureAlerts extends Command
 {
     protected $signature = 'azure:sync-alerts
-                            {--subscription= : Sync only one Azure subscription}
-                            {--hours=24 : Look back this many hours for modified alerts}';
+                            {--subscription= : Sync only one Azure subscription}';
 
-    protected $description = 'Synchronize Azure Monitor alerts';
+    protected $description = 'Synchronize active Azure Monitor alerts';
 
     public function handle(AzureAlertSyncService $sync): int
     {
-        $hours = (int) $this->option('hours');
-
-        if ($hours < 1) {
-            $this->error('The --hours option must be at least 1.');
-
-            return self::FAILURE;
-        }
-
-        $this->info('Synchronizing Azure Monitor alerts...');
+        $this->info('Synchronizing active Azure Monitor alerts...');
 
         try {
-            $stats = $sync->sync($this->option('subscription'), $hours);
+            $stats = $sync->sync($this->option('subscription'));
         } catch (\Throwable $exception) {
             $this->error('Alert synchronization failed: '.$exception->getMessage());
 
@@ -36,12 +27,13 @@ class SyncAzureAlerts extends Command
         }
 
         $this->line('Subscriptions: '.$stats['subscriptions']);
-        $this->line('Discovered: '.$stats['discovered']);
+        $this->line('Active alerts discovered: '.$stats['discovered']);
         $this->line('Created: '.$stats['created']);
         $this->line('Updated: '.$stats['updated']);
         $this->line('Unchanged: '.$stats['unchanged']);
+        $this->line('Removed from active set: '.$stats['deleted']);
 
-        $this->info('Azure alert synchronization completed.');
+        $this->info('Active Azure alert synchronization completed.');
 
         return self::SUCCESS;
     }
