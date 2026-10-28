@@ -39,23 +39,19 @@ class SubscriptionSecurityOverview extends BaseWidget
             Stat::make('Security Recommendations', (string) $total)
                 ->description('All Defender for Cloud assessments')
                 ->icon('heroicon-o-shield-check')
-                ->color('primary')
-                ->extraAttributes(['class' => 'ccod-security-stat']),
+                ->color('primary'),
             Stat::make('Unhealthy', (string) $unhealthy)
                 ->description('Recommendations requiring attention')
                 ->icon('heroicon-o-exclamation-triangle')
-                ->color($unhealthy > 0 ? 'danger' : 'success')
-                ->extraAttributes(['class' => 'ccod-security-stat']),
+                ->color($unhealthy > 0 ? 'danger' : 'success'),
             Stat::make('Healthy', (string) $healthy)
                 ->description('Assessments currently healthy')
                 ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->extraAttributes(['class' => 'ccod-security-stat']),
+                ->color('success'),
             Stat::make('Last Evaluated', $lastEvaluatedLabel)
                 ->description($lastChangedLabel)
                 ->icon('heroicon-o-clock')
-                ->color('gray')
-                ->extraAttributes(['class' => 'ccod-security-stat']),
+                ->color('gray'),
         ];
     }
 }
