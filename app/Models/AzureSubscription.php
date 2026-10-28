@@ -21,7 +21,7 @@ class AzureSubscription extends Model
     /** @deprecated Legacy metadata retained for migration compatibility. */
     public function application(): BelongsTo { return $this->belongsTo(Application::class); }
     public function projects(): BelongsToMany { return $this->belongsToMany(Project::class,'project_subscriptions','subscription_id','project_id','subscription_id','id')->withPivot('environment'); }
-    public function businessUnits(): BelongsToMany { return $this->belongsToMany(BusinessUnit::class,'team_subscription','subscription_id','business_unit_id','subscription_id','id')->withTimestamps(); }
+    public function businessUnits(): BelongsToMany { return $this->belongsToMany(BusinessUnit::class,'team_subscription','subscription_id','business_unit_id','business_unit_id','id')->withTimestamps(); }
     /** @deprecated Use businessUnits(). */
     public function teams(): BelongsToMany { return $this->businessUnits(); }
     public function documentation(): HasOne { return $this->hasOne(SubscriptionDocumentation::class,'subscription_id','subscription_id'); }
@@ -32,4 +32,5 @@ class AzureSubscription extends Model
     public function alerts(): HasMany { return $this->hasMany(AzureAlert::class,'subscription_id','subscription_id'); }
     public function costs(): HasMany { return $this->hasMany(AzureSubscriptionCost::class,'subscription_id','subscription_id'); }
     public function securityAssessments(): HasMany { return $this->hasMany(AzureSecurityAssessment::class,'subscription_id','subscription_id'); }
+    public function securityScores(): HasMany { return $this->hasMany(AzureSecurityScore::class,'subscription_id','subscription_id'); }
 }
