@@ -60,6 +60,7 @@ class AzureSecuritySyncService
 securityresources
 | where type =~ "microsoft.security/assessments"
 | where tostring(properties.status.code) =~ "Unhealthy"
+| extend resourceDetails = properties.resourceDetails
 | extend resourceId = tostring(properties.resourceDetails.id)
 | extend recommendationName = tostring(properties.displayName)
 | extend statusCode = tostring(properties.status.code)
@@ -76,7 +77,7 @@ securityresources
 | extend resourceSource = tostring(properties.resourceDetails.source)
 | extend portalLink = tostring(properties.links.azurePortalUri)
 | extend policyDefinitionId = tostring(properties.metadata.policyDefinitionId)
-| project id, name, resourceId, recommendationName, statusCode, statusCause, statusDescription, firstEvaluationDate, statusChangeDate, severity, description, remediationDescription, assessmentType, implementationEffort, userImpact, resourceSource, portalLink, policyDefinitionId, properties
+| project id, name, resourceId, resourceDetails, recommendationName, statusCode, statusCause, statusDescription, firstEvaluationDate, statusChangeDate, severity, description, remediationDescription, assessmentType, implementationEffort, userImpact, resourceSource, portalLink, policyDefinitionId, properties
 | order by id asc
 KQL,
                 'options' => [
@@ -130,10 +131,18 @@ KQL,
 
     private function syncOne(array $assessment, string $subscriptionId): string
     {
+        $resourceId = $assessment['resourceId'] ?? null;
+        if (! is_string($resourceId) || $resourceId === '') {
+            $resourceDetails = $assessment['resourceDetails'] ?? null;
+            if (is_array($resourceDetails)) {
+                $resourceId = $resourceDetails['id'] ?? null;
+            }
+        }
+
         $attributes = [
             'assessment_id' => (string) $assessment['id'],
             'subscription_id' => $subscriptionId,
-            'resource_id' => $this->stringOrNull($assessment['resourceId'] ?? null),
+            'resource_id' => $this->stringOrNull($resourceId),
             'recommendation_id' => $this->stringOrNull($assessment['name'] ?? null),
             'recommendation_name' => $this->stringOrNull($assessment['recommendationName'] ?? null),
             'state' => 'Unhealthy',
