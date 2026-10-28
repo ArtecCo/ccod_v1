@@ -22,8 +22,7 @@ class AzureSecurityScoreInfolist
                             ->columnSpan(2),
                         TextEntry::make('weight')
                             ->label('Weight')
-                            ->numeric()
-                            ->suffix(' points'),
+                            ->numeric(),
                         TextEntry::make('current_score')
                             ->label('Current Score')
                             ->numeric(decimalPlaces: 2)
