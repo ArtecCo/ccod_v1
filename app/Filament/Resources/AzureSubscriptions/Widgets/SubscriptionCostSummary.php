@@ -57,6 +57,8 @@ class SubscriptionCostSummary extends BaseWidget
                 ->descriptionColor($trendColor);
         }
 
+        $forecast = $this->record->costForecast;
+
         return [
             $mtd,
             Stat::make('Budget', $this->formatMoney($this->record->budgets()->sum('amount'), $this->budgetCurrency()))
@@ -65,7 +67,7 @@ class SubscriptionCostSummary extends BaseWidget
             Stat::make('Budget Actual', $this->formatMoney($this->record->budgets()->sum('current_spend'), $this->budgetCurrency()))
                 ->icon('heroicon-o-banknotes')
                 ->color('gray'),
-            Stat::make('Budget Forecast', $this->formatMoney($this->record->budgets()->sum('forecast_spend'), $this->budgetCurrency()))
+            Stat::make('Forecast', $this->formatMoney($forecast?->forecast_amount, $forecast?->currency ?: 'EUR'))
                 ->icon('heroicon-o-chart-bar')
                 ->color('gray'),
             Stat::make('MoM Difference', $difference === null ? '—' : $this->formatDifference($difference))
