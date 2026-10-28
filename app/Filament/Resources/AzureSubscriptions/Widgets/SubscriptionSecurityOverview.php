@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
-use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -21,7 +20,10 @@ class SubscriptionSecurityOverview extends BaseWidget
     {
         $assessmentQuery = $this->record->securityAssessments();
         $unhealthy = (clone $assessmentQuery)->where('state', 'Unhealthy')->count();
-        $lastEvaluated = (clone $assessmentQuery)->max('first_evaluated_at');
+        $high = (clone $assessmentQuery)
+            ->where('state', 'Unhealthy')
+            ->where('severity', 'High')
+            ->count();
         $lastChanged = (clone $assessmentQuery)->max('status_changed_at');
 
         $scores = $this->record->securityScores()
@@ -50,11 +52,11 @@ class SubscriptionSecurityOverview extends BaseWidget
                 ->description('Recommendations requiring attention')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->color($unhealthy > 0 ? 'danger' : 'success'),
-            Stat::make('Last Evaluated', $lastEvaluated ? Carbon::parse($lastEvaluated)->format('d M Y, H:i') : '—')
-                ->description('Latest Defender assessment evaluation')
-                ->icon('heroicon-o-clock')
-                ->color('gray'),
-            Stat::make('Last Status Change', $lastChanged ? Carbon::parse($lastChanged)->format('d M Y, H:i') : '—')
+            Stat::make('High Recommendations', (string) $high)
+                ->description('High-severity recommendations requiring attention')
+                ->icon('heroicon-o-shield-exclamation')
+                ->color($high > 0 ? 'danger' : 'success'),
+            Stat::make('Last Status Change', $lastChanged ? $lastChanged->format('d M Y, H:i') : '—')
                 ->description('Latest recommendation status change')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray'),
