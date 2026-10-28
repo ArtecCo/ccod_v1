@@ -86,21 +86,22 @@ function azureGet(string $url, string $token): array
             'Accept: application/json',
         ],
         CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HEADER => true,
         CURLOPT_TIMEOUT => $timeout,
     ]);
 
-    $rawBody = curl_exec($ch);
+    $rawResponse = curl_exec($ch);
     $error = curl_error($ch);
     $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $headerSize = (int) curl_getinfo($ch, CURLINFO_HEADER_SIZE);
     curl_close($ch);
 
-    if ($rawBody === false) {
+    if ($rawResponse === false) {
         throw new RuntimeException("Azure request failed: {$error}");
     }
 
-    $headerText = substr($rawBody, 0, $headerSize);
-    $bodyText = substr($rawBody, $headerSize);
+    $headerText = substr($rawResponse, 0, $headerSize);
+    $bodyText = substr($rawResponse, $headerSize);
     $headers = [];
 
     foreach (preg_split('/\r\n|\r|\n/', $headerText) ?: [] as $line) {
