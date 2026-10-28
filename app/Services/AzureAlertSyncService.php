@@ -13,17 +13,14 @@ class AzureAlertSyncService
 {
     private const API_VERSION = '2024-04-01';
     private const PAGE_SIZE = 1000;
-    private const DEFAULT_LOOKBACK_HOURS = 24;
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
     ) {
     }
 
-    public function sync(?string $subscriptionId = null, int $lookbackHours = self::DEFAULT_LOOKBACK_HOURS): array
+    public function sync(?string $subscriptionId = null): array
     {
-        $lookbackHours = max(1, $lookbackHours);
-
         $subscriptions = AzureSubscription::query()
             ->when($subscriptionId !== null, fn ($query) => $query->where('subscription_id', $subscriptionId))
             ->pluck('subscription_id')
@@ -37,10 +34,11 @@ class AzureAlertSyncService
             'created' => 0,
             'updated' => 0,
             'unchanged' => 0,
+            'deleted' => 0,
         ];
 
         foreach ($subscriptions as $id) {
-            $result = $this->syncSubscription($id, $lookbackHours);
+            $result = $this->syncSubscription($id);
 
             foreach ($result as $key => $value) {
                 $stats[$key] += $value;
@@ -50,18 +48,19 @@ class AzureAlertSyncService
         return $stats;
     }
 
-    private function syncSubscription(string $subscriptionId, int $lookbackHours): array
+    private function syncSubscription(string $subscriptionId): array
     {
-        $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0];
+        $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'deleted' => 0];
+        $seen = [];
         $skipToken = null;
 
         do {
             $payload = [
                 'subscriptions' => [$subscriptionId],
-                'query' => <<<KQL
+                'query' => <<<'KQL'
 alertsmanagementresources
 | where type =~ "microsoft.alertsmanagement/alerts"
-| where todatetime(properties.essentials.lastModifiedDateTime) > ago({$lookbackHours}h)
+| where tostring(properties.essentials.monitorCondition) =~ "Fired"
 | project
     alertId = id,
     alertName = name,
@@ -105,12 +104,24 @@ KQL,
                 }
 
                 $stats['discovered']++;
+                $seen[] = $alert['alertId'];
                 $stats[$this->syncOne($alert, $subscriptionId)]++;
             }
 
             $next = $page['$skipToken'] ?? null;
             $skipToken = is_string($next) && $next !== '' ? $next : null;
         } while ($skipToken !== null);
+
+        $query = AzureAlert::query()->where('subscription_id', $subscriptionId);
+        $stats['deleted'] = $seen === []
+            ? $query->count()
+            : (clone $query)->whereNotIn('azure_alert_id', $seen)->count();
+
+        if ($seen === []) {
+            $query->delete();
+        } else {
+            $query->whereNotIn('azure_alert_id', $seen)->delete();
+        }
 
         return $stats;
     }
