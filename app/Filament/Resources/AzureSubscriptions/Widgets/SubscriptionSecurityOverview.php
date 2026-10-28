@@ -27,20 +27,27 @@ class SubscriptionSecurityOverview extends BaseWidget
             ->count();
         $lastChanged = (clone $assessmentQuery)->max('status_changed_at');
 
-        $scores = $this->record->securityScores()
+        $latestScore = $this->record->securityScores()
             ->orderByDesc('captured_at')
-            ->limit(7)
-            ->get()
-            ->sortBy('captured_at')
-            ->values();
+            ->first();
 
-        $latestScore = $scores->last();
         $scorePercentage = $latestScore !== null
             ? round(((float) $latestScore->percentage_score) * 100, 2)
             : null;
-        $scoreChart = $scores
-            ->map(fn ($score): float => round(((float) $score->percentage_score) * 100, 2))
-            ->all();
+
+        $scoreChart = [];
+
+        if ($latestScore !== null && $latestScore->initiative_name !== null) {
+            $scoreChart = $this->record->securityScores()
+                ->where('initiative_name', $latestScore->initiative_name)
+                ->orderByDesc('captured_at')
+                ->limit(7)
+                ->get()
+                ->sortBy('captured_at')
+                ->map(fn ($score): float => round(((float) $score->percentage_score) * 100, 2))
+                ->values()
+                ->all();
+        }
 
         $lastChangedLabel = $lastChanged !== null
             ? Carbon::parse($lastChanged)->format('d M Y, H:i')
@@ -48,7 +55,7 @@ class SubscriptionSecurityOverview extends BaseWidget
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
             ->icon('heroicon-o-shield-check')
-            ->color($scorePercentage === null ? 'gray' : ($scorePercentage >= 80 ? 'success' : ($scorePercentage >= 60 ? 'warning' : 'danger')));
+            ->color('gray');
 
         if (count($scoreChart) >= 2) {
             $securityScore = $securityScore->chart($scoreChart);
