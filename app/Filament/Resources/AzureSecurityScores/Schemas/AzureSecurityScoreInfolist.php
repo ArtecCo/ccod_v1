@@ -17,12 +17,12 @@ class AzureSecurityScoreInfolist
             Section::make('Security Control')
                 ->schema([
                     Grid::make(3)->schema([
-                        TextEntry::make('initiative_name')
+                        TextEntry::make('display_name')
                             ->label('Security Control')
                             ->columnSpan(2),
                         TextEntry::make('weight')
                             ->label('Weight')
-                            ->formatStateUsing(fn (mixed $state): string => $state === null ? 'Not available' : (string) $state)
+                            ->numeric()
                             ->suffix(' points'),
                         TextEntry::make('current_score')
                             ->label('Current Score')
@@ -34,7 +34,16 @@ class AzureSecurityScoreInfolist
                             ->suffix(' points'),
                         TextEntry::make('percentage_score')
                             ->label('Score')
-                            ->formatStateUsing(fn (mixed $state): string => $state === null ? 'Not available' : round(((float) $state) * 100, 2) . '%'),
+                            ->formatStateUsing(fn (mixed $state): string => round(((float) $state) * 100, 2) . '%'),
+                        TextEntry::make('healthy_resource_count')
+                            ->label('Healthy Resources')
+                            ->numeric(),
+                        TextEntry::make('unhealthy_resource_count')
+                            ->label('Unhealthy Resources')
+                            ->numeric(),
+                        TextEntry::make('not_applicable_resource_count')
+                            ->label('Not Applicable')
+                            ->numeric(),
                         TextEntry::make('captured_at')
                             ->label('Captured')
                             ->dateTime('d M Y, H:i'),
