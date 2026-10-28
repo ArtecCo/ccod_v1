@@ -37,13 +37,14 @@ class SubscriptionCostSummary extends BaseWidget
         $currency = $current?->currency ?: 'EUR';
         $currentAmount = $current !== null ? (float) $current->amount : null;
         $previousAmount = $previous !== null ? (float) $previous->amount : null;
-        $difference = $this->percentageDifference($currentAmount, $previousAmount);
+        $differenceAmount = $this->differenceAmount($currentAmount, $previousAmount);
+        $differencePercentage = $this->percentageDifference($currentAmount, $previousAmount);
 
         // Cost trend semantics are intentionally inverted: increasing spend is bad,
         // decreasing spend is good. This is limited to the Cost tab widgets.
-        $trendColor = $difference === null
+        $trendColor = $differencePercentage === null
             ? 'primary'
-            : ($difference > 0 ? 'danger' : ($difference < 0 ? 'success' : 'primary'));
+            : ($differencePercentage > 0 ? 'danger' : ($differencePercentage < 0 ? 'success' : 'primary'));
 
         $mtd = Stat::make('MTD Cost', $this->formatMoney($currentAmount, $currency))
             ->icon('heroicon-o-banknotes')
@@ -53,16 +54,22 @@ class SubscriptionCostSummary extends BaseWidget
             $mtd = $mtd->chart($sparkline)->chartColor($trendColor);
         }
 
-        if ($difference !== null) {
+        if ($differencePercentage !== null) {
             $mtd = $mtd
-                ->description($this->formatDifference($difference) . ' vs previous month')
-                ->descriptionIcon($difference > 0
+                ->description($this->formatDifference($differencePercentage) . ' vs previous month')
+                ->descriptionIcon($differencePercentage > 0
                     ? 'heroicon-m-arrow-trending-up'
-                    : ($difference < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus'))
+                    : ($differencePercentage < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus'))
                 ->descriptionColor($trendColor);
         }
 
         $forecast = $this->record->costForecast;
+        $forecastRemaining = $forecast?->forecast_amount !== null
+            ? (float) $forecast->forecast_amount
+            : null;
+        $forecastTotal = $currentAmount !== null && $forecastRemaining !== null
+            ? $currentAmount + $forecastRemaining
+            : null;
 
         return [
             $mtd,
@@ -72,17 +79,28 @@ class SubscriptionCostSummary extends BaseWidget
             Stat::make('Budget Actual', $this->formatMoney($this->record->budgets()->sum('current_spend'), $this->budgetCurrency()))
                 ->icon('heroicon-o-banknotes')
                 ->color('primary'),
-            Stat::make('Forecast', $this->formatMoney($forecast?->forecast_amount, $forecast?->currency ?: 'EUR'))
+            Stat::make('Forecast', $this->formatMoney($forecastTotal, $forecast?->currency ?: $currency))
                 ->icon('heroicon-o-chart-bar')
                 ->color('primary'),
-            Stat::make('MoM Difference', $difference === null ? '—' : $this->formatDifference($difference))
-                ->description($difference === null ? 'Previous month unavailable' : 'vs previous month')
-                ->descriptionIcon($difference === null
+            Stat::make('MoM Difference', $this->formatSignedMoney($differenceAmount, $currency))
+                ->description($differencePercentage === null
+                    ? 'Previous month unavailable'
+                    : $this->formatDifference($differencePercentage) . ' vs previous month')
+                ->descriptionIcon($differencePercentage === null
                     ? 'heroicon-m-minus'
-                    : ($difference > 0 ? 'heroicon-m-arrow-trending-up' : ($difference < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus')))
+                    : ($differencePercentage > 0 ? 'heroicon-m-arrow-trending-up' : ($differencePercentage < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus')))
                 ->descriptionColor($trendColor)
                 ->color($trendColor),
         ];
+    }
+
+    private function differenceAmount(?float $current, ?float $previous): ?float
+    {
+        if ($current === null || $previous === null) {
+            return null;
+        }
+
+        return $current - $previous;
     }
 
     private function percentageDifference(?float $current, ?float $previous): ?float
@@ -111,5 +129,16 @@ class SubscriptionCostSummary extends BaseWidget
         }
 
         return strtoupper($currency) . ' ' . number_format((float) $value, 2);
+    }
+
+    private function formatSignedMoney(?float $value, string $currency): string
+    {
+        if ($value === null) {
+            return '—';
+        }
+
+        $sign = $value > 0 ? '+' : ($value < 0 ? '-' : '');
+
+        return $sign . strtoupper($currency) . ' ' . number_format(abs($value), 2);
     }
 }
