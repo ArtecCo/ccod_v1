@@ -35,11 +35,11 @@ return new class extends Migration
             $table->string('portal_link', 2048)->nullable();
             $table->timestamp('synced_at')->nullable();
 
-            $table->index('subscription_id');
-            $table->index(['subscription_id', 'state']);
-            $table->index(['subscription_id', 'severity']);
-            $table->index(['subscription_id', 'status_changed_at']);
-            $table->index('assessment_id', 'assessment_id_index');
+            $table->index('subscription_id', 'sec_assessment_subscription_idx');
+            $table->index(['subscription_id', 'state'], 'sec_assessment_subscription_state_idx');
+            $table->index(['subscription_id', 'severity'], 'sec_assessment_subscription_severity_idx');
+            $table->index(['subscription_id', 'status_changed_at'], 'sec_assessment_subscription_changed_idx');
+            $table->index('assessment_id', 'sec_assessment_id_idx');
         });
     }
 
