@@ -6,7 +6,9 @@ namespace App\Filament\Resources\AzureSecurityAssessments\Pages;
 
 use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResource;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
+use Filament\Support\Icons\Heroicon;
 
 class ViewAzureSecurityAssessment extends ViewRecord
 {
@@ -17,25 +19,34 @@ class ViewAzureSecurityAssessment extends ViewRecord
         return $this->record->recommendation_name ?? 'Security Recommendation';
     }
 
-    /**
-     * Security assessments are detail-only records and intentionally have no
-     * standalone index page. Build the breadcrumb trail from the subscription
-     * resource instead of asking Filament to generate a nonexistent
-     * AzureSecurityAssessmentResource::getUrl('index') URL.
-     */
     public function getBreadcrumbs(): array
     {
         $subscription = $this->record->subscription;
-        $subscriptionUrl = AzureSubscriptionResource::getUrl('view', [
+        $securityUrl = AzureSubscriptionResource::getUrl('view', [
             'record' => $subscription,
             'tab' => 'Security',
         ]);
 
         return [
             'Subscriptions' => AzureSubscriptionResource::getUrl('index'),
-            $subscription->display_name ?? 'Subscription' => $subscriptionUrl,
-            'Security' => $subscriptionUrl,
+            $subscription->display_name ?? 'Subscription' => $securityUrl,
+            'Security' => $securityUrl,
             $this->getTitle(),
+        ];
+    }
+
+    protected function getHeaderActions(): array
+    {
+        $subscription = $this->record->subscription;
+
+        return [
+            Action::make('backToSecurity')
+                ->label('Back to Security')
+                ->icon(Heroicon::OutlinedArrowLeft)
+                ->url(AzureSubscriptionResource::getUrl('view', [
+                    'record' => $subscription,
+                    'tab' => 'Security',
+                ])),
         ];
     }
 }
