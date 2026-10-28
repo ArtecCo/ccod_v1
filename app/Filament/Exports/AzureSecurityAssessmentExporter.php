@@ -18,7 +18,7 @@ class AzureSecurityAssessmentExporter extends Exporter
         return [
             ExportColumn::make('recommendation_name')->label('Recommendation'),
             ExportColumn::make('severity')->label('Severity'),
-            ExportColumn::make('resource_id')->label('Affected Resource'),
+            ExportColumn::make('resource_id')->label('Affected Resource')->state(fn (AzureSecurityAssessment $record): string => self::resourceName($record->resource_id)),
             ExportColumn::make('status_changed_at')->label('Status Changed'),
             ExportColumn::make('assessment_type')->label('Assessment Type'),
             ExportColumn::make('implementation_effort')->label('Effort'),
@@ -39,5 +39,19 @@ class AzureSecurityAssessmentExporter extends Exporter
         }
 
         return $body;
+    }
+
+    private static function resourceName(?string $resourceId): string
+    {
+        if (! is_string($resourceId) || trim($resourceId) === '') {
+            return '—';
+        }
+
+        $segments = array_values(array_filter(
+            explode('/', trim($resourceId, '/')),
+            static fn (string $segment): bool => $segment !== '',
+        ));
+
+        return $segments !== [] ? (string) end($segments) : $resourceId;
     }
 }
