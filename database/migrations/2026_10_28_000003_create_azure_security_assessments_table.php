@@ -12,7 +12,7 @@ return new class extends Migration
     {
         Schema::create('azure_security_assessments', function (Blueprint $table): void {
             $table->id();
-            $table->string('assessment_id', 1024);
+            $table->string('assessment_id', 512);
             $table->string('subscription_id', 100);
             $table->string('resource_id', 1024)->nullable();
             $table->string('recommendation_id', 255)->nullable();
