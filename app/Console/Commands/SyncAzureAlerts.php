@@ -12,11 +12,11 @@ class SyncAzureAlerts extends Command
     protected $signature = 'azure:sync-alerts
                             {--subscription= : Sync only one Azure subscription}';
 
-    protected $description = 'Synchronize active Azure Monitor alerts';
+    protected $description = 'Synchronize active Azure Monitor alerts from the past 24 hours';
 
     public function handle(AzureAlertSyncService $sync): int
     {
-        $this->info('Synchronizing active Azure Monitor alerts...');
+        $this->info('Synchronizing active Azure Monitor alerts from the past 24 hours...');
 
         try {
             $stats = $sync->sync($this->option('subscription'));
