@@ -14,7 +14,7 @@ class SubscriptionCostHistoryChart extends ChartWidget
 
     protected static ?string $heading = 'Cost History';
 
-    protected static string $color = 'gray';
+    protected string $color = 'gray';
 
     protected ?string $pollingInterval = null;
 
