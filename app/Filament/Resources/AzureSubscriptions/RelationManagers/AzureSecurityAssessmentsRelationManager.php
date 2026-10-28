@@ -4,12 +4,10 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
-use App\Filament\Exports\AzureSecurityAssessmentExporter;
 use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResource;
 use App\Models\AzureSecurityAssessment;
 use App\Services\AccessAuthorizationService;
-use Filament\Actions\ExportAction;
-use Filament\Actions\Exports\Enums\ExportFormat;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -122,14 +120,6 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 Group::make('recommendation_name')->label('Recommendation'),
                 Group::make('assessment_type')->label('Assessment Type'),
             ])
-            ->headerActions([
-                ExportAction::make('exportSecurityRecommendations')
-                    ->label('Export to Excel')
-                    ->icon('heroicon-o-arrow-down-tray')
-                    ->exporter(AzureSecurityAssessmentExporter::class)
-                    ->formats([ExportFormat::Xlsx])
-                    ->visible(fn (): bool => $this->canExport()),
-            ])
             ->recordUrl(fn (AzureSecurityAssessment $record): string => AzureSecurityAssessmentResource::getUrl('view', [
                 'subscription' => $record->subscription_id,
                 'record' => $record,
@@ -137,7 +127,10 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
             ->defaultSort('status_changed_at', 'desc')
             ->striped(false)
             ->recordActions([])
-            ->toolbarActions([]);
+            ->toolbarActions([
+                XlsxExportAction::make()
+                    ->visible(fn (): bool => $this->canExport()),
+            ]);
     }
 
     private function canExport(): bool
