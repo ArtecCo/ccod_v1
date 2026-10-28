@@ -110,7 +110,10 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
             ->groups([
                 Group::make('severity')->label('Severity'),
             ])
-            ->recordUrl(fn (AzureSecurityAssessment $record): string => AzureSecurityAssessmentResource::getUrl('view', ['record' => $record]))
+            ->recordUrl(fn (AzureSecurityAssessment $record): string => AzureSecurityAssessmentResource::getUrl('view', [
+                'subscription' => $record->subscription_id,
+                'record' => $record,
+            ]))
             ->defaultSort('status_changed_at', 'desc')
             ->striped(false)
             ->recordActions([])
