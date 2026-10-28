@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -26,6 +27,14 @@ class SubscriptionSecurityOverview extends BaseWidget
         $lastEvaluated = (clone $query)->max('first_evaluated_at');
         $lastChanged = (clone $query)->max('status_changed_at');
 
+        $lastEvaluatedLabel = $lastEvaluated
+            ? Carbon::parse($lastEvaluated)->format('d M Y, H:i')
+            : '—';
+
+        $lastChangedLabel = $lastChanged
+            ? 'Last status change: ' . Carbon::parse($lastChanged)->format('d M Y, H:i')
+            : 'No evaluation timestamp available';
+
         return [
             Stat::make('Security Recommendations', (string) $total)
                 ->description('All Defender for Cloud assessments')
@@ -39,8 +48,8 @@ class SubscriptionSecurityOverview extends BaseWidget
                 ->description('Assessments currently healthy')
                 ->icon('heroicon-o-check-circle')
                 ->color('success'),
-            Stat::make('Last Evaluated', $lastEvaluated ? (string) $lastEvaluated : '—')
-                ->description($lastChanged ? 'Last status change: ' . $lastChanged : 'No evaluation timestamp available')
+            Stat::make('Last Evaluated', $lastEvaluatedLabel)
+                ->description($lastChangedLabel)
                 ->icon('heroicon-o-clock')
                 ->color('gray'),
         ];
