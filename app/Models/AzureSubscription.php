@@ -15,7 +15,7 @@ class AzureSubscription extends Model
     public $incrementing = false;
     protected $keyType = 'string';
     public $timestamps = false;
-    protected $fillable = ['subscription_id','display_name','application_id','environment','key_vault_reference','health_status','security_score','mtd_spend_eur','last_synced'];
+    protected $fillable = ['subscription_id','display_name','state','tenant_id','authorization_source','application_id','environment','key_vault_reference','health_status','security_score','mtd_spend_eur','last_synced'];
     protected $casts = ['security_score'=>'decimal:2','mtd_spend_eur'=>'decimal:2','last_synced'=>'datetime'];
 
     /** @deprecated Legacy metadata retained for migration compatibility. */
