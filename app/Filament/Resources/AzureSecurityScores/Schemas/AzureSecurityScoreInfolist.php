@@ -32,6 +32,9 @@ class AzureSecurityScoreInfolist
                             ->label('Maximum Score')
                             ->numeric(decimalPlaces: 2)
                             ->suffix(' points'),
+                        TextEntry::make('potential_score_increase')
+                            ->label('Potential Score Increase')
+                            ->state(fn ($record): string => number_format(max(0, (float) $record->max_score - (float) $record->current_score), 2) . ' points'),
                         TextEntry::make('percentage_score')
                             ->label('Score')
                             ->formatStateUsing(fn (mixed $state): string => round(((float) $state) * 100, 2) . '%'),
