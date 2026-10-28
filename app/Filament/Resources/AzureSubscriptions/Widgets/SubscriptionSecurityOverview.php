@@ -19,38 +19,44 @@ class SubscriptionSecurityOverview extends BaseWidget
 
     protected function getStats(): array
     {
-        $query = $this->record->securityAssessments();
+        $assessmentQuery = $this->record->securityAssessments();
+        $unhealthy = (clone $assessmentQuery)->where('state', 'Unhealthy')->count();
+        $lastEvaluated = (clone $assessmentQuery)->max('first_evaluated_at');
+        $lastChanged = (clone $assessmentQuery)->max('status_changed_at');
 
-        $unhealthy = (clone $query)->where('state', 'Unhealthy')->count();
-        $healthy = (clone $query)->where('state', 'Healthy')->count();
-        $total = (clone $query)->count();
-        $lastEvaluated = (clone $query)->max('first_evaluated_at');
-        $lastChanged = (clone $query)->max('status_changed_at');
+        $scores = $this->record->securityScores()
+            ->orderByDesc('captured_at')
+            ->limit(7)
+            ->get()
+            ->sortBy('captured_at')
+            ->values();
 
-        $lastEvaluatedLabel = $lastEvaluated
-            ? Carbon::parse($lastEvaluated)->format('d M Y, H:i')
-            : '—';
-
-        $lastChangedLabel = $lastChanged
-            ? 'Last status change: ' . Carbon::parse($lastChanged)->format('d M Y, H:i')
-            : 'No evaluation timestamp available';
+        $latestScore = $scores->last();
+        $scorePercentage = $latestScore !== null
+            ? round(((float) $latestScore->percentage_score) * 100, 2)
+            : null;
+        $scoreChart = $scores->map(fn ($score): float => round(((float) $score->percentage_score) * 100, 2))->all();
+        $scoreDescription = $latestScore !== null
+            ? sprintf('%.2f / %.2f points', (float) $latestScore->current_score, (float) $latestScore->max_score)
+            : 'No secure score imported yet';
 
         return [
-            Stat::make('Security Recommendations', (string) $total)
-                ->description('All Defender for Cloud assessments')
+            Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
+                ->description($scoreDescription)
                 ->icon('heroicon-o-shield-check')
-                ->color('primary'),
+                ->color($scorePercentage === null ? 'gray' : ($scorePercentage >= 80 ? 'success' : ($scorePercentage >= 60 ? 'warning' : 'danger')))
+                ->chart($scoreChart),
             Stat::make('Unhealthy', (string) $unhealthy)
                 ->description('Recommendations requiring attention')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->color($unhealthy > 0 ? 'danger' : 'success'),
-            Stat::make('Healthy', (string) $healthy)
-                ->description('Assessments currently healthy')
-                ->icon('heroicon-o-check-circle')
-                ->color('success'),
-            Stat::make('Last Evaluated', $lastEvaluatedLabel)
-                ->description($lastChangedLabel)
+            Stat::make('Last Evaluated', $lastEvaluated ? Carbon::parse($lastEvaluated)->format('d M Y, H:i') : '—')
+                ->description('Latest Defender assessment evaluation')
                 ->icon('heroicon-o-clock')
+                ->color('gray'),
+            Stat::make('Last Status Change', $lastChanged ? Carbon::parse($lastChanged)->format('d M Y, H:i') : '—')
+                ->description('Latest recommendation status change')
+                ->icon('heroicon-o-arrow-path')
                 ->color('gray'),
         ];
     }
