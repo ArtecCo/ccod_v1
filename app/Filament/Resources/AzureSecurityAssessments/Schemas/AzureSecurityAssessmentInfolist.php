@@ -35,7 +35,13 @@ class AzureSecurityAssessmentInfolist
                 ->schema([
                     TextEntry::make('cves')
                         ->hiddenLabel()
-                        ->formatStateUsing(fn (?array $state): string => $state ? implode(', ', $state) : 'No CVEs identified for this recommendation.'),
+                        ->formatStateUsing(function (mixed $state): string {
+                            $cves = is_array($state) ? array_filter($state, 'is_string') : [];
+
+                            return $cves !== []
+                                ? implode(', ', $cves)
+                                : 'No CVEs identified for this recommendation.';
+                        }),
                 ])
                 ->columnSpanFull(),
             Section::make('Remediation')
