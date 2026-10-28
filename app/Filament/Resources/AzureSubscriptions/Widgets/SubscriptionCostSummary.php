@@ -29,10 +29,6 @@ class SubscriptionCostSummary extends BaseWidget
 
         $current = $costs->last();
         $previous = $costs->count() > 1 ? $costs->get($costs->count() - 2) : null;
-        $sparkline = $costs
-            ->map(fn (AzureSubscriptionCost $cost): float => (float) $cost->amount)
-            ->values()
-            ->all();
 
         $currency = $current?->currency ?: 'EUR';
         $currentAmount = $current !== null ? (float) $current->amount : null;
@@ -49,10 +45,6 @@ class SubscriptionCostSummary extends BaseWidget
         $mtd = Stat::make('MTD Cost', $this->formatMoney($currentAmount, $currency))
             ->icon('heroicon-o-banknotes')
             ->color($trendColor);
-
-        if (count($sparkline) >= 2) {
-            $mtd = $mtd->chart($sparkline)->chartColor($trendColor);
-        }
 
         if ($differencePercentage !== null) {
             $mtd = $mtd
