@@ -151,7 +151,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
         $user = auth()->guard('web')->user();
 
         return $user !== null
-            && app(AccessAuthorizationService::class)->hasPermission($user, 'security.view', $this->getOwnerRecord());
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'security.export', $this->getOwnerRecord());
     }
 
     private function resourceName(?string $resourceId): string
