@@ -56,9 +56,17 @@ try {
             $body = $response['body'];
 
             echo "Access      : YES\n";
+            echo 'Response keys: ' . implode(', ', array_keys($body)) . "\n";
+            echo 'Subscription ID: ' . ($body['subscriptionId'] ?? '—') . "\n";
             echo 'Display name: ' . ($body['displayName'] ?? '—') . "\n";
             echo 'State       : ' . ($body['state'] ?? '—') . "\n";
             echo 'Tenant ID   : ' . ($body['tenantId'] ?? '—') . "\n";
+            echo 'Authorization source: ' . ($body['authorizationSource'] ?? '—') . "\n";
+
+            // Print the non-sensitive ARM response so we can diagnose an
+            // unexpected response shape without exposing the bearer token.
+            echo "Response body:\n";
+            echo json_encode($body, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
         } else {
             echo "Access      : NO / NOT CONFIRMED\n";
             azurePrintError($response);
