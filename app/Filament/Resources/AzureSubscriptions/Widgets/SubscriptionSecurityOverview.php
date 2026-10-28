@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -42,6 +43,10 @@ class SubscriptionSecurityOverview extends BaseWidget
             ? sprintf('%.2f / %.2f points', (float) $latestScore->current_score, (float) $latestScore->max_score)
             : 'No secure score imported yet';
 
+        $lastChangedLabel = $lastChanged !== null
+            ? Carbon::parse($lastChanged)->format('d M Y, H:i')
+            : '—';
+
         return [
             Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
                 ->description($scoreDescription)
@@ -56,7 +61,7 @@ class SubscriptionSecurityOverview extends BaseWidget
                 ->description('High-severity recommendations requiring attention')
                 ->icon('heroicon-o-shield-exclamation')
                 ->color($high > 0 ? 'danger' : 'success'),
-            Stat::make('Last Status Change', $lastChanged ? $lastChanged->format('d M Y, H:i') : '—')
+            Stat::make('Last Status Change', $lastChangedLabel)
                 ->description('Latest recommendation status change')
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray'),
