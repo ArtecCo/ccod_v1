@@ -17,7 +17,6 @@ return new class extends Migration
             $table->decimal('current_score', 12, 4)->default(0);
             $table->decimal('max_score', 12, 4)->default(0);
             $table->decimal('percentage_score', 8, 5)->default(0);
-            $table->unsignedBigInteger('weight')->default(0);
             $table->timestamp('captured_at');
             $table->timestamp('synced_at')->nullable();
 
