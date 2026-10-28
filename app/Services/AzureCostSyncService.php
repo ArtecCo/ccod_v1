@@ -13,6 +13,7 @@ class AzureCostSyncService
 {
     private const SOURCE = 'azure_cost_management';
     private const GRANULARITY = 'monthly';
+    private const API_VERSION = '2025-03-01';
 
     private ?string $accessToken = null;
 
@@ -252,6 +253,7 @@ class AzureCostSyncService
     {
         return Http::acceptJson()
             ->withToken($this->accessToken())
+            ->withQueryParameters(['api-version' => self::API_VERSION])
             ->timeout((int) config('services.azure.timeout', 30));
     }
 
