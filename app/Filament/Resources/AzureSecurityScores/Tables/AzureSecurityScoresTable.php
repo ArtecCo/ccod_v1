@@ -19,23 +19,28 @@ class AzureSecurityScoresTable
                     ->searchable()
                     ->sortable()
                     ->weight('medium'),
-                TextColumn::make('current_score')
-                    ->label('Current Score')
-                    ->numeric(decimalPlaces: 2)
-                    ->sortable()
-                    ->suffix(' pts'),
+                TextColumn::make('potential_score_increase')
+                    ->label('Potential Gain')
+                    ->state(fn ($record): string => number_format(max(0, (float) $record->max_score - (float) $record->current_score), 2) . ' pts')
+                    ->sortable(query: fn ($query, string $direction) => $query->orderByRaw("GREATEST(max_score - current_score, 0) {$direction}")),
+                TextColumn::make('unhealthy_resource_count')
+                    ->label('Unhealthy')
+                    ->numeric()
+                    ->sortable(),
                 TextColumn::make('max_score')
                     ->label('Maximum Score')
                     ->numeric(decimalPlaces: 2)
                     ->sortable()
                     ->suffix(' pts'),
-                TextColumn::make('unhealthy_resource_count')
-                    ->label('Unhealthy')
-                    ->numeric()
-                    ->sortable(),
                 TextColumn::make('weight')
                     ->label('Weight')
                     ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->suffix(' pts'),
+                TextColumn::make('current_score')
+                    ->label('Current Score')
+                    ->numeric(decimalPlaces: 2)
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->suffix(' pts'),
