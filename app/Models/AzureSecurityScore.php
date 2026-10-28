@@ -19,7 +19,6 @@ class AzureSecurityScore extends Model
         'current_score',
         'max_score',
         'percentage_score',
-        'weight',
         'captured_at',
         'synced_at',
     ];
@@ -28,7 +27,6 @@ class AzureSecurityScore extends Model
         'current_score' => 'decimal:4',
         'max_score' => 'decimal:4',
         'percentage_score' => 'decimal:5',
-        'weight' => 'integer',
         'captured_at' => 'datetime',
         'synced_at' => 'datetime',
     ];
