@@ -91,7 +91,6 @@ class AzureSecurityScoreSyncService
             'current_score' => (float) ($details['current'] ?? 0),
             'max_score' => (float) ($details['max'] ?? 0),
             'percentage_score' => (float) ($details['percentage'] ?? 0),
-            'weight' => (int) ($properties['weight'] ?? 0),
         ];
     }
 }
