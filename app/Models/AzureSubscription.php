@@ -33,5 +33,4 @@ class AzureSubscription extends Model
     public function costs(): HasMany { return $this->hasMany(AzureSubscriptionCost::class,'subscription_id','subscription_id'); }
     public function securityAssessments(): HasMany { return $this->hasMany(AzureSecurityAssessment::class,'subscription_id','subscription_id'); }
     public function securityScores(): HasMany { return $this->hasMany(AzureSecurityScore::class,'subscription_id','subscription_id'); }
-    public function securityScoreControls(): HasMany { return $this->hasMany(AzureSecurityScoreControl::class,'subscription_id','subscription_id'); }
 }
