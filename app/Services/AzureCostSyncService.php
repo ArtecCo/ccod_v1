@@ -129,10 +129,20 @@ class AzureCostSyncService
         $response->throw();
 
         $properties = $response->json('properties', []);
-        $columns = collect($properties['columns'] ?? [])->map(fn (mixed $column): ?string => is_array($column) && is_string($column['name'] ?? null) ? $column['name'] : null)->filter()->values()->all();
-        return collect($properties['rows'] ?? [])->filter('is_array')->map(function (array $values) use ($columns): array {
-            return collect($columns)->mapWithKeys(fn (string $column, int $index): array => [$column => $values[$index] ?? null])->all();
-        })->all();
+        $columns = collect($properties['columns'] ?? [])
+            ->map(fn (mixed $column): ?string => is_array($column) && is_string($column['name'] ?? null) ? $column['name'] : null)
+            ->filter()
+            ->values()
+            ->all();
+
+        return collect($properties['rows'] ?? [])
+            ->filter(fn (mixed $values): bool => is_array($values))
+            ->map(function (array $values) use ($columns): array {
+                return collect($columns)
+                    ->mapWithKeys(fn (string $column, int $index): array => [$column => $values[$index] ?? null])
+                    ->all();
+            })
+            ->all();
     }
 
     private function numericCostFromRow(array $row): ?float
