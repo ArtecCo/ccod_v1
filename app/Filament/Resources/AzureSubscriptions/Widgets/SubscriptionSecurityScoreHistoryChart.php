@@ -12,9 +12,9 @@ class SubscriptionSecurityScoreHistoryChart extends ChartWidget
 {
     public AzureSubscription $record;
 
-    protected static ?string $heading = 'Security Score History';
+    protected ?string $heading = 'Security Score History';
 
-    protected static string $color = 'gray';
+    protected string $color = 'gray';
 
     protected ?string $pollingInterval = null;
 
