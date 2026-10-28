@@ -38,11 +38,16 @@ class SubscriptionCostSummary extends BaseWidget
         $currentAmount = $current !== null ? (float) $current->amount : null;
         $previousAmount = $previous !== null ? (float) $previous->amount : null;
         $difference = $this->percentageDifference($currentAmount, $previousAmount);
-        $trendColor = $difference === null ? 'gray' : ($difference >= 0 ? 'success' : 'danger');
+
+        // Cost trend semantics are intentionally inverted: increasing spend is bad,
+        // decreasing spend is good. This is limited to the Cost tab widgets.
+        $trendColor = $difference === null
+            ? 'primary'
+            : ($difference > 0 ? 'danger' : ($difference < 0 ? 'success' : 'primary'));
 
         $mtd = Stat::make('MTD Cost', $this->formatMoney($currentAmount, $currency))
             ->icon('heroicon-o-banknotes')
-            ->color('gray');
+            ->color($trendColor);
 
         if (count($sparkline) >= 2) {
             $mtd = $mtd->chart($sparkline)->chartColor($trendColor);
@@ -51,9 +56,9 @@ class SubscriptionCostSummary extends BaseWidget
         if ($difference !== null) {
             $mtd = $mtd
                 ->description($this->formatDifference($difference) . ' vs previous month')
-                ->descriptionIcon($difference >= 0
+                ->descriptionIcon($difference > 0
                     ? 'heroicon-m-arrow-trending-up'
-                    : 'heroicon-m-arrow-trending-down')
+                    : ($difference < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus'))
                 ->descriptionColor($trendColor);
         }
 
@@ -63,20 +68,20 @@ class SubscriptionCostSummary extends BaseWidget
             $mtd,
             Stat::make('Budget', $this->formatMoney($this->record->budgets()->sum('amount'), $this->budgetCurrency()))
                 ->icon('heroicon-o-wallet')
-                ->color('gray'),
+                ->color('primary'),
             Stat::make('Budget Actual', $this->formatMoney($this->record->budgets()->sum('current_spend'), $this->budgetCurrency()))
                 ->icon('heroicon-o-banknotes')
-                ->color('gray'),
+                ->color('primary'),
             Stat::make('Forecast', $this->formatMoney($forecast?->forecast_amount, $forecast?->currency ?: 'EUR'))
                 ->icon('heroicon-o-chart-bar')
-                ->color('gray'),
+                ->color('primary'),
             Stat::make('MoM Difference', $difference === null ? '—' : $this->formatDifference($difference))
                 ->description($difference === null ? 'Previous month unavailable' : 'vs previous month')
                 ->descriptionIcon($difference === null
                     ? 'heroicon-m-minus'
-                    : ($difference >= 0 ? 'heroicon-m-arrow-trending-up' : 'heroicon-m-arrow-trending-down'))
+                    : ($difference > 0 ? 'heroicon-m-arrow-trending-up' : ($difference < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus')))
                 ->descriptionColor($trendColor)
-                ->color('gray'),
+                ->color($trendColor),
         ];
     }
 
