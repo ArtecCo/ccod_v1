@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('azure:sync-costs')->dailyAt('00:10');
 Schedule::command('azure:sync-security')->dailyAt('00:20');
+Schedule::command('azure:sync-alerts')->dailyAt('00:30');
