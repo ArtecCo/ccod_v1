@@ -4,8 +4,12 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
+use App\Filament\Exports\AzureSecurityAssessmentExporter;
 use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResource;
 use App\Models\AzureSecurityAssessment;
+use App\Services\AccessAuthorizationService;
+use Filament\Actions\ExportAction;
+use Filament\Actions\Exports\Enums\ExportFormat;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -67,9 +71,64 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     'Medium' => 'Medium',
                     'Low' => 'Low',
                 ]),
+                SelectFilter::make('resource_id')
+                    ->label('Affected Resource')
+                    ->searchable()
+                    ->options(fn (): array => AzureSecurityAssessment::query()
+                        ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
+                        ->where('state', 'Unhealthy')
+                        ->whereNotNull('resource_id')
+                        ->distinct()
+                        ->pluck('resource_id')
+                        ->mapWithKeys(fn (string $resourceId): array => [$resourceId => $this->resourceName($resourceId)])
+                        ->sort()
+                        ->all()),
+                SelectFilter::make('assessment_type')->label('Assessment Type')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
+                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
+                    ->where('state', 'Unhealthy')
+                    ->whereNotNull('assessment_type')
+                    ->distinct()
+                    ->orderBy('assessment_type')
+                    ->pluck('assessment_type', 'assessment_type')
+                    ->all()),
+                SelectFilter::make('implementation_effort')->label('Effort')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
+                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
+                    ->where('state', 'Unhealthy')
+                    ->whereNotNull('implementation_effort')
+                    ->distinct()
+                    ->orderBy('implementation_effort')
+                    ->pluck('implementation_effort', 'implementation_effort')
+                    ->all()),
+                SelectFilter::make('user_impact')->label('User Impact')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
+                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
+                    ->where('state', 'Unhealthy')
+                    ->whereNotNull('user_impact')
+                    ->distinct()
+                    ->orderBy('user_impact')
+                    ->pluck('user_impact', 'user_impact')
+                    ->all()),
+                SelectFilter::make('status_cause')->label('Status Cause')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
+                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
+                    ->where('state', 'Unhealthy')
+                    ->whereNotNull('status_cause')
+                    ->distinct()
+                    ->orderBy('status_cause')
+                    ->pluck('status_cause', 'status_cause')
+                    ->all()),
             ])
             ->groups([
                 Group::make('severity')->label('Severity'),
+                Group::make('resource_id')->label('Affected Resource')->getTitleFromRecordUsing(fn (AzureSecurityAssessment $record): string => $this->resourceName($record->resource_id)),
+                Group::make('recommendation_name')->label('Recommendation'),
+                Group::make('assessment_type')->label('Assessment Type'),
+            ])
+            ->headerActions([
+                ExportAction::make('exportSecurityRecommendations')
+                    ->label('Export to Excel')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->exporter(AzureSecurityAssessmentExporter::class)
+                    ->formats([ExportFormat::Xlsx])
+                    ->visible(fn (): bool => $this->canExport()),
             ])
             ->recordUrl(fn (AzureSecurityAssessment $record): string => AzureSecurityAssessmentResource::getUrl('view', [
                 'subscription' => $record->subscription_id,
@@ -79,6 +138,20 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
             ->striped(false)
             ->recordActions([])
             ->toolbarActions([]);
+    }
+
+    private function canExport(): bool
+    {
+        $developer = auth()->guard('developers')->user();
+
+        if ($developer?->is_active === true) {
+            return true;
+        }
+
+        $user = auth()->guard('web')->user();
+
+        return $user !== null
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'security.view', $this->getOwnerRecord());
     }
 
     private function resourceName(?string $resourceId): string
