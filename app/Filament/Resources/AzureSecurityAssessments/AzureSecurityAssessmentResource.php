@@ -53,11 +53,9 @@ class AzureSecurityAssessmentResource extends Resource
             return parent::getEloquentQuery()->whereRaw('1 = 0');
         }
 
-        return parent::getEloquentQuery()->whereHas('subscription', function (Builder $query) use ($user): void {
-            $query->whereKey($query->getModel()->getKey());
-            $accessible = app(AccessAuthorizationService::class)->accessibleSubscriptionQuery($user);
-            $query->whereIn('subscription_id', $accessible->select('subscription_id'));
-        });
+        $accessible = app(AccessAuthorizationService::class)->accessibleSubscriptionQuery($user);
+
+        return parent::getEloquentQuery()->whereIn('subscription_id', $accessible->select('subscription_id'));
     }
 
     public static function infolist(Schema $schema): Schema
