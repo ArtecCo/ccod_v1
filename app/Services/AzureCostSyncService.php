@@ -38,6 +38,7 @@ class AzureCostSyncService
         $rows = $this->queryCost($subscription->subscription_id, 'Custom', $from, $now->endOfMonth(), 'Daily');
         $indexed = [];
         $unmappedRows = 0;
+        $historicalPeriodsReturned = 0;
 
         foreach ($rows as $row) {
             $periodStart = $this->periodStartFromRow($row);
@@ -45,6 +46,10 @@ class AzureCostSyncService
             if ($periodStart === null || $amount === null) {
                 $unmappedRows++;
                 continue;
+            }
+
+            if ($periodStart->lt($now->startOfMonth())) {
+                $historicalPeriodsReturned++;
             }
 
             $key = $periodStart->toDateString();
@@ -56,6 +61,10 @@ class AzureCostSyncService
 
         if ($rows !== [] && $indexed === []) {
             throw new RuntimeException('Azure returned cost rows, but no usable UsageDate and PreTaxCost values could be parsed.');
+        }
+
+        if ($historicalPeriodsReturned === 0) {
+            throw new RuntimeException('Azure Cost Management returned no rows for the previous months. The historical query was not accepted as a complete 12-month result, so no fabricated zero-cost history was written.');
         }
 
         $records = [];
