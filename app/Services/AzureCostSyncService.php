@@ -19,8 +19,15 @@ class AzureCostSyncService
 
     public function syncSubscription(AzureSubscription $subscription, bool $forceHistorical = false): array
     {
-        $hasHistoricalData = AzureSubscriptionCost::query()->where('subscription_id', $subscription->subscription_id)->where('granularity', self::GRANULARITY)->exists();
-        return $forceHistorical || ! $hasHistoricalData ? $this->syncHistorical($subscription) : $this->syncMonthToDate($subscription);
+        $hasHistoricalData = AzureSubscriptionCost::query()
+            ->where('subscription_id', $subscription->subscription_id)
+            ->where('granularity', self::GRANULARITY)
+            ->where('amount', '>', 0)
+            ->exists();
+
+        return $forceHistorical || ! $hasHistoricalData
+            ? $this->syncHistorical($subscription)
+            : $this->syncMonthToDate($subscription);
     }
 
     public function syncHistorical(AzureSubscription $subscription): array
@@ -50,15 +57,16 @@ class AzureCostSyncService
             throw new RuntimeException('Azure returned cost rows, but no usable billing date and PreTaxCost values could be parsed.');
         }
 
+        // Only persist months actually returned by Azure. Never manufacture zero-cost
+        // months for periods where the API returned no row; doing so makes the history
+        // look complete while hiding a failed/incomplete historical query.
         $records = [];
-        $cursor = $from;
-        while ($cursor->lte($now->startOfMonth())) {
-            $key = $cursor->toDateString();
-            $value = $indexed[$key] ?? ['amount' => 0.0, 'currency' => null];
+        foreach ($indexed as $key => $value) {
+            $periodStart = CarbonImmutable::parse($key)->startOfMonth();
             $records[] = [
                 'subscription_id' => $subscription->subscription_id,
                 'period_start' => $key,
-                'period_end' => $cursor->endOfMonth()->toDateString(),
+                'period_end' => $periodStart->endOfMonth()->toDateString(),
                 'amount' => $value['amount'],
                 'currency' => $value['currency'],
                 'granularity' => self::GRANULARITY,
@@ -67,17 +75,32 @@ class AzureCostSyncService
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
-            $cursor = $cursor->addMonth();
         }
 
-        AzureSubscriptionCost::upsert($records, ['subscription_id', 'period_start', 'granularity'], ['period_end', 'amount', 'currency', 'source', 'synced_at', 'updated_at']);
-        $current = collect($records)->last();
+        if ($records !== []) {
+            AzureSubscriptionCost::upsert(
+                $records,
+                ['subscription_id', 'period_start', 'granularity'],
+                ['period_end', 'amount', 'currency', 'source', 'synced_at', 'updated_at'],
+            );
+        }
+
+        $current = collect($records)->sortBy('period_start')->last();
         $subscription->forceFill([
-            'mtd_spend_eur' => $current !== null && strtoupper((string) ($current['currency'] ?? '')) === 'EUR' ? $current['amount'] : null,
+            'mtd_spend_eur' => $current !== null && strtoupper((string) ($current['currency'] ?? '')) === 'EUR'
+                ? $current['amount']
+                : null,
             'last_synced' => now(),
         ])->saveQuietly();
 
-        return ['mode' => 'historical', 'months' => count($records), 'current_mtd' => $current['amount'] ?? null, 'currency' => $current['currency'] ?? null, 'source_rows' => count($rows), 'unmapped_rows' => $unmappedRows];
+        return [
+            'mode' => 'historical',
+            'months' => count($records),
+            'current_mtd' => $current['amount'] ?? null,
+            'currency' => $current['currency'] ?? null,
+            'source_rows' => count($rows),
+            'unmapped_rows' => $unmappedRows,
+        ];
     }
 
     public function syncMonthToDate(AzureSubscription $subscription): array
@@ -94,12 +117,32 @@ class AzureCostSyncService
         }
 
         AzureSubscriptionCost::query()->updateOrCreate(
-            ['subscription_id' => $subscription->subscription_id, 'period_start' => $now->startOfMonth()->toDateString(), 'granularity' => self::GRANULARITY],
-            ['period_end' => $now->endOfMonth()->toDateString(), 'amount' => $amount, 'currency' => $currency, 'source' => self::SOURCE, 'synced_at' => now()],
+            [
+                'subscription_id' => $subscription->subscription_id,
+                'period_start' => $now->startOfMonth()->toDateString(),
+                'granularity' => self::GRANULARITY,
+            ],
+            [
+                'period_end' => $now->endOfMonth()->toDateString(),
+                'amount' => $amount,
+                'currency' => $currency,
+                'source' => self::SOURCE,
+                'synced_at' => now(),
+            ],
         );
 
-        $subscription->forceFill(['mtd_spend_eur' => strtoupper((string) $currency) === 'EUR' ? $amount : null, 'last_synced' => now()])->saveQuietly();
-        return ['mode' => 'mtd', 'months' => 1, 'current_mtd' => $amount, 'currency' => $currency, 'source_rows' => count($rows)];
+        $subscription->forceFill([
+            'mtd_spend_eur' => strtoupper((string) $currency) === 'EUR' ? $amount : null,
+            'last_synced' => now(),
+        ])->saveQuietly();
+
+        return [
+            'mode' => 'mtd',
+            'months' => 1,
+            'current_mtd' => $amount,
+            'currency' => $currency,
+            'source_rows' => count($rows),
+        ];
     }
 
     /** @return array<int, array<string, mixed>> */
@@ -109,7 +152,12 @@ class AzureCostSyncService
             'type' => 'Usage',
             'timeframe' => $timeframe,
             'dataset' => [
-                'aggregation' => ['totalCost' => ['name' => 'PreTaxCost', 'function' => 'Sum']],
+                'aggregation' => [
+                    'totalCost' => [
+                        'name' => 'PreTaxCost',
+                        'function' => 'Sum',
+                    ],
+                ],
                 'granularity' => 'Monthly',
             ],
         ];
@@ -118,10 +166,18 @@ class AzureCostSyncService
             if ($from === null || $to === null) {
                 throw new RuntimeException('Custom Azure cost queries require a start and end date.');
             }
-            $payload['timePeriod'] = ['from' => $from->startOfDay()->toIso8601String(), 'to' => $to->endOfDay()->toIso8601String()];
+
+            $payload['timePeriod'] = [
+                'from' => $from->startOfDay()->toIso8601String(),
+                'to' => $to->endOfDay()->toIso8601String(),
+            ];
         }
 
-        $url = sprintf('https://management.azure.com/subscriptions/%s/providers/Microsoft.CostManagement/query', $subscriptionId);
+        $url = sprintf(
+            'https://management.azure.com/subscriptions/%s/providers/Microsoft.CostManagement/query',
+            $subscriptionId,
+        );
+
         $response = $this->managementRequest()->post($url, $payload);
         if ($response->status() === 204) {
             return [];
@@ -152,15 +208,24 @@ class AzureCostSyncService
                 return (float) $row[$key];
             }
         }
+
         return null;
     }
 
     private function periodStartFromRow(array $row): ?CarbonImmutable
     {
-        $value = $row['BillingMonth'] ?? $row['billingMonth'] ?? $row['UsageDate'] ?? $row['usageDate'] ?? $row['UsageMonth'] ?? $row['usageMonth'] ?? null;
+        $value = $row['BillingMonth']
+            ?? $row['billingMonth']
+            ?? $row['UsageDate']
+            ?? $row['usageDate']
+            ?? $row['UsageMonth']
+            ?? $row['usageMonth']
+            ?? null;
+
         if ($value === null) {
             return null;
         }
+
         $value = trim((string) $value);
 
         foreach ([['Ym', '/^\d{6}$/'], ['Ymd', '/^\d{8}$/']] as [$format, $pattern]) {
@@ -187,7 +252,10 @@ class AzureCostSyncService
 
     private function managementRequest(): PendingRequest
     {
-        return Http::acceptJson()->withToken($this->accessToken())->withQueryParameters(['api-version' => self::API_VERSION])->timeout((int) config('services.azure.timeout', 30));
+        return Http::acceptJson()
+            ->withToken($this->accessToken())
+            ->withQueryParameters(['api-version' => self::API_VERSION])
+            ->timeout((int) config('services.azure.timeout', 30));
     }
 
     private function accessToken(): string
@@ -195,18 +263,32 @@ class AzureCostSyncService
         if ($this->accessToken !== null) {
             return $this->accessToken;
         }
+
         $tenantId = config('services.azure.tenant_id');
         $clientId = config('services.azure.client_id');
         $clientSecret = config('services.azure.client_secret');
+
         if (! $tenantId || ! $clientId || ! $clientSecret) {
             throw new RuntimeException('Azure service principal credentials are not configured. Set AZURE_TENANT_ID, AZURE_CLIENT_ID and AZURE_CLIENT_SECRET.');
         }
-        $response = Http::asForm()->acceptJson()->timeout((int) config('services.azure.timeout', 30))->post(sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $tenantId), ['grant_type' => 'client_credentials', 'client_id' => $clientId, 'client_secret' => $clientSecret, 'scope' => 'https://management.azure.com/.default']);
+
+        $response = Http::asForm()
+            ->acceptJson()
+            ->timeout((int) config('services.azure.timeout', 30))
+            ->post(sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $tenantId), [
+                'grant_type' => 'client_credentials',
+                'client_id' => $clientId,
+                'client_secret' => $clientSecret,
+                'scope' => 'https://management.azure.com/.default',
+            ]);
+
         $response->throw();
         $token = $response->json('access_token');
+
         if (! is_string($token) || $token === '') {
             throw new RuntimeException('Azure token response did not contain an access token.');
         }
+
         return $this->accessToken = $token;
     }
 }
