@@ -30,4 +30,5 @@ class AzureSubscription extends Model
     public function billingResources(): HasMany { return $this->hasMany(BillingResource::class,'subscription_id','subscription_id'); }
     public function webUrls(): HasMany { return $this->hasMany(SubscriptionWebUrl::class,'subscription_id','subscription_id'); }
     public function alerts(): HasMany { return $this->hasMany(AzureAlert::class,'subscription_id','subscription_id'); }
+    public function costs(): HasMany { return $this->hasMany(AzureSubscriptionCost::class,'subscription_id','subscription_id'); }
 }
