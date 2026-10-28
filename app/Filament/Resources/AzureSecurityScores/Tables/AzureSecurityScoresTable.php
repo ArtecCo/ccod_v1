@@ -14,7 +14,7 @@ class AzureSecurityScoresTable
     {
         return $table
             ->columns([
-                TextColumn::make('initiative_name')
+                TextColumn::make('display_name')
                     ->label('Security Control')
                     ->searchable()
                     ->sortable()
@@ -29,9 +29,9 @@ class AzureSecurityScoresTable
                     ->numeric(decimalPlaces: 2)
                     ->sortable()
                     ->suffix(' pts'),
-                TextColumn::make('percentage_score')
-                    ->label('Score')
-                    ->formatStateUsing(fn (mixed $state): string => round(((float) $state) * 100, 2) . '%')
+                TextColumn::make('unhealthy_resource_count')
+                    ->label('Unhealthy')
+                    ->numeric()
                     ->sortable(),
                 TextColumn::make('weight')
                     ->label('Weight')
@@ -39,6 +39,21 @@ class AzureSecurityScoresTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->suffix(' pts'),
+                TextColumn::make('percentage_score')
+                    ->label('Score')
+                    ->formatStateUsing(fn (mixed $state): string => round(((float) $state) * 100, 2) . '%')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('healthy_resource_count')
+                    ->label('Healthy')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('not_applicable_resource_count')
+                    ->label('Not Applicable')
+                    ->numeric()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('captured_at')
                     ->label('Captured')
                     ->dateTime('d M Y, H:i')
