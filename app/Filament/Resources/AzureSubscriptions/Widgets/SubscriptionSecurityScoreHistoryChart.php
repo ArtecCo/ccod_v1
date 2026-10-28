@@ -33,7 +33,13 @@ class SubscriptionSecurityScoreHistoryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $days = (int) ($this->filter ?: 30);
+        $days = match ($this->filter) {
+            '7' => 7,
+            '15' => 15,
+            '30' => 30,
+            default => 30,
+        };
+
         $latest = AzureSecurityScore::query()
             ->where('subscription_id', $this->record->subscription_id)
             ->orderByDesc('captured_at')
