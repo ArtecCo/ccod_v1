@@ -39,6 +39,7 @@ class SubscriptionCostSummary extends BaseWidget
         $previousAmount = $previous !== null ? (float) $previous->amount : null;
         $differenceAmount = $this->differenceAmount($currentAmount, $previousAmount);
         $differencePercentage = $this->percentageDifference($currentAmount, $previousAmount);
+        $periodLabel = $current?->period_start?->format('M Y') ?: now()->format('M Y');
 
         // Cost trend semantics are intentionally inverted: increasing spend is bad,
         // decreasing spend is good. This is limited to the Cost tab widgets.
@@ -74,9 +75,11 @@ class SubscriptionCostSummary extends BaseWidget
         return [
             $mtd,
             Stat::make('Budget', $this->formatMoney($this->record->budgets()->sum('amount'), $this->budgetCurrency()))
+                ->description('For ' . $periodLabel)
                 ->icon('heroicon-o-wallet')
                 ->color('primary'),
             Stat::make('Forecast', $this->formatMoney($forecastTotal, $forecast?->currency ?: $currency))
+                ->description('For ' . $periodLabel)
                 ->icon('heroicon-o-chart-bar')
                 ->color('primary'),
             Stat::make('MoM Difference', $this->formatSignedMoney($differenceAmount, $currency))
