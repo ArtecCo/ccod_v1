@@ -42,9 +42,19 @@ class SubscriptionCostSummary extends BaseWidget
             ? 'primary'
             : ($differencePercentage > 0 ? 'danger' : ($differencePercentage < 0 ? 'success' : 'primary'));
 
+        $sparkline = $costs
+            ->pluck('amount')
+            ->map(fn ($amount): float => (float) $amount)
+            ->values()
+            ->all();
+
         $mtd = Stat::make('MTD Cost', $this->formatMoney($currentAmount, $currency))
             ->icon('heroicon-o-banknotes')
             ->color($trendColor);
+
+        if ($sparkline !== []) {
+            $mtd = $mtd->chart($sparkline)->chartColor($trendColor);
+        }
 
         if ($differencePercentage !== null) {
             $mtd = $mtd
