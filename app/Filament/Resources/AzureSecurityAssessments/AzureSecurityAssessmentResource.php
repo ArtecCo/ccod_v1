@@ -31,17 +31,6 @@ class AzureSecurityAssessmentResource extends Resource
         return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, 'security.view');
     }
 
-    public static function canView($record): bool
-    {
-        if (auth()->guard('developers')->user()?->is_active === true) {
-            return true;
-        }
-
-        $user = auth()->guard('web')->user();
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasResourceAccess($user, $record->subscription);
-    }
-
     public static function getEloquentQuery(): Builder
     {
         if (auth()->guard('developers')->user()?->is_active === true) {
@@ -55,7 +44,8 @@ class AzureSecurityAssessmentResource extends Resource
 
         $accessible = app(AccessAuthorizationService::class)->accessibleSubscriptionQuery($user);
 
-        return parent::getEloquentQuery()->whereIn('subscription_id', $accessible->select('subscription_id'));
+        return parent::getEloquentQuery()
+            ->whereIn('subscription_id', $accessible->select('subscription_id'));
     }
 
     public static function infolist(Schema $schema): Schema
