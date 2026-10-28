@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AzureSubscriptions\Pages;
 
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureAlertsRelationManager;
+use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureSecurityAssessmentsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
 use App\Models\Developer;
 use App\Models\SubscriptionWebUrl;
@@ -25,6 +26,7 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityO
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 
 class ViewAzureSubscription extends ViewRecord
@@ -66,7 +68,10 @@ class ViewAzureSubscription extends ViewRecord
                         : null,
                 ])))->columns(1),
                 $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => [Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->columnSpanFull(), Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull()])->columns(1),
-                $this->makeTab('Security', 'security.view')->schema(fn (): array => [])->columns(1),
+                $this->makeTab('Security', 'security.view')->schema(fn (): array => [
+                    Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->columnSpanFull(),
+                    Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull(),
+                ])->columns(1),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->columnSpanFull()])->columns(1),
                 $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [$this->getRelationManagersContentComponent()->columnSpanFull()])->columns(1),
