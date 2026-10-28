@@ -17,7 +17,7 @@ class SubscriptionCostSummary extends BaseWidget
 
     protected ?string $pollingInterval = null;
 
-    protected int | array | null $columns = 6;
+    protected int | array | null $columns = 5;
 
     protected function getStats(): array
     {
