@@ -17,7 +17,7 @@ class SubscriptionCostSummary extends BaseWidget
 
     protected ?string $pollingInterval = null;
 
-    protected int | array | null $columns = 5;
+    protected int | array | null $columns = 6;
 
     protected function getStats(): array
     {
@@ -76,9 +76,6 @@ class SubscriptionCostSummary extends BaseWidget
             Stat::make('Budget', $this->formatMoney($this->record->budgets()->sum('amount'), $this->budgetCurrency()))
                 ->icon('heroicon-o-wallet')
                 ->color('primary'),
-            Stat::make('Budget Actual', $this->formatMoney($this->record->budgets()->sum('current_spend'), $this->budgetCurrency()))
-                ->icon('heroicon-o-banknotes')
-                ->color('primary'),
             Stat::make('Forecast', $this->formatMoney($forecastTotal, $forecast?->currency ?: $currency))
                 ->icon('heroicon-o-chart-bar')
                 ->color('primary'),
@@ -91,6 +88,9 @@ class SubscriptionCostSummary extends BaseWidget
                     : ($differencePercentage > 0 ? 'heroicon-m-arrow-trending-up' : ($differencePercentage < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus')))
                 ->descriptionColor($trendColor)
                 ->color($trendColor),
+            Stat::make('Last Synced', $this->record->last_synced?->format('d M Y, H:i') ?? '—')
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray'),
         ];
     }
 
