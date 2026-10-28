@@ -1,0 +1,48 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Filament\Resources\AzureSubscriptions\Widgets;
+
+use App\Models\AzureSubscription;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
+
+class SubscriptionSecurityOverview extends BaseWidget
+{
+    public AzureSubscription $record;
+
+    protected ?string $pollingInterval = null;
+
+    protected int | array | null $columns = 4;
+
+    protected function getStats(): array
+    {
+        $query = $this->record->securityAssessments();
+
+        $unhealthy = (clone $query)->where('state', 'Unhealthy')->count();
+        $healthy = (clone $query)->where('state', 'Healthy')->count();
+        $total = (clone $query)->count();
+        $lastEvaluated = (clone $query)->max('first_evaluated_at');
+        $lastChanged = (clone $query)->max('status_changed_at');
+
+        return [
+            Stat::make('Security Recommendations', (string) $total)
+                ->description('All Defender for Cloud assessments')
+                ->icon('heroicon-o-shield-check')
+                ->color('primary'),
+            Stat::make('Unhealthy', (string) $unhealthy)
+                ->description('Recommendations requiring attention')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->color($unhealthy > 0 ? 'danger' : 'success'),
+            Stat::make('Healthy', (string) $healthy)
+                ->description('Assessments currently healthy')
+                ->icon('heroicon-o-check-circle')
+                ->color('success'),
+            Stat::make('Last Evaluated', $lastEvaluated ? (string) $lastEvaluated : '—')
+                ->description($lastChanged ? 'Last status change: ' . $lastChanged : 'No evaluation timestamp available')
+                ->icon('heroicon-o-clock')
+                ->color('gray'),
+        ];
+    }
+}
