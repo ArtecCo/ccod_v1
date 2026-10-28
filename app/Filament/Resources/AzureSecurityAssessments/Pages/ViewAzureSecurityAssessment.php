@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSecurityAssessments\Pages;
 
 use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResource;
+use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use Filament\Resources\Pages\ViewRecord;
 
 class ViewAzureSecurityAssessment extends ViewRecord
@@ -17,13 +18,24 @@ class ViewAzureSecurityAssessment extends ViewRecord
     }
 
     /**
-     * This resource intentionally has no index/list page. The assessment
-     * details page is reached from the subscription Security tab, so using
-     * ViewRecord's default breadcrumbs would try to generate a nonexistent
-     * resource index URL and cause a 500 during rendering.
+     * Security assessments are detail-only records and intentionally have no
+     * standalone index page. Build the breadcrumb trail from the subscription
+     * resource instead of asking Filament to generate a nonexistent
+     * AzureSecurityAssessmentResource::getUrl('index') URL.
      */
     public function getBreadcrumbs(): array
     {
-        return [$this->getTitle()];
+        $subscription = $this->record->subscription;
+        $subscriptionUrl = AzureSubscriptionResource::getUrl('view', [
+            'record' => $subscription,
+            'tab' => 'Security',
+        ]);
+
+        return [
+            'Subscriptions' => AzureSubscriptionResource::getUrl('index'),
+            $subscription->display_name ?? 'Subscription' => $subscriptionUrl,
+            'Security' => $subscriptionUrl,
+            $this->getTitle(),
+        ];
     }
 }
