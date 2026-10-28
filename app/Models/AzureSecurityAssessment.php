@@ -29,6 +29,7 @@ class AzureSecurityAssessment extends Model
         'policy_definition_id',
         'categories',
         'threats',
+        'cves',
         'user_impact',
         'status_cause',
         'status_description',
@@ -41,6 +42,7 @@ class AzureSecurityAssessment extends Model
     protected $casts = [
         'categories' => 'array',
         'threats' => 'array',
+        'cves' => 'array',
         'first_evaluated_at' => 'datetime',
         'status_changed_at' => 'datetime',
         'synced_at' => 'datetime',
