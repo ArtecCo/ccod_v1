@@ -5,10 +5,7 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSecurityAssessments\Pages;
 
 use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResource;
-use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
-use Filament\Actions\Action;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Support\Icons\Heroicon;
 
 class ViewAzureSecurityAssessment extends ViewRecord
 {
@@ -19,34 +16,16 @@ class ViewAzureSecurityAssessment extends ViewRecord
         return $this->record->recommendation_name ?? 'Security Recommendation';
     }
 
+    /**
+     * This resource is detail-only. It has no standalone index page, so the
+     * breadcrumb must not ask Filament to generate an index URL and must not
+     * imply that the recommendation is a child page of a subscription.
+     */
     public function getBreadcrumbs(): array
     {
-        $subscription = $this->record->subscription;
-        $securityUrl = AzureSubscriptionResource::getUrl('view', [
-            'record' => $subscription,
-            'tab' => 'Security',
-        ]);
-
         return [
-            'Subscriptions' => AzureSubscriptionResource::getUrl('index'),
-            $subscription->display_name ?? 'Subscription' => $securityUrl,
-            'Security' => $securityUrl,
+            'Security Recommendations',
             $this->getTitle(),
-        ];
-    }
-
-    protected function getHeaderActions(): array
-    {
-        $subscription = $this->record->subscription;
-
-        return [
-            Action::make('backToSecurity')
-                ->label('Back to Security')
-                ->icon(Heroicon::OutlinedArrowLeft)
-                ->url(AzureSubscriptionResource::getUrl('view', [
-                    'record' => $subscription,
-                    'tab' => 'Security',
-                ])),
         ];
     }
 }
