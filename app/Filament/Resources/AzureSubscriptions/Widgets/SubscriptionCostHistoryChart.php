@@ -14,7 +14,7 @@ class SubscriptionCostHistoryChart extends ChartWidget
 
     protected ?string $heading = 'Cost History';
 
-    protected string $color = 'gray';
+    protected string $color = 'primary';
 
     protected ?string $pollingInterval = null;
 
@@ -48,5 +48,27 @@ class SubscriptionCostHistoryChart extends ChartWidget
     protected function getType(): string
     {
         return 'line';
+    }
+
+    public function mount(): void
+    {
+        $costs = AzureSubscriptionCost::query()
+            ->where('subscription_id', $this->record->subscription_id)
+            ->where('granularity', 'monthly')
+            ->orderByDesc('period_start')
+            ->limit(2)
+            ->get(['amount']);
+
+        if ($costs->count() < 2) {
+            return;
+        }
+
+        $current = (float) $costs->get(0)->amount;
+        $previous = (float) $costs->get(1)->amount;
+
+        // For costs, higher spending is bad (red) and lower spending is good (green).
+        $this->color = $current > $previous
+            ? 'danger'
+            : ($current < $previous ? 'success' : 'primary');
     }
 }
