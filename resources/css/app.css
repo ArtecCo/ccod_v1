@@ -10,6 +10,16 @@
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
+/* Compact security overview cards. */
+html .ccod-security-stat {
+    min-height: 0 !important;
+    padding: 1rem 1.125rem !important;
+}
+
+html .ccod-security-stat > div {
+    min-height: 0 !important;
+}
+
 /* Notification severity colors follow the global Filament color palette configured in Developer > Styling. */
 html .ccod-notifications .ccod-notifications__icon--info,
 html .ccod-notifications .ccod-notifications__severity--info {
