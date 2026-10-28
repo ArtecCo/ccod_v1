@@ -13,6 +13,7 @@ class AzureAlertSyncService
 {
     private const API_VERSION = '2024-04-01';
     private const PAGE_SIZE = 1000;
+    private const LOOKBACK_HOURS = 24;
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
@@ -61,6 +62,7 @@ class AzureAlertSyncService
 alertsmanagementresources
 | where type =~ "microsoft.alertsmanagement/alerts"
 | where tostring(properties.essentials.monitorCondition) =~ "Fired"
+| where todatetime(properties.essentials.startDateTime) > ago(24h)
 | project
     alertId = id,
     alertName = name,
