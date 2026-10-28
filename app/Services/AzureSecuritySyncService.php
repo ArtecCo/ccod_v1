@@ -61,7 +61,7 @@ securityresources
 | where type =~ "microsoft.security/assessments"
 | where tostring(properties.status.code) =~ "Unhealthy"
 | extend resourceDetails = properties.resourceDetails
-| extend resourceId = tostring(properties.resourceDetails.id)
+| extend resourceId = tostring(properties.resourceDetails.Id)
 | extend recommendationName = tostring(properties.displayName)
 | extend statusCode = tostring(properties.status.code)
 | extend statusCause = tostring(properties.status.cause)
@@ -74,7 +74,7 @@ securityresources
 | extend assessmentType = tostring(properties.metadata.assessmentType)
 | extend implementationEffort = tostring(properties.metadata.implementationEffort)
 | extend userImpact = tostring(properties.metadata.userImpact)
-| extend resourceSource = tostring(properties.resourceDetails.source)
+| extend resourceSource = tostring(properties.resourceDetails.Source)
 | extend portalLink = tostring(properties.links.azurePortalUri)
 | extend policyDefinitionId = tostring(properties.metadata.policyDefinitionId)
 | project id, name, resourceId, resourceDetails, recommendationName, statusCode, statusCause, statusDescription, firstEvaluationDate, statusChangeDate, severity, description, remediationDescription, assessmentType, implementationEffort, userImpact, resourceSource, portalLink, policyDefinitionId, properties
@@ -132,11 +132,32 @@ KQL,
     private function syncOne(array $assessment, string $subscriptionId): string
     {
         $resourceId = $assessment['resourceId'] ?? null;
+        $properties = is_array($assessment['properties'] ?? null) ? $assessment['properties'] : [];
+        $resourceDetails = is_array($assessment['resourceDetails'] ?? null)
+            ? $assessment['resourceDetails']
+            : (is_array($properties['resourceDetails'] ?? null) ? $properties['resourceDetails'] : []);
+
         if (! is_string($resourceId) || $resourceId === '') {
-            $resourceDetails = $assessment['resourceDetails'] ?? null;
-            if (is_array($resourceDetails)) {
-                $resourceId = $resourceDetails['id'] ?? null;
+            foreach (['id', 'Id'] as $key) {
+                if (is_string($resourceDetails[$key] ?? null) && $resourceDetails[$key] !== '') {
+                    $resourceId = $resourceDetails[$key];
+                    break;
+                }
             }
+        }
+
+        if (! is_string($resourceId) || $resourceId === '') {
+            $additionalData = is_array($properties['additionalData'] ?? null) ? $properties['additionalData'] : [];
+            foreach (['AzureResourceId', 'azureResourceId', 'resourceId'] as $key) {
+                if (is_string($additionalData[$key] ?? null) && $additionalData[$key] !== '') {
+                    $resourceId = $additionalData[$key];
+                    break;
+                }
+            }
+        }
+
+        if (! is_string($resourceId) || $resourceId === '') {
+            $resourceId = $this->resourceIdFromAssessmentId((string) $assessment['id']);
         }
 
         $attributes = [
@@ -184,6 +205,19 @@ KQL,
 
         $existing->forceFill($attributes)->saveQuietly();
         return $changed ? 'updated' : 'unchanged';
+    }
+
+    private function resourceIdFromAssessmentId(string $assessmentId): ?string
+    {
+        $marker = '/providers/Microsoft.Security/assessments/';
+        $position = stripos($assessmentId, $marker);
+
+        if ($position === false) {
+            return null;
+        }
+
+        $resourceId = substr($assessmentId, 0, $position);
+        return $resourceId !== '' ? $resourceId : null;
     }
 
     private function metadataArray(array $assessment, string $key): ?array
