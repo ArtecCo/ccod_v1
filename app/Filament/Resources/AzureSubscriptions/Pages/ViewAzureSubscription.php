@@ -64,18 +64,18 @@ class ViewAzureSubscription extends ViewRecord
                 $this->makeTab('Overview', null)->schema(fn (): array => [Section::make('Subscription Details')->schema([$this->getInfolistContentComponent()->columnSpanFull()])->columnSpanFull(), Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull()])->columns(1),
                 $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
                     Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionCostHistoryChart::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionCostHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(SubscriptionBudgetDetails::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                     $this->canViewTab('cost.breakdown.view')
                         ? Livewire::make(SubscriptionResourceCostBreakdown::class, ['record' => $this->record])->lazy()->columnSpanFull()
                         : null,
-                ])))->columns(1),
+                ])))->columns(2),
                 $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => [Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(), Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull()])->columns(1),
                 $this->makeTab('Security', 'security.view')->schema(fn (): array => [
                     Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionSecurityScoreHistoryChart::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionSecurityScoreHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
-                ])->columns(1),
+                ])->columns(2),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull()])->columns(1),
                 $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [$this->getRelationManagersContentComponent()->columnSpanFull()])->columns(1),
