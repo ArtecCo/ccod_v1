@@ -20,6 +20,8 @@ class AzureSecurityAssessmentResource extends Resource
 {
     protected static ?string $model = AzureSecurityAssessment::class;
     protected static ?string $parentResource = AzureSubscriptionResource::class;
+    protected static ?string $modelLabel = 'Security Recommendation';
+    protected static ?string $pluralModelLabel = 'Security Recommendations';
     protected static string|BackedEnum|null $navigationIcon = null;
     protected static bool $shouldRegisterNavigation = false;
     protected static ?string $slug = 'security-assessments';
