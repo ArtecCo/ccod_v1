@@ -12,7 +12,7 @@ class SubscriptionCostHistoryChart extends ChartWidget
 {
     public AzureSubscription $record;
 
-    protected static ?string $heading = 'Cost History';
+    protected ?string $heading = 'Cost History';
 
     protected string $color = 'gray';
 
