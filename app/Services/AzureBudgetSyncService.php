@@ -55,8 +55,10 @@ class AzureBudgetSyncService
                     'current_spend' => is_numeric($currentSpend['amount'] ?? null) ? (float) $currentSpend['amount'] : 0,
                     'forecast_spend' => is_numeric($forecastSpend['amount'] ?? null) ? (float) $forecastSpend['amount'] : null,
                     'time_grain' => $this->stringOrNull($properties['timeGrain'] ?? null),
-                    'start_date' => $this->dateOrNull($timePeriod['start'] ?? null),
-                    'end_date' => $this->dateOrNull($timePeriod['end'] ?? null),
+                    // Microsoft.Consumption uses startDate/endDate in BudgetTimePeriod.
+                    // Keep the fallback keys for compatibility with any older response shape.
+                    'start_date' => $this->dateOrNull($timePeriod['startDate'] ?? $timePeriod['start'] ?? null),
+                    'end_date' => $this->dateOrNull($timePeriod['endDate'] ?? $timePeriod['end'] ?? null),
                     'fetched_at' => now(),
                 ],
             );
