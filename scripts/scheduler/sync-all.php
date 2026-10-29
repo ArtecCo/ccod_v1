@@ -4,10 +4,8 @@ declare(strict_types=1);
 
 /**
  * Unified scheduler runner for Windows Task Scheduler.
- *
- * Runs all six lightweight scheduler scripts sequentially, streams their
- * console output, records timing/results, and writes a human-readable HTML
- * report for every run.
+ * Runs all six lightweight scheduler scripts sequentially and writes a
+ * printer-friendly HTML report for every run.
  */
 
 $basePath = dirname(__DIR__, 2);
@@ -55,7 +53,6 @@ foreach ($modules as $module) {
         $stderr = "Runner script not found: {$scriptPath}";
     } else {
         $command = '"' . str_replace('"', '\\"', PHP_BINARY) . '" "' . str_replace('"', '\\"', $scriptPath) . '"';
-
         $descriptors = [
             0 => ['pipe', 'r'],
             1 => ['pipe', 'w'],
@@ -88,7 +85,6 @@ foreach ($modules as $module) {
     if ($stdout !== '') {
         fwrite(STDOUT, $stdout);
     }
-
     if ($stderr !== '') {
         fwrite(STDERR, $stderr);
     }
@@ -133,16 +129,36 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 
 $moduleCards = '';
 $timelineRows = '';
+$webUrlRows = '';
 
 foreach ($rows as $index => $row) {
     $statusClass = $row['status'] === 'SUCCESS' ? 'success' : 'failed';
-    $statusLabel = $row['status'] === 'SUCCESS' ? 'SUCCESS' : 'FAILED';
+    $statusLabel = $row['status'];
+
     $output = $row['stdout'];
     if ($row['stderr'] !== '') {
         $output .= ($output !== '' ? PHP_EOL . PHP_EOL : '') . '[stderr]' . PHP_EOL . $row['stderr'];
     }
     if ($output === '') {
         $output = 'No console output was produced by this module.';
+    }
+
+    if ($row['name'] === 'Web URLs') {
+        $lines = preg_split('/\R/', $row['stdout']) ?: [];
+        foreach ($lines as $line) {
+            if (preg_match('/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)$/', trim($line), $matches)) {
+                $project = trim($matches[1]);
+                if ($project !== 'Project' && ! str_starts_with($project, '---')) {
+                    $webUrlRows .= sprintf(
+                        '<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td></tr>',
+                        $escape($project),
+                        (int) $matches[2],
+                        (int) $matches[3],
+                        (int) $matches[4],
+                    );
+                }
+            }
+        }
     }
 
     $moduleCards .= sprintf(
@@ -158,15 +174,13 @@ foreach ($rows as $index => $row) {
                 </div>
                 <div class="status %s">%s</div>
             </div>
-
             <div class="module-meta">
                 <div><span>Started</span><strong>%s</strong></div>
                 <div><span>Ended</span><strong>%s</strong></div>
                 <div><span>Elapsed</span><strong>%s</strong></div>
                 <div><span>Exit code</span><strong>%d</strong></div>
             </div>
-
-            <details class="console" open>
+            <details class="console">
                 <summary>Console output</summary>
                 <pre>%s</pre>
             </details>
@@ -210,83 +224,92 @@ $html = <<<'HTML'
 <title>CCOD Azure Sync Report - __RUN_ID__</title>
 <style>
 :root {
-    color-scheme: dark;
-    --bg: #080a0d;
-    --surface: #0f1217;
-    --surface-2: #14181f;
-    --border: #252b34;
-    --text: #e7ebf0;
-    --muted: #8e98a7;
-    --success: #45d483;
-    --success-bg: rgba(69, 212, 131, .10);
-    --danger: #ff6678;
-    --danger-bg: rgba(255, 102, 120, .10);
-    --accent: #8aa4ff;
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f5f6f8;
+    --border: #d9dde3;
+    --text: #20252b;
+    --muted: #66707c;
+    --success: #147a43;
+    --success-bg: #edf8f1;
+    --danger: #b42336;
+    --danger-bg: #fff0f2;
+    --accent: #315f9b;
     --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
 }
 * { box-sizing: border-box; }
-body {
-    margin: 0;
-    background: var(--bg);
-    color: var(--text);
-    font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-    line-height: 1.5;
-}
-.container { width: min(1180px, calc(100% - 40px)); margin: 0 auto; padding: 42px 0 60px; }
-.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
-.eyebrow { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
-h1 { margin: 5px 0 8px; font-size: clamp(28px, 4vw, 42px); letter-spacing: -.03em; }
-.subtitle { color: var(--muted); margin: 0; font-size: 14px; }
-.status { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 999px; padding: 7px 12px; font-size: 11px; font-weight: 800; letter-spacing: .08em; }
-.status.success { color: var(--success); background: var(--success-bg); border-color: rgba(69, 212, 131, .25); }
-.status.failed { color: var(--danger); background: var(--danger-bg); border-color: rgba(255, 102, 120, .25); }
-.summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 34px; }
-.metric { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 18px; }
-.metric span { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
-.metric strong { display: block; font-size: 22px; letter-spacing: -.02em; }
+body { margin: 0; background: var(--bg); color: var(--text); font-family: Arial, Helvetica, sans-serif; line-height: 1.45; }
+.container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 34px 0 50px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
+.eyebrow { color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+h1 { margin: 4px 0 6px; font-size: 32px; letter-spacing: -.02em; }
+.subtitle { color: var(--muted); margin: 0; font-size: 13px; }
+.status { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 999px; padding: 6px 11px; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
+.status.success { color: var(--success); background: var(--success-bg); border-color: #bfe5cc; }
+.status.failed { color: var(--danger); background: var(--danger-bg); border-color: #efc2c9; }
+.summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 28px; }
+.metric { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 13px 15px; }
+.metric span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
+.metric strong { display: block; font-size: 19px; }
 .metric.total strong { color: var(--accent); }
 .metric.good strong { color: var(--success); }
 .metric.bad strong { color: var(--danger); }
-.section-title { margin: 0 0 12px; font-size: 15px; }
-.timeline { overflow: hidden; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 34px; }
+.section-title { margin: 0 0 9px; font-size: 14px; }
+.timeline { overflow: hidden; border: 1px solid var(--border); border-radius: 7px; margin-bottom: 28px; }
 table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 12px 15px; border-bottom: 1px solid var(--border); font-size: 13px; }
-th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
+th { background: var(--surface-2); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
 tr:last-child td { border-bottom: 0; }
-.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; }
-.dot.success { background: var(--success); box-shadow: 0 0 8px rgba(69,212,131,.35); }
-.dot.failed { background: var(--danger); box-shadow: 0 0 8px rgba(255,102,120,.35); }
-.modules { display: grid; gap: 14px; }
-.module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; }
+.dot.success { background: var(--success); }
+.dot.failed { background: var(--danger); }
+.web-coverage { margin-bottom: 28px; }
+.web-coverage table { border: 1px solid var(--border); }
+.web-coverage th, .web-coverage td { padding: 8px 11px; }
+.web-coverage td:nth-child(n+2), .web-coverage th:nth-child(n+2) { text-align: right; }
+.modules { display: grid; gap: 12px; }
+.module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 7px; overflow: hidden; break-inside: avoid; }
 .module-card.success { border-left: 3px solid var(--success); }
 .module-card.failed { border-left: 3px solid var(--danger); }
-.module-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 18px 20px; }
-.module-title { display: flex; align-items: center; gap: 13px; min-width: 0; }
-.module-number { color: var(--muted); font-family: var(--mono); font-size: 12px; }
-.module-title h2 { margin: 0; font-size: 17px; }
-.module-script { color: var(--muted); font-family: var(--mono); font-size: 11px; margin-top: 2px; }
+.module-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 16px; }
+.module-title { display: flex; align-items: center; gap: 11px; min-width: 0; }
+.module-number { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.module-title h2 { margin: 0; font-size: 15px; }
+.module-script { color: var(--muted); font-family: var(--mono); font-size: 10px; margin-top: 2px; }
 .module-meta { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface-2); }
-.module-meta div { padding: 12px 16px; border-right: 1px solid var(--border); }
+.module-meta div { padding: 9px 12px; border-right: 1px solid var(--border); }
 .module-meta div:last-child { border-right: 0; }
-.module-meta span { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 3px; }
-.module-meta strong { font-family: var(--mono); font-size: 12px; font-weight: 600; }
-.console { background: #07090c; }
-.console summary { cursor: pointer; color: var(--muted); padding: 10px 16px; font-size: 11px; border-bottom: 1px solid var(--border); user-select: none; }
-.console pre { margin: 0; padding: 16px; overflow-x: auto; color: #cbd2dc; font-family: var(--mono); font-size: 12px; line-height: 1.65; white-space: pre-wrap; word-break: break-word; }
-.footer { margin-top: 28px; color: var(--muted); font-size: 11px; text-align: center; }
+.module-meta span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
+.module-meta strong { font-family: var(--mono); font-size: 10px; font-weight: 600; }
+.console { background: #fafafa; }
+.console summary { cursor: pointer; color: var(--muted); padding: 8px 12px; font-size: 10px; border-bottom: 1px solid var(--border); user-select: none; }
+.console pre { margin: 0; padding: 12px; overflow-x: auto; color: #30363d; font-family: var(--mono); font-size: 10px; line-height: 1.55; white-space: pre-wrap; word-break: break-word; }
+.footer { margin-top: 24px; color: var(--muted); font-size: 10px; text-align: center; }
 @media (max-width: 800px) {
-    .container { width: min(100% - 24px, 1180px); padding-top: 24px; }
+    .container { width: min(100% - 24px, 1120px); padding-top: 22px; }
     .header { flex-direction: column; }
     .summary { grid-template-columns: repeat(2, 1fr); }
     .module-meta { grid-template-columns: repeat(2, 1fr); }
     .module-meta div:nth-child(2) { border-right: 0; }
     .module-meta div:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
 }
-@media (max-width: 520px) {
-    .summary { grid-template-columns: 1fr; }
-    .module-meta { grid-template-columns: 1fr; }
-    .module-meta div { border-right: 0; border-bottom: 1px solid var(--border); }
-    .module-meta div:last-child { border-bottom: 0; }
+@media print {
+    @page { size: A4 portrait; margin: 12mm; }
+    body { background: #fff; color: #000; font-size: 10pt; }
+    .container { width: 100%; padding: 0; }
+    .header { margin-bottom: 14px; }
+    h1 { font-size: 22pt; }
+    .summary { grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
+    .metric { padding: 8px 10px; border-radius: 0; }
+    .timeline, .web-coverage { margin-bottom: 16px; }
+    .module-card { border-radius: 0; box-shadow: none; }
+    .modules { gap: 9px; }
+    .console { background: #fff; }
+    .console summary { display: none; }
+    .console pre { padding: 8px; font-size: 8pt; }
+    .module-card, .timeline, .web-coverage { break-inside: avoid; }
+    .module-card { page-break-inside: avoid; }
+    .status { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
 }
 </style>
 </head>
@@ -316,64 +339,45 @@ tr:last-child td { border-bottom: 0; }
         </table>
     </section>
 
-    <h2 class="section-title">Module details</h2>
-    <div class="modules">
-        __MODULE_CARDS__
-    </div>
+    <section class="web-coverage">
+        <h2 class="section-title">Web URL coverage by project</h2>
+        <table>
+            <thead><tr><th>Project</th><th>Links checked</th><th>Live</th><th>Down</th></tr></thead>
+            <tbody>__WEB_URL_ROWS__</tbody>
+        </table>
+    </section>
 
-    <div class="footer">Generated by CCOD unified scheduler · __GENERATED_AT__</div>
+    <h2 class="section-title">Module details</h2>
+    <section class="modules">__MODULE_CARDS__</section>
+
+    <footer class="footer">Generated by CCOD scheduler · __GENERATED_AT__</footer>
 </div>
 </body>
 </html>
 HTML;
 
-$html = str_replace(
-    [
-        '__RUN_ID__',
-        '__COMPLETED_AT__',
-        '__GENERATED_AT__',
-        '__OVERALL_CLASS__',
-        '__OVERALL_STATUS__',
-        '__TOTAL_DURATION__',
-        '__MODULE_COUNT__',
-        '__SUCCESS_COUNT__',
-        '__FAILURE_COUNT__',
-        '__TIMELINE_ROWS__',
-        '__MODULE_CARDS__',
-    ],
-    [
-        $escape($runId),
-        $escape($completedAt),
-        $escape($generatedAt),
-        $overallClass,
-        $overallStatus,
-        $escape($formatDuration($totalDuration)),
-        (string) count($rows),
-        (string) $successCount,
-        (string) $failureCount,
-        $timelineRows,
-        $moduleCards,
-    ],
-    $html,
-);
+$replacements = [
+    '__RUN_ID__' => $escape($runId),
+    '__COMPLETED_AT__' => $escape($completedAt),
+    '__GENERATED_AT__' => $escape($generatedAt),
+    '__OVERALL_CLASS__' => $overallClass,
+    '__OVERALL_STATUS__' => $escape($overallStatus),
+    '__TOTAL_DURATION__' => $escape($formatDuration($totalDuration)),
+    '__MODULE_COUNT__' => (string) count($rows),
+    '__SUCCESS_COUNT__' => (string) $successCount,
+    '__FAILURE_COUNT__' => (string) $failureCount,
+    '__TIMELINE_ROWS__' => $timelineRows,
+    '__WEB_URL_ROWS__' => $webUrlRows !== '' ? $webUrlRows : '<tr><td colspan="4">No project-level web URL results were reported.</td></tr>',
+    '__MODULE_CARDS__' => $moduleCards,
+];
 
-try {
-    if (file_put_contents($reportPath, $html, LOCK_EX) === false) {
-        throw new RuntimeException("Unable to write report: {$reportPath}");
-    }
+$html = strtr($html, $replacements);
 
-    if (file_put_contents($latestReportPath, $html, LOCK_EX) === false) {
-        throw new RuntimeException("Unable to write latest report: {$latestReportPath}");
-    }
-} catch (Throwable $exception) {
-    fwrite(STDERR, 'Unable to write scheduler report: ' . $exception->getMessage() . PHP_EOL);
+if (file_put_contents($reportPath, $html) === false || file_put_contents($latestReportPath, $html) === false) {
+    fwrite(STDERR, "Unable to write scheduler HTML report." . PHP_EOL);
     exit(1);
 }
 
-fwrite(STDOUT, "=================================" . PHP_EOL);
-fwrite(STDOUT, sprintf("Overall status: %s" . PHP_EOL, $overallStatus));
-fwrite(STDOUT, sprintf("Total duration: %.3f seconds" . PHP_EOL, $totalDuration));
 fwrite(STDOUT, "Report: {$reportPath}" . PHP_EOL);
-fwrite(STDOUT, "Latest report: {$latestReportPath}" . PHP_EOL);
-
+fwrite(STDOUT, "Latest: {$latestReportPath}" . PHP_EOL);
 exit($anyFailure ? 1 : 0);
