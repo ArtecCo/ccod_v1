@@ -6,6 +6,7 @@ namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
 use App\Models\AzureSubscriptionCost;
+use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -39,7 +40,6 @@ class SubscriptionCostSummary extends BaseWidget
         $previousAmount = $previous !== null ? (float) $previous->amount : null;
         $differenceAmount = $this->differenceAmount($currentAmount, $previousAmount);
         $differencePercentage = $this->percentageDifference($currentAmount, $previousAmount);
-        $periodLabel = $current?->period_start?->format('M Y') ?: now()->format('M Y');
 
         // Cost trend semantics are intentionally inverted: increasing spend is bad,
         // decreasing spend is good. This is limited to the Cost tab widgets.
@@ -72,14 +72,18 @@ class SubscriptionCostSummary extends BaseWidget
             ? $currentAmount + $forecastRemaining
             : null;
 
+        $budgetAmount = $this->record->budgets()->sum('amount');
+        $budgetCurrency = $this->budgetCurrency();
+        $budgetExpiry = $this->budgetExpiryLabel();
+
         return [
             $mtd,
-            Stat::make('Budget', $this->formatMoney($this->record->budgets()->sum('amount'), $this->budgetCurrency()))
-                ->description('For ' . $periodLabel)
+            Stat::make('Budget', $this->formatMoney($budgetAmount, $budgetCurrency))
+                ->description($budgetExpiry)
                 ->icon('heroicon-o-wallet')
                 ->color('primary'),
             Stat::make('Forecast', $this->formatMoney($forecastTotal, $forecast?->currency ?: $currency))
-                ->description('For ' . $periodLabel)
+                ->description($current?->period_start?->format('M Y') ? 'For ' . $current->period_start->format('M Y') : 'For current period')
                 ->icon('heroicon-o-chart-bar')
                 ->color('primary'),
             Stat::make('MoM Difference', $this->formatSignedMoney($differenceAmount, $currency))
@@ -123,6 +127,17 @@ class SubscriptionCostSummary extends BaseWidget
     private function budgetCurrency(): string
     {
         return $this->record->budgets()->value('currency') ?: 'EUR';
+    }
+
+    private function budgetExpiryLabel(): string
+    {
+        $endDate = $this->record->budgets()->max('end_date');
+
+        if (! is_string($endDate) || $endDate === '') {
+            return 'Expiry unavailable';
+        }
+
+        return 'Until ' . Carbon::parse($endDate)->format('M Y');
     }
 
     private function formatMoney(mixed $value, string $currency): string
