@@ -27,7 +27,7 @@ class AzureSecurityScoreSyncService
             ->values()
             ->all();
 
-        $stats = ['subscriptions' => count($subscriptions), 'discovered' => 0, 'created' => 0, 'updated' => 0];
+        $stats = ['subscriptions' => count($subscriptions), 'discovered' => 0, 'created' => 0, 'updated' => 0, 'pruned' => 0];
 
         foreach ($subscriptions as $subscription) {
             $url = sprintf(
@@ -73,6 +73,14 @@ class AzureSecurityScoreSyncService
                     $stats['updated']++;
                 }
             }
+
+            // Keep seven calendar days of score snapshots for the subscription.
+            // This runs only after Azure has returned successfully for this subscription.
+            $retentionStart = Carbon::now()->startOfDay()->subDays(6);
+            $stats['pruned'] += AzureSecurityScore::query()
+                ->where('subscription_id', $subscription)
+                ->where('captured_at', '<', $retentionStart)
+                ->delete();
         }
 
         return $stats;
