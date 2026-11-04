@@ -20,25 +20,18 @@ class SubscriptionSecurityScoreHistoryChart extends ChartWidget
 
     protected static bool $isLazy = true;
 
-    public ?string $filter = '30';
+    public ?string $filter = '7';
 
     protected function getFilters(): ?array
     {
         return [
             '7' => 'Last 7 days',
-            '15' => 'Last 15 days',
-            '30' => 'Last 30 days',
         ];
     }
 
     protected function getData(): array
     {
-        $days = match ($this->filter) {
-            '7' => 7,
-            '15' => 15,
-            '30' => 30,
-            default => 30,
-        };
+        $days = 7;
 
         $latest = AzureSecurityScore::query()
             ->where('subscription_id', $this->record->subscription_id)
