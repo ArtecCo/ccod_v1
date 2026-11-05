@@ -18,6 +18,8 @@ use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
@@ -57,6 +59,14 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             ->statePath('filters')
             ->components([
                 Section::make('Time range')
+                    ->headerActions([
+                        $this->addGraphAction,
+                        Action::make('refreshCharts')
+                            ->label('Refresh')
+                            ->icon('heroicon-o-arrow-path')
+                            ->color('gray')
+                            ->action(fn () => $this->refreshCharts()),
+                    ])
                     ->schema([
                         Select::make('preset')
                             ->label('Period')
@@ -182,6 +192,61 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
     {
         abort_unless($this->canViewMetrics(), 403);
         $this->refreshVersion++;
+    }
+
+    public function graphsSchema(Schema $schema): Schema
+    {
+        $sections = [];
+
+        foreach ($this->getGraphs() as $graph) {
+            $headerActions = [];
+
+            if ($this->canManageMetrics()) {
+                $headerActions[] = Action::make('removeMetricGraph')
+                    ->label('Remove graph')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->size('sm')
+                    ->requiresConfirmation()
+                    ->modalHeading('Remove metric graph')
+                    ->modalDescription('This removes the graph for everyone who can view this subscription.')
+                    ->action(function () use ($graph): void {
+                        $this->deleteGraph($graph->id);
+                        $this->refreshVersion++;
+                    });
+            }
+
+            $range = $this->getRange();
+
+            $sections[] = Section::make($graph->title)
+                ->description(($graph->resource?->name ?? 'Resource').' · '.($graph->resource?->resource_type ?? ''))
+                ->headerActions($headerActions)
+                ->schema([
+                    Livewire::make(\App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionMetricGraphChart::class, [
+                        'record' => $this->record,
+                        'graphId' => $graph->id,
+                        'start' => $range['start'],
+                        'end' => $range['end'],
+                        'interval' => $range['interval'],
+                    ])
+                        ->key('metric-chart-'.$graph->id.'-'.sha1(json_encode($range)).'-'.$this->refreshVersion)
+                        ->columnSpanFull(),
+                ])
+                ->columnSpan(1);
+        }
+
+        if ($sections === []) {
+            return $schema->components([
+                Section::make('No metric graphs configured')
+                    ->description($this->canManageMetrics()
+                        ? 'Add a graph to monitor one or more metrics from an Azure resource.'
+                        : 'No metric graphs have been configured for this subscription.'),
+            ]);
+        }
+
+        return $schema->components([
+            Grid::make(2)->schema($sections),
+        ]);
     }
 
     public function getGraphs()
