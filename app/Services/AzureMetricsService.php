@@ -62,7 +62,7 @@ class AzureMetricsService
                 throw new RuntimeException('One or more selected metrics or aggregations are not supported by this resource.');
             }
 
-            $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $metric, $aggregation, $start, $end, $interval]));
+            $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $definition['namespace'] ?? null, $metric, $aggregation, $start, $end, $interval]));
             $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $interval, $definition): array {
                 $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
                     . '?api-version=' . self::API_VERSION
