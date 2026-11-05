@@ -34,7 +34,7 @@ try {
     $total = (clone $query)->count();
 
     if ($total === 0) {
-        fwrite(STDOUT, "No active web URLs found.\\n");
+        fwrite(STDOUT, "No active web URLs found.\n");
         exit(0);
     }
 
@@ -45,7 +45,7 @@ try {
     $down = 0;
     $concurrency = max(1, min(25, (int) (getenv('CCOD_URL_CHECK_CONCURRENCY') ?: 10)));
 
-    fwrite(STDOUT, sprintf("Checking %d active web URLs (concurrency: %d)...\\n", $total, $concurrency));
+    fwrite(STDOUT, sprintf("Checking %d active web URLs (concurrency: %d)...\n", $total, $concurrency));
 
     $query->with('subscription.projects:id,name')->orderBy('id')->chunkById(50, function ($urls) use ($monitor, &$projects, &$unassigned, &$processed, &$live, &$down, $total, $concurrency): void {
         $monitor->checkMany($urls, $concurrency);
@@ -75,7 +75,7 @@ try {
         }
 
         fwrite(STDOUT, sprintf(
-            "[%d/%d] URLs checked | Live: %d | Down: %d\\n",
+            "[%d/%d] URLs checked | Live: %d | Down: %d\n",
             $processed,
             $total,
             $live,
