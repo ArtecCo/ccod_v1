@@ -43,7 +43,15 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     'status_changed_at',
                     'remediation_description',
                     'portal_link',
-                ]))
+                ])
+                ->orderByRaw("CASE LOWER(severity)
+                    WHEN 'critical' THEN 1
+                    WHEN 'high' THEN 2
+                    WHEN 'medium' THEN 3
+                    WHEN 'low' THEN 4
+                    ELSE 5
+                END ASC")
+                ->orderByDesc('status_changed_at'))
             ->columns([
                 TextColumn::make('recommendation_name')->label('Recommendation')->searchable()->sortable()->weight('medium')->wrap(),
                 TextColumn::make('severity')->label('Severity')->badge()->color(fn (?string $state): string => match (strtolower((string) $state)) {
@@ -132,7 +140,6 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 'subscription' => $record->subscription_id,
                 'record' => $record,
             ]))
-            ->defaultSort('severity', 'asc')
             ->striped(false)
             ->recordActions([])
             ->toolbarActions([
