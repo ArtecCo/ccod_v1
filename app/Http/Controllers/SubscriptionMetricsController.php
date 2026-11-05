@@ -109,7 +109,7 @@ class SubscriptionMetricsController extends Controller
         $user = auth()->guard('web')->user();
         $developer = auth()->guard('developers')->user();
         if ($developer?->is_active === true) return;
-        abort_unless($user instanceof User
+        abort_unless($user instanceof User && $user->is_active
             && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $subscription), 403);
     }
 }
