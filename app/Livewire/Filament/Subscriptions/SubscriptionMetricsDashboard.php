@@ -63,7 +63,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             ->components([
                 Section::make('Time range')
                     ->headerActions([
-                        $this->addGraphAction,
+                        $this->addGraphAction(),
                         Action::make('refreshCharts')
                             ->label('Refresh')
                             ->icon('heroicon-o-arrow-path')
