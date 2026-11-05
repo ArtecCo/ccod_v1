@@ -12,7 +12,7 @@
     <div x-show="preset === 'custom'" class="flex flex-wrap items-end gap-3 rounded-xl border p-4">
         <label class="text-sm">Start (IST)<input type="datetime-local" x-model="customStart" class="fi-input mt-1 block"></label>
         <label class="text-sm">End (IST)<input type="datetime-local" x-model="customEnd" class="fi-input mt-1 block"></label>
-        <button type="button" @click="refreshAll()" class="fi-btn fi-btn-size-md fi-btn-color-primary">Apply</button>
+        <button type="button" @click="applyCustomRange()" class="fi-btn fi-btn-size-md fi-btn-color-primary">Apply</button>
     </div>
     <p x-show="loading" class="text-sm text-gray-500">Loading Azure resource metric definitions…</p>
     <p x-show="error" x-text="error" class="rounded-lg bg-danger-50 p-3 text-sm text-danger-700"></p>
@@ -57,7 +57,7 @@
 @script
 <script>
     Alpine.data('metricsDashboard', (subscriptionId) => ({
-        subscriptionId, resources: [], graphs: [], graphData: {}, graphLoading: {}, graphErrors: {},
+        subscriptionId, resources: [], graphs: [], graphData: {}, graphFetchedAt: {}, graphLoading: {}, graphErrors: {},
         loading: false, saving: false, error: '', builderOpen: false,
         canManage: @js(auth()->guard('developers')->user()?->is_active === true || (auth()->guard('web')->user()?->is_active === true && app(\App\Services\AccessAuthorizationService::class)->hasPermission(auth()->guard('web')->user(), 'resources.metrics.manage', $this->record))),
         preset: '1h', customStart: '', customEnd: '', timer: null, refreshTimer: null, active: false, loadingInitial: false,
@@ -93,21 +93,59 @@
         async loadInitial() {
             if (!this.active || this.loadingInitial) return;
             this.loadingInitial = true; this.loading = true; this.error = '';
-            try { [this.resources, this.graphs] = await Promise.all([this.request('resources'), this.request('graphs')]); await this.refreshAll(); }
+            try { [this.resources, this.graphs] = await Promise.all([this.request('resources'), this.request('graphs')]); await this.refreshAll(true); }
             catch (e) { this.error = e.message; }
             finally { this.loading = false; this.loadingInitial = false; }
         },
-        async refreshAll() {
+        async refreshAll(forceFull = false) {
             if (!this.active || document.visibilityState !== 'visible') return;
             const range = this.getRange(); if (!range) return;
-            await Promise.all(this.graphs.map(graph => this.refreshGraph(graph, range)));
+            await Promise.all(this.graphs.map(graph => this.refreshGraph(graph, range, forceFull)));
         },
-        async refreshGraph(graph, range = this.getRange()) {
+        async refreshGraph(graph, range = this.getRange(), forceFull = false) {
             if (!this.active || !range || this.graphLoading[graph.id]) return;
             this.graphLoading[graph.id] = true; this.graphErrors[graph.id] = '';
-            try { this.graphData[graph.id] = await this.request('graphs/' + graph.id + '/data?' + new URLSearchParams(range)); }
-            catch (e) { this.graphErrors[graph.id] = e.message; }
+            try {
+                const previous = this.graphData[graph.id];
+                const queryRange = { ...range };
+                if (!forceFull && previous && this.graphFetchedAt[graph.id]) {
+                    const overlap = this.requestedIntervalMinutes() * 2;
+                    const incrementalStart = new Date(Date.parse(this.graphFetchedAt[graph.id]) - overlap * 60000).toISOString();
+                    if (Date.parse(incrementalStart) > Date.parse(range.start)) queryRange.start = incrementalStart;
+                }
+                const fresh = await this.request('graphs/' + graph.id + '/data?' + new URLSearchParams(queryRange));
+                this.graphData[graph.id] = forceFull || !previous ? fresh : this.mergeSeries(previous, fresh, range.start);
+                this.graphFetchedAt[graph.id] = new Date().toISOString();
+            } catch (e) { this.graphErrors[graph.id] = e.message; }
             finally { this.graphLoading[graph.id] = false; }
+        },
+        requestedIntervalMinutes() { return this.interval() === 'PT1H' ? 60 : Number(this.interval().match(/\\d+/)?.[0] || 1); },
+        mergeSeries(previous, fresh, minimumTime) {
+            return previous.map((oldSeries, index) => {
+                const newSeries = fresh[index] || oldSeries;
+                const oldMetrics = oldSeries.value || [];
+                const newMetrics = newSeries.value || [];
+                const metricKeys = new Set([...oldMetrics, ...newMetrics].map(metric => metric.name?.value || metric.name));
+                const value = [...metricKeys].map(key => {
+                    const oldMetric = oldMetrics.find(metric => (metric.name?.value || metric.name) === key);
+                    const newMetric = newMetrics.find(metric => (metric.name?.value || metric.name) === key);
+                    const source = newMetric || oldMetric;
+                    const oldLines = oldMetric?.timeseries || [];
+                    const newLines = newMetric?.timeseries || [];
+                    const lineKeys = new Set([...oldLines, ...newLines].map(line => JSON.stringify(line.metadatavalues || [])));
+                    const timeseries = [...lineKeys].map(lineKey => {
+                        const oldLine = oldLines.find(line => JSON.stringify(line.metadatavalues || []) === lineKey);
+                        const newLine = newLines.find(line => JSON.stringify(line.metadatavalues || []) === lineKey);
+                        const points = new Map();
+                        [...(oldLine?.data || []), ...(newLine?.data || [])].forEach(point => {
+                            if (Date.parse(point.timeStamp) >= Date.parse(minimumTime)) points.set(point.timeStamp, point);
+                        });
+                        return { ...(newLine || oldLine), data: [...points.values()].sort((a, b) => Date.parse(a.timeStamp) - Date.parse(b.timeStamp)) };
+                    });
+                    return { ...source, timeseries };
+                });
+                return { ...newSeries, value };
+            });
         },
         getRange() {
             const end = this.preset === 'custom' ? this.customEnd : this.localDateTime(0);
@@ -119,12 +157,14 @@
         localDateTime(minutesAgo) { const d = new Date(Date.now() + 330 * 60000 - minutesAgo * 60000); return d.toISOString().slice(0,16); },
         durationMinutes() { if (this.preset === 'custom' && this.customStart && this.customEnd) return Math.max(1, Math.round((Date.parse(this.customEnd + ':00+05:30') - Date.parse(this.customStart + ':00+05:30')) / 60000)); return ({'15m':15,'30m':30,'1h':60,'6h':360,'12h':720,'24h':1440,'7d':10080,'30d':43200})[this.preset] || 60; },
         interval() { const m = this.durationMinutes(); return m <= 60 ? 'PT1M' : m <= 1440 ? 'PT5M' : 'PT1H'; },
-        applyPreset() { if (this.preset === 'custom') { if (!this.customEnd) this.customEnd = this.localDateTime(0); if (!this.customStart) this.customStart = this.localDateTime(60); } if (this.active) this.refreshAll(); },
+        applyPreset() { if (this.preset === 'custom') { if (!this.customEnd) this.customEnd = this.localDateTime(0); if (!this.customStart) this.customStart = this.localDateTime(60); } this.graphData = {}; this.graphFetchedAt = {}; if (this.active) this.refreshAll(true); },
+        applyCustomRange() { this.graphData = {}; this.graphFetchedAt = {}; this.refreshAll(true); },
         rangeLabelStart() { return this.preset === 'custom' ? this.customStart : this.preset + ' ago'; },
         lineColor(i) { return ['#2563eb','#16a34a','#d97706','#9333ea','#dc2626','#0891b2'][i % 6]; },
         chartPoints(graphId, index) {
             const item = (this.graphData[graphId] || [])[index];
             const vals = item?.value?.flatMap(m => (m.timeseries || []).flatMap(line => line.data || [])) || [];
+            vals.sort((a, b) => Date.parse(a.timeStamp) - Date.parse(b.timeStamp));
             const key = String(item?.aggregation || '').toLowerCase();
             const nums = vals.map(p => p[key]).filter(v => v !== null && v !== undefined && Number.isFinite(Number(v))).map(Number);
             if (!nums.length) return '';
@@ -138,12 +178,12 @@
         openBuilder() { this.builderOpen = true; if (!this.resources.length) this.loadInitial(); },
         async saveGraph() {
             this.saving = true;
-            try { await this.request('graphs', {method:'POST', body:JSON.stringify(this.draft)}); this.builderOpen = false; this.draft = {resource_id:'',title:'',series:[{metric:'',aggregation:''}]}; this.graphs = await this.request('graphs'); await this.refreshAll(); }
+            try { await this.request('graphs', {method:'POST', body:JSON.stringify(this.draft)}); this.builderOpen = false; this.draft = {resource_id:'',title:'',series:[{metric:'',aggregation:''}]}; this.graphs = await this.request('graphs'); await this.refreshAll(true); }
             catch (e) { this.error = e.message; } finally { this.saving = false; }
         },
         async removeGraph(graph) {
             if (!window.confirm('Remove this graph for everyone who can view this subscription?')) return;
-            try { await this.request('graphs/' + graph.id, {method:'DELETE'}); this.graphs = this.graphs.filter(g => g.id !== graph.id); delete this.graphData[graph.id]; }
+            try { await this.request('graphs/' + graph.id, {method:'DELETE'}); this.graphs = this.graphs.filter(g => g.id !== graph.id); delete this.graphData[graph.id]; delete this.graphFetchedAt[graph.id]; }
             catch (e) { this.error = e.message; }
         }
     }));
