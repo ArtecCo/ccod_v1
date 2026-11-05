@@ -11,7 +11,9 @@ use RuntimeException;
 class AzureBudgetSyncService
 {
     private const API_VERSION = '2023-05-01';
-    private ?string $accessToken = null;\n\n    public function __construct(private readonly AzureCostManagementThrottle $throttle) {}
+    private ?string $accessToken = null;
+
+    public function __construct(private readonly AzureCostManagementThrottle $throttle) {}
 
     public function sync(AzureSubscription $subscription): int
     {
