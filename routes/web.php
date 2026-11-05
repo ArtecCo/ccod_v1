@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ClientPortalNotificationController;
+use App\Http\Controllers\SubscriptionMetricsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function (): void {
