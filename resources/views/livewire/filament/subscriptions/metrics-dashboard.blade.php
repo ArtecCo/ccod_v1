@@ -59,7 +59,7 @@
     Alpine.data('metricsDashboard', (subscriptionId) => ({
         subscriptionId, resources: [], graphs: [], graphData: {}, graphLoading: {}, graphErrors: {},
         loading: false, saving: false, error: '', builderOpen: false,
-        canManage: @js(auth()->guard('developers')->check() || (auth()->guard('web')->user() && app(\App\Services\AccessAuthorizationService::class)->hasPermission(auth()->guard('web')->user(), 'resources.metrics.manage', $this->record))),
+        canManage: @js(auth()->guard('developers')->user()?->is_active === true || (auth()->guard('web')->user() && app(\App\Services\AccessAuthorizationService::class)->hasPermission(auth()->guard('web')->user(), 'resources.metrics.manage', $this->record))),
         preset: '1h', customStart: '', customEnd: '', timer: null, refreshTimer: null, active: false, loadingInitial: false,
         draft: { resource_id: '', title: '', series: [{ metric: '', aggregation: '' }] },
         init() {
