@@ -37,6 +37,7 @@ class AzureMetricsService
                     'name' => $item['name']['value'],
                     'display_name' => $item['name']['localizedValue'] ?? $item['name']['value'],
                     'unit' => $item['unit'] ?? null,
+                    'namespace' => $item['namespace'] ?? null,
                     'primary_aggregation' => $item['primaryAggregationType'] ?? null,
                     'aggregations' => array_values(array_filter($item['supportedAggregationTypes'], 'is_string')),
                     'time_grain' => collect($item['metricAvailabilities'] ?? [])
@@ -62,13 +63,14 @@ class AzureMetricsService
             }
 
             $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $metric, $aggregation, $start, $end, $interval]));
-            $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $interval): array {
+            $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $interval, $definition): array {
                 $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
                     . '?api-version=' . self::API_VERSION
                     . '&metricnames=' . rawurlencode($metric)
                     . '&timespan=' . rawurlencode($start . '/' . $end)
                     . '&interval=' . rawurlencode($interval)
-                    . '&aggregation=' . rawurlencode($aggregation);
+                    . '&aggregation=' . rawurlencode($aggregation)
+                    . (is_string($definition['namespace'] ?? null) && $definition['namespace'] !== '' ? '&metricnamespace=' . rawurlencode($definition['namespace']) : '');
                 $response = $this->azure->get($url);
                 if ($response->failed()) {
                     throw new RuntimeException('Azure Monitor metrics query failed.');
