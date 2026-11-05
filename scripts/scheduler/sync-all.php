@@ -48,14 +48,15 @@ foreach ($modules as $module) {
     $stdout = '';
     $stderr = '';
     $exitCode = 1;
+    $timedOut = false;
 
     if (! is_file($scriptPath)) {
         $stderr = "Runner script not found: {$scriptPath}";
     } else {
         $command = '"' . str_replace('"', '\\"', PHP_BINARY) . '" "' . str_replace('"', '\\"', $scriptPath) . '"';
-        // Redirect child output to temporary files instead of reading two pipes
-        // sequentially. Reading stdout to EOF before stderr can deadlock when the
-        // stderr pipe fills while the child is still writing.
+        // Keep child output in files so neither output stream can block the child.
+        // Read those files while the process runs so Task Scheduler/console output
+        // identifies the exact operation that is taking time.
         $stdoutFile = tempnam(sys_get_temp_dir(), 'ccod-sync-out-');
         $stderrFile = tempnam(sys_get_temp_dir(), 'ccod-sync-err-');
 
@@ -79,10 +80,81 @@ foreach ($modules as $module) {
 
             if (is_resource($process)) {
                 fclose($pipes[0]);
-                $exitCode = proc_close($process);
 
-                $stdout = file_get_contents($stdoutFile) ?: '';
-                $stderr = file_get_contents($stderrFile) ?: '';
+                $stdoutReader = fopen($stdoutFile, 'rb');
+                $stderrReader = fopen($stderrFile, 'rb');
+                $timeoutSeconds = max(60, (int) (getenv('CCOD_SYNC_MODULE_TIMEOUT') ?: 1800));
+                $deadline = microtime(true) + $timeoutSeconds;
+                $lastStatus = null;
+
+                do {
+                    if (is_resource($stdoutReader)) {
+                        $chunk = stream_get_contents($stdoutReader);
+                        if (is_string($chunk) && $chunk !== '') {
+                            $stdout .= $chunk;
+                            fwrite(STDOUT, $chunk);
+                        }
+                    }
+
+                    if (is_resource($stderrReader)) {
+                        $chunk = stream_get_contents($stderrReader);
+                        if (is_string($chunk) && $chunk !== '') {
+                            $stderr .= $chunk;
+                            fwrite(STDERR, $chunk);
+                        }
+                    }
+
+                    $lastStatus = proc_get_status($process);
+                    if (! ($lastStatus['running'] ?? false)) {
+                        $exitCode = (int) ($lastStatus['exitcode'] ?? 1);
+                        break;
+                    }
+
+                    if (microtime(true) >= $deadline) {
+                        $timedOut = true;
+                        $stderr .= PHP_EOL . "Module exceeded its {$timeoutSeconds}-second timeout; terminating child process." . PHP_EOL;
+                        fwrite(STDERR, "[TIMEOUT] {$module['name']} exceeded {$timeoutSeconds} seconds; terminating." . PHP_EOL);
+                        proc_terminate($process);
+                        usleep(500000);
+
+                        $lastStatus = proc_get_status($process);
+                        if ($lastStatus['running'] ?? false) {
+                            proc_terminate($process, 9);
+                        }
+
+                        $exitCode = 124;
+                        break;
+                    }
+
+                    usleep(200000);
+                } while (true);
+
+                // Capture any bytes written between the last poll and process exit.
+                if (is_resource($stdoutReader)) {
+                    $chunk = stream_get_contents($stdoutReader);
+                    if (is_string($chunk) && $chunk !== '') {
+                        $stdout .= $chunk;
+                        fwrite(STDOUT, $chunk);
+                    }
+                    fclose($stdoutReader);
+                }
+
+                if (is_resource($stderrReader)) {
+                    $chunk = stream_get_contents($stderrReader);
+                    if (is_string($chunk) && $chunk !== '') {
+                        $stderr .= $chunk;
+                        fwrite(STDERR, $chunk);
+                    }
+                    fclose($stderrReader);
+                }
+
+                $closedExitCode = proc_close($process);
+                if (! $timedOut && $exitCode < 0 && $closedExitCode >= 0) {
+                    $exitCode = $closedExitCode;
+                }
+                if ($timedOut) {
+                    $exitCode = 124;
+                }
             } else {
                 $stderr = 'Unable to start runner process.';
             }
