@@ -39,6 +39,15 @@ return new class extends Migration
 
     public function down(): void
     {
-        // Keep permission assignments on rollback to avoid unexpectedly removing access.
+        $permissionId = DB::table('permissions')
+            ->where('slug', 'resources.metrics.manage')
+            ->value('id');
+
+        if ($permissionId === null) {
+            return;
+        }
+
+        DB::table('permission_role')->where('permission_id', $permissionId)->delete();
+        DB::table('permissions')->where('id', $permissionId)->delete();
     }
 };
