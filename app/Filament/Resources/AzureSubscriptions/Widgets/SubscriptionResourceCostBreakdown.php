@@ -51,10 +51,6 @@ class SubscriptionResourceCostBreakdown extends BaseWidget
                     ->label('Location')
                     ->searchable()
                     ->sortable(),
-                TextColumn::make('cost_eur')
-                    ->label('Cost')
-                    ->money('EUR')
-                    ->sortable(),
             ])
             ->defaultSort('name')
             ->striped(false)
