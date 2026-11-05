@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 
 class AzureSecurityScoreSyncService
@@ -55,39 +56,41 @@ class AzureSecurityScoreSyncService
 
                 // Retain one snapshot per subscription and initiative per calendar day.
                 // A later scan on the same day replaces the earlier snapshot.
-                $dailySnapshots = AzureSecurityScore::query()
-                    ->where('subscription_id', $subscription)
-                    ->where('initiative_name', $attributes['initiative_name'])
-                    ->whereBetween('captured_at', [$dayStart, $dayEnd])
-                    ->orderByDesc('captured_at')
-                    ->lockForUpdate()
-                    ->get();
-
-                $existing = $dailySnapshots->first();
-
-                if ($existing === null) {
-                    AzureSecurityScore::query()->create([
-                        ...$attributes,
-                        'captured_at' => $capturedAt,
-                        'synced_at' => $capturedAt,
-                    ]);
-                    $stats['created']++;
-                } else {
-                    $duplicateIds = $dailySnapshots->skip(1)->pluck('id');
-
-                    if ($duplicateIds->isNotEmpty()) {
-                        $stats['deduplicated'] += AzureSecurityScore::query()
-                            ->whereIn('id', $duplicateIds)
-                            ->delete();
+                DB::transaction(function () use ($subscription, $attributes, $capturedAt, &$stats): void {
+                    $dailySnapshots = AzureSecurityScore::query()
+                        ->where('subscription_id', $subscription)
+                        ->where('initiative_name', $attributes['initiative_name'])
+                        ->whereBetween('captured_at', [$dayStart, $dayEnd])
+                        ->orderByDesc('captured_at')
+                        ->lockForUpdate()
+                        ->get();
+    
+                    $existing = $dailySnapshots->first();
+    
+                    if ($existing === null) {
+                        AzureSecurityScore::query()->create([
+                            ...$attributes,
+                            'captured_at' => $capturedAt,
+                            'synced_at' => $capturedAt,
+                        ]);
+                        $stats['created']++;
+                    } else {
+                        $duplicateIds = $dailySnapshots->skip(1)->pluck('id');
+    
+                        if ($duplicateIds->isNotEmpty()) {
+                            $stats['deduplicated'] += AzureSecurityScore::query()
+                                ->whereIn('id', $duplicateIds)
+                                ->delete();
+                        }
+    
+                        $existing->forceFill([
+                            ...$attributes,
+                            'captured_at' => $capturedAt,
+                            'synced_at' => $capturedAt,
+                        ])->saveQuietly();
+                        $stats['updated']++;
                     }
-
-                    $existing->forceFill([
-                        ...$attributes,
-                        'captured_at' => $capturedAt,
-                        'synced_at' => $capturedAt,
-                    ])->saveQuietly();
-                    $stats['updated']++;
-                }
+                });
             }
 
             // Keep seven calendar days of score snapshots for the subscription.
