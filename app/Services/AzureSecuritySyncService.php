@@ -21,6 +21,9 @@ class AzureSecuritySyncService
 
     public function sync(?string $subscriptionId = null): array
     {
+        // One UTC timestamp for the entire security sync run. The UI converts it to IST.
+        $syncTimestamp = Carbon::now('UTC');
+
         $subscriptions = AzureSubscription::query()
             ->when($subscriptionId !== null, fn ($query) => $query->where('subscription_id', $subscriptionId))
             ->pluck('subscription_id')
@@ -38,7 +41,7 @@ class AzureSecuritySyncService
         ];
 
         foreach ($subscriptions as $id) {
-            $result = $this->syncSubscription($id);
+            $result = $this->syncSubscription($id, $syncTimestamp);
             foreach ($result as $key => $value) {
                 $stats[$key] += $value;
             }
@@ -47,7 +50,7 @@ class AzureSecuritySyncService
         return $stats;
     }
 
-    private function syncSubscription(string $subscriptionId): array
+    private function syncSubscription(string $subscriptionId, Carbon $syncTimestamp): array
     {
         $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'deleted' => 0];
         $seen = [];
@@ -127,7 +130,7 @@ KQL,
                 $stats['discovered']++;
                 $assessmentId = $assessment['id'];
                 $seen[] = $assessmentId;
-                $stats[$this->syncOne($assessment, $subscriptionId)]++;
+                $stats[$this->syncOne($assessment, $subscriptionId, $syncTimestamp)]++;
             }
 
             $next = $page['$skipToken'] ?? null;
@@ -148,7 +151,7 @@ KQL,
         return $stats;
     }
 
-    private function syncOne(array $assessment, string $subscriptionId): string
+    private function syncOne(array $assessment, string $subscriptionId, Carbon $syncTimestamp): string
     {
         $properties = is_array($assessment['properties'] ?? null) ? $assessment['properties'] : [];
         $resourceDetails = is_array($assessment['resourceDetails'] ?? null)
@@ -201,7 +204,7 @@ KQL,
             'first_evaluated_at' => $this->dateOrNull($assessment['firstEvaluationDate'] ?? null),
             'status_changed_at' => $this->dateOrNull($assessment['statusChangeDate'] ?? null),
             'portal_link' => $this->firstString([$assessment['portalLink'] ?? null, $properties['links']['azurePortalUri'] ?? null]),
-            'synced_at' => now(),
+            'synced_at' => $syncTimestamp,
         ];
 
         $existing = AzureSecurityAssessment::query()->where('assessment_id', $attributes['assessment_id'])->first();
