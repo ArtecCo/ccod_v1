@@ -103,7 +103,7 @@
             await Promise.all(this.graphs.map(graph => this.refreshGraph(graph, range)));
         },
         async refreshGraph(graph, range = this.getRange()) {
-            if (!this.active || !range) return;
+            if (!this.active || !range || this.graphLoading[graph.id]) return;
             this.graphLoading[graph.id] = true; this.graphErrors[graph.id] = '';
             try { this.graphData[graph.id] = await this.request('graphs/' + graph.id + '/data?' + new URLSearchParams(range)); }
             catch (e) { this.graphErrors[graph.id] = e.message; }
