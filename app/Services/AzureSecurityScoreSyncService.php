@@ -56,7 +56,7 @@ class AzureSecurityScoreSyncService
 
                 // Retain one snapshot per subscription and initiative per calendar day.
                 // A later scan on the same day replaces the earlier snapshot.
-                DB::transaction(function () use ($subscription, $attributes, $capturedAt, &$stats): void {
+                DB::transaction(function () use ($subscription, $attributes, $capturedAt, $dayStart, $dayEnd, &$stats): void {
                     $dailySnapshots = AzureSecurityScore::query()
                         ->where('subscription_id', $subscription)
                         ->where('initiative_name', $attributes['initiative_name'])
@@ -64,9 +64,7 @@ class AzureSecurityScoreSyncService
                         ->orderByDesc('captured_at')
                         ->lockForUpdate()
                         ->get();
-    
                     $existing = $dailySnapshots->first();
-    
                     if ($existing === null) {
                         AzureSecurityScore::query()->create([
                             ...$attributes,
@@ -76,13 +74,11 @@ class AzureSecurityScoreSyncService
                         $stats['created']++;
                     } else {
                         $duplicateIds = $dailySnapshots->skip(1)->pluck('id');
-    
                         if ($duplicateIds->isNotEmpty()) {
                             $stats['deduplicated'] += AzureSecurityScore::query()
                                 ->whereIn('id', $duplicateIds)
                                 ->delete();
                         }
-    
                         $existing->forceFill([
                             ...$attributes,
                             'captured_at' => $capturedAt,
