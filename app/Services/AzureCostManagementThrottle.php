@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace App\\Services;
+namespace App\Services;
 
-use Illuminate\\Http\\Client\\PendingRequest;
-use Illuminate\\Http\\Client\\Response;
-use Illuminate\\Support\\Facades\\Log;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class AzureCostManagementThrottle
