@@ -24,12 +24,19 @@ class AzureMetricsService
             $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metricDefinitions?api-version=' . self::API_VERSION;
             $response = $this->azure->get($url);
             if ($response->failed()) {
-                $azureError = $response->json('error', []);
+                $payload = $response->json();
+                $azureError = is_array($payload) ? ($payload['error'] ?? $payload) : [];
                 $azureCode = is_array($azureError) ? ($azureError['code'] ?? null) : null;
-                $azureMessage = is_array($azureError) ? ($azureError['message'] ?? null) : null;
+                $azureMessage = is_array($azureError)
+                    ? ($azureError['message'] ?? $azureError['Message'] ?? null)
+                    : null;
+
+                if (! is_string($azureMessage) || $azureMessage === '') {
+                    $azureMessage = trim($response->body());
+                }
 
                 throw new RuntimeException(sprintf(
-                    'Azure Monitor metric definitions request failed (HTTP %d%s%s).',
+                    'Azure Monitor metric definitions request failed (HTTP %d%s%s)',
                     $response->status(),
                     is_string($azureCode) && $azureCode !== '' ? ', '.$azureCode : '',
                     is_string($azureMessage) && $azureMessage !== '' ? ': '.$azureMessage : '',
