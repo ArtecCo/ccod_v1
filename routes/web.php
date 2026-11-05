@@ -10,7 +10,7 @@ Route::middleware('auth')->prefix('notifications')->name('notifications.')->grou
     Route::post('/read-all', [ClientPortalNotificationController::class, 'readAll'])->name('mark-all-read');
 });
 
-Route::middleware('auth:web')->prefix('subscriptions/{subscription:subscription_id}/metrics')->name('subscriptions.metrics.')->group(function (): void {
+Route::middleware('auth:web,developers')->prefix('subscriptions/{subscription:subscription_id}/metrics')->name('subscriptions.metrics.')->group(function (): void {
     Route::get('/resources', [SubscriptionMetricsController::class, 'resources'])->name('resources');
     Route::get('/graphs', [SubscriptionMetricsController::class, 'graphs'])->name('graphs');
     Route::post('/graphs', [SubscriptionMetricsController::class, 'storeGraph'])->name('graphs.store');
