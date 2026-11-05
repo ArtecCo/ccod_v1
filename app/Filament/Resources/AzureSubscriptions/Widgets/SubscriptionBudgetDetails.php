@@ -2,7 +2,9 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
+use App\Models\AzureBudget;
 use App\Models\AzureSubscription;
+use App\Models\AzureSubscriptionCost;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
@@ -42,6 +44,9 @@ class SubscriptionBudgetDetails extends BaseWidget
                     ->sortable(),
                 TextColumn::make('forecast_spend')
                     ->label('Forecast')
+                    ->state(fn (AzureBudget $record): ?float => $record->forecast_spend !== null
+                        ? (float) $record->forecast_spend
+                        : $this->subscriptionForecastTotal())
                     ->money('EUR')
                     ->sortable(),
                 TextColumn::make('time_grain')
@@ -61,6 +66,30 @@ class SubscriptionBudgetDetails extends BaseWidget
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExportCost()),
             ]);
+    }
+
+    private function subscriptionForecastTotal(): ?float
+    {
+        $forecast = $this->record->costForecast;
+
+        if ($forecast?->forecast_amount === null) {
+            return null;
+        }
+
+        $currentAmount = AzureSubscriptionCost::query()
+            ->where('subscription_id', $this->record->subscription_id)
+            ->where('granularity', 'monthly')
+            ->orderBy('period_start')
+            ->value('amount');
+
+        $latestAmount = AzureSubscriptionCost::query()
+            ->where('subscription_id', $this->record->subscription_id)
+            ->where('granularity', 'monthly')
+            ->orderByDesc('period_start')
+            ->value('amount');
+
+        return ($latestAmount !== null ? (float) $latestAmount : 0.0)
+            + (float) $forecast->forecast_amount;
     }
 
     protected function canExportCost(): bool
