@@ -50,31 +50,35 @@ class AzureMetricsService
     public function query(BillingResource $resource, array $series, string $start, string $end, string $interval): array
     {
         $definitions = collect($this->definitions($resource))->keyBy('name');
-        $metricNames = collect($series)->pluck('metric')->unique()->values();
+        $results = [];
 
         foreach ($series as $item) {
-            $definition = $definitions->get($item['metric'] ?? '');
-            if (! $definition || ! in_array($item['aggregation'] ?? '', $definition['aggregations'], true)) {
+            $metric = $item['metric'] ?? null;
+            $aggregation = $item['aggregation'] ?? null;
+            $definition = $definitions->get($metric);
+
+            if (! $definition || ! is_string($aggregation) || ! in_array($aggregation, $definition['aggregations'], true)) {
                 throw new RuntimeException('One or more selected metrics or aggregations are not supported by this resource.');
             }
+
+            $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $metric, $aggregation, $start, $end, $interval]));
+            $results[] = Cache::remember($cacheKey, now()->addSeconds(45), function () use ($resource, $metric, $aggregation, $start, $end, $interval): array {
+                $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
+                    . '?api-version=' . self::API_VERSION
+                    . '&metricnames=' . rawurlencode($metric)
+                    . '&timespan=' . rawurlencode($start . '/' . $end)
+                    . '&interval=' . rawurlencode($interval)
+                    . '&aggregation=' . rawurlencode($aggregation);
+                $response = $this->azure->get($url);
+                if ($response->failed()) {
+                    throw new RuntimeException('Azure Monitor metrics query failed.');
+                }
+
+                return ['metric' => $metric, 'aggregation' => $aggregation, 'value' => $response->json('value', [])];
+            });
         }
 
-        $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $series, $start, $end, $interval]));
-        return Cache::remember($cacheKey, now()->addSeconds(45), function () use ($resource, $metricNames, $series, $start, $end, $interval): array {
-            $aggregations = collect($series)->pluck('aggregation')->unique()->values()->implode(',');
-            $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
-                . '?api-version=' . self::API_VERSION
-                . '&metricnames=' . rawurlencode($metricNames->implode(','))
-                . '&timespan=' . rawurlencode($start . '/' . $end)
-                . '&interval=' . rawurlencode($interval)
-                . '&aggregation=' . rawurlencode($aggregations);
-            $response = $this->azure->get($url);
-            if ($response->failed()) {
-                throw new RuntimeException('Azure Monitor metrics query failed.');
-            }
-
-            return $response->json('value', []);
-        });
+        return $results;
     }
 
     public function eligibleResources(AzureSubscription $subscription): array
