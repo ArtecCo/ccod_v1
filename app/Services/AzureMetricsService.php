@@ -23,7 +23,9 @@ class AzureMetricsService
         return Cache::remember($key, now()->addMinutes(15), function () use ($resource): array {
             $resourceType = strtolower(trim((string) $resource->resource_type));
             $region = strtolower(trim((string) ($resource->region ?: 'global')));
-            $supportedTypesKey = 'azure-supported-metric-resource-types:' . $region;
+            // Version the cache key because earlier builds incorrectly stored
+            // the first region's namespace list under every resource region.
+            $supportedTypesKey = 'azure-supported-metric-resource-types:v2:' . $region;
             $supportedTypes = Cache::get($supportedTypesKey);
 
             // Azure returns the supported platform metric namespaces with this
@@ -47,24 +49,39 @@ class AzureMetricsService
                     $azureMessage = trim($response->body());
                 }
 
-                if (
-                    $response->status() === 400
-                    && is_string($azureMessage)
-                    && preg_match('/is not a supported platform metric namespace, supported ones are (.+?), Region:/is', $azureMessage, $matches) === 1
-                ) {
-                    $supportedTypes = collect(explode(',', $matches[1]))
-                        ->map(fn (string $type): string => strtolower(trim($type)))
-                        ->filter()
-                        ->unique()
-                        ->values()
-                        ->all();
+                if ($response->status() === 400 && is_string($azureMessage)) {
+                    // Azure can include separate supported-namespace lists for
+                    // multiple regions in one error message. Never associate
+                    // the first list with the resource's region by assumption.
+                    preg_match_all(
+                        '/supported ones are (.+?), Region:\\s*([^,\\)]+)(?:, TraceId:|\\))/is',
+                        $azureMessage,
+                        $regionMatches,
+                        PREG_SET_ORDER,
+                    );
 
-                    if ($supportedTypes !== []) {
-                        Cache::put($supportedTypesKey, $supportedTypes, now()->addHours(24));
-
-                        if (! in_array($resourceType, $supportedTypes, true)) {
-                            return [];
+                    foreach ($regionMatches as $regionMatch) {
+                        $listedRegion = strtolower(trim($regionMatch[2] ?? ''));
+                        if ($listedRegion !== $region) {
+                            continue;
                         }
+
+                        $supportedTypes = collect(explode(',', $regionMatch[1]))
+                            ->map(fn (string $type): string => strtolower(trim($type)))
+                            ->filter()
+                            ->unique()
+                            ->values()
+                            ->all();
+
+                        if ($supportedTypes !== []) {
+                            Cache::put($supportedTypesKey, $supportedTypes, now()->addHours(24));
+
+                            if (! in_array($resourceType, $supportedTypes, true)) {
+                                return [];
+                            }
+                        }
+
+                        break;
                     }
                 }
 
