@@ -116,7 +116,7 @@
             return { start: iso(start), end: iso(end), interval: this.interval() };
         },
         localDateTime(minutesAgo) { const d = new Date(Date.now() + 330 * 60000 - minutesAgo * 60000); return d.toISOString().slice(0,16); },
-        durationMinutes() { return ({'15m':15,'30m':30,'1h':60,'6h':360,'12h':720,'24h':1440,'7d':10080,'30d':43200})[this.preset] || 60; },
+        durationMinutes() { if (this.preset === 'custom' && this.customStart && this.customEnd) return Math.max(1, Math.round((Date.parse(this.customEnd + ':00+05:30') - Date.parse(this.customStart + ':00+05:30')) / 60000)); return ({'15m':15,'30m':30,'1h':60,'6h':360,'12h':720,'24h':1440,'7d':10080,'30d':43200})[this.preset] || 60; },
         interval() { const m = this.durationMinutes(); return m <= 60 ? 'PT1M' : m <= 1440 ? 'PT5M' : 'PT1H'; },
         applyPreset() { if (this.preset === 'custom') { if (!this.customEnd) this.customEnd = this.localDateTime(0); if (!this.customStart) this.customStart = this.localDateTime(60); } if (this.active) this.refreshAll(); },
         rangeLabelStart() { return this.preset === 'custom' ? this.customStart : this.preset + ' ago'; },
