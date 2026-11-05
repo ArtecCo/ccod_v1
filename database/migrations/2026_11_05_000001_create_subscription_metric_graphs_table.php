@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('subscription_metric_graphs', function (Blueprint $table): void {
             $table->id();
-            $table->string('subscription_id', 36);
+            $table->string('subscription_id', 100)->collation('utf8mb4_unicode_ci');
             $table->string('resource_id', 255);
             $table->string('title', 160);
             $table->json('series');
