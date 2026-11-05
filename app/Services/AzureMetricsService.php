@@ -32,7 +32,8 @@ class AzureMetricsService
 
             return collect($items)->filter(fn ($item) => is_array($item)
                 && is_string($item['name']['value'] ?? null)
-                && is_array($item['supportedAggregationTypes'] ?? null))
+                && is_array($item['supportedAggregationTypes'] ?? null)
+                && $item['supportedAggregationTypes'] !== [])
                 ->map(fn ($item) => [
                     'name' => $item['name']['value'],
                     'display_name' => $item['name']['localizedValue'] ?? $item['name']['value'],
