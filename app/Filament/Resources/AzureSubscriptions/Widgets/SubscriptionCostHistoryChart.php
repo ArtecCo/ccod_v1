@@ -6,6 +6,7 @@ namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
 use App\Models\AzureSubscriptionCost;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 
 class SubscriptionCostHistoryChart extends ChartWidget
@@ -45,6 +46,21 @@ class SubscriptionCostHistoryChart extends ChartWidget
                 ->values()
                 ->all(),
         ];
+    }
+
+    protected function getOptions(): RawJs
+    {
+        return RawJs::make(<<<'JS'
+            {
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: (value) => '€' + Number(value).toLocaleString(),
+                        },
+                    },
+                },
+            }
+        JS);
     }
 
     protected function getType(): string

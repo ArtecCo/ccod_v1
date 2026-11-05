@@ -18,6 +18,8 @@ class SubscriptionSecurityScoreHistoryChart extends ChartWidget
 
     protected ?string $pollingInterval = null;
 
+    protected ?string $maxHeight = '300px';
+
     protected static bool $isLazy = true;
 
     public ?string $filter = '7';

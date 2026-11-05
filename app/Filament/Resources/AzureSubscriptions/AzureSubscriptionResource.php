@@ -26,6 +26,20 @@ class AzureSubscriptionResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
     protected static ?string $recordTitleAttribute = 'display_name';
 
+    /**
+     * Allow users with project/group-based subscription access to open
+     * individual subscription pages, independently of the Administration list permission.
+     */
+    public static function canAccess(): bool
+    {
+        if (auth()->guard('developers')->user()?->is_active === true) {
+            return true;
+        }
+
+        $user = auth()->guard('web')->user();
+        return $user instanceof User && app(AccessAuthorizationService::class)->hasAnyResourceAccess($user);
+    }
+
     public static function canViewAny(): bool
     {
         if (auth()->guard('developers')->user()?->is_active === true) {
