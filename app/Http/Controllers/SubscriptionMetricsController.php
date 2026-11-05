@@ -83,7 +83,7 @@ class SubscriptionMetricsController extends Controller
             'position' => (int) SubscriptionMetricGraph::query()->where('subscription_id', $subscription->subscription_id)->max('position') + 1,
         ]);
 
-        return response()->json(['data' => $graph->load('resource')], 201);
+        return response()->json(['data' => $graph->load(['resource:resource_id,name,resource_type'])], 201);
     }
 
     public function deleteGraph(AzureSubscription $subscription, SubscriptionMetricGraph $graph): JsonResponse
