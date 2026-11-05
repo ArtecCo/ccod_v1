@@ -101,7 +101,7 @@ class SubscriptionMetricsController extends Controller
         $range = $request->validate([
             'start' => ['required', 'date'],
             'end' => ['required', 'date', 'after:start'],
-            'interval' => ['required', 'regex:/^PT(?:1|5|15|30|60)M$/'],
+            'interval' => ['required', 'regex:/^(?:PT(?:1|5|15|30|60)M|PT1H)$/'],
         ]);
         abort_if(now()->parse($range['end'])->diffInDays(now()->parse($range['start'])) > 93, 422, 'Metric time range cannot exceed 93 days.');
 
