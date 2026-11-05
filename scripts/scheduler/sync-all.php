@@ -53,23 +53,46 @@ foreach ($modules as $module) {
         $stderr = "Runner script not found: {$scriptPath}";
     } else {
         $command = '"' . str_replace('"', '\\"', PHP_BINARY) . '" "' . str_replace('"', '\\"', $scriptPath) . '"';
-        $descriptors = [
-            0 => ['pipe', 'r'],
-            1 => ['pipe', 'w'],
-            2 => ['pipe', 'w'],
-        ];
+        // Redirect child output to temporary files instead of reading two pipes
+        // sequentially. Reading stdout to EOF before stderr can deadlock when the
+        // stderr pipe fills while the child is still writing.
+        $stdoutFile = tempnam(sys_get_temp_dir(), 'ccod-sync-out-');
+        $stderrFile = tempnam(sys_get_temp_dir(), 'ccod-sync-err-');
 
-        $process = proc_open($command, $descriptors, $pipes, $basePath);
+        if ($stdoutFile === false || $stderrFile === false) {
+            if (is_string($stdoutFile) && is_file($stdoutFile)) {
+                unlink($stdoutFile);
+            }
+            if (is_string($stderrFile) && is_file($stderrFile)) {
+                unlink($stderrFile);
+            }
 
-        if (is_resource($process)) {
-            fclose($pipes[0]);
-            $stdout = stream_get_contents($pipes[1]) ?: '';
-            fclose($pipes[1]);
-            $stderr = stream_get_contents($pipes[2]) ?: '';
-            fclose($pipes[2]);
-            $exitCode = proc_close($process);
+            $stderr = 'Unable to create temporary output files for the runner process.';
         } else {
-            $stderr = 'Unable to start runner process.';
+            $descriptors = [
+                0 => ['pipe', 'r'],
+                1 => ['file', $stdoutFile, 'w'],
+                2 => ['file', $stderrFile, 'w'],
+            ];
+
+            $process = proc_open($command, $descriptors, $pipes, $basePath);
+
+            if (is_resource($process)) {
+                fclose($pipes[0]);
+                $exitCode = proc_close($process);
+
+                $stdout = file_get_contents($stdoutFile) ?: '';
+                $stderr = file_get_contents($stderrFile) ?: '';
+            } else {
+                $stderr = 'Unable to start runner process.';
+            }
+
+            if (is_file($stdoutFile)) {
+                unlink($stdoutFile);
+            }
+            if (is_file($stderrFile)) {
+                unlink($stderrFile);
+            }
         }
     }
 
