@@ -295,8 +295,10 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         $interval = $minutes <= 60 ? 'PT1M' : ($minutes <= 1440 ? 'PT5M' : 'PT1H');
 
         return [
-            'start' => $start->utc()->toIso8601String(),
-            'end' => $end->utc()->toIso8601String(),
+            // Azure Monitor's timespan parser treats '+' in an offset as a
+            // space in some request paths. Send explicit UTC Zulu timestamps.
+            'start' => $start->utc()->format('Y-m-d\\TH:i:s\\Z'),
+            'end' => $end->utc()->format('Y-m-d\\TH:i:s\\Z'),
             'interval' => $interval,
         ];
     }
