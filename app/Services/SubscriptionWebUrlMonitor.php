@@ -27,6 +27,121 @@ class SubscriptionWebUrlMonitor
         return $webUrl->refresh();
     }
 
+    /**
+     * Check a bounded batch concurrently. Response bodies are discarded because
+     * the monitor only needs status, timing and TLS certificate metadata.
+     *
+     * @param iterable<SubscriptionWebUrl> $webUrls
+     */
+    public function checkMany(iterable $webUrls, int $concurrency = 10): void
+    {
+        $items = is_array($webUrls) ? array_values($webUrls) : collect($webUrls)->values()->all();
+        $concurrency = max(1, min(25, $concurrency));
+
+        if (! function_exists('curl_multi_init') || ! function_exists('curl_init')) {
+            foreach ($items as $item) {
+                $this->check($item);
+            }
+            return;
+        }
+
+        foreach (array_chunk($items, $concurrency) as $batch) {
+            $multi = curl_multi_init();
+            $handles = [];
+
+            foreach ($batch as $webUrl) {
+                $startedAt = microtime(true);
+                $parts = parse_url($webUrl->url) ?: [];
+                $isHttps = strtolower($parts['scheme'] ?? '') === 'https';
+                $handle = curl_init($webUrl->url);
+
+                if ($handle === false) {
+                    $webUrl->is_live = false;
+                    $webUrl->http_status = null;
+                    $webUrl->response_time_ms = 0;
+                    $webUrl->last_check_error = 'Unable to initialize cURL.';
+                    $this->clearSslData($webUrl, $isHttps ? false : null);
+                    $webUrl->last_checked_at = now();
+                    $webUrl->save();
+                    continue;
+                }
+
+                $options = [
+                    CURLOPT_RETURNTRANSFER => false,
+                    CURLOPT_WRITEFUNCTION => static fn ($curl, string $data): int => strlen($data),
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_MAXREDIRS => 5,
+                    CURLOPT_CONNECTTIMEOUT => 5,
+                    CURLOPT_TIMEOUT => 10,
+                    CURLOPT_USERAGENT => 'CCOD Web URL Monitor/1.0',
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                ];
+
+                if ($isHttps && defined('CURLOPT_CERTINFO') && defined('CURLINFO_CERTINFO')) {
+                    $options[CURLOPT_CERTINFO] = true;
+                }
+
+                curl_setopt_array($handle, $options);
+                curl_multi_add_handle($multi, $handle);
+                $handles[(int) $handle] = [
+                    'handle' => $handle,
+                    'model' => $webUrl,
+                    'started' => $startedAt,
+                    'host' => $parts['host'] ?? '',
+                    'https' => $isHttps,
+                ];
+            }
+
+            do {
+                do {
+                    $status = curl_multi_exec($multi, $running);
+                } while ($status === CURLM_CALL_MULTI_PERFORM);
+
+                if ($running > 0) {
+                    $selected = curl_multi_select($multi, 1.0);
+                    if ($selected === -1) {
+                        usleep(100000);
+                    }
+                }
+            } while ($running > 0 && $status === CURLM_OK);
+
+            foreach ($handles as $entry) {
+                $handle = $entry['handle'];
+                /** @var SubscriptionWebUrl $webUrl */
+                $webUrl = $entry['model'];
+                $error = curl_error($handle);
+                $info = curl_getinfo($handle);
+                $httpStatus = (int) ($info['http_code'] ?? 0);
+
+                $webUrl->is_live = $httpStatus >= 100 && $httpStatus < 500;
+                $webUrl->http_status = $httpStatus > 0 ? $httpStatus : null;
+                $webUrl->response_time_ms = (int) round((microtime(true) - $entry['started']) * 1000);
+                $webUrl->last_check_error = $error !== '' ? $error : null;
+
+                if ($entry['https']) {
+                    $certificates = defined('CURLINFO_CERTINFO') ? curl_getinfo($handle, CURLINFO_CERTINFO) : null;
+                    $certificatePem = $this->extractLeafCertificate($certificates);
+                    if ($certificatePem !== null) {
+                        $this->applyCertificateData($webUrl, $certificatePem, $entry['host']);
+                    } else {
+                        $this->clearSslData($webUrl, $httpStatus === 0 ? false : null);
+                    }
+                } else {
+                    $this->clearSslData($webUrl);
+                }
+
+                $webUrl->last_checked_at = now();
+                $webUrl->save();
+
+                curl_multi_remove_handle($multi, $handle);
+                curl_close($handle);
+            }
+
+            curl_multi_close($multi);
+        }
+    }
+
     private function checkHttps(SubscriptionWebUrl $webUrl, array $parts, float $startedAt): void
     {
         $host = $parts['host'];
