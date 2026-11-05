@@ -81,18 +81,11 @@ class AzureMetricsService
         return $results;
     }
 
-    public function eligibleResources(AzureSubscription $subscription): array
+    public function eligibleResources(AzureSubscription $subscription): \Illuminate\Database\Eloquent\Collection
     {
         return $subscription->billingResources()
             ->whereNotNull('resource_type')
             ->orderBy('name')
-            ->get(['resource_id', 'name', 'resource_type', 'region', 'sku'])
-            ->map(fn (BillingResource $resource) => [
-                'resource_id' => $resource->resource_id,
-                'name' => $resource->name,
-                'resource_type' => $resource->resource_type,
-                'region' => $resource->region,
-                'sku' => $resource->sku,
-            ])->all();
+            ->get(['resource_id', 'subscription_id', 'name', 'resource_type', 'region', 'sku']);
     }
 }
