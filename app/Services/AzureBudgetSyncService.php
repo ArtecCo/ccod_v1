@@ -11,7 +11,7 @@ use RuntimeException;
 class AzureBudgetSyncService
 {
     private const API_VERSION = '2023-05-01';
-    private ?string $accessToken = null;
+    private ?string $accessToken = null;\n\n    public function __construct(private readonly AzureCostManagementThrottle $throttle) {}
 
     public function sync(AzureSubscription $subscription): int
     {
@@ -20,7 +20,7 @@ class AzureBudgetSyncService
             $subscription->subscription_id,
         );
 
-        $response = $this->request()->get($url, ['api-version' => self::API_VERSION])->throw();
+        $response = $this->throttle->get($this->request()->withQueryParameters(['api-version' => self::API_VERSION]), $url)->throw();
         $items = $response->json('value', []);
 
         if (! is_array($items)) {
