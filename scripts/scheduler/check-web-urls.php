@@ -30,43 +30,58 @@ $app->bootstrapWith([
 try {
     /** @var SubscriptionWebUrlMonitor $monitor */
     $monitor = $app->make(SubscriptionWebUrlMonitor::class);
-    $urls = SubscriptionWebUrl::query()
-        ->where('is_active', true)
-        ->with('subscription.projects:id,name')
-        ->orderBy('id')
-        ->get();
+    $query = SubscriptionWebUrl::query()->where('is_active', true);
+    $total = (clone $query)->count();
 
-    if ($urls->isEmpty()) {
-        fwrite(STDOUT, "No active web URLs found.\n");
+    if ($total === 0) {
+        fwrite(STDOUT, "No active web URLs found.\\n");
         exit(0);
     }
 
     $projects = [];
     $unassigned = 0;
+    $processed = 0;
+    $live = 0;
+    $down = 0;
+    $concurrency = max(1, min(25, (int) (getenv('CCOD_URL_CHECK_CONCURRENCY') ?: 10)));
 
-    foreach ($urls as $url) {
-        $monitor->check($url);
+    fwrite(STDOUT, sprintf("Checking %d active web URLs (concurrency: %d)...\\n", $total, $concurrency));
 
-        $projectNames = $url->subscription?->projects?->pluck('name')->filter()->values()->all() ?? [];
+    $query->with('subscription.projects:id,name')->orderBy('id')->chunkById(50, function ($urls) use ($monitor, &$projects, &$unassigned, &$processed, &$live, &$down, $total, $concurrency): void {
+        $monitor->checkMany($urls, $concurrency);
 
-        if ($projectNames === []) {
-            $unassigned++;
-            continue;
-        }
+        foreach ($urls as $url) {
+            $projectNames = $url->subscription?->projects?->pluck('name')->filter()->values()->all() ?? [];
 
-        foreach ($projectNames as $projectName) {
-            if (! isset($projects[$projectName])) {
-                $projects[$projectName] = [
-                    'checked' => 0,
-                    'live' => 0,
-                    'down' => 0,
-                ];
+            if ($projectNames === []) {
+                $unassigned++;
             }
 
-            $projects[$projectName]['checked']++;
-            $url->is_live ? $projects[$projectName]['live']++ : $projects[$projectName]['down']++;
+            foreach ($projectNames as $projectName) {
+                if (! isset($projects[$projectName])) {
+                    $projects[$projectName] = ['checked' => 0, 'live' => 0, 'down' => 0];
+                }
+
+                $projects[$projectName]['checked']++;
+                if ($url->is_live) {
+                    $projects[$projectName]['live']++;
+                } else {
+                    $projects[$projectName]['down']++;
+                }
+            }
+
+            $url->is_live ? $live++ : $down++;
+            $processed++;
         }
-    }
+
+        fwrite(STDOUT, sprintf(
+            "[%d/%d] URLs checked | Live: %d | Down: %d\\n",
+            $processed,
+            $total,
+            $live,
+            $down,
+        ));
+    });
 
     ksort($projects, SORT_NATURAL | SORT_FLAG_CASE);
 
