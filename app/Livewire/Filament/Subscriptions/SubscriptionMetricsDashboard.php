@@ -63,6 +63,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             ->components([
                 Section::make('Time range')
                     ->headerActions([
+                        $this->addGraphAction(),
                         Action::make('refreshCharts')
                             ->label('Refresh')
                             ->icon('heroicon-o-arrow-path')
@@ -306,17 +307,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         $options = [];
 
         foreach (app(AzureMetricsService::class)->eligibleResources($this->record) as $resource) {
-            try {
-                if (app(AzureMetricsService::class)->definitions($resource) !== []) {
-                    $options[$resource->resource_id] = $resource->name.' ('.$resource->resource_type.')';
-                }
-            } catch (Throwable $exception) {
-                Log::warning('Skipping Azure resource because metric definitions could not be retrieved.', [
-                    'resource_id' => $resource->resource_id,
-                    'resource_type' => $resource->resource_type,
-                    'exception' => $exception->getMessage(),
-                ]);
-            }
+            $options[$resource->resource_id] = $resource->name.' ('.$resource->resource_type.')';
         }
 
         return $options;
