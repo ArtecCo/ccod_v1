@@ -23,8 +23,7 @@ class SubscriptionCostHistoryTable extends BaseWidget
     {
         return AzureSubscriptionCost::query()
             ->where('subscription_id', $this->record->subscription_id)
-            ->where('granularity', 'monthly')
-            ->orderBy('period_start');
+            ->where('granularity', 'monthly');
     }
 
     public function table(Table $table): Table
