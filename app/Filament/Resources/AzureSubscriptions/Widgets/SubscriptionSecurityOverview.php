@@ -63,7 +63,7 @@ class SubscriptionSecurityOverview extends BaseWidget
         $trendColor = $scoreDifference === null ? 'gray' : ($scoreDifference >= 0 ? 'success' : 'danger');
 
         $lastSyncedLabel = $lastSynced !== null
-            ? Carbon::parse($lastSynced, 'UTC')->setTimezone('Asia/Kolkata')->format('d M Y, H:i')
+            ? Carbon::parse($lastSynced)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
