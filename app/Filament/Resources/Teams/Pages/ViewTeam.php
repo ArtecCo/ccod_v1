@@ -14,7 +14,8 @@ class ViewTeam extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make(),
+            EditAction::make()
+                ->visible(fn (): bool => TeamResource::canEdit($this->getRecord())),
             DeleteAction::make()
                 ->visible(fn (): bool => TeamResource::canDelete($this->getRecord())),
         ];
