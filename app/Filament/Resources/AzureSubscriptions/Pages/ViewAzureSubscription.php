@@ -30,6 +30,7 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 
 class ViewAzureSubscription extends ViewRecord
@@ -75,7 +76,8 @@ class ViewAzureSubscription extends ViewRecord
                 $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => [Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(), Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull()])->columns(1),
                 $this->makeTab('Security', 'security.view')->schema(fn (): array => [
                     Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionSecurityScoreHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),\n                    Livewire::make(SubscriptionSecurityScoreHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
+                    Livewire::make(SubscriptionSecurityScoreHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
+                    Livewire::make(SubscriptionSecurityScoreHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
                 ])->columns(2),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
