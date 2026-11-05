@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Teams\Tables;
 
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Grouping\Group;
@@ -17,6 +16,6 @@ class TeamsTable
             TextColumn::make('name')->searchable()->sortable(),
             TextColumn::make('projects_count')->counts('projects')->label('Projects')->sortable(),
             TextColumn::make('updated_at')->dateTime()->sortable(),
-        ])->groups([Group::make('name')->label('Business Unit')])->striped(false)->recordActions([ViewAction::make(),EditAction::make()])->toolbarActions([XlsxExportAction::make()]);
+        ])->groups([Group::make('name')->label('Business Unit')])->striped(false)->recordActions([ViewAction::make()])->toolbarActions([XlsxExportAction::make()]);
     }
 }
