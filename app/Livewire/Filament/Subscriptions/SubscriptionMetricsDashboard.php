@@ -311,7 +311,11 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                     $options[$resource->resource_id] = $resource->name.' ('.$resource->resource_type.')';
                 }
             } catch (Throwable $exception) {
-                report($exception);
+                Log::warning('Skipping Azure resource because metric definitions could not be retrieved.', [
+                    'resource_id' => $resource->resource_id,
+                    'resource_type' => $resource->resource_type,
+                    'exception' => $exception->getMessage(),
+                ]);
             }
         }
 
