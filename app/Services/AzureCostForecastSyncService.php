@@ -12,7 +12,7 @@ use RuntimeException;
 class AzureCostForecastSyncService
 {
     private const API_VERSION = '2025-03-01';
-    private ?string $accessToken = null;
+    private ?string $accessToken = null;\n\n    public function __construct(private readonly AzureCostManagementThrottle $throttle) {}
 
     public function sync(AzureSubscription $subscription): bool
     {
@@ -42,7 +42,7 @@ class AzureCostForecastSyncService
             'timeframe' => 'Custom',
         ];
 
-        $response = $this->request()->post($url, $payload);
+        $response = $this->throttle->post($this->request(), $url, $payload);
         if ($response->status() === 204) {
             return false;
         }
