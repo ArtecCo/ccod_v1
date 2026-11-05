@@ -12,6 +12,8 @@ use App\Services\AccessAuthorizationService;
 use App\Services\AzureMetricsService;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class SubscriptionMetricGraphChart extends ChartWidget
 {
@@ -34,13 +36,24 @@ class SubscriptionMetricGraphChart extends ChartWidget
         abort_unless($this->canViewMetrics(), 403);
 
         $graph = $this->graph();
-        $results = app(AzureMetricsService::class)->query(
-            $graph->resource,
-            $graph->series,
-            $this->start,
-            $this->end,
-            $this->interval,
-        );
+        try {
+            $results = app(AzureMetricsService::class)->query(
+                $graph->resource,
+                $graph->series,
+                $this->start,
+                $this->end,
+                $this->interval,
+            );
+        } catch (Throwable $exception) {
+            Log::warning('Metric graph could not load Azure data; rendering an empty chart instead.', [
+                'subscription_id' => $this->record->subscription_id,
+                'graph_id' => $graph->id,
+                'resource_id' => $graph->resource?->resource_id,
+                'exception' => $exception->getMessage(),
+            ]);
+
+            return ['datasets' => [], 'labels' => []];
+        }
 
         $labels = [];
         $datasets = [];
