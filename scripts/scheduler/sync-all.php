@@ -56,7 +56,7 @@ foreach ($modules as $module) {
     if (! is_file($scriptPath)) {
         $stderr = "Runner script not found: {$scriptPath}";
     } else {
-        $command = [PHP_BINARY, $scriptPath];
+        $command = '"' . str_replace('"', '\\"', PHP_BINARY) . '" "' . str_replace('"', '\\"', $scriptPath) . '"';
         // Keep child output in files so neither output stream can block the child.
         // Read those files while the process runs so Task Scheduler/console output
         // identifies the exact operation that is taking time.
@@ -79,10 +79,7 @@ foreach ($modules as $module) {
                 2 => ['file', $stderrFile, 'w'],
             ];
 
-            // Launch PHP directly instead of through cmd.exe. On Windows, a shell
-            // wrapper can outlive the PHP child and make proc_close() wait even
-            // after the runner has completed its work.
-            $process = proc_open($command, $descriptors, $pipes, $basePath, null, ['bypass_shell' => true]);
+            $process = proc_open($command, $descriptors, $pipes, $basePath);
 
             if (is_resource($process)) {
                 fclose($pipes[0]);
@@ -154,17 +151,11 @@ foreach ($modules as $module) {
                     fclose($stderrReader);
                 }
 
-                // The direct PHP process has already been observed as stopped above.
-                // proc_close() now only releases the process resource; it no longer
-                // has to wait for an intermediate command-shell process.
                 $closedExitCode = proc_close($process);
-                if (! $timedOut) {
-                    if ($exitCode < 0 && $closedExitCode >= 0) {
-                        $exitCode = $closedExitCode;
-                    } elseif ($exitCode < 0) {
-                        $exitCode = 1;
-                    }
-                } else {
+                if (! $timedOut && $exitCode < 0 && $closedExitCode >= 0) {
+                    $exitCode = $closedExitCode;
+                }
+                if ($timedOut) {
                     $exitCode = 124;
                 }
             } else {
