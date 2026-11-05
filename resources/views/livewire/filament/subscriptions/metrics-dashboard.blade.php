@@ -110,7 +110,7 @@
                 const previous = this.graphData[graph.id];
                 const queryRange = { ...range };
                 if (!forceFull && previous && this.graphFetchedAt[graph.id]) {
-                    const overlap = this.requestedIntervalMinutes() * 2;
+                    const overlap = this.requestedIntervalMinutes(graph.id) * 2;
                     const incrementalStart = new Date(Date.parse(this.graphFetchedAt[graph.id]) - overlap * 60000).toISOString();
                     if (Date.parse(incrementalStart) > Date.parse(range.start)) queryRange.start = incrementalStart;
                 }
@@ -120,7 +120,7 @@
             } catch (e) { this.graphErrors[graph.id] = e.message; }
             finally { this.graphLoading[graph.id] = false; }
         },
-        requestedIntervalMinutes() { return this.interval() === 'PT1H' ? 60 : Number(this.interval().match(/\d+/)?.[0] || 1); },
+        requestedIntervalMinutes(graphId) { const minutes = value => value === 'PT1H' ? 60 : (value?.match(/^PT(\d+)M$/) ? Number(value.match(/^PT(\d+)M$/)[1]) : (value?.match(/^P(\d+)D$/) ? Number(value.match(/^P(\d+)D$/)[1]) * 1440 : 1)); return Math.max(minutes(this.interval()), ...(this.graphData[graphId] || []).map(series => minutes(series.interval))); },
         mergeSeries(previous, fresh, minimumTime) {
             return previous.map((oldSeries, index) => {
                 const newSeries = fresh[index] || oldSeries;
