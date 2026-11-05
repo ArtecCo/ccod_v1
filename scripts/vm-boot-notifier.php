@@ -6,7 +6,7 @@ const DB_HOST = '127.0.0.1';
 const DB_PORT = 3306;
 const DB_NAME = 'cloud_ops_dashboard';
 const DB_USER = 'ccod_system_tasks';
-const DB_PASSWORD = 'YOUR_STRONG_PASSWORD';
+const DB_PASSWORD = 'ccod_system.tasks';
 
 const UTC_TIMEZONE = 'UTC';
 const IST_TIMEZONE = 'Asia/Kolkata';
