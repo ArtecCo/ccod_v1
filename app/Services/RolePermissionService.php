@@ -31,6 +31,8 @@ class RolePermissionService
             'cost.export' => ['category' => 'Cost', 'name' => 'Export cost'],
             'cost.settings.manage' => ['category' => 'Cost', 'name' => 'Manage cost settings'],
             'resources.view' => ['category' => 'Resources', 'name' => 'View resources'],
+            'resources.metrics.view' => ['category' => 'Metrics', 'name' => 'View resource metrics'],
+            'resources.metrics.manage' => ['category' => 'Metrics', 'name' => 'Manage metric graphs'],
             'resources.export' => ['category' => 'Resources', 'name' => 'Export resources'],
             'resources.sync' => ['category' => 'Resources', 'name' => 'Manual Sync'],
             'security.view' => ['category' => 'Security', 'name' => 'View security'],
@@ -78,7 +80,7 @@ class RolePermissionService
             'monitoring.history.view', 'monitoring.checks.trigger', 'alerts.acknowledge', 'alerts.close',
             'alerts.settings.manage', 'urls.check.trigger', 'urls.history.view', 'security.scores.view',
             'security.settings.manage', 'dashboard.metrics.view', 'dashboard.widgets.view', 'dashboard.export',
-            'resources.metrics.view', 'tickets.disable',
+            'tickets.disable',
         ];
     }
 
@@ -92,6 +94,7 @@ class RolePermissionService
             'alerts.export' => 'alerts.view', 'alerts.sync' => 'alerts.view',
             'projects.create' => 'projects.view', 'projects.edit' => 'projects.view', 'projects.delete' => 'projects.view',
             'resources.export' => 'resources.view', 'resources.sync' => 'resources.view',
+            'resources.metrics.manage' => 'resources.metrics.view',
             'security.export' => 'security.view', 'security.sync' => 'security.view',
             'tickets.create' => 'tickets.view', 'tickets.update' => 'tickets.view', 'tickets.assign' => 'tickets.view', 'tickets.close' => 'tickets.view', 'tickets.export' => 'tickets.view',
             'urls.create' => 'urls.view', 'urls.edit' => 'urls.view', 'urls.delete' => 'urls.view', 'urls.export' => 'urls.view',
