@@ -84,7 +84,7 @@ class SubscriptionWebUrlMonitor
 
                 curl_setopt_array($handle, $options);
                 curl_multi_add_handle($multi, $handle);
-                $handles[(int) $handle] = [
+                $handles[spl_object_id($handle)] = [
                     'handle' => $handle,
                     'model' => $webUrl,
                     'started' => $startedAt,
