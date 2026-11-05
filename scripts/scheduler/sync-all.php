@@ -9,6 +9,9 @@ declare(strict_types=1);
  */
 
 $basePath = dirname(__DIR__, 2);
+
+// Standalone CLI runners do not necessarily pass through Laravel's timezone bootstrap.
+date_default_timezone_set('Asia/Kolkata');
 $schedulerPath = __DIR__;
 $reportDirectory = $basePath . DIRECTORY_SEPARATOR . 'storage' . DIRECTORY_SEPARATOR . 'logs' . DIRECTORY_SEPARATOR . 'scheduler' . DIRECTORY_SEPARATOR . 'reports';
 
