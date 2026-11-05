@@ -22,7 +22,7 @@ class AzureSecuritySyncService
     public function sync(?string $subscriptionId = null): array
     {
         // One UTC timestamp for the entire security sync run. The UI converts it to IST.
-        $syncTimestamp = Carbon::now('UTC');
+        $syncTimestamp = Carbon::now();
 
         $subscriptions = AzureSubscription::query()
             ->when($subscriptionId !== null, fn ($query) => $query->where('subscription_id', $subscriptionId))
