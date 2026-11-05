@@ -58,7 +58,7 @@ class SubscriptionMetricsController extends Controller
     {
         $this->authorizeMetrics($subscription, 'resources.metrics.manage');
         $data = $request->validate([
-            'resource_id' => ['required', 'string', 'max:2048'],
+            'resource_id' => ['required', 'string', 'max:255'],
             'title' => ['required', 'string', 'max:160'],
             'series' => ['required', 'array', 'min:1', 'max:20'],
             'series.*.metric' => ['required', 'string', 'max:200'],
