@@ -86,11 +86,13 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                             ->required(),
                         DateTimePicker::make('custom_start')
                             ->label('Start (IST)')
+                            ->timezone('Asia/Kolkata')
                             ->seconds(false)
                             ->native(true)
                             ->visible(fn ($get): bool => $get('preset') === 'custom'),
                         DateTimePicker::make('custom_end')
                             ->label('End (IST)')
+                            ->timezone('Asia/Kolkata')
                             ->seconds(false)
                             ->native(true)
                             ->visible(fn ($get): bool => $get('preset') === 'custom'),
@@ -202,7 +204,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             $headerActions = [];
 
             if ($this->canManageMetrics()) {
-                $headerActions[] = Action::make('removeMetricGraph')
+                $headerActions[] = Action::make('removeMetricGraph'.$graph->id)
                     ->label('Remove graph')
                     ->icon('heroicon-o-trash')
                     ->color('danger')
@@ -276,6 +278,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         ];
 
         if ($preset === 'custom') {
+            abort_unless(filled($this->filters['custom_start'] ?? null) && filled($this->filters['custom_end'] ?? null), 422, 'Choose both a start and end time.');
             $start = Carbon::parse($this->filters['custom_start'] ?? null, 'Asia/Kolkata');
             $end = Carbon::parse($this->filters['custom_end'] ?? null, 'Asia/Kolkata');
             abort_unless($end->greaterThan($start), 422, 'The end of the range must be after the start.');
