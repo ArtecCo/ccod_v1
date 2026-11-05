@@ -180,12 +180,8 @@ foreach ($modules as $module) {
         $anyFailure = true;
     }
 
-    if ($stdout !== '') {
-        fwrite(STDOUT, $stdout);
-    }
-    if ($stderr !== '') {
-        fwrite(STDERR, $stderr);
-    }
+    // Child output is streamed to the console while the process runs.
+    // Do not print the accumulated buffers again here.
 
     fwrite(STDOUT, sprintf(
         "[%s] %s — %.3f seconds (exit code %d)" . PHP_EOL . PHP_EOL,
