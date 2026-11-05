@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryChart;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryTable;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
@@ -64,7 +65,8 @@ class ViewAzureSubscription extends ViewRecord
                 $this->makeTab('Overview', null)->schema(fn (): array => [Section::make('Subscription Details')->schema([$this->getInfolistContentComponent()->columnSpanFull()])->columnSpanFull(), Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull()])->columns(1),
                 $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
                     Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionCostHistoryChart::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionCostHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
+                    Livewire::make(SubscriptionCostHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(SubscriptionBudgetDetails::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                     $this->canViewTab('cost.breakdown.view')
                         ? Livewire::make(SubscriptionResourceCostBreakdown::class, ['record' => $this->record])->lazy()->columnSpanFull()
