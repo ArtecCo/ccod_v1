@@ -105,7 +105,7 @@ try {
         fwrite(STDOUT, sprintf("%-40s %8d\n", 'Unassigned project', $unassigned));
     }
 
-    fwrite(STDOUT, PHP_EOL . sprintf("Total active links checked: %d\n", $urls->count()));
+    fwrite(STDOUT, PHP_EOL . sprintf("Total active links checked: %d\n", $processed));
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Web URL check failed: ' . $exception->getMessage() . PHP_EOL);
     exit(1);
