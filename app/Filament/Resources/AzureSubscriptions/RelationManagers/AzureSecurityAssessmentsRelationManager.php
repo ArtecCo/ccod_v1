@@ -51,7 +51,15 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     'medium' => 'warning',
                     'low' => 'gray',
                     default => 'gray',
-                })->sortable(),
+                })->sortable(query: fn (Builder $query, string $direction): Builder => $query
+                    ->orderByRaw("CASE LOWER(severity)
+                        WHEN 'critical' THEN 1
+                        WHEN 'high' THEN 2
+                        WHEN 'medium' THEN 3
+                        WHEN 'low' THEN 4
+                        ELSE 5
+                    END {$direction}")
+                    ->orderByDesc('status_changed_at')),
                 TextColumn::make('resource_id')->label('Affected Resource')->formatStateUsing(fn (?string $state): string => $this->resourceName($state))->searchable()->limit(60),
                 TextColumn::make('status_changed_at')->label('Status Changed')->dateTime('d M Y, H:i')->sortable(),
                 TextColumn::make('assessment_type')->label('Assessment Type')->searchable()->toggleable(isToggledHiddenByDefault: true),
@@ -124,7 +132,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 'subscription' => $record->subscription_id,
                 'record' => $record,
             ]))
-            ->defaultSort('status_changed_at', 'desc')
+            ->defaultSort('severity', 'asc')
             ->striped(false)
             ->recordActions([])
             ->toolbarActions([
