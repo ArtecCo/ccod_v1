@@ -45,7 +45,7 @@
             </div>
             <div class="mt-5 space-y-3"><div class="flex justify-between"><h4 class="text-sm font-semibold">Metric series</h4><button type="button" @click="addDraftSeries()" class="text-sm text-primary-600">+ Add series</button></div>
                 <template x-for="(series, index) in draft.series" :key="index"><div class="grid gap-3 rounded-lg border p-3 sm:grid-cols-[1fr_1fr_auto]">
-                    <label class="text-sm">Metric<select x-model="series.metric" @change="series.aggregation = ''" class="fi-input mt-1 block w-full"><option value="">Choose metric</option><template x-for="metric in (selectedResource?.metrics || [])" :key="metric.name"><option :value="metric.name" x-text="metric.display_name + ' (' + metric.unit + ')'"></option></template></select></label>
+                    <label class="text-sm">Metric<select x-model="series.metric" @change="series.aggregation = ''" class="fi-input mt-1 block w-full"><option value="">Choose metric</option><template x-for="metric in (selectedResource?.metrics || [])" :key="metric.name"><option :value="metric.name" x-text="metric.display_name + (metric.unit ? ' (' + metric.unit + ')' : '')"></option></template></select></label>
                     <label class="text-sm">Aggregation<select x-model="series.aggregation" class="fi-input mt-1 block w-full"><option value="">Choose aggregation</option><template x-for="aggregation in aggregationsFor(series.metric)" :key="aggregation"><option :value="aggregation" x-text="aggregation"></option></template></select></label>
                     <button type="button" @click="draft.series.splice(index, 1)" class="text-xs text-danger-600">Remove</button>
                 </div></template>
