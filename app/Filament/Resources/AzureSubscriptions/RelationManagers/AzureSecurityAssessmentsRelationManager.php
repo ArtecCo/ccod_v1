@@ -68,7 +68,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                         WHEN 'low' THEN 4
                         ELSE 5
                     END {$direction}")
-                    ->orderByDesc('status_changed_at')),
+                    ->orderByDesc('synced_at')),
                 TextColumn::make('resource_id')->label('Affected Resource')->formatStateUsing(fn (?string $state): string => $this->resourceName($state))->searchable()->limit(60),
                 TextColumn::make('synced_at')->label('Last Synced')->dateTime('d M Y, H:i')->timezone('Asia/Kolkata')->sortable(),
                 TextColumn::make('assessment_type')->label('Assessment Type')->searchable()->toggleable(isToggledHiddenByDefault: true),
