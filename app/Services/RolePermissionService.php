@@ -55,6 +55,10 @@ class RolePermissionService
             'users.create' => ['category' => 'Users', 'name' => 'Create users'],
             'users.edit' => ['category' => 'Users', 'name' => 'Update/Edit users'],
             'users.delete' => ['category' => 'Users', 'name' => 'Delete users'],
+            'business_units.view' => ['category' => 'Business Units', 'name' => 'View business units'],
+            'business_units.create' => ['category' => 'Business Units', 'name' => 'Create business units'],
+            'business_units.edit' => ['category' => 'Business Units', 'name' => 'Edit business units'],
+            'business_units.delete' => ['category' => 'Business Units', 'name' => 'Delete business units'],
             'users.access_requests.view' => ['category' => 'Access Requests', 'name' => 'View access requests'],
             'users.access_requests.decide' => ['category' => 'Access Requests', 'name' => 'Take decision'],
         ];
@@ -94,6 +98,9 @@ class RolePermissionService
             'roles.create' => 'roles.view', 'roles.edit' => 'roles.view', 'roles.delete' => 'roles.view',
             'users.create' => 'users.view', 'users.edit' => 'users.view', 'users.delete' => 'users.view',
             'users.access_requests.decide' => 'users.access_requests.view',
+            'business_units.create' => 'business_units.view',
+            'business_units.edit' => 'business_units.view',
+            'business_units.delete' => 'business_units.view',
         ];
     }
 
