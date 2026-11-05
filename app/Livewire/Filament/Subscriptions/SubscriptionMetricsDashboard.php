@@ -23,6 +23,7 @@ use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Schemas\Concerns\InteractsWithSchemas;
+use Filament\Schemas\Concerns\RestrictsFileUploadsToSchemaComponents;
 use Filament\Schemas\Contracts\HasSchemas;
 use Illuminate\Support\Carbon;
 use Livewire\Component;
@@ -32,6 +33,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 {
     use InteractsWithActions;
     use InteractsWithSchemas;
+    use RestrictsFileUploadsToSchemaComponents;
 
     public AzureSubscription $record;
 
