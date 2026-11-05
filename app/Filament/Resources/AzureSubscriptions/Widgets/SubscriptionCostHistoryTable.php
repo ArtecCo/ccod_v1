@@ -40,6 +40,8 @@ class SubscriptionCostHistoryTable extends BaseWidget
                     ->sortable(),
             ])
             ->defaultSort('period_start')
+            ->paginated([5])
+            ->defaultPaginationPageOption(5)
             ->striped(false)
             ->recordActions([]);
     }
