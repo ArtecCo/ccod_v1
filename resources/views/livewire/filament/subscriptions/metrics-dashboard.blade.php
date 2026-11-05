@@ -104,6 +104,7 @@
         },
         async refreshGraph(graph, range = this.getRange(), forceFull = false) {
             if (!this.active || !range || this.graphLoading[graph.id]) return;
+            if (!forceFull && this.preset === 'custom' && Date.parse(range.end) <= Date.now() && this.graphData[graph.id]) return;
             this.graphLoading[graph.id] = true; this.graphErrors[graph.id] = '';
             try {
                 const previous = this.graphData[graph.id];
