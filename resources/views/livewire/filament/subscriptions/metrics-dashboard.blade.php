@@ -73,7 +73,7 @@
         },
         destroy() { if (this.timer) window.clearInterval(this.timer); if (this.refreshTimer) window.clearInterval(this.refreshTimer); },
         isMetricsTabActive() {
-            if (new URLSearchParams(window.location.search).get('tab') === 'Metrics') return true;
+            if (['Metrics', 'metrics'].includes(new URLSearchParams(window.location.search).get('tab'))) return true;
             return [...document.querySelectorAll('[role="tab"][aria-selected="true"],button[aria-selected="true"]')].some(el => el.textContent.trim() === 'Metrics');
         },
         checkActive() {
