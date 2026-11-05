@@ -60,15 +60,17 @@
         subscriptionId, resources: [], graphs: [], graphData: {}, graphLoading: {}, graphErrors: {},
         loading: false, saving: false, error: '', builderOpen: false,
         canManage: @js(auth()->guard('developers')->check() || (auth()->guard('web')->user() && app(\App\Services\AccessAuthorizationService::class)->hasPermission(auth()->guard('web')->user(), 'resources.metrics.manage', $this->record))),
-        preset: '1h', customStart: '', customEnd: '', timer: null, active: false, loadingInitial: false,
+        preset: '1h', customStart: '', customEnd: '', timer: null, refreshTimer: null, active: false, loadingInitial: false,
         draft: { resource_id: '', title: '', series: [{ metric: '', aggregation: '' }] },
         init() {
             this.applyPreset();
             this.timer = window.setInterval(() => this.checkActive(), 1200);
+            this.refreshTimer = window.setInterval(() => { if (this.active) this.refreshAll(); }, 30000);
             document.addEventListener('visibilitychange', () => this.checkActive());
             window.addEventListener('popstate', () => this.checkActive());
             this.checkActive();
         },
+        destroy() { if (this.timer) window.clearInterval(this.timer); if (this.refreshTimer) window.clearInterval(this.refreshTimer); },
         isMetricsTabActive() {
             if (new URLSearchParams(window.location.search).get('tab') === 'Metrics') return true;
             return [...document.querySelectorAll('[role="tab"][aria-selected="true"],button[aria-selected="true"]')].some(el => el.textContent.trim() === 'Metrics');
