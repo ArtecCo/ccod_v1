@@ -21,6 +21,18 @@ class AzureMetricsService
         if ($refresh) Cache::forget($key);
 
         return Cache::remember($key, now()->addMinutes(15), function () use ($resource): array {
+            $resourceType = strtolower(trim((string) $resource->resource_type));
+            $region = strtolower(trim((string) ($resource->region ?: 'global')));
+            $supportedTypesKey = 'azure-supported-metric-resource-types:' . $region;
+            $supportedTypes = Cache::get($supportedTypesKey);
+
+            // Azure returns the supported platform metric namespaces with this
+            // specific 400 response. Reuse that list to avoid requesting
+            // definitions for resource types that Azure does not support.
+            if (is_array($supportedTypes) && ! in_array($resourceType, $supportedTypes, true)) {
+                return [];
+            }
+
             $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metricDefinitions?api-version=' . self::API_VERSION;
             $response = $this->azure->get($url);
             if ($response->failed()) {
@@ -33,6 +45,27 @@ class AzureMetricsService
 
                 if (! is_string($azureMessage) || $azureMessage === '') {
                     $azureMessage = trim($response->body());
+                }
+
+                if (
+                    $response->status() === 400
+                    && is_string($azureMessage)
+                    && preg_match('/is not a supported platform metric namespace, supported ones are (.+?), Region:/is', $azureMessage, $matches) === 1
+                ) {
+                    $supportedTypes = collect(explode(',', $matches[1]))
+                        ->map(fn (string $type): string => strtolower(trim($type)))
+                        ->filter()
+                        ->unique()
+                        ->values()
+                        ->all();
+
+                    if ($supportedTypes !== []) {
+                        Cache::put($supportedTypesKey, $supportedTypes, now()->addHours(24));
+
+                        if (! in_array($resourceType, $supportedTypes, true)) {
+                            return [];
+                        }
+                    }
                 }
 
                 throw new RuntimeException(sprintf(
