@@ -41,6 +41,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     'status_cause',
                     'first_evaluated_at',
                     'status_changed_at',
+                    'synced_at',
                     'remediation_description',
                     'portal_link',
                 ])
@@ -51,7 +52,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     WHEN 'low' THEN 4
                     ELSE 5
                 END ASC")
-                ->orderByDesc('status_changed_at'))
+                ->orderByDesc('synced_at'))
             ->columns([
                 TextColumn::make('recommendation_name')->label('Recommendation')->searchable()->sortable()->weight('medium')->wrap(),
                 TextColumn::make('severity')->label('Severity')->badge()->color(fn (?string $state): string => match (strtolower((string) $state)) {
@@ -69,7 +70,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                     END {$direction}")
                     ->orderByDesc('status_changed_at')),
                 TextColumn::make('resource_id')->label('Affected Resource')->formatStateUsing(fn (?string $state): string => $this->resourceName($state))->searchable()->limit(60),
-                TextColumn::make('status_changed_at')->label('Status Changed')->dateTime('d M Y, H:i')->sortable(),
+                TextColumn::make('synced_at')->label('Last Synced')->dateTime('d M Y, H:i')->timezone('Asia/Kolkata')->sortable(),
                 TextColumn::make('assessment_type')->label('Assessment Type')->searchable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('implementation_effort')->label('Effort')->badge()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('user_impact')->label('User Impact')->toggleable(isToggledHiddenByDefault: true),
