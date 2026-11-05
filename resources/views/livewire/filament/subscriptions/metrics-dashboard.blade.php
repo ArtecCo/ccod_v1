@@ -60,7 +60,7 @@
         subscriptionId, resources: [], graphs: [], graphData: {}, graphFetchedAt: {}, graphLoading: {}, graphErrors: {},
         loading: false, saving: false, error: '', builderOpen: false,
         canManage: @js(auth()->guard('developers')->user()?->is_active === true || (auth()->guard('web')->user()?->is_active === true && app(\App\Services\AccessAuthorizationService::class)->hasPermission(auth()->guard('web')->user(), 'resources.metrics.manage', $this->record))),
-        preset: '1h', customStart: '', customEnd: '', timer: null, refreshTimer: null, active: false, loadingInitial: false,
+        preset: '1h', customStart: '', customEnd: '', timer: null, refreshTimer: null, active: false, loadingInitial: false, initialized: false,
         draft: { resource_id: '', title: '', series: [{ metric: '', aggregation: '' }] },
         init() {
             this.applyPreset();
@@ -93,7 +93,7 @@
         async loadInitial() {
             if (!this.active || this.loadingInitial) return;
             this.loadingInitial = true; this.loading = true; this.error = '';
-            try { [this.resources, this.graphs] = await Promise.all([this.request('resources'), this.request('graphs')]); await this.refreshAll(true); }
+            try { const wasInitialized = this.initialized; [this.resources, this.graphs] = await Promise.all([this.request('resources'), this.request('graphs')]); this.initialized = true; await this.refreshAll(!wasInitialized); }
             catch (e) { this.error = e.message; }
             finally { this.loading = false; this.loadingInitial = false; }
         },
