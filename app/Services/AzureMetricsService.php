@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\BillingResource;
 use App\Models\AzureSubscription;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 class AzureMetricsService
@@ -171,7 +172,37 @@ class AzureMetricsService
                     . (is_string($definition['namespace'] ?? null) && $definition['namespace'] !== '' ? '&metricnamespace=' . rawurlencode($definition['namespace']) : '');
                 $response = $this->azure->get($url);
                 if ($response->failed()) {
-                    throw new RuntimeException('Azure Monitor metrics query failed.');
+                    $payload = $response->json();
+                    $azureError = is_array($payload) ? ($payload['error'] ?? $payload) : [];
+                    $azureCode = is_array($azureError) && is_string($azureError['code'] ?? null)
+                        ? $azureError['code']
+                        : null;
+                    $azureMessage = is_array($azureError) && is_string($azureError['message'] ?? null)
+                        ? $azureError['message']
+                        : null;
+                    $responseBody = trim($response->body());
+
+                    Log::error('Azure Monitor metrics query rejected.', [
+                        'http_status' => $response->status(),
+                        'azure_error_code' => $azureCode,
+                        'azure_error_message' => $azureMessage,
+                        'response_body' => mb_substr($responseBody, 0, 4000),
+                        'resource_id' => $resource->resource_id,
+                        'resource_type' => $resource->resource_type,
+                        'metric' => $metric,
+                        'aggregation' => $aggregation,
+                        'namespace' => $definition['namespace'] ?? null,
+                        'timespan_start' => $start,
+                        'timespan_end' => $end,
+                        'interval' => $metricInterval,
+                    ]);
+
+                    throw new RuntimeException(sprintf(
+                        'Azure Monitor metrics query failed (HTTP %d%s%s).',
+                        $response->status(),
+                        $azureCode ? ', '.$azureCode : '',
+                        $azureMessage ? ': '.$azureMessage : '',
+                    ));
                 }
 
                 return ['metric' => $metric, 'aggregation' => $aggregation, 'interval' => $metricInterval, 'value' => $response->json('value', [])];
