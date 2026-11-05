@@ -32,14 +32,13 @@ class SubscriptionCostHistoryTable extends BaseWidget
             ->columns([
                 TextColumn::make('period_start')
                     ->label('Month')
-                    ->date('M Y')
-                    ->sortable(),
+                    ->date('M Y'),
                 TextColumn::make('amount')
                     ->label('Cost')
                     ->money(fn (AzureSubscriptionCost $record): string => $record->currency ?: 'EUR')
                     ->sortable(),
             ])
-            ->defaultSort('period_start')
+            ->defaultSort('period_start', 'desc')
             ->paginated([5])
             ->defaultPaginationPageOption(5)
             ->striped(false)
