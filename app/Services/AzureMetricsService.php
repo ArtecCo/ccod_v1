@@ -62,7 +62,7 @@ class AzureMetricsService
             }
 
             $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $metric, $aggregation, $start, $end, $interval]));
-            $results[] = Cache::remember($cacheKey, now()->addSeconds(45), function () use ($resource, $metric, $aggregation, $start, $end, $interval): array {
+            $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $interval): array {
                 $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
                     . '?api-version=' . self::API_VERSION
                     . '&metricnames=' . rawurlencode($metric)
