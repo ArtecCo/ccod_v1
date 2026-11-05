@@ -35,6 +35,8 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
     public array $filters = [];
 
+    public int $refreshVersion = 0;
+
     public function mount(AzureSubscription $record): void
     {
         $this->record = $record;
@@ -160,7 +162,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                         ->max('position') + 1,
                 ]);
 
-                $this->dispatch('$refresh');
+                $this->refreshVersion++;
             })
             ->successNotificationTitle('Metric graph created');
     }
@@ -179,7 +181,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
     public function refreshCharts(): void
     {
         abort_unless($this->canViewMetrics(), 403);
-        $this->dispatch('$refresh');
+        $this->refreshVersion++;
     }
 
     public function getGraphs()
