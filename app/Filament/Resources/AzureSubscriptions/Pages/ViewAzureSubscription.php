@@ -51,6 +51,7 @@ class ViewAzureSubscription extends ViewRecord
             'Overview' => null,
             'Cost' => 'cost.view',
             'Metrics' => 'resources.metrics.view',
+            'metrics' => 'resources.metrics.view',
         ];
 
         $requestedTab = request()->query('tab');
