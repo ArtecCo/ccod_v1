@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\\Filament\\Resources\\AzureSubscriptions\\Widgets;
+namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
-use App\\Models\\AzureSubscription;
-use App\\Models\\AzureSubscriptionCost;
-use Filament\\Tables\\Columns\\TextColumn;
-use Filament\\Tables\\Table;
-use Filament\\Widgets\\TableWidget as BaseWidget;
-use Illuminate\\Database\\Eloquent\\Builder;
+use App\Models\AzureSubscription;
+use App\Models\AzureSubscriptionCost;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget as BaseWidget;
+use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionCostHistoryTable extends BaseWidget
 {
