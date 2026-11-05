@@ -119,7 +119,7 @@
             } catch (e) { this.graphErrors[graph.id] = e.message; }
             finally { this.graphLoading[graph.id] = false; }
         },
-        requestedIntervalMinutes() { return this.interval() === 'PT1H' ? 60 : Number(this.interval().match(/\\d+/)?.[0] || 1); },
+        requestedIntervalMinutes() { return this.interval() === 'PT1H' ? 60 : Number(this.interval().match(/\d+/)?.[0] || 1); },
         mergeSeries(previous, fresh, minimumTime) {
             return previous.map((oldSeries, index) => {
                 const newSeries = fresh[index] || oldSeries;
@@ -178,7 +178,7 @@
         openBuilder() { this.builderOpen = true; if (!this.resources.length) this.loadInitial(); },
         async saveGraph() {
             this.saving = true;
-            try { await this.request('graphs', {method:'POST', body:JSON.stringify(this.draft)}); this.builderOpen = false; this.draft = {resource_id:'',title:'',series:[{metric:'',aggregation:''}]}; this.graphs = await this.request('graphs'); await this.refreshAll(true); }
+            try { const created = await this.request('graphs', {method:'POST', body:JSON.stringify(this.draft)}); this.builderOpen = false; this.draft = {resource_id:'',title:'',series:[{metric:'',aggregation:''}]}; this.graphs.push(created); await this.refreshGraph(created, this.getRange(), true); }
             catch (e) { this.error = e.message; } finally { this.saving = false; }
         },
         async removeGraph(graph) {
