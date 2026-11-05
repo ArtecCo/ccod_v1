@@ -29,12 +29,12 @@ class SubscriptionMetricGraphChart extends ChartWidget
 
     protected ?string $maxHeight = '300px';
 
-    protected function getHeading(): ?string
+    public function getHeading(): ?string
     {
         return $this->graph()->title;
     }
 
-    protected function getDescription(): ?string
+    public function getDescription(): ?string
     {
         $resource = $this->graph()->resource;
 
