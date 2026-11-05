@@ -2,19 +2,15 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\\Services;
 
-use Illuminate\Http\Client\PendingRequest;
-use Illuminate\Http\Client\Response;
-use Illuminate\Support\Facades\Log;
+use Illuminate\\Http\\Client\\PendingRequest;
+use Illuminate\\Http\\Client\\Response;
+use Illuminate\\Support\\Facades\\Log;
 use RuntimeException;
 
 class AzureCostManagementThrottle
 {
-    private const MAX_ATTEMPTS = 4;
-    private const DEFAULT_DELAY_SECONDS = 2;
-    private const MAX_DELAY_SECONDS = 30;
-
     private const RATE_LIMIT_HEADERS = [
         'x-ms-ratelimit-microsoft.costmanagement-qpu-consumed',
         'x-ms-ratelimit-microsoft.costmanagement-qpu-remaining',
@@ -23,15 +19,6 @@ class AzureCostManagementThrottle
         'x-ms-ratelimit-microsoft.costmanagement-tenant-retry-after',
         'x-ms-ratelimit-microsoft.costmanagement-client-retry-after',
         'x-ms-ratelimit-microsoft.consumption-retry-after',
-        'Retry-After',
-    ];
-
-    private const RETRY_AFTER_HEADERS = [
-        'x-ms-ratelimit-microsoft.consumption-retry-after',
-        'x-ms-ratelimit-microsoft.costmanagement-qpu-retry-after',
-        'x-ms-ratelimit-microsoft.costmanagement-entity-retry-after',
-        'x-ms-ratelimit-microsoft.costmanagement-tenant-retry-after',
-        'x-ms-ratelimit-microsoft.costmanagement-client-retry-after',
         'Retry-After',
     ];
 
@@ -47,69 +34,82 @@ class AzureCostManagementThrottle
 
     private function send(callable $request, string $method, string $url): Response
     {
-        for ($attempt = 1; $attempt <= self::MAX_ATTEMPTS; $attempt++) {
+        $maxAttempts = max(1, (int) config('services.azure.retry_attempts', 6));
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
             /** @var Response $response */
             $response = $request();
-            $this->logRateLimitHeaders($response, $method, $url, $attempt);
+            $status = $response->status();
 
-            if ($response->status() !== 429 || $attempt === self::MAX_ATTEMPTS) {
+            if (! in_array($status, [408, 429, 500, 502, 503, 504], true) || $attempt === $maxAttempts) {
                 return $response;
             }
 
-            $delay = $this->delaySeconds($response, $attempt);
-            Log::warning('Azure Cost Management request throttled; retrying.', [
+            $delay = $this->retryDelaySeconds($response, $attempt);
+            Log::warning('Azure API request will be retried.', [
                 'method' => $method,
                 'url' => $url,
+                'status' => $status,
                 'attempt' => $attempt,
-                'max_attempts' => self::MAX_ATTEMPTS,
+                'max_attempts' => $maxAttempts,
                 'delay_seconds' => $delay,
-                'rate_limit_headers' => $this->rateLimitHeaders($response),
+                'retry_headers' => $this->rateLimitHeaders($response),
             ]);
 
             sleep($delay);
         }
 
-        throw new RuntimeException('Azure Cost Management request retry loop ended unexpectedly.');
+        throw new RuntimeException('Azure API retry loop ended unexpectedly.');
     }
 
-    private function logRateLimitHeaders(Response $response, string $method, string $url, int $attempt): void
+    private function retryDelaySeconds(Response $response, int $attempt): int
     {
-        $headers = $this->rateLimitHeaders($response);
+        $delays = [];
 
-        Log::info('Azure Cost Management rate-limit diagnostics.', [
-            'method' => $method,
-            'url' => $url,
-            'attempt' => $attempt,
-            'status' => $response->status(),
-            'rate_limit_headers' => $headers,
-        ]);
+        foreach ([
+            'x-ms-ratelimit-microsoft.consumption-retry-after',
+            'x-ms-ratelimit-microsoft.costmanagement-qpu-retry-after',
+            'x-ms-ratelimit-microsoft.costmanagement-entity-retry-after',
+            'x-ms-ratelimit-microsoft.costmanagement-tenant-retry-after',
+            'x-ms-ratelimit-microsoft.costmanagement-client-retry-after',
+            'Retry-After',
+        ] as $header) {
+            $value = $response->header($header);
+            if (! is_string($value) || trim($value) === '') {
+                continue;
+            }
+
+            $value = trim($value);
+            if (is_numeric($value)) {
+                $delays[] = max(1, (int) ceil((float) $value));
+                continue;
+            }
+
+            $timestamp = strtotime($value);
+            if ($timestamp !== false) {
+                $delays[] = max(1, $timestamp - time());
+            }
+        }
+
+        if ($delays !== []) {
+            // Honor the longest server-provided delay; never shorten Retry-After.
+            return max($delays);
+        }
+
+        $base = max(1, (int) config('services.azure.retry_base_delay', 2));
+        $exponential = $base * (2 ** min(10, $attempt - 1));
+        return (int) ceil($exponential + random_int(0, max(1, (int) ceil($exponential * 0.2))));
     }
 
     private function rateLimitHeaders(Response $response): array
     {
         $headers = [];
-
         foreach (self::RATE_LIMIT_HEADERS as $header) {
             $value = $response->header($header);
-
             if ($value !== null && $value !== '') {
                 $headers[$header] = $value;
             }
         }
-
         return $headers;
-    }
-
-    private function delaySeconds(Response $response, int $attempt): int
-    {
-        foreach (self::RETRY_AFTER_HEADERS as $header) {
-            $retryAfter = $response->header($header);
-
-            if (is_numeric($retryAfter)) {
-                return min(self::MAX_DELAY_SECONDS, max(1, (int) ceil((float) $retryAfter)));
-            }
-        }
-
-        return min(self::MAX_DELAY_SECONDS, self::DEFAULT_DELAY_SECONDS * (2 ** ($attempt - 1)));
     }
 }
