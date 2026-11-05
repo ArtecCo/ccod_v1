@@ -13,10 +13,40 @@ class AzureMetricsService
 {
     private const API_VERSION = '2018-01-01';
 
+    /**
+     * Resource types for which this dashboard explicitly retrieves Azure
+     * platform metrics. Keep this allowlist narrow: inventory resources such
+     * as alerts, dashboards, network groups, and policy objects are not metric
+     * targets and must never be sent to metricDefinitions.
+     */
+    private const SUPPORTED_RESOURCE_TYPES = [
+        'microsoft.compute/virtualmachines',
+        'microsoft.compute/virtualmachinescalesets',
+        'microsoft.sql/servers',
+        'microsoft.sql/servers/databases',
+        'microsoft.sql/managedinstances',
+        'microsoft.sql/managedinstances/databases',
+        'microsoft.cache/redis',
+        'microsoft.cache/redisenterprise',
+        'microsoft.cache/redisenterprise/databases',
+        'microsoft.web/sites',
+        'microsoft.web/serverfarms',
+        'microsoft.dbformysql/servers',
+        'microsoft.dbformysql/flexibleservers',
+        'microsoft.dbforpostgresql/servers',
+        'microsoft.dbforpostgresql/flexibleservers',
+        'microsoft.dbformariadb/servers',
+        'microsoft.documentdb/databaseaccounts',
+    ];
+
     public function __construct(private readonly AzureSubscriptionSyncService $azure) {}
 
     public function definitions(BillingResource $resource, bool $refresh = false): array
     {
+        if (! $this->supportsMetrics($resource)) {
+            return [];
+        }
+
         $key = 'azure-metric-definitions:' . sha1(strtolower($resource->resource_id));
         if ($refresh) Cache::forget($key);
 
@@ -175,8 +205,17 @@ class AzureMetricsService
     public function eligibleResources(AzureSubscription $subscription): \Illuminate\Database\Eloquent\Collection
     {
         return $subscription->billingResources()
-            ->whereNotNull('resource_type')
+            ->whereIn(\Illuminate\Support\Facades\DB::raw('LOWER(resource_type)'), self::SUPPORTED_RESOURCE_TYPES)
             ->orderBy('name')
             ->get(['resource_id', 'subscription_id', 'name', 'resource_type', 'region', 'sku']);
+    }
+
+    public function supportsMetrics(BillingResource $resource): bool
+    {
+        return in_array(
+            strtolower(trim((string) $resource->resource_type)),
+            self::SUPPORTED_RESOURCE_TYPES,
+            true,
+        );
     }
 }
