@@ -17,6 +17,7 @@ use Filament\Tables\Table;
 class TeamResource extends Resource
 {
  protected static ?string $model=BusinessUnit::class;protected static string|BackedEnum|null $navigationIcon=Heroicon::OutlinedUserGroup;protected static ?string $navigationLabel='Business Units';protected static string|\UnitEnum|null $navigationGroup='Administration';
+ public static function canAccess(): bool { return static::canViewAny(); }
  public static function canViewAny():bool{return static::canManage('business_units.view');}public static function canCreate():bool{return static::canManage('business_units.create');}public static function canView($record):bool{return static::canManage('business_units.view');}public static function canEdit($record):bool{return static::canManage('business_units.edit');}public static function canDelete($record):bool{return static::canManage('business_units.delete');}
  public static function form(Schema $schema):Schema{return TeamForm::configure($schema);}public static function infolist(Schema $schema):Schema{return TeamInfolist::configure($schema);}public static function table(Table $table):Table{return TeamsTable::configure($table);}public static function getPages():array{return ['index'=>ListTeams::route('/'),'create'=>CreateTeam::route('/create'),'view'=>ViewTeam::route('/{record}'),'edit'=>EditTeam::route('/{record}/edit')];}
  private static function canManage(string $permission):bool
