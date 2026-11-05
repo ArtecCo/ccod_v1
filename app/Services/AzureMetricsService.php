@@ -62,13 +62,14 @@ class AzureMetricsService
                 throw new RuntimeException('One or more selected metrics or aggregations are not supported by this resource.');
             }
 
-            $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $definition['namespace'] ?? null, $metric, $aggregation, $start, $end, $interval]));
-            $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $interval, $definition): array {
+            $metricInterval = $this->resolveInterval($definition['time_grain'] ?? [], $interval);
+            $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $definition['namespace'] ?? null, $metric, $aggregation, $start, $end, $metricInterval]));
+            $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $metricInterval, $definition): array {
                 $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
                     . '?api-version=' . self::API_VERSION
                     . '&metricnames=' . rawurlencode($metric)
                     . '&timespan=' . rawurlencode($start . '/' . $end)
-                    . '&interval=' . rawurlencode($interval)
+                    . '&interval=' . rawurlencode($metricInterval)
                     . '&aggregation=' . rawurlencode($aggregation)
                     . (is_string($definition['namespace'] ?? null) && $definition['namespace'] !== '' ? '&metricnamespace=' . rawurlencode($definition['namespace']) : '');
                 $response = $this->azure->get($url);
@@ -76,11 +77,32 @@ class AzureMetricsService
                     throw new RuntimeException('Azure Monitor metrics query failed.');
                 }
 
-                return ['metric' => $metric, 'aggregation' => $aggregation, 'value' => $response->json('value', [])];
+                return ['metric' => $metric, 'aggregation' => $aggregation, 'interval' => $metricInterval, 'value' => $response->json('value', [])];
             });
         }
 
         return $results;
+    }
+
+    private function resolveInterval(array $available, string $requested): string
+    {
+        $minutes = static function (string $value): ?int {
+            if (preg_match('/^PT(\\d+)M$/', $value, $matches) === 1) return (int) $matches[1];
+            if (preg_match('/^PT(\\d+)H$/', $value, $matches) === 1) return (int) $matches[1] * 60;
+            if (preg_match('/^P(\\d+)D$/', $value, $matches) === 1) return (int) $matches[1] * 1440;
+            return null;
+        };
+
+        $requestedMinutes = $minutes($requested);
+        $choices = collect($available)
+            ->filter(fn ($value): bool => is_string($value) && $minutes($value) !== null)
+            ->sortBy(fn (string $value): int => $minutes($value))
+            ->values();
+
+        if ($choices->isEmpty() || $requestedMinutes === null || $choices->contains($requested)) return $requested;
+
+        return $choices->first(fn (string $value): bool => $minutes($value) >= $requestedMinutes)
+            ?? $choices->last();
     }
 
     public function eligibleResources(AzureSubscription $subscription): \Illuminate\Database\Eloquent\Collection
