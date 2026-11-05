@@ -26,7 +26,7 @@ class SubscriptionSecurityOverview extends BaseWidget
             ->where('state', 'Unhealthy')
             ->where('severity', 'High')
             ->count();
-        $lastChanged = (clone $assessmentQuery)->max('status_changed_at');
+        $lastSynced = (clone $assessmentQuery)->max('synced_at');
 
         $latestScore = $this->record->securityScores()
             ->orderByDesc('captured_at')
@@ -62,8 +62,8 @@ class SubscriptionSecurityOverview extends BaseWidget
 
         $trendColor = $scoreDifference === null ? 'gray' : ($scoreDifference >= 0 ? 'success' : 'danger');
 
-        $lastChangedLabel = $lastChanged !== null
-            ? Carbon::parse($lastChanged)->format('d M Y, H:i')
+        $lastSyncedLabel = $lastSynced !== null
+            ? Carbon::parse($lastSynced, 'UTC')->setTimezone('Asia/Kolkata')->format('d M Y, H:i')
             : '—';
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
@@ -91,7 +91,7 @@ class SubscriptionSecurityOverview extends BaseWidget
             Stat::make('High Recommendations', (string) $high)
                 ->icon('heroicon-o-shield-exclamation')
                 ->color($high > 0 ? 'danger' : 'success'),
-            Stat::make('Last Status Change', $lastChangedLabel)
+            Stat::make('Last Sync', $lastSyncedLabel)
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray'),
         ];
