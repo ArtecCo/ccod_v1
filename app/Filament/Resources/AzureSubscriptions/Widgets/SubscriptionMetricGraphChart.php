@@ -25,27 +25,20 @@ class SubscriptionMetricGraphChart extends ChartWidget
 
     public string $interval;
 
-    protected ?string $heading = null;
-
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '300px';
 
-    public function mount(
-        AzureSubscription $record,
-        int $graphId,
-        string $start,
-        string $end,
-        string $interval,
-    ): void {
-        $this->record = $record;
-        $this->graphId = $graphId;
-        $this->start = $start;
-        $this->end = $end;
-        $this->interval = $interval;
+    protected function getHeading(): ?string
+    {
+        return $this->graph()->title;
+    }
 
-        abort_unless($this->canViewMetrics(), 403);
-        $this->heading = $this->graph()->title;
+    protected function getDescription(): ?string
+    {
+        $resource = $this->graph()->resource;
+
+        return $resource?->name.' · '.$resource?->resource_type;
     }
 
     protected function getData(): array
