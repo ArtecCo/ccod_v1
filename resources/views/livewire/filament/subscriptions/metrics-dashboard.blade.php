@@ -67,6 +67,7 @@
             this.timer = window.setInterval(() => this.checkActive(), 1200);
             this.refreshTimer = window.setInterval(() => { if (this.active && !this.loadingInitial) this.refreshAll(); }, 30000);
             document.addEventListener('visibilitychange', () => this.checkActive());
+            document.addEventListener('click', (event) => { if (event.target.closest('[role="tab"],button[aria-selected]')) requestAnimationFrame(() => this.checkActive()); });
             window.addEventListener('popstate', () => this.checkActive());
             this.checkActive();
         },
