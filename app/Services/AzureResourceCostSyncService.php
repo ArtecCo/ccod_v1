@@ -31,15 +31,30 @@ class AzureResourceCostSyncService
 
         $response = $this->throttle->post($this->request(), $url, $payload);
         if ($response->status() === 204) {
-            BillingResource::query()->where('subscription_id', $subscription->subscription_id)->update(['cost_eur' => 0]);
-            return 0;
+            throw new RuntimeException('Azure returned HTTP 204 for resource costs; existing values were left unchanged because completeness could not be verified.');
         }
         $response->throw();
 
+        $allRows = [];
         $properties = $response->json('properties', []);
+        if (! is_array($properties) || ! is_array($properties['columns'] ?? null) || ! is_array($properties['rows'] ?? null)) {
+            throw new RuntimeException('Azure returned an incomplete resource-cost response; existing values were left unchanged.');
+        }
+        $allRows = array_merge($allRows, $properties['rows']);
+        $nextLink = $properties['nextLink'] ?? null;
+        while (is_string($nextLink) && $nextLink !== '') {
+            $page = $this->throttle->get($this->request(), $nextLink);
+            $page->throw();
+            $pageProperties = $page->json('properties', []);
+            if (! is_array($pageProperties) || ! is_array($pageProperties['rows'] ?? null)) {
+                throw new RuntimeException('Azure returned an incomplete resource-cost page; existing values were left unchanged.');
+            }
+            $allRows = array_merge($allRows, $pageProperties['rows']);
+            $nextLink = $pageProperties['nextLink'] ?? null;
+        }
         $columns = collect($properties['columns'] ?? [])->map(fn (mixed $column): ?string => is_array($column) && is_string($column['name'] ?? null) ? $column['name'] : null)->filter()->values()->all();
         $costs = [];
-        foreach (($properties['rows'] ?? []) as $values) {
+        foreach ($allRows as $values) {
             if (! is_array($values)) continue;
             $row = [];
             foreach ($columns as $index => $column) $row[$column] = $values[$index] ?? null;
