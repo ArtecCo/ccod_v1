@@ -108,4 +108,21 @@ class RolePermissionServiceTest extends TestCase
 
         $this->assertSame([], $role->fresh()->permissions()->pluck('id')->all());
     }
+
+    public function test_metrics_management_permission_automatically_grants_metrics_view(): void
+    {
+        $role = Role::create([
+            'name' => 'Test metrics role',
+            'slug' => 'test-metrics-role',
+            'is_active' => true,
+            'is_system_role' => false,
+        ]);
+
+        app(RolePermissionService::class)->sync($role, ['resources.metrics.manage']);
+
+        $this->assertEqualsCanonicalizing(
+            ['resources.metrics.view', 'resources.metrics.manage'],
+            $role->fresh()->permissions()->pluck('slug')->all(),
+        );
+    }
 }
