@@ -32,6 +32,7 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOvervi
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
+use App\Livewire\Filament\Subscriptions\SubscriptionMetricsDashboard;
 
 class ViewAzureSubscription extends ViewRecord
 {
