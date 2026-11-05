@@ -24,13 +24,19 @@ class SubscriptionMetricsController extends Controller
         $resources = $metrics->eligibleResources($subscription);
         $eligible = [];
 
-        foreach ($resources as $resourceData) {
-            $resource = BillingResource::query()->where('resource_id', $resourceData['resource_id'])
-                ->where('subscription_id', $subscription->subscription_id)->first();
-            if (! $resource) continue;
+        foreach ($resources as $resource) {
             try {
                 $definitions = $metrics->definitions($resource);
-                if ($definitions !== []) $eligible[] = [...$resourceData, 'metrics' => $definitions];
+                if ($definitions !== []) {
+                    $eligible[] = [
+                        'resource_id' => $resource->resource_id,
+                        'name' => $resource->name,
+                        'resource_type' => $resource->resource_type,
+                        'region' => $resource->region,
+                        'sku' => $resource->sku,
+                        'metrics' => $definitions,
+                    ];
+                }
             } catch (Throwable $exception) {
                 report($exception);
             }
