@@ -27,7 +27,7 @@ class AzureSecurityScoreSyncService
             ->values()
             ->all();
 
-        $stats = ['subscriptions' => count($subscriptions), 'discovered' => 0, 'created' => 0, 'updated' => 0, 'pruned' => 0];
+        $stats = ['subscriptions' => count($subscriptions), 'discovered' => 0, 'created' => 0, 'updated' => 0, 'deduplicated' => 0, 'pruned' => 0];
 
         foreach ($subscriptions as $subscription) {
             $url = sprintf(
@@ -50,12 +50,20 @@ class AzureSecurityScoreSyncService
                 $stats['discovered']++;
                 $attributes = $this->attributes($score, $subscription);
                 $capturedAt = Carbon::now();
+                $dayStart = $capturedAt->copy()->startOfDay();
+                $dayEnd = $capturedAt->copy()->endOfDay();
 
-                $existing = AzureSecurityScore::query()
+                // Retain one snapshot per subscription and initiative per calendar day.
+                // A later scan on the same day replaces the earlier snapshot.
+                $dailySnapshots = AzureSecurityScore::query()
                     ->where('subscription_id', $subscription)
                     ->where('initiative_name', $attributes['initiative_name'])
-                    ->whereBetween('captured_at', [$capturedAt->copy()->startOfMinute(), $capturedAt->copy()->endOfMinute()])
-                    ->first();
+                    ->whereBetween('captured_at', [$dayStart, $dayEnd])
+                    ->orderByDesc('captured_at')
+                    ->lockForUpdate()
+                    ->get();
+
+                $existing = $dailySnapshots->first();
 
                 if ($existing === null) {
                     AzureSecurityScore::query()->create([
@@ -65,6 +73,14 @@ class AzureSecurityScoreSyncService
                     ]);
                     $stats['created']++;
                 } else {
+                    $duplicateIds = $dailySnapshots->skip(1)->pluck('id');
+
+                    if ($duplicateIds->isNotEmpty()) {
+                        $stats['deduplicated'] += AzureSecurityScore::query()
+                            ->whereIn('id', $duplicateIds)
+                            ->delete();
+                    }
+
                     $existing->forceFill([
                         ...$attributes,
                         'captured_at' => $capturedAt,
