@@ -20,3 +20,58 @@
         <div class="ccod-cloud-loader__track"><span></span></div>
     </div>
 </div>
+
+<script>
+(() => {
+    const initCloudLoader = () => {
+        const overlay = document.getElementById('ccod-cloud-loader');
+
+        if (!overlay || overlay.dataset.initialized === 'true' || ! window.Livewire) {
+            return;
+        }
+
+        overlay.dataset.initialized = 'true';
+
+        let activeRequests = 0;
+        let showTimer = null;
+
+        const show = () => {
+            activeRequests++;
+
+            if (activeRequests === 1) {
+                showTimer = window.setTimeout(() => {
+                    overlay.classList.add('is-visible');
+                    overlay.setAttribute('aria-hidden', 'false');
+                }, 120);
+            }
+        };
+
+        const hide = () => {
+            activeRequests = Math.max(0, activeRequests - 1);
+
+            if (activeRequests === 0) {
+                window.clearTimeout(showTimer);
+                overlay.classList.remove('is-visible');
+                overlay.setAttribute('aria-hidden', 'true');
+            }
+        };
+
+        window.Livewire.hook('request', ({ succeed, fail }) => {
+            show();
+            succeed(() => hide());
+            fail(() => hide());
+        });
+
+        window.addEventListener('pageshow', () => {
+            activeRequests = 0;
+            window.clearTimeout(showTimer);
+            overlay.classList.remove('is-visible');
+            overlay.setAttribute('aria-hidden', 'true');
+        });
+    };
+
+    document.addEventListener('livewire:init', initCloudLoader);
+    document.addEventListener('DOMContentLoaded', initCloudLoader);
+    initCloudLoader();
+})();
+</script>
