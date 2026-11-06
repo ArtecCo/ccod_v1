@@ -206,11 +206,94 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             $headerActions = [];
 
             if ($this->canManageMetrics()) {
+                $headerActions[] = Action::make('editMetricGraph'.$graph->id)
+                    ->label('Edit graph')
+                    ->tooltip('Edit graph')
+                    ->icon('heroicon-o-pencil-square')
+                    ->iconButton()
+                    ->color('gray')
+                    ->modalHeading('Edit resource metric graph')
+                    ->modalSubmitActionLabel('Save changes')
+                    ->fillForm(fn (): array => [
+                        'resource_id' => $graph->resource_id,
+                        'title' => $graph->title,
+                        'series' => $graph->series ?? [],
+                    ])
+                    ->schema([
+                        Select::make('resource_id')
+                            ->label('Azure resource')
+                            ->options(fn (): array => $this->resourceOptions())
+                            ->searchable()
+                            ->live()
+                            ->required(),
+                        TextInput::make('title')
+                            ->label('Graph title')
+                            ->maxLength(160)
+                            ->required(),
+                        Repeater::make('series')
+                            ->label('Metric series')
+                            ->schema([
+                                Select::make('metric')
+                                    ->label('Metric')
+                                    ->options(fn ($get): array => $this->metricOptions($get('../../resource_id')))
+                                    ->searchable()
+                                    ->live()
+                                    ->required(),
+                                Select::make('aggregation')
+                                    ->label('Aggregation')
+                                    ->options(fn ($get): array => $this->aggregationOptions($get('../../resource_id'), $get('metric')))
+                                    ->required(),
+                            ])
+                            ->columns(2)
+                            ->defaultItems(1)
+                            ->minItems(1)
+                            ->maxItems(20)
+                            ->required(),
+                    ])
+                    ->action(function (array $data) use ($graph): void {
+                        abort_unless($this->canManageMetrics(), 403);
+
+                        $resource = BillingResource::query()
+                            ->where('subscription_id', $this->record->subscription_id)
+                            ->where('resource_id', $data['resource_id'])
+                            ->firstOrFail();
+
+                        $definitions = collect(app(AzureMetricsService::class)->definitions($resource))->keyBy('name');
+                        $series = collect($data['series'])->map(function (array $item) use ($definitions): array {
+                            $definition = $definitions->get($item['metric'] ?? '');
+
+                            abort_unless(
+                                $definition && in_array($item['aggregation'] ?? null, $definition['aggregations'], true),
+                                422,
+                                'A selected metric or aggregation is not supported by this resource.'
+                            );
+
+                            return [
+                                'metric' => $item['metric'],
+                                'aggregation' => $item['aggregation'],
+                            ];
+                        })->values()->all();
+
+                        SubscriptionMetricGraph::query()
+                            ->where('subscription_id', $this->record->subscription_id)
+                            ->whereKey($graph->id)
+                            ->firstOrFail()
+                            ->update([
+                                'resource_id' => $resource->resource_id,
+                                'title' => $data['title'],
+                                'series' => $series,
+                            ]);
+
+                        $this->refreshVersion++;
+                    })
+                    ->successNotificationTitle('Metric graph updated');
+
                 $headerActions[] = Action::make('removeMetricGraph'.$graph->id)
                     ->label('Remove graph')
+                    ->tooltip('Remove graph')
                     ->icon('heroicon-o-trash')
+                    ->iconButton()
                     ->color('danger')
-                    ->size('sm')
                     ->requiresConfirmation()
                     ->modalHeading('Remove metric graph')
                     ->modalDescription('This removes the graph for everyone who can view this subscription.')
