@@ -73,9 +73,15 @@ class SubscriptionCostSummary extends BaseWidget
             ? $currentAmount + $forecastRemaining
             : null;
 
-        $budgetAmount = $this->record->budgets()->sum('amount');
-        $budgetCurrency = $this->budgetCurrency();
-        $budgetExpiry = $this->budgetExpiryLabel();
+        // Read the subscription's small budget set once instead of issuing
+        // separate SUM, currency and MAX queries.
+        $budgets = $this->record->budgets()->get(['amount', 'currency', 'end_date']);
+        $budgetAmount = $budgets->sum(fn ($budget): float => (float) $budget->amount);
+        $budgetCurrency = $budgets->first()?->currency ?: 'EUR';
+        $endDate = $budgets->max('end_date');
+        $budgetExpiry = $endDate !== null
+            ? 'Until ' . Carbon::parse($endDate)->format('M Y')
+            : 'Expiry unavailable';
 
         return [
             $mtd,
@@ -123,22 +129,6 @@ class SubscriptionCostSummary extends BaseWidget
     private function formatDifference(float $difference): string
     {
         return ($difference >= 0 ? '+' : '') . number_format($difference, 1) . '%';
-    }
-
-    private function budgetCurrency(): string
-    {
-        return $this->record->budgets()->value('currency') ?: 'EUR';
-    }
-
-    private function budgetExpiryLabel(): string
-    {
-        $endDate = $this->record->budgets()->max('end_date');
-
-        if (! is_string($endDate) || $endDate === '') {
-            return 'Expiry unavailable';
-        }
-
-        return 'Until ' . Carbon::parse($endDate)->format('M Y');
     }
 
     private function formatMoney(mixed $value, string $currency): string
