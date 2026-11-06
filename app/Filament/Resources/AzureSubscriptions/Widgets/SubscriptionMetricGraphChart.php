@@ -12,7 +12,6 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use App\Services\AzureMetricsService;
 use Filament\Widgets\ChartWidget;
-use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -32,11 +31,6 @@ class SubscriptionMetricGraphChart extends ChartWidget
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '300px';
-
-    public function placeholder(): View
-    {
-        return view('livewire.placeholders.metric-chart');
-    }
 
     protected function getData(): array
     {
