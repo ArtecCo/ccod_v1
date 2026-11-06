@@ -21,7 +21,7 @@ class SubscriptionCostHistoryChart extends ChartWidget
      */
     public array $costHistory = [];
 
-    protected ?string $heading = 'Cost History';
+    protected ?string $heading = 'Cost Trend';
 
     protected string $color = 'primary';
 
