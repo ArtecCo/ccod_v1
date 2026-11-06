@@ -73,8 +73,26 @@ class SubscriptionMetricGraphChart extends ChartWidget
                             continue;
                         }
 
-                        $minute = Carbon::parse($timestamp)->utc()->startOfMinute()->format('Y-m-d\\TH:i:s\\Z');
-                        $points[$minute] = (float) $value;
+                        $bucket = $this->interval === 'P1D'
+                            ? Carbon::parse($timestamp)->utc()->startOfDay()
+                            : Carbon::parse($timestamp)->utc()->startOfMinute();
+                        $bucketKey = $this->interval === 'P1D'
+                            ? $bucket->format('Y-m-d')
+                            : $bucket->format('Y-m-d\\TH:i:s\\Z');
+
+                        if ($this->interval === 'P1D' && isset($points[$bucketKey])) {
+                            // Azure normally returns one point per daily bucket.
+                            // This merge also protects against multiple series
+                            // timestamps falling within the same UTC day.
+                            $points[$bucketKey] = match (strtolower($result['aggregation'])) {
+                                'maximum' => max($points[$bucketKey], (float) $value),
+                                'minimum' => min($points[$bucketKey], (float) $value),
+                                'total' => $points[$bucketKey] + (float) $value,
+                                default => ($points[$bucketKey] + (float) $value) / 2,
+                            };
+                        } else {
+                            $points[$bucketKey] = (float) $value;
+                        }
                     }
 
                     if ($points === []) {
@@ -101,16 +119,20 @@ class SubscriptionMetricGraphChart extends ChartWidget
             return ['datasets' => [], 'labels' => []];
         }
 
-        // Build the complete requested one-minute timeline. Azure can return
-        // only a subset of the requested window; retaining the full timeline
-        // makes that missing history visible instead of shrinking the X-axis.
-        $cursor = Carbon::parse($this->start)->utc()->startOfMinute();
-        $lastMinute = Carbon::parse($this->end)->utc()->startOfMinute();
+        // Keep the full selected range on the X-axis. For 30-day views,
+        // one daily bucket per date keeps the chart small and responsive.
+        $daily = $this->interval === 'P1D';
+        $cursor = Carbon::parse($this->start)->utc();
+        $last = Carbon::parse($this->end)->utc();
+        $cursor = $daily ? $cursor->startOfDay() : $cursor->startOfMinute();
+        $last = $daily ? $last->startOfDay() : $last->startOfMinute();
         $timestamps = [];
 
-        while ($cursor->lessThanOrEqualTo($lastMinute)) {
-            $timestamps[] = $cursor->format('Y-m-d\\TH:i:s\\Z');
-            $cursor->addMinute();
+        while ($cursor->lessThanOrEqualTo($last)) {
+            $timestamps[] = $daily
+                ? $cursor->format('Y-m-d')
+                : $cursor->format('Y-m-d\\TH:i:s\\Z');
+            $cursor->add($daily ? '1 day' : '1 minute');
         }
 
         foreach ($datasets as &$dataset) {
@@ -124,9 +146,9 @@ class SubscriptionMetricGraphChart extends ChartWidget
         return [
             'datasets' => $datasets,
             'labels' => array_map(
-                fn (string $timestamp): string => Carbon::parse($timestamp)
-                    ->timezone('Asia/Kolkata')
-                    ->format('d M H:i'),
+                fn (string $timestamp): string => $daily
+                    ? Carbon::createFromFormat('Y-m-d', $timestamp, 'UTC')->timezone('Asia/Kolkata')->format('d M')
+                    : Carbon::parse($timestamp)->timezone('Asia/Kolkata')->format('d M H:i'),
                 $timestamps,
             ),
         ];
