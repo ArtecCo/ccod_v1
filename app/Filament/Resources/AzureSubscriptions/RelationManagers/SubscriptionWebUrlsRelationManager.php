@@ -110,6 +110,33 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                 DeleteAction::make()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record)),
             ])
             ->toolbarActions([
+                CreateAction::make()
+                    ->label('Add Web URL')
+                    ->icon(Heroicon::OutlinedGlobeAlt)
+                    ->modalHeading('Add Web URL')
+                    ->modalSubmitActionLabel('Add URL')
+                    ->mutateFormDataUsing(function (array $data): array {
+                        $data['url'] = rtrim(trim($data['url']), '/');
+                        $data['url_hash'] = hash('sha256', $data['url']);
+                        $data['is_active'] = (bool) ($data['is_active'] ?? true);
+
+                        return $data;
+                    })
+                    ->before(function (CreateAction $action, array $data): void {
+                        $url = rtrim(trim((string) ($data['url'] ?? '')), '/');
+                        $urlHash = hash('sha256', $url);
+
+                        if ($this->getOwnerRecord()->webUrls()->where('url_hash', $urlHash)->exists()) {
+                            Notification::make()
+                                ->danger()
+                                ->title('Web URL already exists')
+                                ->body('This URL has already been added to this subscription.')
+                                ->send();
+
+                            $action->halt();
+                        }
+                    })
+                    ->after(fn (): mixed => $this->dispatch('web-url-added')),
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
             ])
