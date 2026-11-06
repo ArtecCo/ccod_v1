@@ -371,7 +371,14 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         } else {
             $minutes = $durations[$preset] ?? 15;
             $end = now();
-            $start = $end->copy()->subMinutes($minutes);
+
+            if ($preset === '30d') {
+                // Use exactly 30 calendar-day buckets (including today),
+                // rather than touching 31 dates with a rolling 30x24h range.
+                $start = $end->copy()->startOfDay()->subDays(29);
+            } else {
+                $start = $end->copy()->subMinutes($minutes);
+            }
         }
 
         $minutes = max(1, $start->diffInMinutes($end));
