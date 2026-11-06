@@ -160,7 +160,17 @@ class AzureMetricsService
                 throw new RuntimeException('One or more selected metrics or aggregations are not supported by this resource.');
             }
 
-            $metricInterval = $this->resolveInterval($definition['time_grain'] ?? [], $interval);
+            $availableIntervals = $definition['time_grain'] ?? [];
+            if ($availableIntervals !== [] && ! in_array($interval, $availableIntervals, true)) {
+                throw new RuntimeException(sprintf(
+                    'Metric "%s" does not support the dashboard interval %s. Supported intervals: %s.',
+                    $metric,
+                    $interval,
+                    implode(', ', $availableIntervals),
+                ));
+            }
+
+            $metricInterval = $interval;
             $cacheKey = 'azure-metrics-query:' . sha1(json_encode([$resource->resource_id, $definition['namespace'] ?? null, $metric, $aggregation, $start, $end, $metricInterval]));
             $results[] = Cache::remember($cacheKey, now()->addSeconds(20), function () use ($resource, $metric, $aggregation, $start, $end, $metricInterval, $definition): array {
                 $url = 'https://management.azure.com' . $resource->resource_id . '/providers/Microsoft.Insights/metrics'
@@ -205,7 +215,41 @@ class AzureMetricsService
                     ));
                 }
 
-                return ['metric' => $metric, 'aggregation' => $aggregation, 'interval' => $metricInterval, 'value' => $response->json('value', [])];
+                $values = $response->json('value', []);
+                $returned = collect(is_array($values) ? $values : [])->map(function (array $metricResult): array {
+                    $points = collect($metricResult['timeseries'] ?? [])
+                        ->flatMap(fn (array $line) => $line['data'] ?? [])
+                        ->pluck('timeStamp')
+                        ->filter(fn ($timestamp) => is_string($timestamp))
+                        ->sort()
+                        ->values();
+
+                    return [
+                        'timespan' => $metricResult['timespan'] ?? null,
+                        'interval' => $metricResult['interval'] ?? null,
+                        'point_count' => $points->count(),
+                        'first_point' => $points->first(),
+                        'last_point' => $points->last(),
+                    ];
+                })->all();
+
+                Log::debug('Azure Monitor metrics response received.', [
+                    'resource_id' => $resource->resource_id,
+                    'metric' => $metric,
+                    'aggregation' => $aggregation,
+                    'requested_timespan_start' => $start,
+                    'requested_timespan_end' => $end,
+                    'requested_interval' => $metricInterval,
+                    'azure_metric_results' => $returned,
+                ]);
+
+                return [
+                    'metric' => $metric,
+                    'aggregation' => $aggregation,
+                    'interval' => $metricInterval,
+                    'value' => is_array($values) ? $values : [],
+                    'response_metadata' => $returned,
+                ];
             });
         }
 
