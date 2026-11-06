@@ -52,59 +52,69 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
         $now = now('Asia/Kolkata');
 
-        $this->filtersForm->fill([
+        $this->dashboardForm->fill([
             'preset' => '15m',
             'custom_start' => $now->copy()->subMinutes(15)->format('Y-m-d H:i:s'),
             'custom_end' => $now->format('Y-m-d H:i:s'),
         ]);
     }
 
-    public function filtersForm(Schema $schema): Schema
+    public function dashboardForm(Schema $schema): Schema
     {
         return $schema
             ->statePath('filters')
             ->components([
-                Section::make('Time range')
-                    ->headerActions([
-                        $this->addGraphAction(),
-                        Action::make('refreshCharts')
-                            ->label('Refresh')
-                            ->icon('heroicon-o-arrow-path')
-                            ->color('gray')
-                            ->action(fn () => $this->refreshCharts()),
-                    ])
+                Grid::make(1)
+                    ->gap('lg')
                     ->schema([
-                        Select::make('preset')
-                            ->label('Period')
-                            ->options([
-                                '15m' => 'Last 15 minutes',
-                                '30m' => 'Last 30 minutes',
-                                '1h' => 'Last 1 hour',
-                                '6h' => 'Last 6 hours',
-                                '12h' => 'Last 12 hours',
-                                '24h' => 'Last 24 hours',
-                                '7d' => 'Last 7 days',
-                                '30d' => 'Last 30 days',
-                                'custom' => 'Custom range',
-                            ])
-                            ->default('15m')
-                            ->live()
-                            ->required(),
-                        DateTimePicker::make('custom_start')
-                            ->label('Start (IST)')
-                            ->timezone('Asia/Kolkata')
-                            ->seconds(false)
-                            ->native(true)
-                            ->visible(fn ($get): bool => $get('preset') === 'custom'),
-                        DateTimePicker::make('custom_end')
-                            ->label('End (IST)')
-                            ->timezone('Asia/Kolkata')
-                            ->seconds(false)
-                            ->native(true)
-                            ->visible(fn ($get): bool => $get('preset') === 'custom'),
-                    ])
-                    ->columns(3),
+                        $this->filtersSection(),
+                        $this->graphsGrid(),
+                    ]),
             ]);
+    }
+
+    private function filtersSection(): Section
+    {
+        return Section::make('Time range')
+            ->headerActions([
+                $this->addGraphAction(),
+                Action::make('refreshCharts')
+                    ->label('Refresh')
+                    ->icon('heroicon-o-arrow-path')
+                    ->color('gray')
+                    ->action(fn () => $this->refreshCharts()),
+            ])
+            ->schema([
+                Select::make('preset')
+                    ->label('Period')
+                    ->options([
+                        '15m' => 'Last 15 minutes',
+                        '30m' => 'Last 30 minutes',
+                        '1h' => 'Last 1 hour',
+                        '6h' => 'Last 6 hours',
+                        '12h' => 'Last 12 hours',
+                        '24h' => 'Last 24 hours',
+                        '7d' => 'Last 7 days',
+                        '30d' => 'Last 30 days',
+                        'custom' => 'Custom range',
+                    ])
+                    ->default('15m')
+                    ->live()
+                    ->required(),
+                DateTimePicker::make('custom_start')
+                    ->label('Start (IST)')
+                    ->timezone('Asia/Kolkata')
+                    ->seconds(false)
+                    ->native(true)
+                    ->visible(fn ($get): bool => $get('preset') === 'custom'),
+                DateTimePicker::make('custom_end')
+                    ->label('End (IST)')
+                    ->timezone('Asia/Kolkata')
+                    ->seconds(false)
+                    ->native(true)
+                    ->visible(fn ($get): bool => $get('preset') === 'custom'),
+            ])
+            ->columns(3);
     }
 
     public function addGraphAction(): Action
@@ -202,7 +212,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         $this->refreshVersion++;
     }
 
-    public function graphsSchema(Schema $schema): Schema
+    private function graphsGrid(): Grid
     {
         $sections = [];
 
@@ -328,17 +338,20 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         }
 
         if ($sections === []) {
-            return $schema->components([
-                Section::make('No metric graphs configured')
-                    ->description($this->canManageMetrics()
-                        ? 'Add a graph to monitor one or more metrics from an Azure resource.'
-                        : 'No metric graphs have been configured for this subscription.'),
-            ]);
+            return Grid::make(2)
+                ->gap('lg')
+                ->schema([
+                    Section::make('No metric graphs configured')
+                        ->description($this->canManageMetrics()
+                            ? 'Add a graph to monitor one or more metrics from an Azure resource.'
+                            : 'No metric graphs have been configured for this subscription.')
+                        ->columnSpanFull(),
+                ]);
         }
 
-        return $schema->components([
-            Grid::make(2)->schema($sections),
-        ]);
+        return Grid::make(2)
+            ->gap('lg')
+            ->schema($sections);
     }
 
     public function getGraphs()
