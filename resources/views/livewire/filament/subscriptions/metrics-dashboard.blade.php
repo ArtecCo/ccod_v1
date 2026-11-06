@@ -1,11 +1,11 @@
 <div>
-    {{ $this->addGraphAction }}
-
-    <x-filament::section wire:poll.visible.30s="refreshCharts">
+    <x-filament::section>
         {{ $this->filtersForm }}
-
-        {{ $this->graphsSchema }}
     </x-filament::section>
+
+    <div class="mt-6">
+        {{ $this->graphsSchema }}
+    </div>
 
     <x-filament-actions::modals />
 </div>
