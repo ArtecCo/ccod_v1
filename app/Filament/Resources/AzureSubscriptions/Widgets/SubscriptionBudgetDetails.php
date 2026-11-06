@@ -21,6 +21,10 @@ class SubscriptionBudgetDetails extends BaseWidget
 
     protected static ?string $heading = 'Budget Details';
 
+    private bool $subscriptionForecastResolved = false;
+
+    private ?float $cachedSubscriptionForecastTotal = null;
+
     protected function getTableQuery(): Builder
     {
         return $this->record->budgets()->getQuery();
@@ -70,17 +74,17 @@ class SubscriptionBudgetDetails extends BaseWidget
 
     private function subscriptionForecastTotal(): ?float
     {
+        if ($this->subscriptionForecastResolved) {
+            return $this->cachedSubscriptionForecastTotal;
+        }
+
+        $this->subscriptionForecastResolved = true;
+
         $forecast = $this->record->costForecast;
 
         if ($forecast?->forecast_amount === null) {
             return null;
         }
-
-        $currentAmount = AzureSubscriptionCost::query()
-            ->where('subscription_id', $this->record->subscription_id)
-            ->where('granularity', 'monthly')
-            ->orderBy('period_start')
-            ->value('amount');
 
         $latestAmount = AzureSubscriptionCost::query()
             ->where('subscription_id', $this->record->subscription_id)
@@ -88,8 +92,10 @@ class SubscriptionBudgetDetails extends BaseWidget
             ->orderByDesc('period_start')
             ->value('amount');
 
-        return ($latestAmount !== null ? (float) $latestAmount : 0.0)
+        $this->cachedSubscriptionForecastTotal = ($latestAmount !== null ? (float) $latestAmount : 0.0)
             + (float) $forecast->forecast_amount;
+
+        return $this->cachedSubscriptionForecastTotal;
     }
 
     protected function canExportCost(): bool
