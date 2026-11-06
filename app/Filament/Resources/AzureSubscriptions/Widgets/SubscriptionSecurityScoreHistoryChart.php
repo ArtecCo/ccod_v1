@@ -35,28 +35,19 @@ class SubscriptionSecurityScoreHistoryChart extends ChartWidget
     {
         $days = 7;
 
-        $latest = AzureSecurityScore::query()
-            ->where('subscription_id', $this->record->subscription_id)
-            ->orderByDesc('captured_at')
-            ->first();
-
-        if ($latest === null || $latest->initiative_name === null) {
-            return [
-                'datasets' => [
-                    [
-                        'label' => 'Security Score',
-                        'data' => [],
-                    ],
-                ],
-                'labels' => [],
-            ];
-        }
-
         $from = now()->subDays($days - 1)->startOfDay();
 
+        // Resolve the most recently captured initiative inside the history
+        // query, avoiding a separate latest-record round trip.
         $scores = AzureSecurityScore::query()
             ->where('subscription_id', $this->record->subscription_id)
-            ->where('initiative_name', $latest->initiative_name)
+            ->where('initiative_name', function ($query): void {
+                $query->select('initiative_name')
+                    ->from('azure_security_scores')
+                    ->where('subscription_id', $this->record->subscription_id)
+                    ->orderByDesc('captured_at')
+                    ->limit(1);
+            })
             ->where('captured_at', '>=', $from)
             ->orderBy('captured_at')
             ->get(['captured_at', 'percentage_score']);
