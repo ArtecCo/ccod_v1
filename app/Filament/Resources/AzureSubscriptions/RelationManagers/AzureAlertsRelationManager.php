@@ -19,6 +19,8 @@ class AzureAlertsRelationManager extends RelationManager
     protected static ?string $title = 'Alerts';
     protected static bool $isLazy = true;
 
+    private ?array $cachedFilterOptions = null;
+
     #[On('filter-alerts-by-severity')]
     public function filterAlertsBySeverity(?string $severity = null): void
     {
@@ -48,9 +50,9 @@ class AzureAlertsRelationManager extends RelationManager
             ])
             ->filters([
                 SelectFilter::make('severity')->options(['Sev0' => 'Sev0', 'Sev1' => 'Sev1', 'Sev2' => 'Sev2', 'Sev3' => 'Sev3', 'Sev4' => 'Sev4']),
-                SelectFilter::make('signal_type')->label('Signal Type')->options(fn (): array => $ownerRecord->alerts()->distinct()->orderBy('signal_type')->pluck('signal_type', 'signal_type')->filter()->all()),
-                SelectFilter::make('monitor_service')->label('Monitor Service')->options(fn (): array => $ownerRecord->alerts()->distinct()->orderBy('monitor_service')->pluck('monitor_service', 'monitor_service')->filter()->all()),
-                SelectFilter::make('alert_condition')->label('Condition')->options(fn (): array => $ownerRecord->alerts()->distinct()->orderBy('alert_condition')->pluck('alert_condition', 'alert_condition')->filter()->all()),
+                SelectFilter::make('signal_type')->label('Signal Type')->options(fn (): array => $this->filterOptions()['signal_type']),
+                SelectFilter::make('monitor_service')->label('Monitor Service')->options(fn (): array => $this->filterOptions()['monitor_service']),
+                SelectFilter::make('alert_condition')->label('Condition')->options(fn (): array => $this->filterOptions()['alert_condition']),
             ])
             ->groups([Group::make('severity')->label('Severity'), Group::make('signal_type')->label('Signal Type')])
             ->defaultSort('last_modified_time', 'desc')
@@ -60,6 +62,37 @@ class AzureAlertsRelationManager extends RelationManager
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
             ]);
+    }
+
+    /**
+     * Load all alert filter choices with one bounded query.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private function filterOptions(): array
+    {
+        if ($this->cachedFilterOptions !== null) {
+            return $this->cachedFilterOptions;
+        }
+
+        $rows = $this->getOwnerRecord()->alerts()
+            ->select(['signal_type', 'monitor_service', 'alert_condition'])
+            ->distinct()
+            ->get();
+
+        $options = [];
+
+        foreach (['signal_type', 'monitor_service', 'alert_condition'] as $field) {
+            $values = $rows->pluck($field)
+                ->filter(fn ($value): bool => is_string($value) && $value !== '')
+                ->unique()
+                ->sort()
+                ->values();
+
+            $options[$field] = $values->mapWithKeys(fn (string $value): array => [$value => $value])->all();
+        }
+
+        return $this->cachedFilterOptions = $options;
     }
 
     private function canExport(): bool
