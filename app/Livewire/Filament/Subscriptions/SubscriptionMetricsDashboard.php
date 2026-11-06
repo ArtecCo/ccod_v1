@@ -375,10 +375,11 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         }
 
         $minutes = max(1, $start->diffInMinutes($end));
-        // Keep a consistent one-minute sampling request across every graph and range.
-        // Azure may reject PT1M for metrics that do not support that time grain;
-        // AzureMetricsService reports that failure rather than silently changing it.
-        $interval = 'PT1M';
+
+        // Long-range charts use Azure's daily aggregation to keep browser
+        // rendering lightweight. Shorter ranges retain one-minute sampling.
+        // AzureMetricsService validates that each metric supports the grain.
+        $interval = $preset === '30d' ? 'P1D' : 'PT1M';
 
         return [
             // Azure Monitor's timespan parser treats '+' in an offset as a
