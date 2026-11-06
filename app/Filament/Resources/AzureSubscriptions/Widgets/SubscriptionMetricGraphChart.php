@@ -73,10 +73,8 @@ class SubscriptionMetricGraphChart extends ChartWidget
                             continue;
                         }
 
-                        $points[$timestamp] = (float) $value;
-                        $labels[$timestamp] = Carbon::parse($timestamp)
-                            ->timezone('Asia/Kolkata')
-                            ->format('d M H:i');
+                        $minute = Carbon::parse($timestamp)->utc()->startOfMinute()->format('Y-m-d\\TH:i:s\\Z');
+                        $points[$minute] = (float) $value;
                     }
 
                     if ($points === []) {
@@ -99,12 +97,21 @@ class SubscriptionMetricGraphChart extends ChartWidget
             }
         }
 
-        if ($labels === []) {
+        if ($datasets === []) {
             return ['datasets' => [], 'labels' => []];
         }
 
-        ksort($labels);
-        $timestamps = array_keys($labels);
+        // Build the complete requested one-minute timeline. Azure can return
+        // only a subset of the requested window; retaining the full timeline
+        // makes that missing history visible instead of shrinking the X-axis.
+        $cursor = Carbon::parse($this->start)->utc()->startOfMinute();
+        $lastMinute = Carbon::parse($this->end)->utc()->startOfMinute();
+        $timestamps = [];
+
+        while ($cursor->lessThanOrEqualTo($lastMinute)) {
+            $timestamps[] = $cursor->format('Y-m-d\\TH:i:s\\Z');
+            $cursor->addMinute();
+        }
 
         foreach ($datasets as &$dataset) {
             $dataset['data'] = array_map(
@@ -116,7 +123,12 @@ class SubscriptionMetricGraphChart extends ChartWidget
 
         return [
             'datasets' => $datasets,
-            'labels' => array_values($labels),
+            'labels' => array_map(
+                fn (string $timestamp): string => Carbon::parse($timestamp)
+                    ->timezone('Asia/Kolkata')
+                    ->format('d M H:i'),
+                $timestamps,
+            ),
         ];
     }
 
