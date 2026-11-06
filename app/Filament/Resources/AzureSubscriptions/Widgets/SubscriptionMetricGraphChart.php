@@ -162,17 +162,8 @@ class SubscriptionMetricGraphChart extends ChartWidget
                 onHover: (event, activeElements, chart) => {
                     // Keep Chart.js's default hover/tooltip interaction intact.
                     // Resolve the shared timestamp separately for the dynamic legend.
-                    const isPointerLeaving = event.type === 'mouseout';
-                    const indexElements = !isPointerLeaving
-                        ? chart.getElementsAtEventForMode(
-                            event,
-                            'index',
-                            { intersect: false },
-                            false,
-                        )
-                        : [];
-                    const index = indexElements.length > 0
-                        ? indexElements[0].index
+                    const index = event.type !== 'mouseout' && activeElements.length > 0
+                        ? activeElements[0].index
                         : null;
 
                     if (chart.$ccodHoveredIndex === index) {
