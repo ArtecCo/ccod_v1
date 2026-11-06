@@ -20,13 +20,19 @@ class SubscriptionSecurityOverview extends BaseWidget
 
     protected function getStats(): array
     {
-        $assessmentQuery = $this->record->securityAssessments();
-        $unhealthy = (clone $assessmentQuery)->where('state', 'Unhealthy')->count();
-        $high = (clone $assessmentQuery)
+        $assessmentStats = $this->record->securityAssessments()
             ->where('state', 'Unhealthy')
-            ->where('severity', 'High')
-            ->count();
-        $lastSynced = (clone $assessmentQuery)->max('synced_at');
+            ->selectRaw(
+                'COUNT(*) AS unhealthy_count,
+                 SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS high_count,
+                 MAX(synced_at) AS last_synced',
+                ['High'],
+            )
+            ->first();
+
+        $unhealthy = (int) ($assessmentStats?->unhealthy_count ?? 0);
+        $high = (int) ($assessmentStats?->high_count ?? 0);
+        $lastSynced = $assessmentStats?->last_synced;
 
         $latestScore = $this->record->securityScores()
             ->orderByDesc('captured_at')
