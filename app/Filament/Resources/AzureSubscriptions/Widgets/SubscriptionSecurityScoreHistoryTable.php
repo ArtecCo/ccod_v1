@@ -21,20 +21,21 @@ class SubscriptionSecurityScoreHistoryTable extends BaseWidget
 
     protected function getTableQuery(): Builder
     {
-        $latest = AzureSecurityScore::query()
+        $latestInitiative = AzureSecurityScore::query()
+            ->select('initiative_name')
             ->where('subscription_id', $this->record->subscription_id)
             ->orderByDesc('captured_at')
-            ->first();
+            ->limit(1);
 
-        $query = AzureSecurityScore::query()
+        return AzureSecurityScore::query()
             ->where('subscription_id', $this->record->subscription_id)
-            ->where('captured_at', '>=', now()->subDays(6)->startOfDay());
-
-        if ($latest?->initiative_name !== null) {
-            $query->where('initiative_name', $latest->initiative_name);
-        }
-
-        return $query;
+            ->where('captured_at', '>=', now()->subDays(6)->startOfDay())
+            // Preserve the previous behavior when the latest snapshot has a
+            // null initiative (or no snapshot exists): show all recent rows.
+            ->where(function (Builder $query) use ($latestInitiative): void {
+                $query->where('initiative_name', $latestInitiative)
+                    ->orWhereRaw('(?) IS NULL', [$latestInitiative]);
+            });
     }
 
     public function table(Table $table): Table
