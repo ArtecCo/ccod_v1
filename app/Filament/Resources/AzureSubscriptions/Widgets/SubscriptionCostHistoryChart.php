@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSubscription;
 use App\Models\AzureSubscriptionCost;
 use Filament\Support\RawJs;
@@ -13,9 +12,6 @@ use Filament\Widgets\ChartWidget;
 
 class SubscriptionCostHistoryChart extends ChartWidget
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'chart';
     public AzureSubscription $record;
 
     /**
