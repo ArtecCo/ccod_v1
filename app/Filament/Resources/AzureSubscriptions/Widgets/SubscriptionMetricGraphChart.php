@@ -11,6 +11,7 @@ use App\Models\SubscriptionMetricGraph;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use App\Services\AzureMetricsService;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -152,6 +153,63 @@ class SubscriptionMetricGraphChart extends ChartWidget
                 $timestamps,
             ),
         ];
+    }
+
+    protected function getOptions(): RawJs
+    {
+        return RawJs::make(<<<'JS'
+            {
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                onHover: (event, activeElements, chart) => {
+                    const index = activeElements.length > 0
+                        ? activeElements[0].index
+                        : null;
+
+                    if (chart.$ccodHoveredIndex === index) {
+                        return;
+                    }
+
+                    chart.$ccodHoveredIndex = index;
+                    chart.update('none');
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            generateLabels: (chart) => {
+                                const defaultGenerateLabels =
+                                    chart.constructor.defaults.plugins.legend.labels.generateLabels;
+
+                                const labels = defaultGenerateLabels(chart);
+                                const index = chart.$ccodHoveredIndex;
+
+                                if (index === null || index === undefined) {
+                                    return labels;
+                                }
+
+                                return labels.map((item) => {
+                                    const dataset = chart.data.datasets[item.datasetIndex];
+                                    const value = dataset?.data?.[index];
+
+                                    if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+                                        return item;
+                                    }
+
+                                    return {
+                                        ...item,
+                                        text: `${item.text} — ${Number(value).toLocaleString(undefined, {
+                                            maximumFractionDigits: 2,
+                                        })}`,
+                                    };
+                                });
+                            },
+                        },
+                    },
+                },
+            }
+        JS);
     }
 
     protected function getType(): string
