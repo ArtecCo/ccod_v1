@@ -31,8 +31,6 @@ class AzureAlertsRelationManager extends RelationManager
 
     public function table(Table $table): Table
     {
-        $ownerRecord = $this->getOwnerRecord();
-
         return $table
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->select(['id', 'name', 'severity', 'affected_resource', 'target_resource_type', 'alert_condition', 'monitor_service', 'signal_type', 'fire_time', 'last_modified_time', 'subscription_id', 'target_resource_group', 'suppression_status']))
             ->columns([
