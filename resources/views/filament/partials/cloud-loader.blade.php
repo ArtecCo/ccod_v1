@@ -1,6 +1,6 @@
 <style>
 /* The loader lives inside the active Filament tab panel, never over the whole page. */
-.ccod-tab-loader-host{position:relative!important;isolation:isolate}
+.ccod-tab-loader-host{position:relative!important;isolation:isolate;min-height:12rem}
 .ccod-tab-loader{position:absolute;inset:0;z-index:40;display:flex;align-items:flex-start;justify-content:center;padding:3rem 1rem 1rem;background:color-mix(in srgb,var(--gray-50,#f9fafb) 82%,transparent);opacity:0;visibility:hidden;pointer-events:none;transition:opacity 160ms ease,visibility 160ms ease}
 .dark .ccod-tab-loader{background:color-mix(in srgb,var(--gray-950,#030712) 82%,transparent)}
 .ccod-tab-loader.is-visible{opacity:1;visibility:visible}
@@ -76,6 +76,9 @@
                     loader?.classList.add('is-visible');
                     loader?.setAttribute('aria-hidden', 'false');
                 }, 120);
+            } else if (host === panel) {
+                loader.classList.add('is-visible');
+                loader.setAttribute('aria-hidden', 'false');
             }
         };
 
