@@ -164,7 +164,8 @@ class SubscriptionMetricGraphChart extends ChartWidget
                     intersect: false,
                 },
                 onHover: (event, activeElements, chart) => {
-                    const index = activeElements.length > 0
+                    const isPointerLeaving = event.type === 'mouseout';
+                    const index = !isPointerLeaving && activeElements.length > 0
                         ? activeElements[0].index
                         : null;
 
@@ -199,7 +200,7 @@ class SubscriptionMetricGraphChart extends ChartWidget
 
                                     return {
                                         ...item,
-                                        text: `${item.text} — ${Number(value).toLocaleString(undefined, {
+                                        text: `${item.text} · ${Number(value).toLocaleString(undefined, {
                                             maximumFractionDigits: 2,
                                         })}`,
                                     };
