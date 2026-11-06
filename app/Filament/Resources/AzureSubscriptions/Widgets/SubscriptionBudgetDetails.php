@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureBudget;
 use App\Models\AzureSubscription;
 use App\Models\AzureSubscriptionCost;
@@ -17,9 +16,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class SubscriptionBudgetDetails extends BaseWidget
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'table';
     public AzureSubscription $record;
 
     protected static bool $isLazy = true;
