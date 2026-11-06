@@ -11,6 +11,7 @@ use App\Models\SubscriptionMetricGraph;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use App\Services\AzureMetricsService;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -152,6 +153,26 @@ class SubscriptionMetricGraphChart extends ChartWidget
                 $timestamps,
             ),
         ];
+    }
+
+    protected function getOptions(): RawJs
+    {
+        return RawJs::make(<<<'JS'
+            {
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => {
+                                const title = context.dataset.label || '';
+                                const value = context.formattedValue;
+
+                                return title ? `${title} - ${value}` : value;
+                            },
+                        },
+                    },
+                },
+            }
+        JS);
     }
 
     protected function getType(): string
