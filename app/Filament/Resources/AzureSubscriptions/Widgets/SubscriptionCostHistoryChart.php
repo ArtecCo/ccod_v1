@@ -13,6 +13,13 @@ class SubscriptionCostHistoryChart extends ChartWidget
 {
     public AzureSubscription $record;
 
+    /**
+     * The chart and its trend colour use the same cost history read.
+     *
+     * @var array<int, array{label: string, amount: float}>
+     */
+    public array $costHistory = [];
+
     protected ?string $heading = 'Cost History';
 
     protected string $color = 'primary';
@@ -23,28 +30,45 @@ class SubscriptionCostHistoryChart extends ChartWidget
 
     protected static bool $isLazy = true;
 
-    protected function getData(): array
+    public function mount(): void
     {
         $costs = AzureSubscriptionCost::query()
             ->where('subscription_id', $this->record->subscription_id)
             ->where('granularity', 'monthly')
             ->orderBy('period_start')
-            ->get(['period_start', 'amount', 'currency']);
+            ->get(['period_start', 'amount']);
 
+        $this->costHistory = $costs
+            ->map(fn (AzureSubscriptionCost $cost): array => [
+                'label' => $cost->period_start->format('M Y'),
+                'amount' => (float) $cost->amount,
+            ])
+            ->values()
+            ->all();
+
+        if (count($this->costHistory) < 2) {
+            return;
+        }
+
+        $current = $this->costHistory[count($this->costHistory) - 1]['amount'];
+        $previous = $this->costHistory[count($this->costHistory) - 2]['amount'];
+
+        // For costs, higher spending is bad (red) and lower spending is good (green).
+        $this->color = $current > $previous
+            ? 'danger'
+            : ($current < $previous ? 'success' : 'primary');
+    }
+
+    protected function getData(): array
+    {
         return [
             'datasets' => [
                 [
                     'label' => 'Cost',
-                    'data' => $costs
-                        ->map(fn (AzureSubscriptionCost $cost): float => (float) $cost->amount)
-                        ->values()
-                        ->all(),
+                    'data' => array_column($this->costHistory, 'amount'),
                 ],
             ],
-            'labels' => $costs
-                ->map(fn (AzureSubscriptionCost $cost): string => $cost->period_start->format('M Y'))
-                ->values()
-                ->all(),
+            'labels' => array_column($this->costHistory, 'label'),
         ];
     }
 
@@ -66,27 +90,5 @@ class SubscriptionCostHistoryChart extends ChartWidget
     protected function getType(): string
     {
         return 'line';
-    }
-
-    public function mount(): void
-    {
-        $costs = AzureSubscriptionCost::query()
-            ->where('subscription_id', $this->record->subscription_id)
-            ->where('granularity', 'monthly')
-            ->orderByDesc('period_start')
-            ->limit(2)
-            ->get(['amount']);
-
-        if ($costs->count() < 2) {
-            return;
-        }
-
-        $current = (float) $costs->get(0)->amount;
-        $previous = (float) $costs->get(1)->amount;
-
-        // For costs, higher spending is bad (red) and lower spending is good (green).
-        $this->color = $current > $previous
-            ? 'danger'
-            : ($current < $previous ? 'success' : 'primary');
     }
 }
