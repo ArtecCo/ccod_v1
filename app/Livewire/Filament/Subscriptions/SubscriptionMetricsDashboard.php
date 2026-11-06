@@ -50,8 +50,8 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         $now = now('Asia/Kolkata');
 
         $this->filtersForm->fill([
-            'preset' => '30m',
-            'custom_start' => $now->copy()->subMinutes(30)->format('Y-m-d H:i:s'),
+            'preset' => '15m',
+            'custom_start' => $now->copy()->subMinutes(15)->format('Y-m-d H:i:s'),
             'custom_end' => $now->format('Y-m-d H:i:s'),
         ]);
     }
@@ -83,7 +83,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                                 '30d' => 'Last 30 days',
                                 'custom' => 'Custom range',
                             ])
-                            ->default('30m')
+                            ->default('15m')
                             ->live()
                             ->required(),
                         DateTimePicker::make('custom_start')
@@ -350,7 +350,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
     public function getRange(): array
     {
-        $preset = $this->filters['preset'] ?? '30m';
+        $preset = $this->filters['preset'] ?? '15m';
         $durations = [
             '15m' => 15,
             '30m' => 30,
@@ -369,13 +369,16 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             abort_unless($end->greaterThan($start), 422, 'The end of the range must be after the start.');
             abort_if($start->diffInDays($end) > 93, 422, 'Metric time range cannot exceed 93 days.');
         } else {
-            $minutes = $durations[$preset] ?? 30;
+            $minutes = $durations[$preset] ?? 15;
             $end = now();
             $start = $end->copy()->subMinutes($minutes);
         }
 
         $minutes = max(1, $start->diffInMinutes($end));
-        $interval = $minutes <= 60 ? 'PT1M' : ($minutes <= 1440 ? 'PT5M' : 'PT1H');
+        // Keep a consistent one-minute sampling request across every graph and range.
+        // Azure may reject PT1M for metrics that do not support that time grain;
+        // AzureMetricsService reports that failure rather than silently changing it.
+        $interval = 'PT1M';
 
         return [
             // Azure Monitor's timespan parser treats '+' in an offset as a
