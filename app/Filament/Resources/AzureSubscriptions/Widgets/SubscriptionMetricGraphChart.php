@@ -11,7 +11,6 @@ use App\Models\SubscriptionMetricGraph;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use App\Services\AzureMetricsService;
-use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -153,62 +152,6 @@ class SubscriptionMetricGraphChart extends ChartWidget
                 $timestamps,
             ),
         ];
-    }
-
-    protected function getOptions(): RawJs
-    {
-        return RawJs::make(<<<'JS'
-            {
-                interaction: {
-                    mode: 'index',
-                    intersect: false,
-                },
-                onHover: (event, activeElements, chart) => {
-                    const nextIndex = activeElements.length
-                        ? activeElements[0].index
-                        : null;
-
-                    if (chart.$hoverIndex !== nextIndex) {
-                        chart.$hoverIndex = nextIndex;
-                        chart.update('none');
-                    }
-                },
-                plugins: {
-                    tooltip: {
-                        enabled: true,
-                    },
-                    legend: {
-                        labels: {
-                            generateLabels: (chart) => {
-                                const labels = Chart.defaults.plugins.legend.labels.generateLabels(chart);
-                                const index = chart.$hoverIndex;
-
-                                if (index === null || index === undefined) {
-                                    return labels;
-                                }
-
-                                return labels.map((label) => {
-                                    const value = chart.data.datasets[label.datasetIndex]?.data[index];
-
-                                    if (value === null || value === undefined) {
-                                        return label;
-                                    }
-
-                                    const formattedValue = Number(value).toLocaleString(undefined, {
-                                        maximumFractionDigits: 2,
-                                    });
-
-                                    return {
-                                        ...label,
-                                        text: `${label.text} - ${formattedValue}`,
-                                    };
-                                });
-                            },
-                        },
-                    },
-                },
-            }
-        JS);
     }
 
     protected function getType(): string
