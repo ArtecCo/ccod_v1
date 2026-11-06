@@ -22,6 +22,8 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
     protected static bool $isLazy = true;
     protected static ?string $relatedResource = AzureSecurityAssessmentResource::class;
 
+    private ?array $cachedFilterOptions = null;
+
     public function table(Table $table): Table
     {
         return $table
@@ -89,47 +91,23 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 SelectFilter::make('resource_id')
                     ->label('Affected Resource')
                     ->searchable()
-                    ->options(fn (): array => AzureSecurityAssessment::query()
-                        ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
-                        ->where('state', 'Unhealthy')
-                        ->whereNotNull('resource_id')
-                        ->distinct()
-                        ->pluck('resource_id')
-                        ->mapWithKeys(fn (string $resourceId): array => [$resourceId => $this->resourceName($resourceId)])
-                        ->sort()
-                        ->all()),
-                SelectFilter::make('assessment_type')->label('Assessment Type')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
-                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
-                    ->where('state', 'Unhealthy')
-                    ->whereNotNull('assessment_type')
-                    ->distinct()
-                    ->orderBy('assessment_type')
-                    ->pluck('assessment_type', 'assessment_type')
-                    ->all()),
-                SelectFilter::make('implementation_effort')->label('Effort')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
-                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
-                    ->where('state', 'Unhealthy')
-                    ->whereNotNull('implementation_effort')
-                    ->distinct()
-                    ->orderBy('implementation_effort')
-                    ->pluck('implementation_effort', 'implementation_effort')
-                    ->all()),
-                SelectFilter::make('user_impact')->label('User Impact')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
-                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
-                    ->where('state', 'Unhealthy')
-                    ->whereNotNull('user_impact')
-                    ->distinct()
-                    ->orderBy('user_impact')
-                    ->pluck('user_impact', 'user_impact')
-                    ->all()),
-                SelectFilter::make('status_cause')->label('Status Cause')->multiple()->options(fn (): array => AzureSecurityAssessment::query()
-                    ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
-                    ->where('state', 'Unhealthy')
-                    ->whereNotNull('status_cause')
-                    ->distinct()
-                    ->orderBy('status_cause')
-                    ->pluck('status_cause', 'status_cause')
-                    ->all()),
+                    ->options(fn (): array => $this->filterOptions()['resource_id']),
+                SelectFilter::make('assessment_type')
+                    ->label('Assessment Type')
+                    ->multiple()
+                    ->options(fn (): array => $this->filterOptions()['assessment_type']),
+                SelectFilter::make('implementation_effort')
+                    ->label('Effort')
+                    ->multiple()
+                    ->options(fn (): array => $this->filterOptions()['implementation_effort']),
+                SelectFilter::make('user_impact')
+                    ->label('User Impact')
+                    ->multiple()
+                    ->options(fn (): array => $this->filterOptions()['user_impact']),
+                SelectFilter::make('status_cause')
+                    ->label('Status Cause')
+                    ->multiple()
+                    ->options(fn (): array => $this->filterOptions()['status_cause']),
             ])
             ->groups([
                 Group::make('severity')->label('Severity'),
@@ -147,6 +125,51 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
             ]);
+    }
+
+    /**
+     * Build all recommendation filter choices from one distinct database read.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private function filterOptions(): array
+    {
+        if ($this->cachedFilterOptions !== null) {
+            return $this->cachedFilterOptions;
+        }
+
+        $rows = AzureSecurityAssessment::query()
+            ->where('subscription_id', $this->getOwnerRecord()->subscription_id)
+            ->where('state', 'Unhealthy')
+            ->distinct()
+            ->get([
+                'resource_id',
+                'assessment_type',
+                'implementation_effort',
+                'user_impact',
+                'status_cause',
+            ]);
+
+        $resourceIds = $rows->pluck('resource_id')
+            ->filter(fn ($value): bool => is_string($value) && $value !== '')
+            ->unique()
+            ->mapWithKeys(fn (string $resourceId): array => [$resourceId => $this->resourceName($resourceId)])
+            ->sort()
+            ->all();
+
+        $options = ['resource_id' => $resourceIds];
+
+        foreach (['assessment_type', 'implementation_effort', 'user_impact', 'status_cause'] as $field) {
+            $values = $rows->pluck($field)
+                ->filter(fn ($value): bool => is_string($value) && $value !== '')
+                ->unique()
+                ->sort()
+                ->values();
+
+            $options[$field] = $values->mapWithKeys(fn (string $value): array => [$value => $value])->all();
+        }
+
+        return $this->cachedFilterOptions = $options;
     }
 
     private function canExport(): bool
