@@ -96,8 +96,17 @@ class SubscriptionMetricGraphChart extends ChartWidget
                         ->filter()
                         ->implode(', ');
 
+                    $aggregationLabel = match ($aggregation) {
+                        'average' => 'avg',
+                        'maximum' => 'max',
+                        'minimum' => 'min',
+                        'total' => 'sum',
+                        'count' => 'count',
+                        default => $aggregation,
+                    };
+
                     $datasets[] = [
-                        'label' => $result['metric'].($dimensionLabels !== '' ? ' · '.$dimensionLabels : ''),
+                        'label' => $result['metric'].' ('.$aggregationLabel.')'.($dimensionLabels !== '' ? ' · '.$dimensionLabels : ''),
                         'data' => $points,
                         'spanGaps' => false,
                         'tension' => 0.25,
