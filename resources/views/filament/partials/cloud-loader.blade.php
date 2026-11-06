@@ -97,7 +97,9 @@
                 event.shiftKey ||
                 event.altKey ||
                 link.target === '_blank' ||
-                link.hasAttribute('download')
+                link.hasAttribute('download') ||
+                link.hasAttribute('wire:navigate') ||
+                link.hasAttribute('wire:click')
             ) {
                 return;
             }
