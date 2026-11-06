@@ -64,9 +64,6 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                 TextColumn::make('ssl_days_remaining')->label('SSL Days')->placeholder('—')->sortable(),
                 TextColumn::make('last_checked_at')->label('Last Checked')->dateTime()->placeholder('Never')->sortable(),
             ])
-            ->headerActions([
-                // No header actions; Add Web URL belongs in the same toolbar as export.
-            ])
             ->recordActions([
                 EditAction::make()
                     ->label('Edit')
@@ -113,7 +110,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
     
                             $this->dispatch('web-url-added');
                         })
-                        ->successNotificationTitle('Web URL added'),,
+                        ->successNotificationTitle('Web URL added'),
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
             ])
