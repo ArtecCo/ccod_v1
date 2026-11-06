@@ -7,21 +7,15 @@ use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureAlertsRelati
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureSecurityAssessmentsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
 use App\Models\Developer;
-use App\Models\SubscriptionWebUrl;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
-use Filament\Actions\Action;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
-use Illuminate\Support\Facades\Gate;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryChart;
@@ -110,12 +104,6 @@ class ViewAzureSubscription extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('addWebUrl')->label('Add Web URL')->icon(Heroicon::OutlinedGlobeAlt)
-                ->visible(fn (): bool => Gate::forUser(auth()->user())->allows('create', [SubscriptionWebUrl::class, $this->record]))
-                ->modalHeading('Add Web URL')->modalSubmitActionLabel('Add URL')
-                ->form([TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048), Toggle::make('is_active')->label('Active')->default(true)])
-                ->action(function (array $data): void {$url = rtrim(trim($data['url']), '/'); $this->record->webUrls()->create(['url' => $url, 'url_hash' => hash('sha256', $url), 'is_active' => (bool) ($data['is_active'] ?? true)]); $this->dispatch('web-url-added');})
-                ->successNotificationTitle('Web URL added'),
             EditAction::make()->visible(fn (): bool => AzureSubscriptionResource::canEdit($this->record)),
         ];
     }
