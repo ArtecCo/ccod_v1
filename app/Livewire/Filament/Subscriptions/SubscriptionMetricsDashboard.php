@@ -45,6 +45,8 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
     public int $refreshVersion = 0;
 
+    public int $graphListVersion = 0;
+
     public function mount(AzureSubscription $record): void
     {
         $this->record = $record;
@@ -189,7 +191,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                         ->max('position') + 1,
                 ]);
 
-                $this->refreshVersion++;
+                $this->refreshGraphCollection();
             })
             ->successNotificationTitle('Metric graph created');
     }
@@ -208,6 +210,14 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
     public function refreshCharts(): void
     {
         abort_unless($this->canViewMetrics(), 403);
+        $this->refreshVersion++;
+    }
+
+    private function refreshGraphCollection(): void
+    {
+        abort_unless($this->canViewMetrics(), 403);
+
+        $this->graphListVersion++;
         $this->refreshVersion++;
     }
 
@@ -297,7 +307,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                                 'series' => $series,
                             ]);
 
-                        $this->refreshVersion++;
+                        $this->refreshGraphCollection();
                     })
                     ->successNotificationTitle('Metric graph updated');
 
@@ -312,13 +322,14 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                     ->modalDescription('This removes the graph for everyone who can view this subscription.')
                     ->action(function () use ($graph): void {
                         $this->deleteGraph($graph->id);
-                        $this->refreshVersion++;
+                        $this->refreshGraphCollection();
                     });
             }
 
             $range = $this->getRange();
 
             $sections[] = Section::make($graph->title)
+                ->key('metric-graph-'.$graph->id)
                 ->description(($graph->resource?->name ?? 'Resource').' · '.($graph->resource?->resource_type ?? ''))
                 ->headerActions($headerActions)
                 ->schema([
@@ -337,6 +348,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
         if ($sections === []) {
             return Grid::make(2)
+                ->key('metric-graphs-'.$this->graphListVersion)
                 ->schema([
                     Section::make('No metric graphs configured')
                         ->description($this->canManageMetrics()
@@ -347,6 +359,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         }
 
         return Grid::make(2)
+            ->key('metric-graphs-'.$this->graphListVersion)
             ->schema($sections);
     }
 
