@@ -331,7 +331,6 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                         'interval' => $range['interval'],
                     ])
                         ->key('metric-chart-'.$graph->id.'-'.sha1(json_encode($range)).'-'.$this->refreshVersion)
-                        ->lazy()
                         ->columnSpanFull(),
                 ])
                 ->columnSpan(1);
