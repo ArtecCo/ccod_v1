@@ -1,3 +1,26 @@
+<style>
+.ccod-cloud-loader{position:fixed;inset:0;z-index:99999;display:grid;place-items:center;padding:1.5rem;background:rgb(8 15 28 / 72%);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;visibility:hidden;pointer-events:none;transition:opacity 180ms ease,visibility 180ms ease}
+.ccod-cloud-loader.is-visible{opacity:1;visibility:visible;pointer-events:all}
+.ccod-cloud-loader__panel{display:flex;width:min(100%,19rem);flex-direction:column;align-items:center;padding:2rem 2.25rem 1.75rem;border:1px solid rgb(148 163 184 / 25%);border-radius:1rem;background:#111c2e;box-shadow:0 24px 80px rgb(0 0 0 / 38%);color:#f8fafc;text-align:center}
+.ccod-cloud-loader__cloud{position:relative;display:grid;width:7rem;height:6rem;place-items:center;margin-bottom:1.25rem}
+.ccod-cloud-loader__cloud>svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.ccod-cloud-loader__cloud>svg path{fill:#1e3a5f;stroke:#60a5fa;stroke-width:2.5}
+.ccod-cloud-loader__cube{position:relative;width:1.35rem;height:1.35rem;margin-top:1rem;transform-style:preserve-3d;animation:ccod-cloud-cube-spin 2.2s linear infinite}
+.ccod-cloud-loader__cube span{position:absolute;inset:0;border:1px solid #bfdbfe;background:rgb(59 130 246 / 78%);box-shadow:inset 0 0 10px rgb(191 219 254 / 25%)}
+.ccod-cloud-loader__cube span:nth-child(1){transform:translateZ(.675rem)}
+.ccod-cloud-loader__cube span:nth-child(2){transform:rotateY(180deg) translateZ(.675rem)}
+.ccod-cloud-loader__cube span:nth-child(3){transform:rotateY(90deg) translateZ(.675rem)}
+.ccod-cloud-loader__cube span:nth-child(4){transform:rotateY(-90deg) translateZ(.675rem)}
+.ccod-cloud-loader__cube span:nth-child(5){transform:rotateX(90deg) translateZ(.675rem)}
+.ccod-cloud-loader__cube span:nth-child(6){transform:rotateX(-90deg) translateZ(.675rem)}
+.ccod-cloud-loader__title{font-size:1rem;font-weight:650;letter-spacing:.01em}
+.ccod-cloud-loader__subtitle{margin-top:.35rem;color:#a8bad1;font-size:.8rem}
+.ccod-cloud-loader__track{width:9rem;height:3px;overflow:hidden;margin-top:1.4rem;border-radius:99px;background:#26364d}
+.ccod-cloud-loader__track span{display:block;width:42%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#38bdf8,#60a5fa);animation:ccod-cloud-progress 1.15s ease-in-out infinite}
+@keyframes ccod-cloud-cube-spin{from{transform:rotateX(-25deg) rotateY(0deg) rotateZ(0deg)}to{transform:rotateX(335deg) rotateY(360deg) rotateZ(360deg)}}
+@keyframes ccod-cloud-progress{0%{transform:translateX(-115%)}100%{transform:translateX(245%)}}
+@media(prefers-reduced-motion:reduce){.ccod-cloud-loader,.ccod-cloud-loader__cube,.ccod-cloud-loader__track span{animation:none!important;transition:none!important}}
+</style>
 <div
     id="ccod-cloud-loader"
     class="ccod-cloud-loader"
