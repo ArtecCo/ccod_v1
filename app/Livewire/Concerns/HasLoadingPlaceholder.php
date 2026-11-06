@@ -10,10 +10,6 @@ trait HasLoadingPlaceholder
 {
     public function placeholder(): View
     {
-        $variant = property_exists(static::class, 'loadingPlaceholderVariant')
-            ? static::$loadingPlaceholderVariant
-            : 'cards';
-
-        return view('livewire.placeholders.loading', ['variant' => $variant]);
+        return view('livewire.placeholders.cloud');
     }
 }
