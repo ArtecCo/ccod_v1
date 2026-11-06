@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Livewire\Filament\Subscriptions;
 
 
+use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSubscription;
 use App\Models\BillingResource;
 use App\Models\Developer;
@@ -33,6 +34,7 @@ use Throwable;
 
 class SubscriptionMetricsDashboard extends Component implements HasActions, HasSchemas
 {
+    use HasLoadingPlaceholder;
     use InteractsWithActions;
     use InteractsWithSchemas;
     use RestrictsFileUploadsToSchemaComponents;
