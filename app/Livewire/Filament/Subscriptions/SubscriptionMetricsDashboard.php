@@ -50,8 +50,8 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         $now = now('Asia/Kolkata');
 
         $this->filtersForm->fill([
-            'preset' => '1h',
-            'custom_start' => $now->copy()->subHour()->format('Y-m-d H:i:s'),
+            'preset' => '30m',
+            'custom_start' => $now->copy()->subMinutes(30)->format('Y-m-d H:i:s'),
             'custom_end' => $now->format('Y-m-d H:i:s'),
         ]);
     }
@@ -83,7 +83,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                                 '30d' => 'Last 30 days',
                                 'custom' => 'Custom range',
                             ])
-                            ->default('1h')
+                            ->default('30m')
                             ->live()
                             ->required(),
                         DateTimePicker::make('custom_start')
@@ -350,7 +350,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
     public function getRange(): array
     {
-        $preset = $this->filters['preset'] ?? '1h';
+        $preset = $this->filters['preset'] ?? '30m';
         $durations = [
             '15m' => 15,
             '30m' => 30,
@@ -369,7 +369,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             abort_unless($end->greaterThan($start), 422, 'The end of the range must be after the start.');
             abort_if($start->diffInDays($end) > 93, 422, 'Metric time range cannot exceed 93 days.');
         } else {
-            $minutes = $durations[$preset] ?? 60;
+            $minutes = $durations[$preset] ?? 30;
             $end = now();
             $start = $end->copy()->subMinutes($minutes);
         }
