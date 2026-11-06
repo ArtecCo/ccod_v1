@@ -109,7 +109,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     ]),
                 DeleteAction::make()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record)),
             ])
-            ->toolbarActions([
+            ->headerActions([
                 CreateAction::make()
                     ->label('Add Web URL')
                     ->icon(Heroicon::OutlinedGlobeAlt)
