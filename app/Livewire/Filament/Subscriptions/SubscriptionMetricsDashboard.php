@@ -65,7 +65,6 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             ->statePath('filters')
             ->components([
                 Grid::make(1)
-                    ->gap('lg')
                     ->schema([
                         $this->filtersSection(),
                         $this->graphsGrid(),
@@ -338,7 +337,6 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
 
         if ($sections === []) {
             return Grid::make(2)
-                ->gap('lg')
                 ->schema([
                     Section::make('No metric graphs configured')
                         ->description($this->canManageMetrics()
@@ -349,7 +347,6 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
         }
 
         return Grid::make(2)
-            ->gap('lg')
             ->schema($sections);
     }
 
