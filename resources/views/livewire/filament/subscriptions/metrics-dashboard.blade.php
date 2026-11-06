@@ -1,7 +1,5 @@
 <div>
-    <x-filament::section>
-        {{ $this->filtersForm }}
-    </x-filament::section>
+    {{ $this->filtersForm }}
 
     <div class="mt-6">
         {{ $this->graphsSchema }}
