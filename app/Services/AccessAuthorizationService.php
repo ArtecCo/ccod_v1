@@ -24,7 +24,6 @@ class AccessAuthorizationService
 
     private array $groupCache = [];
 
-    private array $navigationGroupCache = [];
 
     public function hasPermission(User $user, string $permission, BusinessUnit|Project|AzureSubscription|null $target = null): bool
     {
@@ -145,30 +144,13 @@ class AccessAuthorizationService
      * client sidebar. Avoid loading role permissions and unrelated subscription
      * columns on every panel request.
      */
+    /**
+     * Return only the subscription and project fields required to build the
+     * client sidebar, reusing the request-scoped authorization group cache.
+     */
     public function subscriptionsForNavigation(User $user): Collection
     {
-        $userId = (int) $user->getKey();
-
-        if (! isset($this->navigationGroupCache[$userId])) {
-            $this->navigationGroupCache[$userId] = UserGroup::query()
-                ->select(['id', 'role_id'])
-                ->with(['role:id,slug', 'projects:id'])
-                ->whereHas('users', function (Builder $query) use ($userId): void {
-                    $query->whereKey($userId)
-                        ->where(function (Builder $q): void {
-                            $q->whereNull('user_group_user.starts_at')
-                                ->orWhere('user_group_user.starts_at', '<=', now());
-                        })
-                        ->where(function (Builder $q): void {
-                            $q->whereNull('user_group_user.expires_at')
-                                ->orWhere('user_group_user.expires_at', '>', now());
-                        });
-                })
-                ->whereHas('role', fn (Builder $query): Builder => $query->where('is_active', true))
-                ->get();
-        }
-
-        $groups = $this->navigationGroupCache[$userId];
+        $groups = $this->groups($user);
 
         $query = AzureSubscription::query()
             ->select(['subscription_id', 'display_name'])
