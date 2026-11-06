@@ -1,7 +1,7 @@
 <div>
     {{ $this->filtersForm }}
 
-    <div class="mt-6">
+    <div class="mt-6" wire:poll.visible.30s="refreshCharts">
         {{ $this->graphsSchema }}
     </div>
 
