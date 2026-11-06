@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
+
+use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSubscription;
 use App\Models\Developer;
 use App\Models\SubscriptionMetricGraph;
@@ -17,6 +19,9 @@ use Throwable;
 
 class SubscriptionMetricGraphChart extends ChartWidget
 {
+    use HasLoadingPlaceholder;
+
+    protected static string $loadingPlaceholderVariant = 'chart';
     public AzureSubscription $record;
 
     public int $graphId;

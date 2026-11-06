@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
+
+use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSubscription;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -9,6 +11,9 @@ use Illuminate\Support\HtmlString;
 
 class SubscriptionStatsOverview extends BaseWidget
 {
+    use HasLoadingPlaceholder;
+
+    protected static string $loadingPlaceholderVariant = 'stats';
     public AzureSubscription $record;
 
     protected ?string $pollingInterval = null;

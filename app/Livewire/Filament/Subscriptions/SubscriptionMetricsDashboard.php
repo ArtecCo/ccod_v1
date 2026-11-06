@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Livewire\Filament\Subscriptions;
 
+
+use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSubscription;
 use App\Models\BillingResource;
 use App\Models\Developer;
@@ -32,6 +34,9 @@ use Throwable;
 
 class SubscriptionMetricsDashboard extends Component implements HasActions, HasSchemas
 {
+    use HasLoadingPlaceholder;
+
+    protected static string $loadingPlaceholderVariant = 'metrics';
     use InteractsWithActions;
     use InteractsWithSchemas;
     use RestrictsFileUploadsToSchemaComponents;
@@ -317,6 +322,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                         'interval' => $range['interval'],
                     ])
                         ->key('metric-chart-'.$graph->id.'-'.sha1(json_encode($range)).'-'.$this->refreshVersion)
+                        ->lazy()
                         ->columnSpanFull(),
                 ])
                 ->columnSpan(1);

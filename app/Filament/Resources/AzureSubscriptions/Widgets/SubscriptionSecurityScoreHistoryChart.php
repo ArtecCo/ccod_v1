@@ -4,12 +4,17 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
+
+use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use Filament\Widgets\ChartWidget;
 
 class SubscriptionSecurityScoreHistoryChart extends ChartWidget
 {
+    use HasLoadingPlaceholder;
+
+    protected static string $loadingPlaceholderVariant = 'chart';
     public AzureSubscription $record;
 
     protected ?string $heading = 'Security Score History';

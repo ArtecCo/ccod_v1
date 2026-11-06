@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
+
+use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use Carbon\Carbon;
@@ -12,6 +14,9 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class SubscriptionSecurityOverview extends BaseWidget
 {
+    use HasLoadingPlaceholder;
+
+    protected static string $loadingPlaceholderVariant = 'stats';
     public AzureSubscription $record;
 
     protected ?string $pollingInterval = null;
