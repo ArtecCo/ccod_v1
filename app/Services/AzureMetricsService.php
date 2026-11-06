@@ -256,27 +256,6 @@ class AzureMetricsService
         return $results;
     }
 
-    private function resolveInterval(array $available, string $requested): string
-    {
-        $minutes = static function (string $value): ?int {
-            if (preg_match('/^PT(\\d+)M$/', $value, $matches) === 1) return (int) $matches[1];
-            if (preg_match('/^PT(\\d+)H$/', $value, $matches) === 1) return (int) $matches[1] * 60;
-            if (preg_match('/^P(\\d+)D$/', $value, $matches) === 1) return (int) $matches[1] * 1440;
-            return null;
-        };
-
-        $requestedMinutes = $minutes($requested);
-        $choices = collect($available)
-            ->filter(fn ($value): bool => is_string($value) && $minutes($value) !== null)
-            ->sortBy(fn (string $value): int => $minutes($value))
-            ->values();
-
-        if ($choices->isEmpty() || $requestedMinutes === null || $choices->contains($requested)) return $requested;
-
-        return $choices->first(fn (string $value): bool => $minutes($value) >= $requestedMinutes)
-            ?? $choices->last();
-    }
-
     public function eligibleResources(AzureSubscription $subscription): \Illuminate\Database\Eloquent\Collection
     {
         return $subscription->billingResources()
