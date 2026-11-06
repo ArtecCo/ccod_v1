@@ -54,7 +54,7 @@ class AdminPanelProvider extends PanelProvider
                 $user = auth()->guard('web')->user();
                 $developer = auth()->guard('developers')->user();
                 $authz = app(AccessAuthorizationService::class);
-                $subscriptions = $user ? $authz->accessibleSubscriptions($user) : collect();
+                $subscriptions = $user ? $authz->subscriptionsForNavigation($user) : collect();
 
                 $groups = $subscriptions
                     ->groupBy(function (AzureSubscription $subscription): string {
