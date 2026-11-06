@@ -34,25 +34,33 @@ class SubscriptionSecurityOverview extends BaseWidget
         $high = (int) ($assessmentStats?->high_count ?? 0);
         $lastSynced = $assessmentStats?->last_synced;
 
-        $latestScore = $this->record->securityScores()
+        // Fetch the latest initiative's score history in one round trip.
+        // MySQL's null-safe equality preserves the case where the latest
+        // snapshot has a null initiative name.
+        $scoreSnapshots = AzureSecurityScore::query()
+            ->where('subscription_id', $this->record->subscription_id)
+            ->whereRaw(
+                'initiative_name <=> (
+                    SELECT latest_score.initiative_name
+                    FROM azure_security_scores AS latest_score
+                    WHERE latest_score.subscription_id = ?
+                    ORDER BY latest_score.captured_at DESC
+                    LIMIT 1
+                )',
+                [$this->record->subscription_id],
+            )
             ->orderByDesc('captured_at')
-            ->first();
+            ->limit(30)
+            ->get(['initiative_name', 'percentage_score', 'captured_at']);
 
+        $latestScore = $scoreSnapshots->first();
         $scorePercentage = $latestScore !== null
             ? round(((float) $latestScore->percentage_score) * 100, 2)
             : null;
 
-        $scoreHistory = collect();
-
-        if ($latestScore !== null && $latestScore->initiative_name !== null) {
-            $scoreHistory = $this->record->securityScores()
-                ->where('initiative_name', $latestScore->initiative_name)
-                ->orderByDesc('captured_at')
-                ->limit(30)
-                ->get(['percentage_score', 'captured_at'])
-                ->sortBy('captured_at')
-                ->values();
-        }
+        $scoreHistory = $latestScore !== null && $latestScore->initiative_name !== null
+            ? $scoreSnapshots->sortBy('captured_at')->values()
+            : collect();
 
         $previousScore = $scoreHistory->count() > 1
             ? $scoreHistory->get($scoreHistory->count() - 2)
