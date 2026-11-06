@@ -27,14 +27,22 @@ class SubscriptionSecurityScoreHistoryTable extends BaseWidget
             ->orderByDesc('captured_at')
             ->limit(1);
 
+        $latestInitiativeSql = $latestInitiative->toSql();
+        $latestInitiativeBindings = $latestInitiative->getBindings();
+
         return AzureSecurityScore::query()
             ->where('subscription_id', $this->record->subscription_id)
             ->where('captured_at', '>=', now()->subDays(6)->startOfDay())
             // Preserve the previous behavior when the latest snapshot has a
             // null initiative (or no snapshot exists): show all recent rows.
-            ->where(function (Builder $query) use ($latestInitiative): void {
-                $query->where('initiative_name', $latestInitiative)
-                    ->orWhereRaw('(?) IS NULL', [$latestInitiative]);
+            ->where(function (Builder $query) use ($latestInitiativeSql, $latestInitiativeBindings): void {
+                $query->whereRaw(
+                    "initiative_name = ({$latestInitiativeSql})",
+                    $latestInitiativeBindings,
+                )->orWhereRaw(
+                    "({$latestInitiativeSql}) IS NULL",
+                    $latestInitiativeBindings,
+                );
             });
     }
 
