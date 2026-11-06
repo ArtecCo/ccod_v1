@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\SubscriptionWebUrl;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
@@ -26,9 +25,6 @@ use Livewire\Attributes\On;
 
 class SubscriptionWebUrlsRelationManager extends RelationManager
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'table';
     protected static string $relationship = 'webUrls';
     protected static ?string $title = 'Web URLs';
     protected static string|\BackedEnum|null $icon = Heroicon::OutlinedGlobeAlt;
