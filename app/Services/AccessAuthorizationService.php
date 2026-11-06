@@ -24,6 +24,8 @@ class AccessAuthorizationService
 
     private array $groupCache = [];
 
+    private array $navigationGroupCache = [];
+
     public function hasPermission(User $user, string $permission, BusinessUnit|Project|AzureSubscription|null $target = null): bool
     {
         if ($this->isSuperAdmin($user)) {
@@ -136,6 +138,60 @@ class AccessAuthorizationService
             $subscription->setAttribute('access_sources', $sources);
             return $subscription;
         })->values();
+    }
+
+    /**
+     * Return only the subscription and project fields required to build the
+     * client sidebar. Avoid loading role permissions and unrelated subscription
+     * columns on every panel request.
+     */
+    public function subscriptionsForNavigation(User $user): Collection
+    {
+        $userId = (int) $user->getKey();
+
+        if (! isset($this->navigationGroupCache[$userId])) {
+            $this->navigationGroupCache[$userId] = UserGroup::query()
+                ->select(['id', 'role_id'])
+                ->with(['role:id,slug', 'projects:id'])
+                ->whereHas('users', function (Builder $query) use ($userId): void {
+                    $query->whereKey($userId)
+                        ->where(function (Builder $q): void {
+                            $q->whereNull('user_group_user.starts_at')
+                                ->orWhere('user_group_user.starts_at', '<=', now());
+                        })
+                        ->where(function (Builder $q): void {
+                            $q->whereNull('user_group_user.expires_at')
+                                ->orWhere('user_group_user.expires_at', '>', now());
+                        });
+                })
+                ->whereHas('role', fn (Builder $query): Builder => $query->where('is_active', true))
+                ->get();
+        }
+
+        $groups = $this->navigationGroupCache[$userId];
+
+        $query = AzureSubscription::query()
+            ->select(['subscription_id', 'display_name'])
+            ->with(['projects:id,name,business_unit_id', 'projects.businessUnit:id,name'])
+            ->orderBy('display_name');
+
+        if ($groups->contains(fn (UserGroup $group): bool => $group->role?->slug === 'super_admin')) {
+            return $query->get();
+        }
+
+        $projectIds = $groups
+            ->flatMap(fn (UserGroup $group): Collection => $group->projects->pluck('id'))
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($projectIds === []) {
+            return collect();
+        }
+
+        return $query
+            ->whereHas('projects', fn (Builder $projectQuery): Builder => $projectQuery->whereIn('projects.id', $projectIds))
+            ->get();
     }
 
     public function canRequestUserGroup(User $user, UserGroup $group): bool
