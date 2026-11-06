@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
@@ -17,9 +16,6 @@ use Livewire\Attributes\On;
 
 class AzureAlertsRelationManager extends RelationManager
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'table';
     protected static string $relationship = 'alerts';
     protected static ?string $title = 'Alerts';
     protected static bool $isLazy = true;
