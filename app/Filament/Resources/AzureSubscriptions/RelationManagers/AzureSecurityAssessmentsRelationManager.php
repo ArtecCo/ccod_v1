@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResource;
 use App\Models\AzureSecurityAssessment;
 use App\Services\AccessAuthorizationService;
@@ -19,9 +18,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class AzureSecurityAssessmentsRelationManager extends RelationManager
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'table';
     protected static string $relationship = 'securityAssessments';
     protected static ?string $title = 'Unhealthy Security Recommendations';
     protected static bool $isLazy = true;
