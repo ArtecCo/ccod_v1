@@ -65,32 +65,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                 TextColumn::make('last_checked_at')->label('Last Checked')->dateTime()->placeholder('Never')->sortable(),
             ])
             ->headerActions([
-                Action::make('addWebUrl')
-                    ->label('Add Web URL')
-                    ->icon(Heroicon::OutlinedGlobeAlt)
-                    ->visible(fn (): bool => Gate::forUser(auth()->user())->allows(
-                        'create',
-                        [SubscriptionWebUrl::class, $this->getOwnerRecord()],
-                    ))
-                    ->modalHeading('Add Web URL')
-                    ->modalSubmitActionLabel('Add URL')
-                    ->form([
-                        TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048),
-                        Toggle::make('is_active')->label('Active')->default(true),
-                    ])
-                    ->action(function (array $data): void {
-                        $url = rtrim(trim($data['url']), '/');
-                        $this->getOwnerRecord()->webUrls()->create([
-                            'url' => $url,
-                            'url_hash' => hash('sha256', $url),
-                            'is_active' => (bool) ($data['is_active'] ?? true),
-                        ]);
-
-                        $this->dispatch('web-url-added');
-                    })
-                    ->successNotificationTitle('Web URL added'),
-                XlsxExportAction::make()
-                    ->visible(fn (): bool => $this->canExport()),
+                // No header actions; Add Web URL belongs in the same toolbar as export.
             ])
             ->recordActions([
                 EditAction::make()
@@ -113,6 +88,34 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                         Action::make('delete')->label('Delete URL')->color('danger')->requiresConfirmation()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record))->action(function (SubscriptionWebUrl $record): void {$record->delete(); $this->dispatch('web-url-added');})->cancelParentActions(),
                     ]),
                 DeleteAction::make()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record)),
+            ])
+            ->toolbarActions([
+                    Action::make('addWebUrl')
+                        ->label('Add Web URL')
+                        ->icon(Heroicon::OutlinedGlobeAlt)
+                        ->visible(fn (): bool => Gate::forUser(auth()->user())->allows(
+                            'create',
+                            [SubscriptionWebUrl::class, $this->getOwnerRecord()],
+                        ))
+                        ->modalHeading('Add Web URL')
+                        ->modalSubmitActionLabel('Add URL')
+                        ->form([
+                            TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048),
+                            Toggle::make('is_active')->label('Active')->default(true),
+                        ])
+                        ->action(function (array $data): void {
+                            $url = rtrim(trim($data['url']), '/');
+                            $this->getOwnerRecord()->webUrls()->create([
+                                'url' => $url,
+                                'url_hash' => hash('sha256', $url),
+                                'is_active' => (bool) ($data['is_active'] ?? true),
+                            ]);
+    
+                            $this->dispatch('web-url-added');
+                        })
+                        ->successNotificationTitle('Web URL added'),,
+                XlsxExportAction::make()
+                    ->visible(fn (): bool => $this->canExport()),
             ])
             ->defaultSort('url');
     }
