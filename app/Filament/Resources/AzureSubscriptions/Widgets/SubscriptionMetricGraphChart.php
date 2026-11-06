@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use App\Models\AzureSubscription;
 use App\Models\Developer;
 use App\Models\SubscriptionMetricGraph;
@@ -13,6 +12,7 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use App\Services\AzureMetricsService;
 use Filament\Widgets\ChartWidget;
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Throwable;
