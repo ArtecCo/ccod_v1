@@ -80,19 +80,9 @@ class SubscriptionMetricGraphChart extends ChartWidget
                             ? $bucket->format('Y-m-d')
                             : $bucket->format('Y-m-d\\TH:i:s\\Z');
 
-                        if ($this->interval === 'P1D' && isset($points[$bucketKey])) {
-                            // Azure normally returns one point per daily bucket.
-                            // This merge also protects against multiple series
-                            // timestamps falling within the same UTC day.
-                            $points[$bucketKey] = match (strtolower($result['aggregation'])) {
-                                'maximum' => max($points[$bucketKey], (float) $value),
-                                'minimum' => min($points[$bucketKey], (float) $value),
-                                'total' => $points[$bucketKey] + (float) $value,
-                                default => ($points[$bucketKey] + (float) $value) / 2,
-                            };
-                        } else {
-                            $points[$bucketKey] = (float) $value;
-                        }
+                        // Azure has already applied the configured aggregation
+                        // over this daily bucket; retain its returned value.
+                        $points[$bucketKey] = (float) $value;
                     }
 
                     if ($points === []) {
