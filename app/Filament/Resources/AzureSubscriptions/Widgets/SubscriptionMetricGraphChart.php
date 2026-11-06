@@ -19,9 +19,6 @@ use Throwable;
 
 class SubscriptionMetricGraphChart extends ChartWidget
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'chart';
     public AzureSubscription $record;
 
     public int $graphId;
@@ -35,6 +32,11 @@ class SubscriptionMetricGraphChart extends ChartWidget
     protected ?string $pollingInterval = null;
 
     protected ?string $maxHeight = '300px';
+
+    public function placeholder(): View
+    {
+        return view('livewire.placeholders.metric-chart');
+    }
 
     protected function getData(): array
     {
