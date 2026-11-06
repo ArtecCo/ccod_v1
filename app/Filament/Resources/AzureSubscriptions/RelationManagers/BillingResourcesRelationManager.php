@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 
-use App\Livewire\Concerns\HasLoadingPlaceholder;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
@@ -16,9 +15,6 @@ use Illuminate\Database\Eloquent\Builder;
 
 class BillingResourcesRelationManager extends RelationManager
 {
-    use HasLoadingPlaceholder;
-
-    protected static string $loadingPlaceholderVariant = 'table';
     protected static string $relationship = 'billingResources';
     protected static ?string $title = 'Resources';
     protected static bool $isLazy = true;
