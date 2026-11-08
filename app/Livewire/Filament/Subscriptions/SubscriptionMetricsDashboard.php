@@ -125,6 +125,7 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             ->icon('heroicon-o-plus')
             ->visible(fn (): bool => $this->canManageMetrics())
             ->modalHeading('Add resource metric graph')
+            ->modalWidth('5xl')
             ->modalSubmitActionLabel('Create graph')
             ->schema([
                 Select::make('resource_id')
