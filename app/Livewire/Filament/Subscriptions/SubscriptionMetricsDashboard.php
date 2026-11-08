@@ -217,6 +217,12 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
     {
         abort_unless($this->canViewMetrics(), 403);
 
+        // Filament caches the schema returned by dashboardForm(). Invalidate it
+        // so the next render rebuilds the graph sections from the database.
+        // Without this, new graphs stay hidden and deleted graphs remain as
+        // stale nested Livewire chart components (which can return a 404).
+        $this->cacheSchema('dashboardForm', null);
+
         $this->graphListVersion++;
         $this->refreshVersion++;
     }
