@@ -196,17 +196,6 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
             ->successNotificationTitle('Metric graph created');
     }
 
-    public function deleteGraph(int $graphId): void
-    {
-        abort_unless($this->canManageMetrics(), 403);
-
-        SubscriptionMetricGraph::query()
-            ->where('subscription_id', $this->record->subscription_id)
-            ->whereKey($graphId)
-            ->firstOrFail()
-            ->delete();
-    }
-
     public function refreshCharts(): void
     {
         abort_unless($this->canViewMetrics(), 403);
@@ -327,9 +316,17 @@ class SubscriptionMetricsDashboard extends Component implements HasActions, HasS
                     ->modalHeading('Remove metric graph')
                     ->modalDescription('This removes the graph for everyone who can view this subscription.')
                     ->action(function () use ($graph): void {
-                        $this->deleteGraph($graph->id);
+                        abort_unless($this->canManageMetrics(), 403);
+
+                        SubscriptionMetricGraph::query()
+                            ->where('subscription_id', $this->record->subscription_id)
+                            ->whereKey($graph->id)
+                            ->firstOrFail()
+                            ->delete();
+
                         $this->refreshGraphCollection();
-                    });
+                    })
+                    ->successNotificationTitle('Metric graph deleted');
             }
 
             $range = $this->getRange();
