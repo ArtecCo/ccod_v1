@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Filament\\Resources\\AzureSubscriptions\\Widgets;
+namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
-use App\\Models\\AzureSubscription;
-use Filament\\Widgets\\StatsOverviewWidget as BaseWidget;
-use Filament\\Widgets\\StatsOverviewWidget\\Stat;
+use App\Models\AzureSubscription;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class SubscriptionStatsOverview extends BaseWidget
 {
