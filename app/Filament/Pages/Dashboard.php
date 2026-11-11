@@ -113,7 +113,8 @@ class Dashboard extends BaseDashboard
             TextEntry::make('dashboard_greeting')
                 ->hiddenLabel()
                 ->html()
-                ->state(new HtmlString('<div class="w-full text-center text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">'.e($greeting.', '.$user->name).'</div>'))
+                ->state(new HtmlString('<div style="width:100%;text-align:center;font-size:clamp(2.5rem,4vw,4rem);font-weight:800;line-height:1.1;letter-spacing:-0.04em;color:inherit;">'.e($greeting.', '.$user->name).'</div>'))
+                ->alignCenter()
                 ->columnSpanFull(),
             TextEntry::make('dashboard_welcome')
                 ->hiddenLabel()
