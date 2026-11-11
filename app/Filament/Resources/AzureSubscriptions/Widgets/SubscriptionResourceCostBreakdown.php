@@ -8,6 +8,8 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
@@ -56,6 +58,28 @@ class SubscriptionResourceCostBreakdown extends BaseWidget
                     ->label('Cost')
                     ->money('EUR')
                     ->sortable(),
+            ])
+            ->filters([
+                SelectFilter::make('resource_type')
+                    ->label('Resource Type')
+                    ->options(fn (): array => $this->record->billingResources()
+                        ->whereNotNull('resource_type')
+                        ->distinct()
+                        ->orderBy('resource_type')
+                        ->pluck('resource_type', 'resource_type')
+                        ->all()),
+                SelectFilter::make('region')
+                    ->label('Location')
+                    ->options(fn (): array => $this->record->billingResources()
+                        ->whereNotNull('region')
+                        ->distinct()
+                        ->orderBy('region')
+                        ->pluck('region', 'region')
+                        ->all()),
+            ])
+            ->groups([
+                Group::make('resource_type')->label('Resource Type'),
+                Group::make('region')->label('Location'),
             ])
             ->defaultSort('name')
             ->striped(false)
