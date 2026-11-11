@@ -27,7 +27,7 @@ class SubscriptionCostSummary extends BaseWidget
             ->where('subscription_id', $this->record->subscription_id)
             ->where('granularity', 'monthly')
             ->orderBy('period_start')
-            ->get(['period_start', 'amount', 'currency']);
+            ->get(['period_start', 'amount', 'currency', 'synced_at']);
 
         $current = $costs->last();
         $previous = $costs->count() > 1 ? $costs->get($costs->count() - 2) : null;
@@ -80,6 +80,7 @@ class SubscriptionCostSummary extends BaseWidget
         $budgetAmount = $budgets->sum(fn ($budget): float => (float) $budget->amount);
         $budgetCurrency = $budgets->first()?->currency ?: 'EUR';
         $endDate = $budgets->max('end_date');
+        [$costDataAge, $costDataAgeColor] = DataAge::for($current?->synced_at);
         $budgetExpiry = $endDate !== null
             ? 'Until ' . Carbon::parse($endDate)->format('M Y')
             : 'Expiry unavailable';
@@ -103,9 +104,11 @@ class SubscriptionCostSummary extends BaseWidget
                     : ($differencePercentage > 0 ? 'heroicon-m-arrow-trending-up' : ($differencePercentage < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus')))
                 ->descriptionColor($trendColor)
                 ->color($trendColor),
-            Stat::make('Last Synced', $this->record->last_synced?->format('d M Y, H:i') ?? '—')
+            Stat::make('Last Synced', $current?->synced_at?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? '—')
                 ->icon('heroicon-o-arrow-path')
-                ->color('gray'),
+                ->color('gray')
+                ->description($costDataAge)
+                ->descriptionColor($costDataAgeColor),
         ];
     }
 
