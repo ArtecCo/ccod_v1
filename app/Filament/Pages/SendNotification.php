@@ -60,7 +60,7 @@ class SendNotification extends Page implements HasForms
                                 'info' => 'Information',
                                 'success' => 'Success',
                                 'warning' => 'Warning',
-                                'critical' => 'Critical',
+                                'danger' => 'Critical',
                             ])
                             ->default('info')
                             ->required(),
