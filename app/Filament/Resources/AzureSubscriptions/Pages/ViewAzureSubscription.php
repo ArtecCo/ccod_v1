@@ -60,7 +60,15 @@ class ViewAzureSubscription extends ViewRecord
     {
         return $schema->components([
             Tabs::make('Subscription Navigation')->tabs([
-                $this->makeTab('Overview', null)->schema(fn (): array => [Section::make('Subscription Details')->schema([$this->getInfolistContentComponent()->columnSpanFull()])->columnSpanFull(), Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull()])->columns(1),
+                $this->makeTab('Overview', null)->schema(fn (): array => [
+                    Section::make('Subscription Details')
+                        ->schema([$this->getInfolistContentComponent()->columnSpanFull()])
+                        ->columnSpanFull(),
+                    Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                ])->columns(1),
                 $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
                     Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                     Livewire::make(SubscriptionCostHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
