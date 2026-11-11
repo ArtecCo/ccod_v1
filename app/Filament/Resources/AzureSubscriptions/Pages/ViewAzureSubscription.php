@@ -23,6 +23,7 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryTab
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
 use App\Livewire\Filament\Subscriptions\SubscriptionMetricsDashboard;
