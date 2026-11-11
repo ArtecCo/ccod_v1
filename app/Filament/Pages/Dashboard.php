@@ -10,6 +10,7 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
@@ -100,9 +101,25 @@ class Dashboard extends BaseDashboard
                 ->all();
 
         return $schema->components([
-            Section::make($greeting.', '.$user->name)
-                ->description('Welcome back to CCOD. Your workspace and account details are ready.')
-                ->icon('heroicon-o-sparkles')
+            ImageEntry::make('dashboard_avatar')
+                ->hiddenLabel()
+                ->state($user->getFilamentAvatarUrl())
+                ->defaultImageUrl(asset('images/default-avatar.svg'))
+                ->circular()
+                ->imageSize(120)
+                ->alignCenter()
+                ->columnSpanFull(),
+            TextEntry::make('dashboard_greeting')
+                ->hiddenLabel()
+                ->state($greeting.', '.$user->name)
+                ->size('xl')
+                ->weight('bold')
+                ->alignCenter()
+                ->columnSpanFull(),
+            TextEntry::make('dashboard_welcome')
+                ->hiddenLabel()
+                ->state('Welcome back to CCOD. Your workspace and account details are ready.')
+                ->alignCenter()
                 ->columnSpanFull(),
             Section::make('Account overview')
                 ->schema([
