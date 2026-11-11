@@ -43,15 +43,22 @@ class AuditLogger
         }
 
         try {
+            $currentRequest = request();
+            $livewire = $currentRequest instanceof Request
+                ? $this->livewireContext($currentRequest)
+                : null;
+
             $properties = array_merge([
                 'success' => $success,
                 'failure_reason' => $failureReason,
-                'request_id' => request()?->header('X-Request-ID') ?: request()?->attributes->get('request_id'),
-                'url' => request()?->fullUrl(),
-                'route' => request()?->route()?->getName(),
-                'method' => request()?->method(),
-                'ip' => request()?->ip(),
-                'user_agent' => request()?->userAgent(),
+                'request_id' => $currentRequest?->header('X-Request-ID') ?: $currentRequest?->attributes->get('request_id'),
+                'url' => $currentRequest?->fullUrl(),
+                'route' => $currentRequest?->route()?->getName(),
+                'method' => $currentRequest?->method(),
+                'ip' => $currentRequest?->ip(),
+                'user_agent' => $currentRequest?->userAgent(),
+                'livewire_components' => $livewire['components'] ?? null,
+                'livewire_actions' => $livewire['actions'] ?? null,
             ], $properties);
 
             $causer = $this->causer();
