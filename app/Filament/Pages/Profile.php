@@ -7,6 +7,7 @@ use App\Models\User;
 use App\Models\UserGroup;
 use App\Services\AccessAuthorizationService;
 use App\Services\AccessRequestService;
+use Spatie\Activitylog\Models\Activity;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\Select;
@@ -29,6 +30,13 @@ class Profile extends Page
     public static function shouldRegisterNavigation(): bool
     {
         return false;
+    }
+
+    public function mount(): void
+    {
+        if (! session()->has('auth_session_started_at')) {
+            session()->put('auth_session_started_at', now()->timestamp);
+        }
     }
 
     public function getUser(): User
@@ -71,6 +79,16 @@ class Profile extends Page
     {
         $user = $this->getUser();
         $groups = $this->getUserGroups();
+        $lastLogin = Activity::query()
+            ->where('event', 'Login')
+            ->where('causer_type', $user->getMorphClass())
+            ->where('causer_id', $user->getKey())
+            ->orderByDesc('created_at')
+            ->skip(1)
+            ->first()?->created_at;
+        $sessionStartedAt = (int) session()->get('auth_session_started_at', now()->timestamp);
+        $elapsedSeconds = max(0, now()->timestamp - $sessionStartedAt);
+        $sessionDuration = sprintf('%02d:%02d:%02d', intdiv($elapsedSeconds, 3600), intdiv($elapsedSeconds % 3600, 60), $elapsedSeconds % 60);
 
         return $schema->components([
             Section::make('Account overview')
@@ -81,8 +99,12 @@ class Profile extends Page
                         TextEntry::make('email')->label('Email')->state($user->email),
                         TextEntry::make('joined')->label('Date joined')->state($user->created_at?->format('d M Y, H:i')),
                         TextEntry::make('group_count')->label('User Groups')->state((string) $groups->count()),
+                        TextEntry::make('account_status')->label('Account status')->badge()->color($user->is_active ? 'success' : 'danger')->state($user->is_active ? 'Active' : 'Inactive'),
+                        TextEntry::make('last_login')->label('Previous login')->icon('heroicon-o-clock')->state($lastLogin?->format('d M Y, H:i') ?? 'No previous login recorded'),
+                        TextEntry::make('current_session')->label('Current session')->icon('heroicon-o-clock')->state($sessionDuration),
                     ]),
                 ])
+                ->extraAttributes(['wire:poll.1s' => '$refresh'])
                 ->columnSpanFull(),
             Section::make('User Groups')
                 ->description('Your access and role are determined by your active User Group memberships.')
