@@ -122,6 +122,13 @@ class SubscriptionStatsOverview extends BaseWidget
             : '—';
 
         [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced);
+        if (($moduleSync?->status ?? null) === 'failed') {
+            $syncAgeDescription = 'Last sync failed' . ($moduleSync?->error_message ? ': ' . $moduleSync->error_message : '');
+            $syncAgeColor = 'danger';
+        } elseif (($moduleSync?->status ?? null) === 'running') {
+            $syncAgeDescription = 'Sync in progress';
+            $syncAgeColor = 'warning';
+        }
 
         return [
             Stat::make('Last Sync', $lastSyncedLabel)
