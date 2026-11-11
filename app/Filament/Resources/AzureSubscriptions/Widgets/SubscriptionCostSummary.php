@@ -82,7 +82,16 @@ class SubscriptionCostSummary extends BaseWidget
         $budgetAmount = $budgets->sum(fn ($budget): float => (float) $budget->amount);
         $budgetCurrency = $budgets->first()?->currency ?: 'EUR';
         $endDate = $budgets->max('end_date');
-        [$costDataAge, $costDataAgeColor] = DataAge::for($current?->synced_at);
+        $moduleSync = app(\App\Services\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'costs');
+        $costSyncedAt = $moduleSync?->last_successful_at !== null ? Carbon::parse($moduleSync->last_successful_at) : $current?->synced_at;
+        [$costDataAge, $costDataAgeColor] = DataAge::for($costSyncedAt);
+        if (($moduleSync?->status ?? null) === 'failed') {
+            $costDataAge = 'Last sync failed' . ($moduleSync?->error_message ? ': ' . $moduleSync->error_message : '');
+            $costDataAgeColor = 'danger';
+        } elseif (($moduleSync?->status ?? null) === 'running') {
+            $costDataAge = 'Sync in progress';
+            $costDataAgeColor = 'warning';
+        }
         $budgetExpiry = $endDate !== null
             ? 'Until ' . Carbon::parse($endDate)->format('M Y')
             : 'Expiry unavailable';
