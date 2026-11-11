@@ -104,7 +104,7 @@ class Dashboard extends BaseDashboard
             TextEntry::make('dashboard_avatar')
                 ->hiddenLabel()
                 ->html()
-                ->state(new HtmlString('<div style="width:56px;height:56px;margin:0 auto;border-radius:9999px;background:#171717;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:600;">'.e(mb_strtoupper(mb_substr(trim($user->name), 0, 1))).'</div>'))
+                ->state(new HtmlString('<div style="width:68px;height:68px;margin:0 auto;border-radius:9999px;background:#171717;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:600;">'.e(mb_strtoupper(mb_substr(trim($user->name), 0, 1))).'</div>'))
                 ->alignCenter()
                 ->extraAttributes(['style' => 'margin-top:2.5rem;'])
                 ->columnSpanFull(),
