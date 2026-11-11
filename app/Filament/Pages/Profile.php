@@ -89,6 +89,21 @@ class Profile extends Page
         $sessionStartedAt = (int) session()->get('auth_session_started_at', now()->timestamp);
         $elapsedSeconds = max(0, now()->timestamp - $sessionStartedAt);
         $sessionDuration = sprintf('%02d:%02d:%02d', intdiv($elapsedSeconds, 3600), intdiv($elapsedSeconds % 3600, 60), $elapsedSeconds % 60);
+        $recentActivity = Activity::query()
+            ->where('causer_type', $user->getMorphClass())
+            ->where('causer_id', $user->getKey())
+            ->where('log_name', '!=', 'Requests')
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+
+        $activityEntries = $recentActivity->isEmpty()
+            ? [TextEntry::make('no_recent_activity')->hiddenLabel()->state('No recent activity to display.')->columnSpanFull()]
+            : $recentActivity->map(fn (Activity $activity): TextEntry => TextEntry::make('activity_'.$activity->getKey())
+                ->label($activity->created_at?->format('d M Y, H:i') ?? 'Activity')
+                ->state(trim(($activity->event ?: $activity->log_name).' — '.($activity->description ?? '')))
+                ->columnSpanFull())
+                ->all();
 
         return $schema->components([
             Section::make('Account overview')
@@ -119,6 +134,10 @@ class Profile extends Page
                         ])
                         ->collapsible()
                         ->collapsed())->all())
+                ->columnSpanFull(),
+            Section::make('Recent activity')
+                ->description('Your latest recorded account and workspace activity.')
+                ->schema($activityEntries)
                 ->columnSpanFull(),
         ]);
     }
