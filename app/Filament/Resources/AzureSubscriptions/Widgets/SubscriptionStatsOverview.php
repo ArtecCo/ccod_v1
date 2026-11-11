@@ -118,9 +118,14 @@ class SubscriptionStatsOverview extends BaseWidget
 
         return [
             $securityStat,
-            Stat::make('Health Status', $isHealthy ? 'Healthy' : 'Unhealthy')
+            Stat::make('Score Health', $isHealthy ? 'Healthy' : 'Unhealthy')
                 ->icon($isHealthy ? 'heroicon-o-check-circle' : 'heroicon-o-exclamation-circle')
                 ->color($isHealthy ? 'success' : 'danger')
+                ->extraAttributes([
+                    'class' => $isHealthy
+                        ? 'border-l-4 !border-l-success-500 !bg-success-50 dark:!bg-success-950/30'
+                        : 'border-l-4 !border-l-danger-500 !bg-danger-50 dark:!bg-danger-950/30',
+                ])
                 ->description($score === null ? 'Security score unavailable' : 'Based on the 80% security score threshold'),
             $costStat,
             Stat::make('Last Sync', $lastSyncedLabel)
