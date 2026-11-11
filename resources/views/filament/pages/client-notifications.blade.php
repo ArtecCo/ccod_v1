@@ -112,7 +112,7 @@
                             <p class="ccod-notifications__message" x-text="notification.data.message"></p>
                             <div class="ccod-notifications__meta">
                                 <span class="ccod-notifications__type" x-text="formatType(notification.data.type)"></span>
-                                <span class="ccod-notifications__severity" x-bind:class="'ccod-notifications__severity--' + (notification.data.severity || 'info')" x-text="formatSeverity(notification.data.severity)"></span>
+                                <span class="ccod-notifications__severity" x-bind:class="'ccod-notifications__severity--' + (notification.data.severity === 'danger' ? 'critical' : (notification.data.severity || 'info'))" x-text="formatSeverity(notification.data.severity)"></span>
                                 <span x-show="notification.data.action_url" class="ccod-notifications__action" x-text="(notification.data.action_label || 'Open') + ' →'"></span>
                             </div>
                         </div>
@@ -234,7 +234,8 @@
             },
 
             formatSeverity(severity) {
-                return (severity || 'info').charAt(0).toUpperCase() + (severity || 'info').slice(1);
+                const normalized = severity === 'danger' ? 'critical' : (severity || 'info');
+                return normalized.charAt(0).toUpperCase() + normalized.slice(1);
             },
 
             formatDate(value) {
