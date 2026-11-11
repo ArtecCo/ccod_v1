@@ -34,7 +34,8 @@ class SubscriptionSecurityOverview extends BaseWidget
 
         $unhealthy = (int) ($assessmentStats?->unhealthy_count ?? 0);
         $high = (int) ($assessmentStats?->high_count ?? 0);
-        $lastSynced = $assessmentStats?->last_synced;
+        $moduleSync = app(\App\Services\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'security');
+        $lastSynced = $moduleSync?->last_successful_at ?? $assessmentStats?->last_synced;
 
         // Fetch the latest initiative's score history in one round trip.
         // MySQL's null-safe equality preserves the case where the latest
@@ -82,6 +83,13 @@ class SubscriptionSecurityOverview extends BaseWidget
             ? Carbon::parse($lastSynced)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
         [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null);
+        if (($moduleSync?->status ?? null) === 'failed') {
+            $syncAgeDescription = 'Last sync failed' . ($moduleSync?->error_message ? ': ' . $moduleSync->error_message : '');
+            $syncAgeColor = 'danger';
+        } elseif (($moduleSync?->status ?? null) === 'running') {
+            $syncAgeDescription = 'Sync in progress';
+            $syncAgeColor = 'warning';
+        }
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
             ->icon('heroicon-o-shield-check')
