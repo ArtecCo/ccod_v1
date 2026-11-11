@@ -113,7 +113,7 @@ class SubscriptionStatsOverview extends BaseWidget
                 ->descriptionColor($costTrendColor);
         }
 
-        $moduleSync = app(\\App\\Services\\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'subscriptions');
+        $moduleSync = app(\App\Services\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'subscriptions');
         $lastSynced = $moduleSync?->last_successful_at !== null
             ? Carbon::parse($moduleSync->last_successful_at)
             : ($this->record->last_synced !== null ? Carbon::parse($this->record->last_synced) : null);
