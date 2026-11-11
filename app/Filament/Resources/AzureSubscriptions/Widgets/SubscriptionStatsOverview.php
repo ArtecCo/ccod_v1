@@ -124,7 +124,7 @@ class SubscriptionStatsOverview extends BaseWidget
             );
             $syncAgeColor = 'danger';
         } else {
-            $ageSeconds = max(0, $lastSynced->diffInSeconds(now()));
+            $ageSeconds = (int) max(0, $lastSynced->diffInSeconds(now()));
             $ageHours = intdiv($ageSeconds, 3600);
             $ageMinutes = intdiv($ageSeconds % 3600, 60);
             $ageLabel = $ageHours > 0
