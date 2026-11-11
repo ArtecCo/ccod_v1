@@ -8,6 +8,7 @@ use App\Models\AzureAlert;
 use App\Models\AzureSubscription;
 use Illuminate\Support\Carbon;
 use RuntimeException;
+use Throwable;
 
 class AzureAlertSyncService
 {
@@ -17,6 +18,7 @@ class AzureAlertSyncService
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
+        private readonly SubscriptionModuleSyncTracker $syncTracker,
     ) {
     }
 
@@ -39,7 +41,15 @@ class AzureAlertSyncService
         ];
 
         foreach ($subscriptions as $id) {
-            $result = $this->syncSubscription($id);
+            $this->syncTracker->begin('alerts', [$id]);
+
+            try {
+                $result = $this->syncSubscription($id);
+                $this->syncTracker->succeed('alerts', [$id]);
+            } catch (Throwable $exception) {
+                $this->syncTracker->fail('alerts', [$id], $exception->getMessage());
+                throw $exception;
+            }
 
             foreach ($result as $key => $value) {
                 $stats[$key] += $value;
@@ -193,7 +203,7 @@ KQL,
 
         try {
             return Carbon::parse($value);
-        } catch (\Throwable) {
+        } catch (Throwable) {
             return null;
         }
     }
