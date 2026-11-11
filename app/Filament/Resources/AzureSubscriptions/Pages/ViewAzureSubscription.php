@@ -63,9 +63,7 @@ class ViewAzureSubscription extends ViewRecord
                     Section::make('Subscription Details')
                         ->schema([$this->getInfolistContentComponent()->columnSpanFull()])
                         ->columnSpanFull(),
-                    Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                 ])->columns(1),
                 $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
                     Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
