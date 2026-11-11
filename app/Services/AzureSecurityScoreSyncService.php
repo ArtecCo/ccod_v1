@@ -8,6 +8,7 @@ use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Client\Response;
 use RuntimeException;
 
 class AzureSecurityScoreSyncService
@@ -105,7 +106,7 @@ class AzureSecurityScoreSyncService
      * Retry only transient Azure gateway responses for the security score request.
      * Certificate verification remains enabled by the shared Azure HTTP client.
      */
-    private function getWithGatewayRetry(string $url): \\Illuminate\\Http\\Client\\Response
+    private function getWithGatewayRetry(string $url): Response
     {
         $retryableStatuses = [502, 503, 504];
         $maxAttempts = 4;
