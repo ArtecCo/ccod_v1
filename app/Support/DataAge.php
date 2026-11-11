@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Support;
 
 use Carbon\CarbonInterface;
+use Illuminate\Support\HtmlString;
 
 class DataAge
 {
     public static function for(?CarbonInterface $syncedAt): array
     {
         if ($syncedAt === null) {
-            return ['Data age unavailable', 'danger'];
+            return [
+                new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Sync time unavailable — data freshness unknown</span>'),
+                'danger',
+            ];
         }
 
         $seconds = (int) max(0, $syncedAt->diffInSeconds(now()));
@@ -36,7 +40,9 @@ class DataAge
         $stale = $seconds > 8 * 60 * 60;
 
         return [
-            $stale ? 'Stale data · ' . $age . ' old' : 'Data age: ' . $age,
+            $stale
+                ? new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Stale data · ' . e('Data is ' . $age . ' old') . '</span>')
+                : 'Data age: ' . $age,
             $stale ? 'danger' : 'gray',
         ];
     }
