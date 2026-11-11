@@ -84,6 +84,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                 ]),
             Stat::make('Sev 3', (string) ($counts?->sev3 ?? 0))
                 ->color('warning')
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-exclamation-circle')
                 ->extraAttributes([
                     'role' => 'button',
@@ -91,6 +92,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                 ]),
             Stat::make('Sev 4', (string) ($counts?->sev4 ?? 0))
                 ->color('gray')
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-information-circle')
                 ->extraAttributes([
                     'role' => 'button',
