@@ -112,7 +112,7 @@ class Dashboard extends BaseDashboard
                         TextEntry::make('dashboard_created')->label('Account created')->icon('heroicon-o-calendar-days')->state($user->created_at?->format('d M Y') ?? '—'),
                         TextEntry::make('dashboard_status')->label('Account status')->badge()->color($user->is_active ? 'success' : 'danger')->state($user->is_active ? 'Active' : 'Inactive'),
                         TextEntry::make('dashboard_last_login')->label('Previous login')->icon('heroicon-o-clock')->state($lastLogin?->format('d M Y, H:i') ?? 'No previous login recorded'),
-                        TextEntry::make('dashboard_session')->label('Current session')->icon('heroicon-o-stopwatch')->state($sessionDuration),
+                        TextEntry::make('dashboard_session')->label('Current session')->icon('heroicon-o-clock')->state($sessionDuration),
                         TextEntry::make('dashboard_group_count')->label('Active user groups')->icon('heroicon-o-user-group')->state((string) $groups->count()),
                     ]),
                 ])
