@@ -10,7 +10,6 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
@@ -102,18 +101,16 @@ class Dashboard extends BaseDashboard
                 ->all();
 
         return $schema->components([
-            ImageEntry::make('dashboard_avatar')
+            TextEntry::make('dashboard_avatar')
                 ->hiddenLabel()
-                ->state($user->getFilamentAvatarUrl())
-                ->defaultImageUrl(asset('images/default-avatar.svg'))
-                ->circular()
-                ->imageSize(120)
+                ->html()
+                ->state(new HtmlString('<div style="width:56px;height:56px;margin:0 auto;border-radius:9999px;background:#171717;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:600;">'.e(mb_strtoupper(mb_substr(trim($user->name), 0, 1))).'</div>'))
                 ->alignCenter()
                 ->columnSpanFull(),
             TextEntry::make('dashboard_greeting')
                 ->hiddenLabel()
                 ->html()
-                ->state(new HtmlString('<div style="width:100%;text-align:center;font-size:clamp(2.5rem,4vw,4rem);font-weight:800;line-height:1.1;letter-spacing:-0.04em;color:inherit;">'.e($greeting.', '.$user->name).'</div>'))
+                ->state(new HtmlString('<div style="width:100%;text-align:center;font-size:clamp(1.5rem,2.5vw,2.25rem);font-weight:700;line-height:1.25;letter-spacing:-0.025em;color:inherit;">'.e($greeting.', '.$user->name).'</div>'))
                 ->alignCenter()
                 ->columnSpanFull(),
             TextEntry::make('dashboard_welcome')
