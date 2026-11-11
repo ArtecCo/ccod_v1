@@ -117,6 +117,9 @@ class SubscriptionStatsOverview extends BaseWidget
             : '—';
 
         return [
+            Stat::make('Last Sync', $lastSyncedLabel)
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray'),
             $securityStat,
             Stat::make('Score Health', $isHealthy ? 'Healthy' : 'Unhealthy')
                 ->icon($isHealthy ? 'heroicon-o-check-circle' : 'heroicon-o-exclamation-circle')
@@ -129,9 +132,6 @@ class SubscriptionStatsOverview extends BaseWidget
                 ])
                 ->description($score === null ? 'Security score unavailable' : 'Based on the 80% security score threshold'),
             $costStat,
-            Stat::make('Last Sync', $lastSyncedLabel)
-                ->icon('heroicon-o-arrow-path')
-                ->color('gray'),
             Stat::make('Total Alerts', number_format($this->record->alerts()->count()))
                 ->icon('heroicon-o-bell-alert')
                 ->color('primary'),
