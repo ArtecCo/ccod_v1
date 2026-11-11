@@ -137,7 +137,9 @@ class AuditLogger
      */
     private function livewireContext(Request $request): ?array
     {
-        if (! $request->is('livewire/update') && ! str_ends_with($request->path(), '/livewire/update')) {
+        // Livewire can use a customized update URI (for example,
+        // /livewire-d5988550/update). Its request header is the stable identifier.
+        if (! $request->hasHeader('X-Livewire')) {
             return null;
         }
 
