@@ -93,9 +93,19 @@ class AuditLogger
             $reason = Response::$statusTexts[$status] ?? 'Request failed';
         }
 
+        $livewire = $this->livewireContext($request);
+        $description = $livewire !== null
+            ? sprintf(
+                'Livewire: %s%s (%s)',
+                implode(', ', $livewire['components']),
+                $livewire['actions'] !== [] ? ' — '.implode(', ', $livewire['actions']) : '',
+                $status ?? 'unknown',
+            )
+            : sprintf('%s %s (%s)', $request->method(), $request->path(), $status ?? 'unknown');
+
         $this->log(
             event: $request->isMethod('GET') ? 'Page Request' : 'Request',
-            description: sprintf('%s %s (%s)', $request->method(), $request->path(), $status ?? 'unknown'),
+            description: $description,
             success: $success,
             failureReason: $this->sanitizeFailureReason($reason),
             properties: [
@@ -104,6 +114,8 @@ class AuditLogger
                 'is_refresh_or_navigation' => $request->isMethod('GET'),
                 'is_filament_request' => str_starts_with($request->path(), 'admin')
                     || str_starts_with($request->path(), 'developer'),
+                'livewire_components' => $livewire['components'] ?? null,
+                'livewire_actions' => $livewire['actions'] ?? null,
             ],
             logName: 'Requests',
             tags: $success ? ['request'] : ['request', 'failure'],
@@ -111,6 +123,52 @@ class AuditLogger
                 ? LogSettings::PAGE_REQUESTS
                 : LogSettings::APPLICATION_REQUESTS,
         );
+    }
+
+    /**
+     * Extract safe Livewire metadata without recording component state or call parameters.
+     */
+    private function livewireContext(Request $request): ?array
+    {
+        if (! $request->is('livewire/update') && ! str_ends_with($request->path(), '/livewire/update')) {
+            return null;
+        }
+
+        $payload = $request->input('components');
+        if (! is_array($payload)) {
+            return ['components' => [], 'actions' => []];
+        }
+
+        $components = [];
+        $actions = [];
+
+        foreach ($payload as $component) {
+            if (! is_array($component)) {
+                continue;
+            }
+
+            $snapshot = $component['snapshot'] ?? null;
+            if (is_string($snapshot)) {
+                $snapshot = json_decode($snapshot, true);
+            }
+
+            $name = is_array($snapshot) ? data_get($snapshot, 'memo.name') : null;
+            if (is_string($name) && $name !== '') {
+                $components[] = mb_substr($name, 0, 150);
+            }
+
+            foreach (($component['calls'] ?? []) as $call) {
+                $method = is_array($call) ? ($call['method'] ?? null) : null;
+                if (is_string($method) && $method !== '') {
+                    $actions[] = mb_substr($method, 0, 100);
+                }
+            }
+        }
+
+        return [
+            'components' => array_values(array_unique($components)),
+            'actions' => array_values(array_unique($actions)),
+        ];
     }
 
     private function shouldSkipRequest(Request $request): bool
