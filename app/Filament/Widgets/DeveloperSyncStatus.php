@@ -2,73 +2,68 @@
 
 namespace App\Filament\Widgets;
 
-use Filament\Widgets\StatsOverviewWidget;
-use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Support\Facades\DB;
+use App\Models\SubscriptionModuleSync;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+use Filament\Widgets\TableWidget;
 
-class DeveloperSyncStatus extends StatsOverviewWidget
+class DeveloperSyncStatus extends TableWidget
 {
-    protected function getStats(): array
+    protected static ?string $heading = 'Azure data sync';
+
+    protected int|string|array $columnSpan = 'full';
+
+    protected static ?int $sort = 1;
+
+    public function table(Table $table): Table
     {
-        $modules = [
-            'subscriptions' => 'Subscriptions',
-            'resources' => 'Resources',
-            'costs' => 'Costs',
-            'security' => 'Security',
-            'alerts' => 'Alerts',
-            'web_urls' => 'Web URLs',
-        ];
-
-        $stats = [];
-
-        foreach ($modules as $key => $label) {
-            $latest = DB::table('subscription_module_syncs')
-                ->where('module', $key)
-                ->orderByDesc('updated_at')
-                ->first();
-
-            $lastSuccess = DB::table('subscription_module_syncs')
-                ->where('module', $key)
-                ->max('last_successful_at');
-
-            $status = $latest?->status ?? 'never';
-            $description = $lastSuccess
-                ? 'Last successful: ' . \Illuminate\Support\Carbon::parse($lastSuccess)->format('d M Y, H:i')
-                : 'No successful sync recorded';
-
-            if ($status === 'failed') {
-                $description = 'Latest status failed · ' . $description;
-            } elseif ($status === 'running') {
-                $description = 'A sync is currently running · ' . $description;
-            } elseif ($status === 'never') {
-                $description = 'No sync status recorded yet';
-            }
-
-            $stats[] = Stat::make($label, strtoupper($status))
-                ->description($description)
-                ->icon(match ($status) {
-                    'success' => 'heroicon-o-check-circle',
-                    'running' => 'heroicon-o-arrow-path',
-                    'failed' => 'heroicon-o-exclamation-circle',
-                    default => 'heroicon-o-clock',
-                })
-                ->color(match ($status) {
-                    'success' => 'success',
-                    'running' => 'warning',
-                    'failed' => 'danger',
-                    default => 'gray',
-                });
-        }
-
-        $reportPath = storage_path('logs/scheduler/reports/latest.html');
-        $reportAvailable = is_file($reportPath);
-
-        $stats[] = Stat::make('Latest Sync Report', $reportAvailable ? 'Available' : 'Not generated')
-            ->description($reportAvailable ? 'Open the latest full scheduler report' : 'Run sync-all.php to generate a report')
-            ->icon('heroicon-o-document-chart-bar')
-            ->color($reportAvailable ? 'success' : 'gray')
-            ->url($reportAvailable ? route('developer.sync-report') : null);
-
-        return $stats;
+        return $table
+            ->query(
+                SubscriptionModuleSync::query()
+                    ->selectRaw('module, MAX(id) as id, MAX(status) as status, MAX(last_successful_at) as last_successful_at, MAX(last_started_at) as last_started_at, MAX(last_failed_at) as last_failed_at')
+                    ->groupBy('module')
+            )
+            ->columns([
+                TextColumn::make('module')
+                    ->label('Module')
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'subscriptions' => 'Subscriptions',
+                        'resources' => 'Resources',
+                        'costs' => 'Costs',
+                        'security' => 'Security',
+                        'alerts' => 'Alerts',
+                        'web_urls' => 'Web URLs',
+                        default => str($state)->replace('_', ' ')->title()->toString(),
+                    })
+                    ->sortable(),
+                TextColumn::make('status')
+                    ->label('Latest status')
+                    ->badge()
+                    ->color(fn (?string $state): string => match ($state) {
+                        'success' => 'success',
+                        'running' => 'warning',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        'success' => 'Successful',
+                        'running' => 'Running',
+                        'failed' => 'Failed',
+                        default => 'Not recorded',
+                    }),
+                TextColumn::make('last_successful_at')
+                    ->label('Last successful sync')
+                    ->dateTime('d M Y, H:i')
+                    ->placeholder('—')
+                    ->sortable(),
+                TextColumn::make('last_started_at')
+                    ->label('Last attempt')
+                    ->dateTime('d M Y, H:i')
+                    ->placeholder('—')
+                    ->sortable(),
+            ])
+            ->defaultSort('last_started_at', 'desc')
+            ->paginated(false)
+            ->striped();
     }
 }
