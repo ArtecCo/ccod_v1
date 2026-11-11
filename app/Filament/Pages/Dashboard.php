@@ -69,7 +69,7 @@ class Dashboard extends BaseDashboard
         $recentActivity = Activity::query()
             ->where('causer_type', $user->getMorphClass())
             ->where('causer_id', $user->getKey())
-            ->whereNot('log_name', 'Requests')
+            ->where('log_name', '!=', 'Requests')
             ->orderByDesc('created_at')
             ->limit(5)
             ->get();
@@ -137,6 +137,11 @@ class Dashboard extends BaseDashboard
                 ->collapsible()
                 ->columnSpanFull(),
         ]);
+    }
+
+    public function getWidgets(): array
+    {
+        return [];
     }
 
     protected function getHeaderActions(): array
