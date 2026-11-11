@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\AzureSecurityAssessment;
 use App\Models\AzureSubscription;
 use Illuminate\Support\Carbon;
+use Illuminate\Http\Client\Response;
 use RuntimeException;
 
 class AzureSecuritySyncService
@@ -155,7 +156,7 @@ KQL,
      * Retry only transient Azure gateway responses for security assessments.
      * Certificate verification remains enabled by the shared Azure HTTP client.
      */
-    private function postWithGatewayRetry(string $url, array $payload): \\Illuminate\\Http\\Client\\Response
+    private function postWithGatewayRetry(string $url, array $payload): Response
     {
         $retryableStatuses = [502, 503, 504];
         $maxAttempts = 4;
