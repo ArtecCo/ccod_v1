@@ -112,7 +112,7 @@ KQL,
                 $payload['options']['$skipToken'] = $skipToken;
             }
 
-            $response = $this->azure->post(
+            $response = $this->postWithGatewayRetry(
                 'https://management.azure.com/providers/Microsoft.ResourceGraph/resources?api-version=' . self::API_VERSION,
                 $payload,
             )->throw();
@@ -149,6 +149,28 @@ KQL,
         }
 
         return $stats;
+    }
+
+    /**
+     * Retry only transient Azure gateway responses for security assessments.
+     * Certificate verification remains enabled by the shared Azure HTTP client.
+     */
+    private function postWithGatewayRetry(string $url, array $payload): \\Illuminate\\Http\\Client\\Response
+    {
+        $retryableStatuses = [502, 503, 504];
+        $maxAttempts = 4;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $response = $this->azure->post($url, $payload);
+
+            if (! in_array($response->status(), $retryableStatuses, true) || $attempt === $maxAttempts) {
+                return $response;
+            }
+
+            usleep($attempt * 500000);
+        }
+
+        throw new RuntimeException('Azure security assessment request exhausted its retry attempts.');
     }
 
     private function syncOne(array $assessment, string $subscriptionId, Carbon $syncTimestamp): string
