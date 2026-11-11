@@ -25,7 +25,6 @@ use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBr
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use App\Livewire\Filament\Subscriptions\SubscriptionMetricsDashboard;
 
 class ViewAzureSubscription extends ViewRecord
@@ -67,7 +66,6 @@ class ViewAzureSubscription extends ViewRecord
                     Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                     Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                     Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                 ])->columns(1),
                 $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
                     Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
