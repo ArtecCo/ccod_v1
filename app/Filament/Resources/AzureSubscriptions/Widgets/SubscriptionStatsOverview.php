@@ -123,8 +123,9 @@ class SubscriptionStatsOverview extends BaseWidget
                 ->color($isHealthy ? 'success' : 'danger')
                 ->extraAttributes([
                     'class' => $isHealthy
-                        ? 'border-l-4 !border-l-success-500 !bg-success-50 dark:!bg-success-950/30 [&_.fi-wi-stats-overview-stat-value]:!text-success-700 dark:[&_.fi-wi-stats-overview-stat-value]:!text-success-400'
-                        : 'border-l-4 !border-l-danger-500 !bg-danger-50 dark:!bg-danger-950/30 [&_.fi-wi-stats-overview-stat-value]:!text-danger-700 dark:[&_.fi-wi-stats-overview-stat-value]:!text-danger-400',
+                        ? 'ccod-score-health ccod-score-health--healthy border-l-4 !border-l-success-500 !bg-success-50 dark:!bg-success-950/30'
+                        : 'ccod-score-health ccod-score-health--unhealthy border-l-4 !border-l-danger-500 !bg-danger-50 dark:!bg-danger-950/30',
+                    'data-score-health' => $isHealthy ? 'healthy' : 'unhealthy',
                 ])
                 ->description($score === null ? 'Security score unavailable' : 'Based on the 80% security score threshold'),
             $costStat,
