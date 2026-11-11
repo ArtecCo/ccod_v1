@@ -35,6 +35,24 @@ class AzureSubscriptionInfolist
                                 ->sort()
                                 ->implode(', ') ?: '—';
                         }),
+                    TextEntry::make('overview_tags')
+                        ->label('Tags')
+                        ->badge()
+                        ->state(function ($record): array {
+                            return $record->projects()
+                                ->with('subscriptionAssignments')
+                                ->get()
+                                ->flatMap(fn ($project) => $project->subscriptionAssignments
+                                    ->where('subscription_id', $record->subscription_id)
+                                    ->flatMap(fn ($assignment) => (array) $assignment->tags))
+                                ->filter()
+                                ->map(fn ($tag): string => strtoupper((string) $tag))
+                                ->unique()
+                                ->sort()
+                                ->values()
+                                ->all();
+                        })
+                        ->placeholder('No tags assigned'),
                     TextEntry::make('overview_user_groups')
                         ->label('Assigned User Groups')
                         ->badge()
