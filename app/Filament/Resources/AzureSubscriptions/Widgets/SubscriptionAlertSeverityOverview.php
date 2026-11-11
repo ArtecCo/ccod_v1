@@ -8,6 +8,7 @@ use App\Support\DataAge;
 use Carbon\Carbon;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\HtmlString;
 
 class SubscriptionAlertSeverityOverview extends BaseWidget
 {
@@ -38,7 +39,8 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
 
         $sync = app(SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'alerts');
         $lastSynced = $sync?->last_successful_at !== null ? Carbon::parse($sync->last_successful_at) : null;
-        $lastSyncedLabel = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? '—';
+        $lastSyncedLabel = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('H:i') ?? '—';
+        $lastSyncedDate = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y');
         [$ageDescription, $ageColor] = DataAge::for($lastSynced);
 
         if (($sync?->status ?? null) === 'failed') {
@@ -49,9 +51,16 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
             $ageColor = 'warning';
         }
 
+        if ($lastSyncedDate !== null) {
+            $ageDescription = $ageDescription instanceof HtmlString
+                ? new HtmlString(e($lastSyncedDate) . ' · ' . $ageDescription->toHtml())
+                : $lastSyncedDate . ' · ' . $ageDescription;
+        }
+
         return [
             Stat::make('Sev 0', (string) ($counts?->sev0 ?? 0))
                 ->color('gray')
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
@@ -59,6 +68,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                 ]),
             Stat::make('Sev 1', (string) ($counts?->sev1 ?? 0))
                 ->color('danger')
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
@@ -66,6 +76,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                 ]),
             Stat::make('Sev 2', (string) ($counts?->sev2 ?? 0))
                 ->color('warning')
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-exclamation-circle')
                 ->extraAttributes([
                     'role' => 'button',
@@ -87,12 +98,14 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                 ]),
             Stat::make('Total Alerts', (string) ($counts?->total ?? 0))
                 ->color('primary')
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-bell-alert')
                 ->extraAttributes([
                     'role' => 'button',
                     'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: null })",
                 ]),
             Stat::make('Last Sync', $lastSyncedLabel)
+                ->extraAttributes(['class' => 'ccod-alert-stat'])
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->description($ageDescription)
