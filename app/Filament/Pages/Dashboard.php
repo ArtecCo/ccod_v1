@@ -14,6 +14,7 @@ use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
+use Illuminate\Support\HtmlString;
 
 class Dashboard extends BaseDashboard
 {
@@ -111,11 +112,8 @@ class Dashboard extends BaseDashboard
                 ->columnSpanFull(),
             TextEntry::make('dashboard_greeting')
                 ->hiddenLabel()
-                ->state($greeting.', '.$user->name)
-                ->size('2xl')
-                ->weight('bold')
-                ->alignCenter()
-                ->extraAttributes(['class' => 'text-3xl md:text-4xl'])
+                ->html()
+                ->state(new HtmlString('<div class="w-full text-center text-4xl font-bold tracking-tight md:text-5xl lg:text-6xl">'.e($greeting.', '.$user->name).'</div>'))
                 ->columnSpanFull(),
             TextEntry::make('dashboard_welcome')
                 ->hiddenLabel()
