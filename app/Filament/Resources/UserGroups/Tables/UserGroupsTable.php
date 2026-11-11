@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\UserGroups\Tables;
 
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
@@ -22,7 +21,6 @@ class UserGroupsTable
             ])
             ->actions([
                 ViewAction::make(),
-                EditAction::make(),
             ]);
     }
 }
