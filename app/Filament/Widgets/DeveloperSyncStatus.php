@@ -17,12 +17,12 @@ class DeveloperSyncStatus extends TableWidget
 
     public function table(Table $table): Table
     {
+        $latestIds = SubscriptionModuleSync::query()
+            ->selectRaw('MAX(id)')
+            ->groupBy('module');
+
         return $table
-            ->query(
-                SubscriptionModuleSync::query()
-                    ->selectRaw('module, MAX(id) as id, MAX(status) as status, MAX(last_successful_at) as last_successful_at, MAX(last_started_at) as last_started_at, MAX(last_failed_at) as last_failed_at')
-                    ->groupBy('module')
-            )
+            ->query(SubscriptionModuleSync::query()->whereIn('id', $latestIds))
             ->columns([
                 TextColumn::make('module')
                     ->label('Module')
@@ -37,7 +37,7 @@ class DeveloperSyncStatus extends TableWidget
                     })
                     ->sortable(),
                 TextColumn::make('status')
-                    ->label('Latest status')
+                    ->label('Status')
                     ->badge()
                     ->color(fn (?string $state): string => match ($state) {
                         'success' => 'success',
@@ -52,7 +52,7 @@ class DeveloperSyncStatus extends TableWidget
                         default => 'Not recorded',
                     }),
                 TextColumn::make('last_successful_at')
-                    ->label('Last successful sync')
+                    ->label('Last successful')
                     ->dateTime('d M Y, H:i')
                     ->placeholder('—')
                     ->sortable(),
