@@ -37,7 +37,7 @@ class AzureSecurityScoreSyncService
                 self::API_VERSION,
             );
 
-            $response = $this->azure->get($url)->throw();
+            $response = $this->getWithGatewayRetry($url)->throw();
             $payload = $response->json();
             if (! is_array($payload) || ! is_array($payload['value'] ?? null)) {
                 throw new RuntimeException("Invalid secure score response for subscription {$subscription}.");
@@ -99,6 +99,28 @@ class AzureSecurityScoreSyncService
         }
 
         return $stats;
+    }
+
+    /**
+     * Retry only transient Azure gateway responses for the security score request.
+     * Certificate verification remains enabled by the shared Azure HTTP client.
+     */
+    private function getWithGatewayRetry(string $url): \\Illuminate\\Http\\Client\\Response
+    {
+        $retryableStatuses = [502, 503, 504];
+        $maxAttempts = 4;
+
+        for ($attempt = 1; $attempt <= $maxAttempts; $attempt++) {
+            $response = $this->azure->get($url);
+
+            if (! in_array($response->status(), $retryableStatuses, true) || $attempt === $maxAttempts) {
+                return $response;
+            }
+
+            usleep($attempt * 500000);
+        }
+
+        throw new RuntimeException('Azure security score request exhausted its retry attempts.');
     }
 
     private function attributes(array $score, string $subscriptionId): array
