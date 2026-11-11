@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
+use Filament\Models\Contracts\HasAvatar;
 use Filament\Panel;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, HasAvatar
 {
     use HasFactory, Notifiable;
 
@@ -20,6 +21,7 @@ class User extends Authenticatable implements FilamentUser
 
     public function userGroups(): BelongsToMany { return $this->belongsToMany(UserGroup::class, 'user_group_user')->withPivot(['starts_at', 'expires_at'])->withTimestamps(); }
     public function accessRequests(): HasMany { return $this->hasMany(AccessRequest::class); }
+    public function getFilamentAvatarUrl(): ?string { return null; }
     public function canAccessPanel(Panel $panel): bool { return $panel->getId() === 'admin' && $this->is_active; }
     public static function getGloballySearchableAttributes(): array { return ['name','email']; }
     public static function getGlobalSearchResultDetails($record): array { return ['Email'=>$record->email]; }
