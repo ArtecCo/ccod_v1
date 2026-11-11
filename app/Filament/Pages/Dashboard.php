@@ -101,22 +101,27 @@ class Dashboard extends BaseDashboard
                 ->all();
 
         return $schema->components([
-            TextEntry::make('dashboard_avatar')
-                ->hiddenLabel()
-                ->html()
-                ->state(new HtmlString('<div style="width:56px;height:56px;margin:0 auto;border-radius:9999px;background:#171717;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:600;">'.e(mb_strtoupper(mb_substr(trim($user->name), 0, 1))).'</div>'))
-                ->alignCenter()
-                ->columnSpanFull(),
-            TextEntry::make('dashboard_greeting')
-                ->hiddenLabel()
-                ->html()
-                ->state(new HtmlString('<div style="width:100%;text-align:center;font-size:clamp(1.5rem,2.5vw,2.25rem);font-weight:700;line-height:1.25;letter-spacing:-0.025em;color:inherit;">'.e($greeting.', '.$user->name).'</div>'))
-                ->alignCenter()
-                ->columnSpanFull(),
-            TextEntry::make('dashboard_welcome')
-                ->hiddenLabel()
-                ->state('Welcome back to CCOD. Your workspace and account details are ready.')
-                ->alignCenter()
+            Section::make()
+                ->schema([
+                    TextEntry::make('dashboard_avatar')
+                        ->hiddenLabel()
+                        ->html()
+                        ->state(new HtmlString('<div style="width:56px;height:56px;margin:0 auto;border-radius:9999px;background:#171717;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.25rem;font-weight:600;">'.e(mb_strtoupper(mb_substr(trim($user->name), 0, 1))).'</div>'))
+                        ->alignCenter()
+                        ->columnSpanFull(),
+                    TextEntry::make('dashboard_greeting')
+                        ->hiddenLabel()
+                        ->html()
+                        ->state(new HtmlString('<div style="width:100%;text-align:center;font-size:clamp(1.5rem,2.5vw,2.25rem);font-weight:700;line-height:1.25;letter-spacing:-0.025em;color:inherit;">'.e($greeting.', '.$user->name).'</div>'))
+                        ->alignCenter()
+                        ->columnSpanFull(),
+                    TextEntry::make('dashboard_welcome')
+                        ->hiddenLabel()
+                        ->state('Welcome back to CCOD. Your workspace and account details are ready.')
+                        ->alignCenter()
+                        ->columnSpanFull(),
+                ])
+                ->extraAttributes(['style' => 'padding:2.5rem 1.5rem;margin:1rem 0;'])
                 ->columnSpanFull(),
             Section::make('Account overview')
                 ->schema([
