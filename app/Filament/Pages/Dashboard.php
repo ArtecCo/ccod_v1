@@ -11,6 +11,7 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
@@ -54,8 +55,8 @@ class Dashboard extends BaseDashboard
             ->first()?->created_at;
 
         $sessionStartedAt = (int) session()->get('auth_session_started_at', now()->timestamp);
-        $sessionDuration = now()->diff(\Illuminate\Support\Carbon::createFromTimestamp($sessionStartedAt))
-            ->format('%a days %h hr %i min');
+        $elapsedSeconds = max(0, now()->timestamp - $sessionStartedAt);
+        $sessionDuration = sprintf('%02d:%02d:%02d', intdiv($elapsedSeconds, 3600), intdiv($elapsedSeconds % 3600, 60), $elapsedSeconds % 60);
 
         $projectCount = $groups
             ->flatMap(fn (UserGroup $group): Collection => $group->projects)
@@ -122,6 +123,7 @@ class Dashboard extends BaseDashboard
                             ]),
                     ]),
                 ])
+                ->extraAttributes(['wire:poll.1s' => '$refresh'])
                 ->columnSpanFull(),
             Section::make('My workspace')
                 ->description('Your current access and the resources available to you.')
