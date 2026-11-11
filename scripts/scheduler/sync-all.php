@@ -13,19 +13,19 @@ $basePath = dirname(__DIR__, 2);
 define('LARAVEL_START', microtime(true));
 require $basePath . '/vendor/autoload.php';
 
-/** @var \\Illuminate\\Foundation\\Application $app */
+/** @var \Illuminate\Foundation\Application $app */
 $app = require $basePath . '/bootstrap/app.php';
 $app->bootstrapWith([
-    \\Illuminate\\Foundation\\Bootstrap\\LoadEnvironmentVariables::class,
-    \\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration::class,
-    \\Illuminate\\Foundation\\Bootstrap\\HandleExceptions::class,
-    \\Illuminate\\Foundation\\Bootstrap\\RegisterFacades::class,
-    \\Illuminate\\Foundation\\Bootstrap\\RegisterProviders::class,
-    \\Illuminate\\Foundation\\Bootstrap\\BootProviders::class,
+    \Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables::class,
+    \Illuminate\Foundation\Bootstrap\LoadConfiguration::class,
+    \Illuminate\Foundation\Bootstrap\HandleExceptions::class,
+    \Illuminate\Foundation\Bootstrap\RegisterFacades::class,
+    \Illuminate\Foundation\Bootstrap\RegisterProviders::class,
+    \Illuminate\Foundation\Bootstrap\BootProviders::class,
 ]);
 
-$syncTracker = $app->make(\\App\\Services\\SubscriptionModuleSyncTracker::class);
-$trackedSubscriptionIds = \\App\\Models\\AzureSubscription::query()
+$syncTracker = $app->make(\App\Services\SubscriptionModuleSyncTracker::class);
+$trackedSubscriptionIds = \App\Models\AzureSubscription::query()
     ->pluck('subscription_id')
     ->filter()
     ->values()
@@ -92,7 +92,7 @@ foreach ($modules as $module) {
     if (! is_file($scriptPath)) {
         $stderr = "Runner script not found: {$scriptPath}";
     } else {
-        $command = '"' . str_replace('"', '\\"', PHP_BINARY) . '" "' . str_replace('"', '\\"', $scriptPath) . '"';
+        $command = '"' . str_replace('"', '\"', PHP_BINARY) . '" "' . str_replace('"', '\"', $scriptPath) . '"';
         // Keep child output in files so neither output stream can block the child.
         // Read those files while the process runs so Task Scheduler/console output
         // identifies the exact operation that is taking time.
