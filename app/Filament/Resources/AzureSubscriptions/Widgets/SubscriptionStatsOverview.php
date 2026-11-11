@@ -119,7 +119,7 @@ class SubscriptionStatsOverview extends BaseWidget
             : '—';
 
         if ($lastSynced === null) {
-            $syncAgeDescription = new \\Illuminate\\Support\\HtmlString(
+            $syncAgeDescription = new \Illuminate\Support\HtmlString(
                 '<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Sync time unavailable — data freshness unknown</span>',
             );
             $syncAgeColor = 'danger';
@@ -133,7 +133,7 @@ class SubscriptionStatsOverview extends BaseWidget
             $isStale = $ageSeconds > 8 * 60 * 60;
 
             $syncAgeDescription = $isStale
-                ? new \\Illuminate\\Support\\HtmlString(
+                ? new \Illuminate\Support\HtmlString(
                     '<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Stale data · ' . e('Data is ' . $ageLabel . ' old') . '</span>',
                 )
                 : 'Data age: ' . $ageLabel;
