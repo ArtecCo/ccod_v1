@@ -14,7 +14,7 @@ class AzureSubscriptionInfolist
         return $schema->components([
             Section::make('Subscription')
                 ->schema([
-                    Grid::make(3)
+                    Grid::make(4)
                         ->schema([
                             TextEntry::make('display_name')
                                 ->label('Subscription Name')
@@ -23,6 +23,11 @@ class AzureSubscriptionInfolist
                                 ->label('Subscription ID')
                                 ->copyable()
                                 ->copyMessage('Subscription ID copied'),
+                            TextEntry::make('overview_url_count')
+                                ->label('Total URLs')
+                                ->state(fn ($record): int => $record->webUrls()->count())
+                                ->badge()
+                                ->color('gray'),
                             TextEntry::make('overview_business_units')
                                 ->label('Business Unit')
                                 ->state(function ($record): string {
