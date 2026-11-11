@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Filament\\Resources\\AzureSubscriptions\\Widgets;
+namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
-use App\\Models\\AzureSubscription;
-use App\\Services\\SubscriptionModuleSyncTracker;
-use App\\Support\\DataAge;
-use Carbon\\Carbon;
-use Filament\\Widgets\\StatsOverviewWidget as BaseWidget;
-use Filament\\Widgets\\StatsOverviewWidget\\Stat;
+use App\Models\AzureSubscription;
+use App\Services\SubscriptionModuleSyncTracker;
+use App\Support\DataAge;
+use Carbon\Carbon;
+use Filament\Widgets\StatsOverviewWidget as BaseWidget;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class SubscriptionAlertSeverityOverview extends BaseWidget
 {
@@ -55,42 +55,42 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
                 ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'x-on:click' => "\\$dispatch('filter-alerts-by-severity', { severity: 'Sev0' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev0' })",
                 ]),
             Stat::make('Sev 1', (string) ($counts?->sev1 ?? 0))
                 ->color('danger')
                 ->icon('heroicon-o-exclamation-triangle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'x-on:click' => "\\$dispatch('filter-alerts-by-severity', { severity: 'Sev1' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev1' })",
                 ]),
             Stat::make('Sev 2', (string) ($counts?->sev2 ?? 0))
                 ->color('warning')
                 ->icon('heroicon-o-exclamation-circle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'x-on:click' => "\\$dispatch('filter-alerts-by-severity', { severity: 'Sev2' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev2' })",
                 ]),
             Stat::make('Sev 3', (string) ($counts?->sev3 ?? 0))
                 ->color('warning')
                 ->icon('heroicon-o-exclamation-circle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'x-on:click' => "\\$dispatch('filter-alerts-by-severity', { severity: 'Sev3' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev3' })",
                 ]),
             Stat::make('Sev 4', (string) ($counts?->sev4 ?? 0))
                 ->color('gray')
                 ->icon('heroicon-o-information-circle')
                 ->extraAttributes([
                     'role' => 'button',
-                    'x-on:click' => "\\$dispatch('filter-alerts-by-severity', { severity: 'Sev4' })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: 'Sev4' })",
                 ]),
             Stat::make('Total Alerts', (string) ($counts?->total ?? 0))
                 ->color('primary')
                 ->icon('heroicon-o-bell-alert')
                 ->extraAttributes([
                     'role' => 'button',
-                    'x-on:click' => "\\$dispatch('filter-alerts-by-severity', { severity: null })",
+                    'x-on:click' => "\$dispatch('filter-alerts-by-severity', { severity: null })",
                 ]),
             Stat::make('Last Sync', $lastSyncedLabel)
                 ->icon('heroicon-o-arrow-path')
