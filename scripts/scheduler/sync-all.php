@@ -10,6 +10,27 @@ declare(strict_types=1);
 
 $basePath = dirname(__DIR__, 2);
 
+define('LARAVEL_START', microtime(true));
+require $basePath . '/vendor/autoload.php';
+
+/** @var \\Illuminate\\Foundation\\Application $app */
+$app = require $basePath . '/bootstrap/app.php';
+$app->bootstrapWith([
+    \\Illuminate\\Foundation\\Bootstrap\\LoadEnvironmentVariables::class,
+    \\Illuminate\\Foundation\\Bootstrap\\LoadConfiguration::class,
+    \\Illuminate\\Foundation\\Bootstrap\\HandleExceptions::class,
+    \\Illuminate\\Foundation\\Bootstrap\\RegisterFacades::class,
+    \\Illuminate\\Foundation\\Bootstrap\\RegisterProviders::class,
+    \\Illuminate\\Foundation\\Bootstrap\\BootProviders::class,
+]);
+
+$syncTracker = $app->make(\\App\\Services\\SubscriptionModuleSyncTracker::class);
+$trackedSubscriptionIds = \\App\\Models\\AzureSubscription::query()
+    ->pluck('subscription_id')
+    ->filter()
+    ->values()
+    ->all();
+
 // Standalone CLI runners do not necessarily pass through Laravel's timezone bootstrap.
 date_default_timezone_set('Asia/Kolkata');
 $schedulerPath = __DIR__;
@@ -42,7 +63,22 @@ fwrite(STDOUT, "=================================" . PHP_EOL);
 fwrite(STDOUT, "Run ID: {$runId}" . PHP_EOL . PHP_EOL);
 
 foreach ($modules as $module) {
+    $moduleKey = match ($module['name']) {
+        'Subscriptions' => 'subscriptions',
+        'Resources' => 'resources',
+        'Costs' => 'costs',
+        'Security' => 'security',
+        'Alerts' => 'alerts',
+        'Web URLs' => 'web_urls',
+        default => null,
+    };
+
+    if ($moduleKey !== null) {
+        $syncTracker->begin($moduleKey, $trackedSubscriptionIds);
+    }
+
     $scriptPath = $schedulerPath . DIRECTORY_SEPARATOR . $module['script'];
+
     $startedAt = microtime(true);
     $started = date('Y-m-d H:i:s P');
 
@@ -176,7 +212,16 @@ foreach ($modules as $module) {
     $duration = $endedAt - $startedAt;
     $status = $exitCode === 0 ? 'SUCCESS' : 'FAILED';
 
+    if ($moduleKey !== null) {
+        if ($exitCode === 0) {
+            $syncTracker->succeed($moduleKey, $trackedSubscriptionIds);
+        } else {
+            $syncTracker->fail($moduleKey, $trackedSubscriptionIds, trim($stderr) !== '' ? trim($stderr) : "{$module['name']} sync exited with code {$exitCode}.");
+        }
+    }
+
     if ($exitCode !== 0) {
+
         $anyFailure = true;
     }
 
