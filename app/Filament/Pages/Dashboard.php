@@ -112,9 +112,10 @@ class Dashboard extends BaseDashboard
             TextEntry::make('dashboard_greeting')
                 ->hiddenLabel()
                 ->state($greeting.', '.$user->name)
-                ->size('xl')
+                ->size('2xl')
                 ->weight('bold')
                 ->alignCenter()
+                ->extraAttributes(['class' => 'text-3xl md:text-4xl'])
                 ->columnSpanFull(),
             TextEntry::make('dashboard_welcome')
                 ->hiddenLabel()
