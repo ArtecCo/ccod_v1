@@ -81,7 +81,7 @@ class SubscriptionResourceCostBreakdown extends BaseWidget
                 Group::make('resource_type')->label('Resource Type'),
                 Group::make('region')->label('Location'),
             ])
-            ->defaultSort('name')
+            ->defaultSort('cost_eur', 'desc')
             ->striped(false)
             ->recordActions([])
             ->toolbarActions([
