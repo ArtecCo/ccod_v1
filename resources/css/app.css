@@ -86,3 +86,42 @@ html.dark .ccod-notifications .ccod-notifications__icon--danger {
     color: white !important;
 }
 
+
+
+html .ccod-alert-stat {
+    min-height: 0 !important;
+    height: 100%;
+    padding: .8rem .95rem !important;
+}
+
+html .ccod-alert-stat .fi-wi-stats-overview-stat {
+    gap: .45rem !important;
+}
+
+html .ccod-alert-stat .fi-wi-stats-overview-stat-label {
+    font-size: .875rem !important;
+    line-height: 1.25rem !important;
+    font-weight: 500 !important;
+}
+
+html .ccod-alert-stat .fi-wi-stats-overview-stat-value {
+    font-size: 1.4rem !important;
+    line-height: 1.75rem !important;
+    font-weight: 600 !important;
+    letter-spacing: -.025em;
+    overflow-wrap: anywhere;
+}
+
+html .ccod-alert-stat .fi-wi-stats-overview-stat-description {
+    font-size: .75rem !important;
+    line-height: 1.1rem !important;
+}
+
+html .ccod-alert-stat .fi-wi-stats-overview-stat-icon {
+    width: 1rem !important;
+    height: 1rem !important;
+}
+
+html .ccod-alert-stat .fi-wi-stats-overview-stat-content {
+    gap: .25rem !important;
+}
