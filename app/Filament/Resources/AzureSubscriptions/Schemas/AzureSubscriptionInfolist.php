@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Filament\\Resources\\AzureSubscriptions\\Schemas;
+namespace App\Filament\Resources\AzureSubscriptions\Schemas;
 
-use Filament\\Infolists\\Components\\TextEntry;
-use Filament\\Schemas\\Components\\Grid;
-use Filament\\Schemas\\Components\\Section;
-use Filament\\Schemas\\Schema;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
 
 class AzureSubscriptionInfolist
 {
