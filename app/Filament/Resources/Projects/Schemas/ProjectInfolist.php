@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\Projects\Schemas;
+namespace App\\Filament\\Resources\\Projects\\Schemas;
 
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Schema;
+use Filament\\Infolists\\Components\\RepeatableEntry;
+use Filament\\Infolists\\Components\\TextEntry;
+use Filament\\Schemas\\Schema;
 
 class ProjectInfolist
 {
@@ -15,10 +15,17 @@ class ProjectInfolist
             TextEntry::make('businessUnit.name')->label('Business Unit'),
             TextEntry::make('description')->placeholder('—')->columnSpanFull(),
             RepeatableEntry::make('subscriptionAssignments')->label('Environment subscriptions')->schema([
-                TextEntry::make('environment')->label('Tags')->formatStateUsing(fn($state): string => strtoupper((string) $state))->badge(),
+                TextEntry::make('environment')
+                    ->label('Environment')
+                    ->formatStateUsing(fn ($state): string => strtoupper((string) $state))
+                    ->badge(),
+                TextEntry::make('tags')
+                    ->label('Tags')
+                    ->badge()
+                    ->placeholder('—'),
                 TextEntry::make('subscription.display_name')->label('Subscription'),
                 TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
-            ])->columns(3)->columnSpanFull(),
+            ])->columns(4)->columnSpanFull(),
             TextEntry::make('created_at')->dateTime(),
             TextEntry::make('updated_at')->dateTime(),
         ]);
