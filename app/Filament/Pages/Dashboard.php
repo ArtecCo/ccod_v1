@@ -2,7 +2,6 @@
 
 namespace App\Filament\Pages;
 
-use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Models\User;
 use App\Models\UserGroup;
 use App\Services\AccessAuthorizationService;
@@ -11,7 +10,6 @@ use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
-use Filament\Infolists\Components\ImageEntry;
 use Filament\Infolists\Components\TextEntry;
 use Spatie\Activitylog\Models\Activity;
 use Illuminate\Support\Collection;
@@ -77,18 +75,19 @@ class Dashboard extends BaseDashboard
 
         $greeting = now()->hour < 12 ? 'Good morning' : (now()->hour < 17 ? 'Good afternoon' : 'Good evening');
 
-        $groupSections = $groups->isEmpty()
+        $groupRows = $groups->isEmpty()
             ? [TextEntry::make('no_groups')->hiddenLabel()->state('You are not currently assigned to any active user groups.')->columnSpanFull()]
-            : $groups->map(fn (UserGroup $group): Section => Section::make($group->name)
+            : $groups->map(fn (UserGroup $group): Grid => Grid::make(2)
                 ->schema([
+                    TextEntry::make('group_name_'.$group->id)
+                        ->label('User group')
+                        ->weight('medium')
+                        ->state($group->name),
                     TextEntry::make('group_role_'.$group->id)
                         ->label('Role')
                         ->badge()
                         ->color('info')
                         ->state($group->role?->name ?? '—'),
-                    TextEntry::make('group_projects_'.$group->id)
-                        ->label('Assigned projects')
-                        ->state($group->projects->pluck('name')->sort()->implode(', ') ?: 'No projects assigned'),
                 ]))
                 ->all();
 
@@ -101,26 +100,19 @@ class Dashboard extends BaseDashboard
                 ->all();
 
         return $schema->components([
-            Section::make()
+            Section::make($greeting.', '.$user->name)
+                ->description('Welcome back to CCOD. Your workspace and account details are ready.')
+                ->icon('heroicon-o-sparkles')
+                ->columnSpanFull(),
+            Section::make('Account overview')
                 ->schema([
-                    Grid::make(['default' => 1, 'md' => 2])->schema([
-                        ImageEntry::make('dashboard_avatar')
-                            ->hiddenLabel()
-                            ->state($user->getFilamentAvatarUrl())
-                            ->defaultImageUrl(asset('images/default-avatar.svg'))
-                            ->circular()
-                            ->imageSize(112),
-                        Section::make($greeting.', '.$user->name)
-                            ->description('Welcome to CCOD. Here is a summary of your account and assigned workspace.')
-                            ->icon('heroicon-o-sparkles')
-                            ->schema([
-                                TextEntry::make('dashboard_email')->label('Email address')->icon('heroicon-o-envelope')->state($user->email),
+                    Grid::make(['default' => 1, 'md' => 3])->schema([
+                        TextEntry::make('dashboard_email')->label('Email address')->icon('heroicon-o-envelope')->state($user->email),
                         TextEntry::make('dashboard_created')->label('Account created')->icon('heroicon-o-calendar-days')->state($user->created_at?->format('d M Y') ?? '—'),
                         TextEntry::make('dashboard_status')->label('Account status')->badge()->color($user->is_active ? 'success' : 'danger')->state($user->is_active ? 'Active' : 'Inactive'),
                         TextEntry::make('dashboard_last_login')->label('Previous login')->icon('heroicon-o-clock')->state($lastLogin?->format('d M Y, H:i') ?? 'No previous login recorded'),
                         TextEntry::make('dashboard_session')->label('Current session')->icon('heroicon-o-clock')->state($sessionDuration),
-                                TextEntry::make('dashboard_group_count')->label('Active user groups')->icon('heroicon-o-user-group')->state((string) $groups->count()),
-                            ]),
+                        TextEntry::make('dashboard_group_count')->label('Active user groups')->icon('heroicon-o-user-group')->state((string) $groups->count()),
                     ]),
                 ])
                 ->extraAttributes(['wire:poll.1s' => '$refresh'])
@@ -136,9 +128,9 @@ class Dashboard extends BaseDashboard
                 ])
                 ->columnSpanFull(),
             Section::make('My user groups')
-                ->description('Your active group memberships, roles and assigned projects.')
+                ->description('Your active group memberships and assigned roles.')
                 ->schema([
-                    Grid::make(['default' => 1, 'md' => 2])->schema($groupSections),
+                    Grid::make(['default' => 1, 'md' => 2])->schema($groupRows),
                 ])
                 ->columnSpanFull(),
             Section::make('Recent activity')
