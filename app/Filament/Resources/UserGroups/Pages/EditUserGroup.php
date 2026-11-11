@@ -20,6 +20,7 @@ class EditUserGroup extends EditRecord
                 ->modalHeading('Delete user group')
                 ->modalDescription('Deleting this group will remove its user and project assignments. This action cannot be undone.')
                 ->modalSubmitActionLabel('Delete group')
+                ->successNotification(null)
                 ->action(function (): void {
                     $record = $this->record;
 
