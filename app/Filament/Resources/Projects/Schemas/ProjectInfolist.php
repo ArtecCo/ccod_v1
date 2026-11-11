@@ -14,18 +14,15 @@ class ProjectInfolist
             TextEntry::make('name'),
             TextEntry::make('businessUnit.name')->label('Business Unit'),
             TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-            RepeatableEntry::make('subscriptionAssignments')->label('Environment subscriptions')->schema([
-                TextEntry::make('environment')
-                    ->label('Environment')
-                    ->formatStateUsing(fn ($state): string => strtoupper((string) $state))
-                    ->badge(),
+            RepeatableEntry::make('subscriptionAssignments')->label('Subscriptions')->schema([
                 TextEntry::make('tags')
                     ->label('Tags')
+                    ->formatStateUsing(fn ($state): string => strtoupper(implode(', ', (array) $state)))
                     ->badge()
                     ->placeholder('—'),
                 TextEntry::make('subscription.display_name')->label('Subscription'),
                 TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
-            ])->columns(4)->columnSpanFull(),
+            ])->columns(3)->columnSpanFull(),
             TextEntry::make('created_at')->dateTime(),
             TextEntry::make('updated_at')->dateTime(),
         ]);
