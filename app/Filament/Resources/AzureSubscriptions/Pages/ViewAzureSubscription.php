@@ -83,8 +83,8 @@ class ViewAzureSubscription extends ViewRecord
                     Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
                 ])->columns(2),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
-                $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull()])->columns(1),
-                $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [$this->getRelationManagersContentComponent()->columnSpanFull()])->columns(1),
+                $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [Livewire::make(SubscriptionModuleSyncStat::class, ['record' => $this->record, 'module' => 'web_urls', 'label' => 'Last Sync'])->lazy()->columnSpanFull(), Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull()])->columns(1),
+                $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [Livewire::make(SubscriptionModuleSyncStat::class, ['record' => $this->record, 'module' => 'resources', 'label' => 'Last Sync'])->lazy()->columnSpanFull(), $this->getRelationManagersContentComponent()->columnSpanFull()])->columns(1),
                 $this->makeTab('Metrics', 'resources.metrics.view')->schema(fn (): array => [Livewire::make(SubscriptionMetricsDashboard::class, ['record' => $this->record])->lazy()->columnSpanFull()])->columns(1),
             ])->persistTabInQueryString()->contained(false)->extraAttributes(['class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none'])->columnSpanFull(),
         ]);
