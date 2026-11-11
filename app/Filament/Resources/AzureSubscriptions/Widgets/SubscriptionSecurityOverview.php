@@ -22,12 +22,11 @@ class SubscriptionSecurityOverview extends BaseWidget
     protected function getStats(): array
     {
         $assessmentStats = $this->record->securityAssessments()
-            ->where('state', 'Unhealthy')
             ->selectRaw(
-                'COUNT(*) AS unhealthy_count,
-                 SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS high_count,
+                'SUM(CASE WHEN state = ? THEN 1 ELSE 0 END) AS unhealthy_count,
+                 SUM(CASE WHEN state = ? AND severity = ? THEN 1 ELSE 0 END) AS high_count,
                  MAX(synced_at) AS last_synced',
-                ['High'],
+                ['Unhealthy', 'Unhealthy', 'High'],
             )
             ->first();
 
@@ -80,6 +79,7 @@ class SubscriptionSecurityOverview extends BaseWidget
         $lastSyncedLabel = $lastSynced !== null
             ? Carbon::parse($lastSynced)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
+        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null);
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
             ->icon('heroicon-o-shield-check')
@@ -108,7 +108,9 @@ class SubscriptionSecurityOverview extends BaseWidget
                 ->color($high > 0 ? 'danger' : 'success'),
             Stat::make('Last Sync', $lastSyncedLabel)
                 ->icon('heroicon-o-arrow-path')
-                ->color('gray'),
+                ->color('gray')
+                ->description($syncAgeDescription)
+                ->descriptionColor($syncAgeColor),
         ];
     }
 }
