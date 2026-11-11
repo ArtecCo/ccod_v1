@@ -80,18 +80,15 @@ class Dashboard extends BaseDashboard
             ? [TextEntry::make('no_groups')->hiddenLabel()->state('You are not currently assigned to any active user groups.')->columnSpanFull()]
             : $groups->map(fn (UserGroup $group): Section => Section::make($group->name)
                 ->schema([
-                    Grid::make(2)->schema([
-                        TextEntry::make('group_role_'.$group->id)
-                            ->label('Role')
-                            ->badge()
-                            ->state($group->role?->name ?? '—'),
-                        TextEntry::make('group_projects_'.$group->id)
-                            ->label('Assigned projects')
-                            ->state($group->projects->pluck('name')->sort()->implode(', ') ?: 'No projects assigned'),
-                    ]),
-                ])
-                ->collapsible()
-                ->collapsed())
+                    TextEntry::make('group_role_'.$group->id)
+                        ->label('Role')
+                        ->badge()
+                        ->color('info')
+                        ->state($group->role?->name ?? '—'),
+                    TextEntry::make('group_projects_'.$group->id)
+                        ->label('Assigned projects')
+                        ->state($group->projects->pluck('name')->sort()->implode(', ') ?: 'No projects assigned'),
+                ]))
                 ->all();
 
         $activityEntries = $recentActivity->isEmpty()
@@ -103,17 +100,26 @@ class Dashboard extends BaseDashboard
                 ->all();
 
         return $schema->components([
-            Section::make($greeting.', '.$user->name)
-                ->description('Welcome to CCOD. Here is a summary of your account and assigned workspace.')
-                ->icon('heroicon-o-sparkles')
+            Section::make()
                 ->schema([
-                    Grid::make(3)->schema([
-                        TextEntry::make('dashboard_email')->label('Email address')->icon('heroicon-o-envelope')->state($user->email),
+                    Grid::make(['default' => 1, 'md' => 2])->schema([
+                        ImageEntry::make('dashboard_avatar')
+                            ->hiddenLabel()
+                            ->state($user->getFilamentAvatarUrl())
+                            ->defaultImageUrl(asset('images/default-avatar.svg'))
+                            ->circular()
+                            ->imageSize(112),
+                        Section::make($greeting.', '.$user->name)
+                            ->description('Welcome to CCOD. Here is a summary of your account and assigned workspace.')
+                            ->icon('heroicon-o-sparkles')
+                            ->schema([
+                                TextEntry::make('dashboard_email')->label('Email address')->icon('heroicon-o-envelope')->state($user->email),
                         TextEntry::make('dashboard_created')->label('Account created')->icon('heroicon-o-calendar-days')->state($user->created_at?->format('d M Y') ?? '—'),
                         TextEntry::make('dashboard_status')->label('Account status')->badge()->color($user->is_active ? 'success' : 'danger')->state($user->is_active ? 'Active' : 'Inactive'),
                         TextEntry::make('dashboard_last_login')->label('Previous login')->icon('heroicon-o-clock')->state($lastLogin?->format('d M Y, H:i') ?? 'No previous login recorded'),
                         TextEntry::make('dashboard_session')->label('Current session')->icon('heroicon-o-clock')->state($sessionDuration),
-                        TextEntry::make('dashboard_group_count')->label('Active user groups')->icon('heroicon-o-user-group')->state((string) $groups->count()),
+                                TextEntry::make('dashboard_group_count')->label('Active user groups')->icon('heroicon-o-user-group')->state((string) $groups->count()),
+                            ]),
                     ]),
                 ])
                 ->columnSpanFull(),
@@ -128,8 +134,10 @@ class Dashboard extends BaseDashboard
                 ])
                 ->columnSpanFull(),
             Section::make('My user groups')
-                ->description('Only active memberships are shown. Expand a group to see its role and assigned projects.')
-                ->schema($groupSections)
+                ->description('Your active group memberships, roles and assigned projects.')
+                ->schema([
+                    Grid::make(['default' => 1, 'md' => 2])->schema($groupSections),
+                ])
                 ->columnSpanFull(),
             Section::make('Recent activity')
                 ->description('Your latest recorded account and workspace activity.')
@@ -147,12 +155,6 @@ class Dashboard extends BaseDashboard
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('myAccounts')
-                ->label('My Accounts')
-                ->icon('heroicon-o-cloud')
-                ->url(fn (): string => AzureSubscriptionResource::getUrl())
-                ->visible(fn (): bool => AzureSubscriptionResource::canViewAny())
-                ->button(),
             Action::make('myProfile')
                 ->label('My Profile')
                 ->icon('heroicon-o-user-circle')
