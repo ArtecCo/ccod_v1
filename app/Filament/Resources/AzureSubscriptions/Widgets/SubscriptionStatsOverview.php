@@ -118,27 +118,7 @@ class SubscriptionStatsOverview extends BaseWidget
             ? $lastSynced->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
 
-        if ($lastSynced === null) {
-            $syncAgeDescription = new \Illuminate\Support\HtmlString(
-                '<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Sync time unavailable — data freshness unknown</span>',
-            );
-            $syncAgeColor = 'danger';
-        } else {
-            $ageSeconds = (int) max(0, $lastSynced->diffInSeconds(now()));
-            $ageHours = intdiv($ageSeconds, 3600);
-            $ageMinutes = intdiv($ageSeconds % 3600, 60);
-            $ageLabel = $ageHours > 0
-                ? $ageHours . ' ' . ($ageHours === 1 ? 'hour' : 'hours') . ($ageMinutes > 0 ? ' ' . $ageMinutes . ' min' : '')
-                : ($ageMinutes > 0 ? $ageMinutes . ' min' : 'less than a minute');
-            $isStale = $ageSeconds > 8 * 60 * 60;
-
-            $syncAgeDescription = $isStale
-                ? new \Illuminate\Support\HtmlString(
-                    '<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Stale data · ' . e('Data is ' . $ageLabel . ' old') . '</span>',
-                )
-                : 'Data age: ' . $ageLabel;
-            $syncAgeColor = $isStale ? 'danger' : 'gray';
-        }
+        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced);
 
         return [
             Stat::make('Last Sync', $lastSyncedLabel)
