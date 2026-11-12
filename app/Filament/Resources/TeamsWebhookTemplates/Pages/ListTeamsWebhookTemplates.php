@@ -12,6 +12,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
+use Filament\Schemas\Components\Utilities\Get;
 
 class ListTeamsWebhookTemplates extends ListRecords
 {
@@ -22,87 +23,99 @@ class ListTeamsWebhookTemplates extends ListRecords
         return [
             Action::make('manageCategories')
                 ->label('Manage categories')
-                ->icon('heroicon-o-rectangle-stack')
-                ->modalHeading('Create or rename a category')
-                ->modalDescription('Choose an existing category to rename it, or leave it blank to create a new category.')
+                ->icon('heroicon-o-tag')
+                ->color('gray')
+                ->modalHeading('Category management')
+                ->modalDescription('Create a category, rename an existing one, or remove an unused category. Categories in use by templates or webhooks cannot be deleted.')
+                ->modalSubmitActionLabel('Apply changes')
                 ->schema([
-                    Select::make('category_id')
-                        ->label('Existing category')
-                        ->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'id')->all())
-                        ->searchable()
-                        ->placeholder('Create a new category'),
-                    TextInput::make('name')
-                        ->label('Category name')
-                        ->required()
-                        ->maxLength(80),
-                ])
-                ->action(function (array $data): void {
-                    $category = filled($data['category_id'] ?? null)
-                        ? TeamsWebhookCategory::query()->find($data['category_id'])
-                        : null;
+                    Select::make('operation')
+                        ->label('What would you like to do?')
+                        ->options([
+                            'create' => 'Create a category',
+                            'rename' => 'Rename a category',
+                            'delete' => 'Delete an unused category',
+                        ])
+                        ->default('create')
+                        ->live()
+                        ->required(),
 
-                    $duplicate = TeamsWebhookCategory::query()
-                        ->where('name', trim($data['name']))
-                        ->when($category, fn ($query) => $query->whereKeyNot($category->getKey()))
-                        ->exists();
-
-                    if ($duplicate) {
-                        Notification::make()
-                            ->title('Category name already exists')
-                            ->body('Choose a different category name.')
-                            ->danger()
-                            ->send();
-
-                        return;
-                    }
-
-                    if ($category) {
-                        $category->update(['name' => trim($data['name'])]);
-                        $message = 'Category renamed successfully.';
-                    } else {
-                        TeamsWebhookCategory::query()->create(['name' => trim($data['name'])]);
-                        $message = 'Category created successfully.';
-                    }
-
-                    Notification::make()->title($message)->success()->send();
-                }),
-
-            Action::make('deleteCategory')
-                ->label('Delete category')
-                ->color('danger')
-                ->icon('heroicon-o-trash')
-                ->modalHeading('Delete an unused category')
-                ->schema([
                     Select::make('category_id')
                         ->label('Category')
                         ->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'id')->all())
                         ->searchable()
-                        ->required(),
+                        ->required(fn (Get $get): bool => in_array($get('operation'), ['rename', 'delete'], true))
+                        ->visible(fn (Get $get): bool => in_array($get('operation'), ['rename', 'delete'], true)),
+
+                    TextInput::make('name')
+                        ->label(fn (Get $get): string => $get('operation') === 'rename' ? 'New category name' : 'Category name')
+                        ->required(fn (Get $get): bool => in_array($get('operation'), ['create', 'rename'], true))
+                        ->maxLength(80)
+                        ->visible(fn (Get $get): bool => in_array($get('operation'), ['create', 'rename'], true)),
+
+                    TextInput::make('confirm_name')
+                        ->label('Type the category name to confirm deletion')
+                        ->required(fn (Get $get): bool => $get('operation') === 'delete')
+                        ->visible(fn (Get $get): bool => $get('operation') === 'delete')
+                        ->helperText('This extra check prevents accidental deletion.'),
                 ])
-                ->requiresConfirmation()
                 ->action(function (array $data): void {
+                    $operation = $data['operation'];
+
+                    if ($operation === 'create') {
+                        $name = trim($data['name']);
+
+                        if (TeamsWebhookCategory::query()->where('name', $name)->exists()) {
+                            Notification::make()->title('Category name already exists')->danger()->send();
+                            return;
+                        }
+
+                        TeamsWebhookCategory::query()->create(['name' => $name]);
+                        Notification::make()->title('Category created')->success()->send();
+                        return;
+                    }
+
                     $category = TeamsWebhookCategory::query()->find($data['category_id']);
 
                     if (! $category) {
+                        Notification::make()->title('Category not found')->danger()->send();
                         return;
                     }
 
-                    $hasTemplates = TeamsWebhookTemplate::query()->where('category', $category->slug)->exists();
-                    $hasWebhooks = TeamsWebhook::query()->where('category', $category->slug)->exists();
+                    if ($operation === 'rename') {
+                        $name = trim($data['name']);
 
-                    if ($hasTemplates || $hasWebhooks) {
-                        Notification::make()
-                            ->title('Category cannot be deleted')
-                            ->body('Delete or move its message templates and reassign its webhooks before deleting this category.')
-                            ->danger()
-                            ->send();
+                        if (TeamsWebhookCategory::query()->where('name', $name)->whereKeyNot($category->getKey())->exists()) {
+                            Notification::make()->title('Category name already exists')->danger()->send();
+                            return;
+                        }
 
+                        $category->update(['name' => $name]);
+                        Notification::make()->title('Category renamed')->success()->send();
                         return;
                     }
 
-                    $category->delete();
+                    if ($operation === 'delete') {
+                        if (trim($data['confirm_name'] ?? '') !== $category->name) {
+                            Notification::make()->title('Category name does not match')->body('The category was not deleted.')->danger()->send();
+                            return;
+                        }
 
-                    Notification::make()->title('Category deleted successfully.')->success()->send();
+                        $hasTemplates = TeamsWebhookTemplate::query()->where('category', $category->slug)->exists();
+                        $hasWebhooks = TeamsWebhook::query()->where('category', $category->slug)->exists();
+
+                        if ($hasTemplates || $hasWebhooks) {
+                            Notification::make()
+                                ->title('Category is still in use')
+                                ->body('Delete or move its templates and reassign its webhooks before deleting this category.')
+                                ->danger()
+                                ->send();
+                            return;
+                        }
+
+                        $category->delete();
+                        Notification::make()->title('Category deleted')->success()->send();
+                    }
                 }),
 
             CreateAction::make(),
