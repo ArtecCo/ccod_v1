@@ -39,11 +39,43 @@ class TeamsWebhookTemplateResource extends Resource
         return $schema->components([
             Section::make('Template')->schema([
                 TextInput::make('name')->required()->maxLength(120),
-                Select::make('category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())->searchable()->required(),
+                Select::make('category')
+                    ->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())
+                    ->searchable()
+                    ->required()
+                    ->live()
+                    ->afterStateUpdated(function ($state, Set $set): void {
+                        $set('event_key', TeamsWebhookEvents::defaultsForCategory($state)[0] ?? null);
+                        $set('placeholder_to_insert', null);
+                    }),
+                Select::make('event_key')
+                    ->label('Event schema for this template')
+                    ->options(TeamsWebhookEvents::options())
+                    ->searchable()
+                    ->required()
+                    ->live()
+                    ->helperText('Select the event whose payload fields should be available as message placeholders.'),
+                Select::make('placeholder_to_insert')
+                    ->label('Insert event field')
+                    ->placeholder('Choose a field to insert into the message')
+                    ->options(fn (Get $get): array => NotificationEventCatalog::placeholderOptions([$get('event_key')]))
+                    ->searchable()
+                    ->dehydrated(false)
+                    ->live()
+                    ->afterStateUpdated(function ($state, Get $get, Set $set): void {
+                        if (! is_string($state) || $state === '') {
+                            return;
+                        }
+
+                        $message = (string) ($get('message_template') ?? '');
+                        $set('message_template', rtrim($message) . ($message !== '' ? "\n" : '') . $state);
+                        $set('placeholder_to_insert', null);
+                    })
+                    ->helperText('Selecting a field appends its placeholder to the message below.'),
                 Toggle::make('is_default')->label('Default template for this category')->helperText('Only one template per category can be the default.'),
                 TextInput::make('title_template')->label('Title')->maxLength(200),
                 Textarea::make('message_template')->label('Message')->rows(14)->required()
-                    ->helperText('Use {field_name} placeholders from the event payload. Common fields: {event_key}, {event_label}, {is_test}, {test_timestamp}. Server: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}. Sync: {overall_status}, {sync_started_at}, {completed_at}, {duration}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}. Other application events expose the context passed by their event producer. Unknown placeholders render as Not available.'),
+                    ->helperText('Use the Insert event field selector above to add valid placeholders. Fields are defined by the selected event schema. Unknown placeholders render as Not available.'),
             ])->columns(2),
         ]);
     }
