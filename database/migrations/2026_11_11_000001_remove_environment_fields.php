@@ -21,6 +21,15 @@ return new class extends Migration
                 ->unique()
                 ->all();
 
+            // The composite application/environment index may be the index
+            // InnoDB is currently using to enforce the application_id FK.
+            // Add a dedicated application_id index before removing it.
+            if (! in_array('azure_subscriptions_application_id_index', $indexes, true)) {
+                Schema::table('azure_subscriptions', function (Blueprint $table): void {
+                    $table->index('application_id', 'azure_subscriptions_application_id_index');
+                });
+            }
+
             Schema::table('azure_subscriptions', function (Blueprint $table) use ($indexes): void {
                 if (in_array('azure_subscriptions_application_environment_unique', $indexes, true)) {
                     $table->dropUnique('azure_subscriptions_application_environment_unique');
