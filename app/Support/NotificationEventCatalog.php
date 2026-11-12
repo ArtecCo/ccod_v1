@@ -9,7 +9,8 @@ class NotificationEventCatalog
     private const COMMON_FIELDS = [
         'event_key' => ['label' => 'Event key', 'type' => 'string', 'description' => 'Stable identifier for the event.'],
         'event_label' => ['label' => 'Event name', 'type' => 'string', 'description' => 'Human-readable event name.'],
-        'is_test' => ['label' => 'Test notification', 'type' => 'boolean', 'description' => 'Whether this is a test delivery.'],
+        'is_test' => ['label' => 'Test notification', 'type' => 'boolean', 'values' => [true => 'Yes', false => 'No'], 'description' => 'Whether this is a test delivery.'],
+        'test_timestamp' => ['label' => 'Test timestamp', 'type' => 'datetime'],
     ];
 
     private const EVENTS = [
@@ -61,6 +62,7 @@ class NotificationEventCatalog
             'description' => 'Raised once the unified scheduler has finished all six synchronization modules.',
             'scope' => ['global', 'subscription'],
             'fields' => [
+                'run_id' => ['label' => 'Sync run ID', 'type' => 'string'],
                 'overall_status' => ['label' => 'Overall status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
                 'sync_started_at' => ['label' => 'Sync start time', 'type' => 'datetime'],
                 'completed_at' => ['label' => 'Sync completion time', 'type' => 'datetime'],
@@ -187,7 +189,7 @@ class NotificationEventCatalog
             $operators += ['contains' => 'Contains', 'not_contains' => 'Does not contain', 'in' => 'Is one of'];
         }
 
-        if (in_array($type, ['number'], true)) {
+        if (in_array($type, ['number', 'datetime'], true)) {
             $operators += [
                 'greater_than' => 'Greater than',
                 'greater_or_equal' => 'Greater than or equal',
@@ -203,7 +205,7 @@ class NotificationEventCatalog
     {
         $field = self::field($eventKeys, $fieldKey);
 
-        return ($field['type'] ?? null) === 'enum' ? ($field['values'] ?? []) : [];
+        return in_array($field['type'] ?? null, ['enum', 'boolean'], true) ? ($field['values'] ?? []) : [];
     }
 
     public static function placeholderOptions(array|string|null $eventKeys): array
