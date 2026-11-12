@@ -142,8 +142,18 @@ class TeamsWebhookNotifier
 
     private function render(string $template, array $context): string
     {
-        return preg_replace_callback('/\{([a-zA-Z0-9_.-]+)\}/', function (array $matches) use ($context): string {
-            $value = data_get($context, $matches[1]);
+        $normalizedContext = [];
+        foreach ($context as $key => $value) {
+            $normalizedContext[strtolower((string) $key)] = $value;
+        }
+
+        return preg_replace_callback('/\{\s*([a-zA-Z0-9_.-]+)\s*\}/i', function (array $matches) use ($context, $normalizedContext): string {
+            $key = $matches[1];
+            $value = data_get($context, $key);
+
+            if ($value === null) {
+                $value = $normalizedContext[strtolower($key)] ?? null;
+            }
 
             return $value === null ? $matches[0] : (string) $value;
         }, $template) ?? $template;
