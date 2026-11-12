@@ -88,7 +88,8 @@ class DeveloperPanelProvider extends PanelProvider
                 AuditLogResource::class,
                 NotificationRuleResource::class,
                 TeamsWebhookResource::class,
-                TeamsWebhookTemplateResource::class,\n                TeamsWebhookCategoryResource::class,
+                TeamsWebhookTemplateResource::class,
+                TeamsWebhookCategoryResource::class,
             ])
             ->pages([
                 Dashboard::class,
