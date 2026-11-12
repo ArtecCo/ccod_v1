@@ -58,7 +58,7 @@ class TeamsWebhookResource extends Resource
                     Select::make('event_keys')
                         ->label('Trigger events')
                         ->multiple()
-                        ->options(TeamsWebhookEvents::options())
+                        ->options(NotificationEventCatalog::groupedOptions())
                         ->searchable()
                         ->preload()
                         ->required()
