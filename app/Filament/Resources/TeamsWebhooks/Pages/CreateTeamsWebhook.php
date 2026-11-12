@@ -26,4 +26,9 @@ class CreateTeamsWebhook extends CreateRecord
 
         return $data;
     }
+    protected function getRedirectUrl(): string
+    {
+        return TeamsWebhookResource::getUrl('index');
+    }
+
 }
