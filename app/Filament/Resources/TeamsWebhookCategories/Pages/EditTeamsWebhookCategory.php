@@ -3,17 +3,11 @@
 namespace App\Filament\Resources\TeamsWebhookCategories\Pages;
 
 use App\Filament\Resources\TeamsWebhookCategories\TeamsWebhookCategoryResource;
-use Filament\Actions\DeleteAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTeamsWebhookCategory extends EditRecord
 {
     protected static string $resource = TeamsWebhookCategoryResource::class;
-
-    protected function getHeaderActions(): array
-    {
-        return [DeleteAction::make()];
-    }
 
     protected function getRedirectUrl(): string
     {
