@@ -13,6 +13,7 @@ use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -39,23 +40,42 @@ class TeamsWebhookResource extends Resource
         return $schema->components([
             Section::make('Webhook destination')->schema([
                 TextInput::make('name')->required()->maxLength(120),
-                Select::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status'])->required()->live(),
+                Select::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status'])->default('server_start')->required()->live()
+                    ->afterStateUpdated(function (Set $set, ?string $state): void {
+                        $set('title_template', self::defaultTitleTemplate($state));
+                        $set('message_template', self::defaultMessageTemplate($state));
+                    }),
                 Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
                 Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required()->visible(fn ($get): bool => $get('destination_type') === 'channel'),
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
             Section::make('Message template')->description('Use the category-specific placeholders listed below.')->schema([
-                TextInput::make('title_template')->label('Title')->maxLength(200),
-                Textarea::make('message_template')->label('Message')->rows(12)
+                TextInput::make('title_template')->label('Title')->maxLength(200)->default(fn (): string => self::defaultTitleTemplate('server_start')),
+                Textarea::make('message_template')->label('Message')->rows(12)->default(fn (): string => self::defaultMessageTemplate('server_start'))->required()
                     ->helperText(fn ($get): string => (
-                        ($get('destination_type') === 'chat' ? 'Chat: plain text with supported Markdown such as **bold**, *italic*, links, and line breaks. Font colors and arbitrary font sizes are not supported. ' : '')
+                        'This template is pre-filled. Values in braces are inserted automatically when the event occurs. '
+                        .($get('destination_type') === 'chat' ? 'Chat: plain text with supported Markdown such as **bold**, *italic*, links, and line breaks. Font colors and arbitrary font sizes are not supported. ' : '')
                         .($get('category') === 'server_start'
                             ? 'Placeholders: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}'
                             : 'Placeholders: {overall_status}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}, {completed_at}')
                     )),
             ]),
         ]);
+    }
+
+    public static function defaultTitleTemplate(?string $category): string
+    {
+        return $category === 'sync_status' ? 'CCOD Azure sync status' : 'CCOD server startup';
+    }
+
+    public static function defaultMessageTemplate(?string $category): string
+    {
+        if ($category === 'sync_status') {
+            return "Overall status: {overall_status}\nStarted: {sync_started_at}\nCompleted: {completed_at}\nDuration: {duration}\n\nSubscriptions: {subscriptions_status}\nResources: {resources_status}\nCosts: {costs_status}\nSecurity: {security_status}\nAlerts: {alerts_status}\nWeb URLs: {web_urls_status}";
+        }
+
+        return "Windows boot time: {server_boot_time}\n\nIIS: {iis_status}\nIIS process started: {iis_started_at}\nPHP FastCGI: {php_status}\nPHP worker started: {php_started_at}\nMySQL2610: {mysql_status}\nMySQL process started: {mysql_started_at}\nLaravel queue: {queue_status}\nQueue worker started: {queue_started_at}";
     }
 
     public static function table(Table $table): Table
