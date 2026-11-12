@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TeamsWebhooks\Pages;
 
 use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
 use App\Models\TeamsWebhookTemplate;
+use App\Support\TeamsWebhookEvents;
 use Filament\Resources\Pages\EditRecord;
 
 class EditTeamsWebhook extends EditRecord
@@ -19,6 +20,10 @@ class EditTeamsWebhook extends EditRecord
             $data['title_template'] = $template->title_template;
             $data['message_template'] = $template->message_template;
         }
+
+        $data['event_keys'] = $data['event_keys'] ?? TeamsWebhookEvents::defaultsForCategory($data['category'] ?? null);
+        $data['conditions'] = $data['conditions'] ?? [];
+        $data['condition_mode'] = $data['condition_mode'] ?? 'all';
 
         $data['message_format'] = ($data['destination_type'] ?? null) === 'chat'
             ? 'adaptive_card'
