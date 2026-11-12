@@ -11,8 +11,13 @@ class EditTeamsWebhook extends EditRecord
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        $data['message_format'] = ($data['destination_type'] ?? null) === 'chat' ? 'plain_text' : ($data['message_format'] ?? 'adaptive_card');
+        $data['message_format'] = ($data['destination_type'] ?? null) === 'chat' ? 'adaptive_card' : ($data['message_format'] ?? 'adaptive_card');
 
         return $data;
+    }
+
+    protected function getRedirectUrl(): string
+    {
+        return TeamsWebhookResource::getUrl('index');
     }
 }
