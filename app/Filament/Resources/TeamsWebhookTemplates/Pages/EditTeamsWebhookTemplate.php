@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Filament\\Resources\\TeamsWebhookTemplates\\Pages;
+namespace App\Filament\Resources\TeamsWebhookTemplates\Pages;
 
-use App\\Filament\\Resources\\TeamsWebhookTemplates\\TeamsWebhookTemplateResource;
-use Filament\\Actions\\DeleteAction;
-use Filament\\Resources\\Pages\\EditRecord;
+use App\Filament\Resources\TeamsWebhookTemplates\TeamsWebhookTemplateResource;
+use Filament\Actions\DeleteAction;
+use Filament\Resources\Pages\EditRecord;
 
 class EditTeamsWebhookTemplate extends EditRecord
 {
