@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TeamsWebhookCategories;
 
 use App\Models\TeamsWebhookCategory;
+use App\Models\TeamsWebhook;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
@@ -48,10 +49,10 @@ class TeamsWebhookCategoryResource extends Resource
         ])->recordActions([
             EditAction::make(),
             DeleteAction::make()->before(function (DeleteAction $action, TeamsWebhookCategory $record): void {
-                if ($record->templates()->exists()) {
+                if ($record->templates()->exists() || TeamsWebhook::query()->where('category', $record->slug)->exists()) {
                     Notification::make()
                         ->title('Category cannot be deleted')
-                        ->body('Delete or move its message templates before deleting this category.')
+                        ->body('Delete or move its message templates and reassign its webhooks before deleting this category.')
                         ->danger()
                         ->send();
 
