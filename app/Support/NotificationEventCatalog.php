@@ -41,6 +41,20 @@ class NotificationEventCatalog
                 'queue_started_at' => '2026-11-12 08:03:00',
             ],
         ],
+        'sync.started' => [
+            'label' => 'Azure synchronization started',
+            'category' => 'Azure',
+            'description' => 'Raised when the unified Azure scheduler begins a synchronization run.',
+            'scope' => ['global'],
+            'fields' => [
+                'run_id' => ['label' => 'Sync run ID', 'type' => 'string'],
+                'sync_started_at' => ['label' => 'Sync start time', 'type' => 'datetime'],
+            ],
+            'sample' => [
+                'run_id' => '20261112-090000',
+                'sync_started_at' => '2026-11-12 09:00:00',
+            ],
+        ],
         'sync.completed' => [
             'label' => 'Azure synchronization completed',
             'category' => 'Azure',
