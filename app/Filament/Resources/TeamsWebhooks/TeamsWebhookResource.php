@@ -1,0 +1,82 @@
+<?php
+
+namespace App\Filament\Resources\TeamsWebhooks;
+
+use App\Models\TeamsWebhook;
+use App\Services\TeamsWebhookNotifier;
+use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+
+class TeamsWebhookResource extends Resource
+{
+    protected static ?string $model = TeamsWebhook::class;
+    protected static ?string $navigationLabel = 'Teams Webhooks';
+    protected static ?string $modelLabel = 'Teams Webhook';
+    protected static ?string $pluralModelLabel = 'Teams Webhooks';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
+    protected static string|\UnitEnum|null $navigationGroup = 'Notifications';
+    protected static ?int $navigationSort = 30;
+    protected static ?string $slug = 'teams-webhooks';
+
+    public static function canViewAny(): bool
+    {
+        return auth()->guard('developers')->check() && auth()->guard('developers')->user()?->is_active === true;
+    }
+
+    public static function form(Schema $schema): Schema
+    {
+        return $schema->components([
+            Section::make('Webhook destination')->schema([
+                TextInput::make('name')->required()->maxLength(120),
+                Select::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status'])->required()->live(),
+                Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
+                Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required()->visible(fn ($get): bool => $get('destination_type') === 'channel'),
+                TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
+                Toggle::make('enabled')->default(true)->label('Enabled'),
+            ])->columns(2),
+            Section::make('Message template')->description('Use the category-specific placeholders listed below.')->schema([
+                TextInput::make('title_template')->label('Title')->maxLength(200),
+                Textarea::make('message_template')->label('Message')->rows(12)->required()
+                    ->helperText(fn ($get): string => $get('category') === 'server_start'
+                        ? 'Placeholders: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}'
+                        : 'Placeholders: {overall_status}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}, {completed_at}'),
+            ]),
+        ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table->defaultSort('id', 'desc')->columns([
+            TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => $state === 'server_start' ? 'Server start' : 'Sync status'),
+            TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => $state === 'channel' ? 'Channel' : 'Chat'),
+            IconColumn::make('enabled')->boolean(),
+            TextColumn::make('last_delivery_status')->badge()->placeholder('Not sent'),
+            TextColumn::make('last_sent_at')->dateTime('Y-m-d H:i:s')->placeholder('Never'),
+        ])->recordActions([
+            Action::make('test')->label('Send test')->icon('heroicon-o-paper-airplane')->action(function (TeamsWebhook $record, TeamsWebhookNotifier $notifier): void {
+                $success = $notifier->sendTest($record);
+                $notification = Notification::make()->title($success ? 'Test delivered' : 'Test delivery failed')->body($success ? 'Teams accepted the test notification.' : 'Check the last delivery error.');
+                ($success ? $notification->success() : $notification->danger())->send();
+            }),
+            \Filament\Actions\EditAction::make(),
+            DeleteAction::make(),
+        ]);
+    }
+
+    public static function getPages(): array
+    {
+        return ['index' => Pages\ListTeamsWebhooks::route('/'), 'create' => Pages\CreateTeamsWebhook::route('/create'), 'edit' => Pages\EditTeamsWebhook::route('/{record}/edit')];
+    }
+}
