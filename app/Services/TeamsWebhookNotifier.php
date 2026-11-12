@@ -203,11 +203,9 @@ class TeamsWebhookNotifier
 
     private function payload(TeamsWebhook $webhook, string $title, string $message): array
     {
-        if ($webhook->destination_type === 'chat') {
-            return ['text' => trim(($title !== '' ? "**{$title}**\n\n" : '').$message)];
-        }
-
-        if ($webhook->message_format === 'message_card') {
+        // Adaptive Cards are supported for both Teams channel and chat destinations.
+        // Keep legacy MessageCard available only for channel workflows.
+        if ($webhook->destination_type === 'channel' && $webhook->message_format === 'message_card') {
             return [
                 '@type' => 'MessageCard',
                 '@context' => 'https://schema.org/extensions',
