@@ -45,9 +45,9 @@ The former `azure.sync.completed` key is normalized to `sync.completed`; existin
 
 ### Adding an event or field
 
-1. Register the event metadata, fields, types, valid values and sample payload in `NotificationEventCatalog`.
-2. At the point where the event occurs, call `TeamsWebhookNotifier::dispatch($eventKey, $context)` once.
-3. Ensure context keys and value types match the registered schema.
+1. Add the event metadata, fields, types, valid values and sample payload to `NotificationEventCatalog`.
+2. Call `TeamsWebhookNotifier::dispatch($eventKey, $context)` from the real workflow where the event occurs.
+3. Keep the registered fields aligned with the dispatched context. Do not add an event to the catalogue before its producer exists.
 
 After registration, the event and its fields become available in the event selector, condition builder and template placeholder selector.
 
