@@ -38,7 +38,7 @@ class TeamsWebhookTemplateResource extends Resource
         return $schema->components([
             Section::make('Template')->schema([
                 TextInput::make('name')->required()->maxLength(120),
-                Select::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status'])->required(),
+                Select::make('category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())->searchable()->required(),
                 Toggle::make('is_default')->label('Default template for this category')->helperText('Only one template per category can be the default.'),
                 TextInput::make('title_template')->label('Title')->maxLength(200),
                 Textarea::make('message_template')->label('Message')->rows(14)->required()
@@ -51,11 +51,11 @@ class TeamsWebhookTemplateResource extends Resource
     {
         return $table->defaultSort('category')->columns([
             TextColumn::make('name')->searchable()->sortable(),
-            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => $state === 'server_start' ? 'Server start' : 'Sync status'),
+            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
             IconColumn::make('is_default')->label('Default')->boolean(),
             TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
         ])->filters([
-            SelectFilter::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status']),
+            SelectFilter::make('category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all()),
         ])->recordActions([
             EditAction::make(),
             DeleteAction::make(),
