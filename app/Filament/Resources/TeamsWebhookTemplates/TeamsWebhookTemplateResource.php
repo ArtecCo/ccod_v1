@@ -88,6 +88,7 @@ class TeamsWebhookTemplateResource extends Resource
     {
         return $table->defaultSort('category')->columns([
             TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (?string $state): string => $state ? (TeamsWebhookEvents::options()[$state] ?? $state) : 'Not assigned')->wrap(),
             TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
             IconColumn::make('is_default')->label('Default')->boolean(),
             TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
