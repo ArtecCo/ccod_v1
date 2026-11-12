@@ -20,21 +20,25 @@ class TeamsWebhookNotifier
 
     public function sendTest(TeamsWebhook $webhook): bool
     {
+        $testNow = now();
+        $testTimestamp = $testNow->format('Y-m-d H:i:s T');
+        $testStartedAt = $testNow->copy()->subMinutes(5)->format('Y-m-d H:i:s T');
+
         $context = $webhook->category === 'server_start'
             ? [
-                'server_boot_time' => now()->toDateTimeString(),
+                'server_boot_time' => $testStartedAt,
                 'iis_status' => 'RUNNING (TEST)',
-                'iis_started_at' => 'Test timestamp',
+                'iis_started_at' => $testStartedAt,
                 'php_status' => 'RUNNING (TEST)',
-                'php_started_at' => 'Test timestamp',
+                'php_started_at' => $testStartedAt,
                 'mysql_status' => 'RUNNING (TEST)',
-                'mysql_started_at' => 'Test timestamp',
+                'mysql_started_at' => $testStartedAt,
                 'queue_status' => 'RUNNING (TEST)',
-                'queue_started_at' => 'Test timestamp',
+                'queue_started_at' => $testStartedAt,
             ]
             : [
                 'overall_status' => 'SUCCESS (TEST)',
-                'sync_started_at' => now()->subMinutes(2)->toDateTimeString(),
+                'sync_started_at' => $testStartedAt,
                 'duration' => '2 minutes (TEST)',
                 'subscriptions_status' => 'SUCCESS',
                 'resources_status' => 'SUCCESS',
@@ -42,7 +46,7 @@ class TeamsWebhookNotifier
                 'security_status' => 'SUCCESS',
                 'alerts_status' => 'SUCCESS',
                 'web_urls_status' => 'SUCCESS',
-                'completed_at' => now()->toDateTimeString(),
+                'completed_at' => $testTimestamp,
             ];
 
         return $this->deliver($webhook, $context);
