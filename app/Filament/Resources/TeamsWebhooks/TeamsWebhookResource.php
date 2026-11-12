@@ -72,10 +72,10 @@ class TeamsWebhookResource extends Resource
     public static function defaultMessageTemplate(?string $category): string
     {
         if ($category === 'sync_status') {
-            return "Overall status: {overall_status}\nStarted: {sync_started_at}\nCompleted: {completed_at}\nDuration: {duration}\n\nSubscriptions: {subscriptions_status}\nResources: {resources_status}\nCosts: {costs_status}\nSecurity: {security_status}\nAlerts: {alerts_status}\nWeb URLs: {web_urls_status}";
+            return "**Overall status:** {overall_status}\n**Started:** {sync_started_at}\n**Completed:** {completed_at}\n**Duration:** {duration}\n\n**Module status**\n- **Subscriptions:** {subscriptions_status}\n- **Resources:** {resources_status}\n- **Costs:** {costs_status}\n- **Security:** {security_status}\n- **Alerts:** {alerts_status}\n- **Web URLs:** {web_urls_status}";
         }
 
-        return "Windows boot time: {server_boot_time}\n\nIIS: {iis_status}\nIIS process started: {iis_started_at}\nPHP FastCGI: {php_status}\nPHP worker started: {php_started_at}\nMySQL2610: {mysql_status}\nMySQL process started: {mysql_started_at}\nLaravel queue: {queue_status}\nQueue worker started: {queue_started_at}";
+        return "**Server boot time:** {server_boot_time}\n\n**IIS**\n- **Status:** {iis_status}\n- **Start time:** {iis_started_at}\n\n**PHP FastCGI**\n- **Status:** {php_status}\n- **Start time:** {php_started_at}\n\n**MySQL2610**\n- **Status:** {mysql_status}\n- **Start time:** {mysql_started_at}\n\n**Laravel queue**\n- **Status:** {queue_status}\n- **Start time:** {queue_started_at}";
     }
 
     public static function table(Table $table): Table
