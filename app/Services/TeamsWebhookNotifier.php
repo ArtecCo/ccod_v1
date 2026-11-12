@@ -74,8 +74,8 @@ class TeamsWebhookNotifier
             $operator = $condition['operator'] ?? 'equals';
             $expected = $condition['value'] ?? null;
             $actual = $field !== '' ? data_get($context, $field) : null;
-            $actualString = mb_strtolower((string) $actual);
-            $expectedString = mb_strtolower((string) $expected);
+            $actualString = is_scalar($actual) ? mb_strtolower((string) $actual) : '';
+            $expectedString = is_scalar($expected) ? mb_strtolower((string) $expected) : '';
 
             $results[] = match ($operator) {
                 'equals' => $actual !== null && $actualString === $expectedString,
