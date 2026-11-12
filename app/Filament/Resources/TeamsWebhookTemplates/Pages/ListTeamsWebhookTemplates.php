@@ -3,7 +3,9 @@
 namespace App\Filament\Resources\TeamsWebhookTemplates\Pages;
 
 use App\Filament\Resources\TeamsWebhookTemplates\TeamsWebhookTemplateResource;
+use App\Filament\Resources\TeamsWebhookCategories\TeamsWebhookCategoryResource;
 use Filament\Actions\CreateAction;
+use Filament\Actions\Action;
 use Filament\Resources\Pages\ListRecords;
 
 class ListTeamsWebhookTemplates extends ListRecords
@@ -12,6 +14,9 @@ class ListTeamsWebhookTemplates extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [\n            Action::make('manageCategories')->label('Manage categories')->icon('heroicon-o-rectangle-stack')->url(TeamsWebhookCategoryResource::getUrl('index')),\n            CreateAction::make(),\n        ];
+        return [
+            Action::make('manageCategories')->label('Manage categories')->icon('heroicon-o-rectangle-stack')->url(TeamsWebhookCategoryResource::getUrl('index')),
+            CreateAction::make(),
+        ];
     }
 }
