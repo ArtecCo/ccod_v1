@@ -519,4 +519,30 @@ if (file_put_contents($reportPath, $html) === false || file_put_contents($latest
 
 fwrite(STDOUT, "Report: {$reportPath}" . PHP_EOL);
 fwrite(STDOUT, "Latest: {$latestReportPath}" . PHP_EOL);
+
+try {
+    $moduleStatuses = [];
+    foreach ($rows as $row) {
+        $key = match ($row['name']) {
+            'Subscriptions' => 'subscriptions_status',
+            'Resources' => 'resources_status',
+            'Costs' => 'costs_status',
+            'Security' => 'security_status',
+            'Alerts' => 'alerts_status',
+            'Web URLs' => 'web_urls_status',
+            default => null,
+        };
+        if ($key !== null) {
+            $moduleStatuses[$key] = $row['status'];
+        }
+    }
+
+    $app->make(\\App\\Services\\TeamsWebhookNotifier::class)->sendSyncStatus(array_merge([
+        'overall_status' => $overallStatus,
+        'completed_at' => $completedAt,
+    ], $moduleStatuses));
+} catch (\\Throwable $exception) {
+    fwrite(STDERR, 'Teams sync notification failed: '.$exception->getMessage().PHP_EOL);
+}
+
 exit($anyFailure ? 1 : 0);
