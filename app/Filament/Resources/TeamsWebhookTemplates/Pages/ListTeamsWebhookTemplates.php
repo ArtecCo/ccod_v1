@@ -12,6 +12,6 @@ class ListTeamsWebhookTemplates extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        return [CreateAction::make()];
+        return [\n            Action::make('manageCategories')->label('Manage categories')->icon('heroicon-o-rectangle-stack')->url(TeamsWebhookCategoryResource::getUrl('index')),\n            CreateAction::make(),\n        ];
     }
 }
