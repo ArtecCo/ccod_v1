@@ -9,7 +9,7 @@ class NotificationEventCatalog
     private const COMMON_FIELDS = [
         'event_key' => ['label' => 'Event key', 'type' => 'string', 'description' => 'Stable identifier for the event.'],
         'event_label' => ['label' => 'Event name', 'type' => 'string', 'description' => 'Human-readable event name.'],
-        'is_test' => ['label' => 'Test notification', 'type' => 'boolean', 'values' => [true => 'Yes', false => 'No'], 'description' => 'Whether this is a test delivery.'],
+        'is_test' => ['label' => 'Test notification', 'type' => 'boolean', 'values' => ['true' => 'Yes', 'false' => 'No'], 'description' => 'Whether this is a test delivery.'],
         'test_timestamp' => ['label' => 'Test timestamp', 'type' => 'datetime'],
     ];
 
