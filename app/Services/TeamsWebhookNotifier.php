@@ -69,9 +69,35 @@ class TeamsWebhookNotifier
         }
 
         $results = [];
-        foreach ($conditions as $key => $expected) {
-            $actual = data_get($context, $key);
-            $results[] = $actual !== null && mb_strtolower((string) $actual) === mb_strtolower((string) $expected);
+        foreach ($conditions as $condition) {
+            $field = trim((string) ($condition['field'] ?? ''));
+            $operator = $condition['operator'] ?? 'equals';
+            $expected = $condition['value'] ?? null;
+            $actual = $field !== '' ? data_get($context, $field) : null;
+            $actualString = mb_strtolower((string) $actual);
+            $expectedString = mb_strtolower((string) $expected);
+
+            $results[] = match ($operator) {
+                'equals' => $actual !== null && $actualString === $expectedString,
+                'not_equals' => $actual !== null && $actualString !== $expectedString,
+                'contains' => is_array($actual)
+                    ? in_array($expected, $actual, true)
+                    : ($actual !== null && str_contains($actualString, $expectedString)),
+                'not_contains' => is_array($actual)
+                    ? ! in_array($expected, $actual, true)
+                    : ($actual !== null && ! str_contains($actualString, $expectedString)),
+                'greater_than' => is_numeric($actual) && is_numeric($expected) && (float) $actual > (float) $expected,
+                'greater_or_equal' => is_numeric($actual) && is_numeric($expected) && (float) $actual >= (float) $expected,
+                'less_than' => is_numeric($actual) && is_numeric($expected) && (float) $actual < (float) $expected,
+                'less_or_equal' => is_numeric($actual) && is_numeric($expected) && (float) $actual <= (float) $expected,
+                'in' => $actual !== null && in_array($actualString, array_map(
+                    static fn (string $value): string => mb_strtolower(trim($value)),
+                    explode(',', (string) $expected),
+                ), true),
+                'exists' => $actual !== null,
+                'not_exists' => $actual === null,
+                default => false,
+            };
         }
 
         return ($webhook->condition_mode ?? 'all') === 'any'
