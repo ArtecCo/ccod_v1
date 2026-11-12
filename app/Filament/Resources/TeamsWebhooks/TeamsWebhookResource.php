@@ -50,7 +50,7 @@ class TeamsWebhookResource extends Resource
                 Select::make('category')->label('Notification category')->options([
                     'server_start' => 'Server start',
                     'sync_status' => 'Sync status',
-                ])->default('server_start')->required()->live()
+                 ]))->default('server_start')->required()->live()
                     ->afterStateUpdated(function ($state, Set $set): void {
                         $template = TeamsWebhookTemplate::query()
                             ->where('category', $state)
@@ -91,7 +91,7 @@ class TeamsWebhookResource extends Resource
     {
         return $table->defaultSort('id', 'desc')->columns([
             TextColumn::make('name')->searchable()->sortable(),
-            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => $state === 'server_start' ? 'Server start' : 'Sync status'),
+            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
             TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => $state === 'channel' ? 'Channel' : 'Chat'),
             IconColumn::make('enabled')->boolean(),
             TextColumn::make('last_delivery_status')->badge()->placeholder('Not sent'),
