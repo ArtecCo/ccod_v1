@@ -64,16 +64,12 @@ class TeamsWebhookResource extends Resource
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
-            Section::make('Message template')->description('Use the category-specific placeholders listed below.')->schema([
-                TextInput::make('title_template')->label('Title')->maxLength(200)->default(fn (): string => self::defaultTitleTemplate('server_start')),
-                Textarea::make('message_template')->label('Message')->rows(12)->default(fn (): string => self::defaultMessageTemplate('server_start'))->required()
-                    ->helperText(fn ($get): string => (
-                        'This template is pre-filled. Values in braces are inserted automatically when the event occurs. '
-                        .($get('destination_type') === 'chat' ? 'Chat and channel destinations use card formatting. Adaptive Cards support bold/italic Markdown plus card-level text size and color. ' : '')
-                        .($get('category') === 'server_start'
-                            ? 'Placeholders: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}'
-                            : 'Placeholders: {overall_status}, {sync_started_at}, {completed_at}, {duration}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}')
-                    )),
+            Section::make('Template selection')->description('Manage reusable templates under Developer → Notifications → Teams Message Templates. Changes to a saved template are used by every webhook linked to it.')->schema([
+                Select::make('template_id')->label('Saved template')->options(fn ($get): array => TeamsWebhookTemplate::query()
+                    ->when($get('category'), fn ($query, $category) => $query->where('category', $category))
+                    ->orderByDesc('is_default')->orderBy('name')->pluck('name', 'id')->all())
+                    ->default(fn ($get) => TeamsWebhookTemplate::query()->where('category', $get('category') ?? 'server_start')->where('is_default', true)->value('id'))
+                    ->searchable()->required()->helperText('Templates are managed separately. Editing a template updates all webhooks using it.'),
             ]),
         ]);
     }
