@@ -43,7 +43,7 @@ class TeamsWebhookTemplateResource extends Resource
                 Toggle::make('is_default')->label('Default template for this category')->helperText('Only one template per category can be the default.'),
                 TextInput::make('title_template')->label('Title')->maxLength(200),
                 Textarea::make('message_template')->label('Message')->rows(14)->required()
-                    ->helperText('Use the placeholders for the selected category. Server start: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}. Sync: {overall_status}, {sync_started_at}, {completed_at}, {duration}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}.'),
+                    ->helperText('Use {field_name} placeholders from the event payload. Common fields: {event_key}, {event_label}, {is_test}, {test_timestamp}. Server: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}. Sync: {overall_status}, {sync_started_at}, {completed_at}, {duration}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}. Other application events expose the context passed by their event producer. Unknown placeholders render as Not available.'),
             ])->columns(2),
         ]);
     }
