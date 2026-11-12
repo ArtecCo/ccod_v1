@@ -143,18 +143,20 @@ class TeamsWebhookNotifier
     {
         $normalizedContext = [];
         foreach ($context as $key => $value) {
-            $normalizedContext[strtolower((string) $key)] = $value;
+            $normalizedKey = strtolower((string) $key);
+            $normalizedContext[$normalizedKey] = $value;
+            $normalizedContext[str_replace(['_', '-', '.'], '', $normalizedKey)] = $value;
         }
 
         return preg_replace_callback('/\{\s*([a-zA-Z0-9_.-]+)\s*\}/i', function (array $matches) use ($context, $normalizedContext): string {
-            $key = $matches[1];
-            $value = data_get($context, $key);
+            $key = strtolower(trim($matches[1]));
+            $value = data_get($context, $matches[1]);
 
             if ($value === null) {
-                $value = $normalizedContext[strtolower($key)] ?? null;
+                $value = $normalizedContext[$key] ?? $normalizedContext[str_replace(['_', '-', '.'], '', $key)] ?? null;
             }
 
-            return $value === null ? $matches[0] : (string) $value;
+            return $value === null ? 'Not available' : (string) $value;
         }, $template) ?? $template;
     }
 
