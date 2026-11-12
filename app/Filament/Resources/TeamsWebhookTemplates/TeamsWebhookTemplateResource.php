@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\TeamsWebhookTemplates;
 
 use App\Models\TeamsWebhookTemplate;
+use App\Models\TeamsWebhookCategory;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
