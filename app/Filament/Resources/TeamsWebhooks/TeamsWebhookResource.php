@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TeamsWebhooks;
 
 use App\Models\TeamsWebhook;
 use App\Models\TeamsWebhookTemplate;
+use App\Models\TeamsWebhookCategory;
 use App\Services\TeamsWebhookNotifier;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -47,10 +48,7 @@ class TeamsWebhookResource extends Resource
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
             Section::make('Notification category and template')->description('Choose what this webhook sends. You can manage reusable message templates under Developer → Notifications → Teams Message Templates.')->schema([
-                Select::make('category')->label('Notification category')->options([
-                    'server_start' => 'Server start',
-                    'sync_status' => 'Sync status',
-                 ]))->default('server_start')->required()->live()
+                Select::make('category')->label('Notification category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())->default('server_start')->required()->live()
                     ->afterStateUpdated(function ($state, Set $set): void {
                         $template = TeamsWebhookTemplate::query()
                             ->where('category', $state)
