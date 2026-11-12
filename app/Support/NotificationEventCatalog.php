@@ -194,7 +194,21 @@ class NotificationEventCatalog
 
     public static function placeholderOptions(array|string|null $eventKeys): array
     {
-        return self::fieldOptions($eventKeys);
+        return collect(self::fieldsForEvents($eventKeys))
+            ->mapWithKeys(fn (array $field, string $key): array => ['{' . $key . '}' => ($field['label'] ?? $key) . ' — {' . $key . '}'])
+            ->all();
+    }
+
+    public static function sampleContext(string $eventKey): array
+    {
+        $eventKey = self::normalizeKey($eventKey);
+        $event = self::event($eventKey);
+        $context = $event['sample'] ?? [];
+        $context['event_key'] = $eventKey;
+        $context['event_label'] = $event['label'] ?? $eventKey;
+        $context['is_test'] = true;
+
+        return $context;
     }
 
     private static function categoryForLegacyEvent(string $key): string
