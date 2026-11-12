@@ -4,6 +4,8 @@ namespace App\Filament\Resources\TeamsWebhookTemplates;
 
 use App\Models\TeamsWebhookTemplate;
 use App\Models\TeamsWebhookCategory;
+use App\Support\TeamsWebhookEvents;
+use App\Support\NotificationEventCatalog;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -12,6 +14,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
