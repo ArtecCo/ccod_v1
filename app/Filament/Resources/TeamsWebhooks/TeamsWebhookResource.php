@@ -8,7 +8,6 @@ use App\Services\TeamsWebhookNotifier;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
@@ -49,16 +48,6 @@ class TeamsWebhookResource extends Resource
                         $set('title_template', $template?->title_template ?? self::defaultTitleTemplate($state));
                         $set('message_template', $template?->message_template ?? self::defaultMessageTemplate($state));
                     }),
-                Select::make('template_id')->label('Saved template')->options(fn ($get): array => TeamsWebhookTemplate::query()
-                    ->when($get('category'), fn ($query, $category) => $query->where('category', $category))
-                    ->orderByDesc('is_default')->orderBy('name')->pluck('name', 'id')->all())
-                    ->searchable()->live()->afterStateUpdated(function (Set $set, $state): void {
-                        $template = $state ? TeamsWebhookTemplate::find($state) : null;
-                        if ($template) {
-                            $set('title_template', $template->title_template);
-                            $set('message_template', $template->message_template);
-                        }
-                    })->helperText('Choose a reusable template. You can still customize this webhook below.'),
                 Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
                 Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required(),
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
