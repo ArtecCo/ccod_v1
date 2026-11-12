@@ -42,6 +42,7 @@ if (! is_dir($reportDirectory) && ! mkdir($reportDirectory, 0775, true) && ! is_
 }
 
 $runStartedAt = microtime(true);
+$syncStartedAt = date('Y-m-d H:i:s P');
 $runId = date('Ymd-His');
 $reportPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.html";
 $latestReportPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.html';
@@ -539,7 +540,9 @@ try {
 
     $app->make(\App\Services\TeamsWebhookNotifier::class)->sendSyncStatus(array_merge([
         'overall_status' => $overallStatus,
+        'sync_started_at' => $syncStartedAt,
         'completed_at' => $completedAt,
+        'duration' => $formatDuration($totalDuration),
     ], $moduleStatuses));
 } catch (\Throwable $exception) {
     fwrite(STDERR, 'Teams sync notification failed: '.$exception->getMessage().PHP_EOL);
