@@ -97,10 +97,26 @@ class TeamsWebhookNotifier
                 'greater_or_equal' => is_numeric($actual) && is_numeric($expected) && (float) $actual >= (float) $expected,
                 'less_than' => is_numeric($actual) && is_numeric($expected) && (float) $actual < (float) $expected,
                 'less_or_equal' => is_numeric($actual) && is_numeric($expected) && (float) $actual <= (float) $expected,
-                'in' => $actual !== null && in_array($actualString, array_map(
-                    static fn (string $value): string => mb_strtolower(trim($value)),
-                    explode(',', (string) $expected),
-                ), true),
+                'in' => $actual !== null && (function () use ($actual, $actualString, $expected): bool {
+                    $expectedValues = is_array($expected)
+                        ? $expected
+                        : explode(',', (string) $expected);
+                    $expectedValues = array_map(
+                        static fn ($value): string => mb_strtolower(trim((string) $value)),
+                        $expectedValues,
+                    );
+
+                    if (is_array($actual)) {
+                        $actualValues = array_map(
+                            static fn ($value): string => mb_strtolower(trim((string) $value)),
+                            $actual,
+                        );
+
+                        return count(array_intersect($actualValues, $expectedValues)) > 0;
+                    }
+
+                    return in_array($actualString, $expectedValues, true);
+                })(),
                 'exists' => $actual !== null,
                 'not_exists' => $actual === null,
                 default => false,
