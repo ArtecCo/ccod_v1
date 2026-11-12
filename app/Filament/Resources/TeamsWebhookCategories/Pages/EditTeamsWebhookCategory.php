@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Filament\\Resources\\TeamsWebhookCategories\\Pages;
+namespace App\Filament\Resources\TeamsWebhookCategories\Pages;
 
-use App\\Filament\\Resources\\TeamsWebhookCategories\\TeamsWebhookCategoryResource;
-use Filament\\Actions\\DeleteAction;
-use Filament\\Resources\\Pages\\EditRecord;
+use App\Filament\Resources\TeamsWebhookCategories\TeamsWebhookCategoryResource;
+use Filament\Actions\DeleteAction;
+use Filament\Resources\Pages\EditRecord;
 
 class EditTeamsWebhookCategory extends EditRecord
 {
