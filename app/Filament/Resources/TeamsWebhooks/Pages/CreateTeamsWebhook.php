@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Filament\\Resources\\TeamsWebhooks\\Pages;
+namespace App\Filament\Resources\TeamsWebhooks\Pages;
 
-use App\\Filament\\Resources\\TeamsWebhooks\\TeamsWebhookResource;
-use App\\Models\\TeamsWebhookTemplate;
-use Filament\\Resources\\Pages\\CreateRecord;
+use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
+use App\Models\TeamsWebhookTemplate;
+use Filament\Resources\Pages\CreateRecord;
 
 class CreateTeamsWebhook extends CreateRecord
 {
