@@ -34,6 +34,8 @@ class TeamsWebhookNotifier
             ]
             : [
                 'overall_status' => 'SUCCESS (TEST)',
+                'sync_started_at' => now()->subMinutes(2)->toDateTimeString(),
+                'duration' => '2 minutes (TEST)',
                 'subscriptions_status' => 'SUCCESS',
                 'resources_status' => 'SUCCESS',
                 'costs_status' => 'SUCCESS',
