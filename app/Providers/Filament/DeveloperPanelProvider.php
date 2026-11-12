@@ -18,6 +18,7 @@ use App\Filament\Resources\Projects\ProjectResource;
 use App\Filament\Resources\QueueJobs\QueueJobResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
+use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
 use App\Filament\Resources\UserGroups\UserGroupResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Widgets\DeveloperOverview;
@@ -83,7 +84,8 @@ class DeveloperPanelProvider extends PanelProvider
                 QueueJobResource::class,
                 FailedJobResource::class,
                 AuditLogResource::class,
-                NotificationRuleResource::class,\n                TeamsWebhookResource::class,
+                NotificationRuleResource::class,
+                TeamsWebhookResource::class,
             ])
             ->pages([
                 Dashboard::class,
