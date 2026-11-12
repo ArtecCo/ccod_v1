@@ -83,7 +83,7 @@ class DeveloperPanelProvider extends PanelProvider
                 QueueJobResource::class,
                 FailedJobResource::class,
                 AuditLogResource::class,
-                NotificationRuleResource::class,
+                NotificationRuleResource::class,\n                TeamsWebhookResource::class,
             ])
             ->pages([
                 Dashboard::class,
