@@ -12,7 +12,7 @@ class CreateTeamsWebhook extends CreateRecord
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $category = $data['category'] ?? 'server_start';
-        $data['message_format'] = ($data['destination_type'] ?? null) === 'chat' ? 'plain_text' : ($data['message_format'] ?? 'adaptive_card');
+        $data['message_format'] = ($data['destination_type'] ?? null) === 'chat' ? 'adaptive_card' : ($data['message_format'] ?? 'adaptive_card');
 
         if (trim((string) ($data['title_template'] ?? '')) === '') {
             $data['title_template'] = TeamsWebhookResource::defaultTitleTemplate($category);
