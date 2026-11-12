@@ -26,7 +26,7 @@ class CreateTeamsWebhook extends CreateRecord
             $data['message_template'] = TeamsWebhookResource::defaultMessageTemplate($category);
         }
 
-        $data['event_keys'] = $data['event_keys'] ?: TeamsWebhookEvents::defaultsForCategory($data['category']);
+        $data['event_keys'] = ($data['event_keys'] ?? []) ?: TeamsWebhookEvents::defaultsForCategory($data['category']);
         $data['conditions'] = $data['conditions'] ?? [];
         $data['condition_mode'] = $data['condition_mode'] ?? 'all';
 
