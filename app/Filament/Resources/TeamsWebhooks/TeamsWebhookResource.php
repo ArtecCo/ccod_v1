@@ -58,7 +58,7 @@ class TeamsWebhookResource extends Resource
                         .($get('destination_type') === 'chat' ? 'Chat: plain text with supported Markdown such as **bold**, *italic*, links, and line breaks. Font colors and arbitrary font sizes are not supported. ' : '')
                         .($get('category') === 'server_start'
                             ? 'Placeholders: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}'
-                            : 'Placeholders: {overall_status}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}, {completed_at}')
+                            : 'Placeholders: {overall_status}, {sync_started_at}, {completed_at}, {duration}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}')
                     )),
             ]),
         ]);
