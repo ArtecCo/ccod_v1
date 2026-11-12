@@ -62,7 +62,9 @@ class TeamsWebhookResource extends Resource
                         ->preload()
                         ->required()
                         ->default(fn (Get $get): array => TeamsWebhookEvents::defaultsForCategory($get('category')))
-                        ->helperText('A destination can subscribe to multiple events.'),
+                        ->live()
+                        ->afterStateUpdated(fn (Set $set) => $set('conditions', []))
+                        ->helperText('A destination can subscribe to multiple events. Condition fields are derived from the selected event schemas.'),
                     Select::make('condition_mode')
                         ->label('Condition matching')
                         ->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])
@@ -71,30 +73,37 @@ class TeamsWebhookResource extends Resource
                     Repeater::make('conditions')
                         ->label('Optional event conditions')
                         ->schema([
-                            TextInput::make('field')->label('Context field')->required()->maxLength(120),
-                            Select::make('operator')->label('Operator')->options([
-                                'equals' => 'Equals',
-                                'not_equals' => 'Does not equal',
-                                'contains' => 'Contains',
-                                'not_contains' => 'Does not contain',
-                                'greater_than' => 'Greater than',
-                                'greater_or_equal' => 'Greater than or equal',
-                                'less_than' => 'Less than',
-                                'less_or_equal' => 'Less than or equal',
-                                'in' => 'Is one of (comma separated)',
-                                'exists' => 'Exists',
-                                'not_exists' => 'Does not exist',
-                            ])->default('equals')->required(),
-                            TextInput::make('value')->label('Comparison value')->maxLength(500)
-                                ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true))
-                                ->visible(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true)),
+                            Select::make('field')
+                                ->label('Event field')
+                                ->options(fn (Get $get): array => NotificationEventCatalog::fieldOptions($get('../../event_keys')))
+                                ->searchable()
+                                ->live()
+                                ->required()
+                                ->helperText('Only fields supplied by the selected events are listed.'),
+                            Select::make('operator')
+                                ->label('Operator')
+                                ->options(fn (Get $get): array => NotificationEventCatalog::operatorsForField($get('../../event_keys'), $get('field')))
+                                ->default('equals')
+                                ->required()
+                                ->live(),
+                            Select::make('value')
+                                ->label('Expected value')
+                                ->options(fn (Get $get): array => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')))
+                                ->searchable()
+                                ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true) && NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) !== [])
+                                ->visible(fn (Get $get): bool => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) !== [] && ! in_array($get('operator'), ['exists', 'not_exists'], true)),
+                            TextInput::make('value_text')
+                                ->label('Expected value')
+                                ->maxLength(500)
+                                ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true) && NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) === [])
+                                ->visible(fn (Get $get): bool => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) === [] && ! in_array($get('operator'), ['exists', 'not_exists'], true)),
                         ])
                         ->columns(3)
                         ->addActionLabel('Add condition')
                         ->reorderable()
                         ->defaultItems(0)
                         ->collapsible()
-                        ->helperText('Conditions can filter by event context fields such as overall_status, subscription_id, severity or cost. Leave empty to receive every selected event.'),
+                        ->helperText('Choose from the fields exposed by the selected events. Enum fields offer valid values; numeric fields offer comparison operators. Leave empty to receive every selected event.'),
                 ]),
 
             Section::make('Message category and template')
