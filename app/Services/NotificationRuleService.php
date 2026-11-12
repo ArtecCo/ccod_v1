@@ -4,20 +4,25 @@ namespace App\Services;
 
 use App\Enums\NotificationEvent;
 use App\Models\NotificationRule;
-use App\Models\Team;
-use App\Models\User;
 use Throwable;
 
 class NotificationRuleService
 {
     public function __construct(
         private readonly NotificationService $notifications,
+        private readonly TeamsWebhookNotifier $teamsWebhooks,
     ) {}
 
-    public function trigger(
-        NotificationEvent $event,
-        array $context = [],
-    ): int {
+    public function trigger(NotificationEvent $event, array $context = []): int
+    {
+        // External webhook subscriptions are independent of in-app notification rules.
+        // A missing or disabled in-app rule must never suppress a configured webhook.
+        try {
+            $this->teamsWebhooks->dispatch($event->value, $context);
+        } catch (Throwable $exception) {
+            report($exception);
+        }
+
         $rule = NotificationRule::query()
             ->where('event_key', $event->value)
             ->where('enabled', true)
@@ -31,7 +36,6 @@ class NotificationRuleService
         $message = $this->resolveTemplate($rule->message ?: $event->label(), $context);
         $actionUrl = $rule->action_url ? $this->resolveTemplate($rule->action_url, $context) : null;
         $actionLabel = $rule->action_label ? $this->resolveTemplate($rule->action_label, $context) : null;
-
         $recipientIds = $rule->recipient_ids ?? [];
 
         return match ($rule->recipient_type) {
