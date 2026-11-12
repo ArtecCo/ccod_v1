@@ -7,7 +7,7 @@ In Developer Panel → Notifications → Teams Webhooks, create one or more dest
 - **Server start** reports Windows boot time, IIS (W3SVC/WAS), PHP FastCGI worker detection, MySQL2610, and the Laravel queue worker.
 - **Sync status** reports the overall result and the status of Subscriptions, Resources, Costs, Security, Alerts, and Web URLs.
 
-Webhook URLs are encrypted using Laravel's application key. Never place webhook URLs in source control or logs. Use a Teams Workflows incoming webhook URL configured for the intended channel or chat.
+Webhook URLs are encrypted using Laravel's application key. Never place webhook URLs in source control or logs. Use a Teams Workflows incoming webhook URL configured for the intended channel or chat. Do not use the retired Office 365 Connector webhook type: Microsoft retired connector-based incoming webhooks in May 2026. See [Microsoft's current incoming webhook guidance](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook).
 
 Channel destinations support Adaptive Cards or legacy MessageCard payloads. Chat destinations use plain text with Teams-supported Markdown; arbitrary font sizes and text colors are not supported.
 
