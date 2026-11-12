@@ -1,19 +1,19 @@
 <?php
 
-namespace App\\Filament\\Resources\\TeamsWebhookTemplates;
+namespace App\Filament\Resources\TeamsWebhookTemplates;
 
-use App\\Models\\TeamsWebhookTemplate;
-use Filament\\Forms\\Components\\Select;
-use Filament\\Forms\\Components\\Textarea;
-use Filament\\Forms\\Components\\TextInput;
-use Filament\\Forms\\Components\\Toggle;
-use Filament\\Resources\\Resource;
-use Filament\\Schemas\\Components\\Section;
-use Filament\\Schemas\\Schema;
-use Filament\\Tables\\Columns\\IconColumn;
-use Filament\\Tables\\Columns\\TextColumn;
-use Filament\\Tables\\Filters\\SelectFilter;
-use Filament\\Tables\\Table;
+use App\Models\TeamsWebhookTemplate;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\IconColumn;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Table;
 
 class TeamsWebhookTemplateResource extends Resource
 {
@@ -21,8 +21,8 @@ class TeamsWebhookTemplateResource extends Resource
     protected static ?string $navigationLabel = 'Teams Message Templates';
     protected static ?string $modelLabel = 'Message Template';
     protected static ?string $pluralModelLabel = 'Message Templates';
-    protected static string|\\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
-    protected static string|\\UnitEnum|null $navigationGroup = 'Notifications';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-text';
+    protected static string|\UnitEnum|null $navigationGroup = 'Notifications';
     protected static ?int $navigationSort = 31;
     protected static ?string $slug = 'teams-message-templates';
 
@@ -60,9 +60,9 @@ class TeamsWebhookTemplateResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\\ListTeamsWebhookTemplates::route('/'),
-            'create' => Pages\\CreateTeamsWebhookTemplate::route('/create'),
-            'edit' => Pages\\EditTeamsWebhookTemplate::route('/{record}/edit'),
+            'index' => Pages\ListTeamsWebhookTemplates::route('/'),
+            'create' => Pages\CreateTeamsWebhookTemplate::route('/create'),
+            'edit' => Pages\EditTeamsWebhookTemplate::route('/{record}/edit'),
         ];
     }
 }
