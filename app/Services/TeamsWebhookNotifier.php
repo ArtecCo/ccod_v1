@@ -92,10 +92,10 @@ class TeamsWebhookNotifier
                 'not_contains' => is_array($actual)
                     ? ! in_array($expected, $actual, true)
                     : ($actual !== null && ! str_contains($actualString, $expectedString)),
-                'greater_than' => is_numeric($actual) && is_numeric($expected) && (float) $actual > (float) $expected,
-                'greater_or_equal' => is_numeric($actual) && is_numeric($expected) && (float) $actual >= (float) $expected,
-                'less_than' => is_numeric($actual) && is_numeric($expected) && (float) $actual < (float) $expected,
-                'less_or_equal' => is_numeric($actual) && is_numeric($expected) && (float) $actual <= (float) $expected,
+                'greater_than' => $this->compareValues($actual, $expected, 'greater_than'),
+                'greater_or_equal' => $this->compareValues($actual, $expected, 'greater_or_equal'),
+                'less_than' => $this->compareValues($actual, $expected, 'less_than'),
+                'less_or_equal' => $this->compareValues($actual, $expected, 'less_or_equal'),
                 'in' => $actual !== null && (function () use ($actual, $actualString, $expected): bool {
                     $expectedValues = is_array($expected)
                         ? $expected
@@ -125,6 +125,33 @@ class TeamsWebhookNotifier
         return ($webhook->condition_mode ?? 'all') === 'any'
             ? in_array(true, $results, true)
             : ! in_array(false, $results, true);
+    }
+
+    private function compareValues(mixed $actual, mixed $expected, string $operator): bool
+    {
+        if ($actual === null || $expected === null) {
+            return false;
+        }
+
+        if (is_numeric($actual) && is_numeric($expected)) {
+            $left = (float) $actual;
+            $right = (float) $expected;
+        } else {
+            $left = strtotime((string) $actual);
+            $right = strtotime((string) $expected);
+
+            if ($left === false || $right === false) {
+                return false;
+            }
+        }
+
+        return match ($operator) {
+            'greater_than' => $left > $right,
+            'greater_or_equal' => $left >= $right,
+            'less_than' => $left < $right,
+            'less_or_equal' => $left <= $right,
+            default => false,
+        };
     }
 
     private function deliver(TeamsWebhook $webhook, array $context): bool
