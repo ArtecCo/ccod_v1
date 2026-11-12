@@ -71,8 +71,11 @@ class TeamsWebhookNotifier
                 throw new \RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
             }
 
-            $title = $this->render($webhook->title_template ?: $this->defaultTitle($webhook->category), $context);
-            $message = $this->render($webhook->message_template, $context);
+            $template = $webhook->template;
+            $titleTemplate = $template?->title_template ?: $webhook->title_template ?: $this->defaultTitle($webhook->category);
+            $messageTemplate = $template?->message_template ?: $webhook->message_template;
+            $title = $this->render($titleTemplate, $context);
+            $message = $this->render($messageTemplate, $context);
             $payload = $this->payload($webhook, $title, $message);
 
             $response = Http::acceptJson()
