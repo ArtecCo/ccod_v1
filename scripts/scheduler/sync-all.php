@@ -47,6 +47,15 @@ $runId = date('Ymd-His');
 $reportPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.html";
 $latestReportPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.html';
 
+try {
+    $app->make(\\App\\Services\\TeamsWebhookNotifier::class)->dispatch('sync.started', [
+        'run_id' => $runId,
+        'sync_started_at' => $syncStartedAt,
+    ]);
+} catch (\\Throwable $exception) {
+    fwrite(STDERR, 'Teams sync-start notification failed: '.$exception->getMessage().PHP_EOL);
+}
+
 $modules = [
     ['name' => 'Subscriptions', 'script' => 'sync-subscriptions.php'],
     ['name' => 'Resources', 'script' => 'sync-resources.php'],
@@ -543,6 +552,11 @@ try {
         'sync_started_at' => $syncStartedAt,
         'completed_at' => $completedAt,
         'duration' => $formatDuration($totalDuration),
+        'duration_seconds' => round($totalDuration, 3),
+        'run_id' => $runId,
+        'failed_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))),
+        'successful_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] === 'SUCCESS'))),
+        'error_summary' => implode(' | ', array_values(array_filter(array_map(static fn (array $row): string => trim($row['stderr']), array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))))),
     ], $moduleStatuses));
 } catch (\Throwable $exception) {
     fwrite(STDERR, 'Teams sync notification failed: '.$exception->getMessage().PHP_EOL);
