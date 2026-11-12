@@ -122,6 +122,19 @@ class NotificationEventCatalog
             ->all();
     }
 
+    public static function groupedOptions(): array
+    {
+        $groups = [];
+
+        foreach (self::all() as $key => $event) {
+            $groups[$event['category'] ?? 'Other'][$key] = $event['label'];
+        }
+
+        ksort($groups);
+
+        return $groups;
+    }
+
     public static function event(string $key): ?array
     {
         $key = self::normalizeKey($key);
