@@ -7,6 +7,8 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -54,6 +56,9 @@ class TeamsWebhookTemplateResource extends Resource
             TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
         ])->filters([
             SelectFilter::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status']),
+        ])->recordActions([
+            EditAction::make(),
+            DeleteAction::make(),
         ]);
     }
 
