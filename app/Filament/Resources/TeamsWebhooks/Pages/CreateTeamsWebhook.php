@@ -4,6 +4,7 @@ namespace App\Filament\Resources\TeamsWebhooks\Pages;
 
 use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
 use App\Models\TeamsWebhookTemplate;
+use App\Support\TeamsWebhookEvents;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateTeamsWebhook extends CreateRecord
@@ -24,6 +25,10 @@ class CreateTeamsWebhook extends CreateRecord
             $data['title_template'] = TeamsWebhookResource::defaultTitleTemplate($category);
             $data['message_template'] = TeamsWebhookResource::defaultMessageTemplate($category);
         }
+
+        $data['event_keys'] = $data['event_keys'] ?: TeamsWebhookEvents::defaultsForCategory($data['category']);
+        $data['conditions'] = $data['conditions'] ?? [];
+        $data['condition_mode'] = $data['condition_mode'] ?? 'all';
 
         $data['message_format'] = ($data['destination_type'] ?? null) === 'chat'
             ? 'adaptive_card'
