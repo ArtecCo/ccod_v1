@@ -54,11 +54,11 @@ class TeamsWebhookTemplateResource extends Resource
                     }),
                 Select::make('event_key')
                     ->label('Event schema for this template')
-                    ->options(TeamsWebhookEvents::options())
+                    ->options(NotificationEventCatalog::groupedOptions())
                     ->searchable()
                     ->required()
                     ->live()
-                    ->helperText('Select the event whose payload fields should be available as message placeholders.'),
+                    ->helperText(fn (Get $get): string => NotificationEventCatalog::event((string) $get('event_key'))['description'] ?? 'Select the event whose payload fields should be available as message placeholders.'),
                 Select::make('placeholder_to_insert')
                     ->label('Insert event field')
                     ->placeholder('Choose a field to insert into the message')
