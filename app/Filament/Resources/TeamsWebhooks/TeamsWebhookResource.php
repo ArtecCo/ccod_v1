@@ -48,7 +48,7 @@ class TeamsWebhookResource extends Resource
             Section::make('Message template')->description('Use the category-specific placeholders listed below.')->schema([
                 TextInput::make('title_template')->label('Title')->maxLength(200),
                 Textarea::make('message_template')->label('Message')->rows(12)
-                    ->helperText(fn ($get): string => $get('category') === 'server_start'
+                    ->helperText(fn ($get): string => ($get('destination_type') === 'chat' ? 'Chat: plain text with supported Markdown such as **bold**, *italic*, links, and line breaks. Font colors and arbitrary font sizes are not supported. ' : '').($get('category') === 'server_start'
                         ? 'Placeholders: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}'
                         : 'Placeholders: {overall_status}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}, {completed_at}'),
             ]),
@@ -63,6 +63,7 @@ class TeamsWebhookResource extends Resource
             TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => $state === 'channel' ? 'Channel' : 'Chat'),
             IconColumn::make('enabled')->boolean(),
             TextColumn::make('last_delivery_status')->badge()->placeholder('Not sent'),
+            TextColumn::make('last_error')->label('Last error')->limit(60)->placeholder('—')->toggleable(),
             TextColumn::make('last_sent_at')->dateTime('Y-m-d H:i:s')->placeholder('Never'),
         ])->recordActions([
             Action::make('test')->label('Send test')->icon('heroicon-o-paper-airplane')->action(function (TeamsWebhook $record, TeamsWebhookNotifier $notifier): void {
