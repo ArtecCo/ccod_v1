@@ -92,6 +92,7 @@ class TeamsWebhookResource extends Resource
                                 ->label('Expected value')
                                 ->options(fn (Get $get): array => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')))
                                 ->searchable()
+                                ->multiple(fn (Get $get): bool => $get('operator') === 'in')
                                 ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true) && NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) !== [])
                                 ->visible(fn (Get $get): bool => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) !== [] && ! in_array($get('operator'), ['exists', 'not_exists'], true)),
                             TextInput::make('value_text')
