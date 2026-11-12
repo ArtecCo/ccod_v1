@@ -18,7 +18,7 @@ class TeamsWebhookNotifier
 
     public function sendSyncStatus(array $context): void
     {
-        $this->dispatch('azure.sync.completed', $context);
+        $this->dispatch('sync.completed', $context);
     }
 
     /**
