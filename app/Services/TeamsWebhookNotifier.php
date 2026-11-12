@@ -25,6 +25,7 @@ class TeamsWebhookNotifier
      */
     public function dispatch(string $eventKey, array $context = []): int
     {
+        $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
             'event_key' => $eventKey,
             'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
@@ -54,7 +55,7 @@ class TeamsWebhookNotifier
 
     public function sendTest(TeamsWebhook $webhook): bool
     {
-        $eventKey = $webhook->event_keys[0] ?? 'server.started';
+        $eventKey = NotificationEventCatalog::normalizeKeys($webhook->event_keys)[0] ?? 'server.started';
         $context = TeamsWebhookEvents::sampleContext($eventKey);
 
         return $this->deliver($webhook, $context);
@@ -71,8 +72,12 @@ class TeamsWebhookNotifier
         $results = [];
         foreach ($conditions as $condition) {
             $field = trim((string) ($condition['field'] ?? ''));
+            if ($field !== '' && ! array_key_exists($field, NotificationEventCatalog::fieldsForEvents([$context['event_key'] ?? '']))) {
+                $results[] = false;
+                continue;
+            }
             $operator = $condition['operator'] ?? 'equals';
-            $expected = $condition['value'] ?? null;
+            $expected = $condition['value'] ?? $condition['value_text'] ?? null;
             $actual = $field !== '' ? data_get($context, $field) : null;
             $actualString = is_scalar($actual) ? mb_strtolower((string) $actual) : '';
             $expectedString = is_scalar($expected) ? mb_strtolower((string) $expected) : '';
