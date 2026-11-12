@@ -537,11 +537,11 @@ try {
         }
     }
 
-    $app->make(\\App\\Services\\TeamsWebhookNotifier::class)->sendSyncStatus(array_merge([
+    $app->make(\App\Services\TeamsWebhookNotifier::class)->sendSyncStatus(array_merge([
         'overall_status' => $overallStatus,
         'completed_at' => $completedAt,
     ], $moduleStatuses));
-} catch (\\Throwable $exception) {
+} catch (\Throwable $exception) {
     fwrite(STDERR, 'Teams sync notification failed: '.$exception->getMessage().PHP_EOL);
 }
 
