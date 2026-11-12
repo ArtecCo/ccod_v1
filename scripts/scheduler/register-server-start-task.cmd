@@ -4,7 +4,7 @@ setlocal
 set "APP_ROOT=C:\inetpub\wwwroot\ccod_v1"
 set "PHP_EXE=C:\PHP\php.exe"
 set "TASK_NAME=CCOD Server Start Teams Notification"
-set "TASK_COMMAND=\"%PHP_EXE%\" \"%APP_ROOT%\scripts\scheduler\notify-server-start.php\""
+set "TASK_COMMAND=%PHP_EXE% %APP_ROOT%\scripts\scheduler\notify-server-start.php"
 
 if not exist "%PHP_EXE%" (
     echo PHP executable not found: %PHP_EXE%
