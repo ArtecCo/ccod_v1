@@ -13,16 +13,9 @@ Channel destinations support Adaptive Cards or legacy MessageCard payloads. Chat
 
 ## Windows startup task
 
-Create a Windows Task Scheduler task running as an account that can read the application files and connect to the application database.
+After pulling the repository, open Command Prompt as Administrator and run scripts\scheduler\register-server-start-task.cmd from the application root. It registers a Windows startup task running as SYSTEM, with a two-minute delay, using C:\PHP\php.exe and scripts\scheduler\notify-server-start.php.
 
-- Trigger: At startup
-- Delay: 2 minutes
-- Run whether user is logged on or not
-- Program: C:\PHP\php.exe
-- Arguments: scripts\scheduler\notify-server-start.php
-- Start in: C:\inetpub\wwwroot\ccod_v1
-
-The delay allows IIS, MySQL, and the queue task to initialize before the status snapshot is sent. The script reports the state it observes; a component that is still starting may be shown as not running.
+The task needs read access to the application files and access to the local database. The delay allows IIS, MySQL, and the queue task to initialize before the status snapshot is sent. The script reports the state it observes; a component that is still starting may be shown as not running.
 
 ## Queue worker
 
