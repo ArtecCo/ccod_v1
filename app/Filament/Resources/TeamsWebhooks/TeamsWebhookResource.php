@@ -47,7 +47,7 @@ class TeamsWebhookResource extends Resource
             ])->columns(2),
             Section::make('Message template')->description('Use the category-specific placeholders listed below.')->schema([
                 TextInput::make('title_template')->label('Title')->maxLength(200),
-                Textarea::make('message_template')->label('Message')->rows(12)->required()
+                Textarea::make('message_template')->label('Message')->rows(12)
                     ->helperText(fn ($get): string => $get('category') === 'server_start'
                         ? 'Placeholders: {server_boot_time}, {iis_status}, {iis_started_at}, {php_status}, {php_started_at}, {mysql_status}, {mysql_started_at}, {queue_status}, {queue_started_at}'
                         : 'Placeholders: {overall_status}, {subscriptions_status}, {resources_status}, {costs_status}, {security_status}, {alerts_status}, {web_urls_status}, {completed_at}'),
