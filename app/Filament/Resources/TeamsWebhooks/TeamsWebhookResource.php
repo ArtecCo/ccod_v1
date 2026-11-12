@@ -7,6 +7,7 @@ use App\Models\TeamsWebhookTemplate;
 use App\Models\TeamsWebhookCategory;
 use App\Services\TeamsWebhookNotifier;
 use App\Support\TeamsWebhookEvents;
+use App\Support\NotificationEventCatalog;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Repeater;
@@ -78,6 +79,7 @@ class TeamsWebhookResource extends Resource
                                 ->options(fn (Get $get): array => NotificationEventCatalog::fieldOptions($get('../../event_keys')))
                                 ->searchable()
                                 ->live()
+                                ->afterStateUpdated(function (Set $set): void { $set('operator', 'equals'); $set('value', null); $set('value_text', null); })
                                 ->required()
                                 ->helperText('Only fields supplied by the selected events are listed.'),
                             Select::make('operator')
