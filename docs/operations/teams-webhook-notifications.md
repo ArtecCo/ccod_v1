@@ -25,7 +25,7 @@ In Developer Panel → Notifications:
 
 Webhook URLs are encrypted using Laravel's application key. Never place webhook URLs in source control or logs. Use a Teams Workflows incoming webhook URL configured for the intended channel or chat. Do not use the retired Office 365 Connector webhook type. See [Microsoft's incoming webhook guidance](https://learn.microsoft.com/en-us/microsoftteams/platform/webhooks-and-connectors/how-to/add-incoming-webhook).
 
-Channel destinations support Adaptive Cards or legacy MessageCard payloads. Chat destinations receive plain text with Teams-supported Markdown; arbitrary font sizes and text colors are not supported.
+Adaptive Cards are the default and are sent to both Teams channel and chat destinations. Legacy MessageCard remains available only for channel destinations.
 
 ## Central event catalogue
 
