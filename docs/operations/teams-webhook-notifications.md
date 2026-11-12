@@ -41,7 +41,7 @@ When a destination subscribes to multiple events, the condition builder displays
 | `sync.started` | Unified Azure sync begins | `run_id`, `sync_started_at` |
 | `sync.completed` | Unified Azure sync finishes | `overall_status`, `duration_seconds`, `failed_modules`, `successful_modules`, `error_summary`, module status fields, timestamps and run ID |
 
-The former `azure.sync.completed` key is normalized to `sync.completed`; existing webhook subscriptions are migrated to the canonical key. Existing application event keys from `App\Enums\NotificationEvent` are also listed. Their event-specific fields should be added to the catalogue when their producers expose a documented payload.
+The former `azure.sync.completed` key is normalized to `sync.completed`; existing webhook subscriptions are migrated to the canonical key. Enum declarations alone do not make an event selectable. Only events registered in this catalogue and dispatched by an active producer appear in the webhook event selector.
 
 ### Adding an event or field
 
