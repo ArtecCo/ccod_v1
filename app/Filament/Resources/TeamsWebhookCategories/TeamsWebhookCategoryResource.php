@@ -1,17 +1,17 @@
 <?php
 
-namespace App\\Filament\\Resources\\TeamsWebhookCategories;
+namespace App\Filament\Resources\TeamsWebhookCategories;
 
-use App\\Models\\TeamsWebhookCategory;
-use Filament\\Actions\\DeleteAction;
-use Filament\\Actions\\EditAction;
-use Filament\\Forms\\Components\\TextInput;
-use Filament\\Notifications\\Notification;
-use Filament\\Resources\\Resource;
-use Filament\\Schemas\\Components\\Section;
-use Filament\\Schemas\\Schema;
-use Filament\\Tables\\Columns\\TextColumn;
-use Filament\\Tables\\Table;
+use App\Models\TeamsWebhookCategory;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\EditAction;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
 
 class TeamsWebhookCategoryResource extends Resource
 {
@@ -19,8 +19,8 @@ class TeamsWebhookCategoryResource extends Resource
     protected static ?string $navigationLabel = 'Template Categories';
     protected static ?string $modelLabel = 'Template Category';
     protected static ?string $pluralModelLabel = 'Template Categories';
-    protected static string|\\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static string|\\UnitEnum|null $navigationGroup = 'Notifications';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static string|\UnitEnum|null $navigationGroup = 'Notifications';
     protected static ?int $navigationSort = 32;
     protected static ?string $slug = 'teams-template-categories';
 
@@ -64,9 +64,9 @@ class TeamsWebhookCategoryResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\\ListTeamsWebhookCategories::route('/'),
-            'create' => Pages\\CreateTeamsWebhookCategory::route('/create'),
-            'edit' => Pages\\EditTeamsWebhookCategory::route('/{record}/edit'),
+            'index' => Pages\ListTeamsWebhookCategories::route('/'),
+            'create' => Pages\CreateTeamsWebhookCategory::route('/create'),
+            'edit' => Pages\EditTeamsWebhookCategory::route('/{record}/edit'),
         ];
     }
 }
