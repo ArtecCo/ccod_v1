@@ -15,7 +15,7 @@ Channel destinations support Adaptive Cards or legacy MessageCard payloads. Chat
 
 After pulling the repository, open Command Prompt as Administrator and run scripts\scheduler\register-server-start-task.cmd from the application root. It registers a Windows startup task running as SYSTEM, with a two-minute delay, using C:\PHP\php.exe and scripts\scheduler\notify-server-start.php.
 
-The task needs read access to the application files and access to the local database. The delay allows IIS, MySQL, and the queue task to initialize before the status snapshot is sent. The script reports the state it observes; a component that is still starting may be shown as not running.
+The task needs read access to the application files and access to the local database. The delay allows IIS, MySQL, and the queue task to initialize before the status snapshot is sent. The script reports the state it observes; a component that is still starting may be shown as not running. PHP status is based on an active php-cgi.exe FastCGI worker, so it can report NOT DETECTED if IIS has not yet handled a PHP request after boot. IIS service start time is derived from its hosting process and can be approximate when Windows shares the service host process.
 
 ## Queue worker
 
