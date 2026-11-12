@@ -40,25 +40,20 @@ class TeamsWebhookResource extends Resource
         return $schema->components([
             Section::make('Webhook destination')->schema([
                 TextInput::make('name')->required()->maxLength(120),
-                Select::make('category')->options(['server_start' => 'Server start', 'sync_status' => 'Sync status'])->default('server_start')->required()->live()
-                    ->afterStateUpdated(function (Set $set, ?string $state): void {
-                        $template = TeamsWebhookTemplate::query()->where('category', $state)->where('is_default', true)->first()
-                            ?? TeamsWebhookTemplate::query()->where('category', $state)->orderBy('id')->first();
-                        $set('template_id', $template?->id);
-                        $set('title_template', $template?->title_template ?? self::defaultTitleTemplate($state));
-                        $set('message_template', $template?->message_template ?? self::defaultMessageTemplate($state));
-                    }),
                 Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
                 Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required(),
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
             Section::make('Template selection')->description('Manage reusable templates under Developer → Notifications → Teams Message Templates. Changes to a saved template are used by every webhook linked to it.')->schema([
-                Select::make('template_id')->label('Saved template')->options(fn ($get): array => TeamsWebhookTemplate::query()
-                    ->when($get('category'), fn ($query, $category) => $query->where('category', $category))
-                    ->orderByDesc('is_default')->orderBy('name')->pluck('name', 'id')->all())
-                    ->default(fn ($get) => TeamsWebhookTemplate::query()->where('category', $get('category') ?? 'server_start')->where('is_default', true)->value('id'))
-                    ->searchable()->required()->helperText('Templates are managed separately. Editing a template updates all webhooks using it.'),
+                Select::make('template_id')->label('Notification template')->options(fn (): array => TeamsWebhookTemplate::query()
+                    ->orderBy('category')->orderByDesc('is_default')->orderBy('name')
+                    ->get()->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
+                        $template->id => ($template->category === 'server_start' ? 'Server start' : 'Sync status').' — '.$template->name.($template->is_default ? ' (Default)' : ''),
+                    ])->all())
+                    ->default(fn () => TeamsWebhookTemplate::query()->where('category', 'server_start')->where('is_default', true)->value('id'))
+                    ->searchable()->required()->live()
+                    ->helperText('Choose the notification type and message template here. Manage templates under Developer → Notifications → Teams Message Templates.'),
             ]),
         ]);
     }
