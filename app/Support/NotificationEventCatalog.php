@@ -2,8 +2,6 @@
 
 namespace App\Support;
 
-use App\Enums\NotificationEvent;
-
 class NotificationEventCatalog
 {
     private const COMMON_FIELDS = [
@@ -99,20 +97,7 @@ class NotificationEventCatalog
 
     public static function all(): array
     {
-        $events = self::EVENTS;
-
-        foreach (NotificationEvent::cases() as $event) {
-            $events[$event->value] = [
-                'label' => $event->label(),
-                'category' => self::categoryForLegacyEvent($event->value),
-                'description' => 'Application event. Additional fields become available when its producer registers them in this catalogue.',
-                'scope' => ['global'],
-                'fields' => [],
-                'sample' => [],
-            ];
-        }
-
-        return $events;
+        return self::EVENTS;
     }
 
     public static function options(): array
@@ -240,14 +225,4 @@ class NotificationEventCatalog
         return $context;
     }
 
-    private static function categoryForLegacyEvent(string $key): string
-    {
-        return match (true) {
-            str_starts_with($key, 'azure_') => 'Azure',
-            str_starts_with($key, 'servicenow_') => 'ServiceNow',
-            str_starts_with($key, 'user_'), str_starts_with($key, 'subscription_') => 'Access and teams',
-            str_starts_with($key, 'maintenance_') => 'Maintenance',
-            default => 'Application',
-        };
-    }
 }
