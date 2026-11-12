@@ -19,8 +19,8 @@ $runPowerShell = static function (string $script): string {
 
 $serviceInfo = static function (string $service) use ($runPowerShell): array {
     $name = str_replace("'", "''", $service);
-    $script = <<<PS
-$service = Get-CimInstance Win32_Service -Filter "Name='$name'"
+    $script = <<<'PS'
+$service = Get-CimInstance Win32_Service -Filter "Name='__SERVICE_NAME__'"
 if ($service) {
     $started = 'Not available'
     if ($service.ProcessId -gt 0) {
@@ -30,6 +30,7 @@ if ($service) {
     [pscustomobject]@{ State=$service.State; StartedAt=$started } | ConvertTo-Json -Compress
 }
 PS;
+    $script = str_replace('__SERVICE_NAME__', $name, $script);
     $data = json_decode($runPowerShell($script), true);
 
     return [
@@ -41,15 +42,15 @@ PS;
 $bootTime = $runPowerShell("(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')");
 $phpScript = <<<'PS'
 $process = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'php-cgi.exe' } | Sort-Object CreationDate | Select-Object -First 1
-if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=$process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')} }
-else { [pscustomobject]@{Status='NOT DETECTED';StartedAt='Not available'} } | ConvertTo-Json -Compress
+$result = if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=$process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')} } else { [pscustomobject]@{Status='NOT DETECTED';StartedAt='Not available'} }
+$result | ConvertTo-Json -Compress
 PS;
 $php = json_decode($runPowerShell($phpScript), true) ?: ['Status' => 'NOT DETECTED', 'StartedAt' => 'Not available'];
 
 $queueScript = <<<'PS'
 $process = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'php.exe' -and $_.CommandLine -match 'artisan queue:work' } | Sort-Object CreationDate | Select-Object -First 1
-if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=$process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')} }
-else { [pscustomobject]@{Status='NOT RUNNING';StartedAt='Not available'} } | ConvertTo-Json -Compress
+$result = if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=$process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')} } else { [pscustomobject]@{Status='NOT RUNNING';StartedAt='Not available'} }
+$result | ConvertTo-Json -Compress
 PS;
 $queue = json_decode($runPowerShell($queueScript), true) ?: ['Status' => 'NOT RUNNING', 'StartedAt' => 'Not available'];
 
