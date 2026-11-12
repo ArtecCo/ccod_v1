@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class TeamsWebhookTemplate extends Model
 {
-    protected $fillable = ['name', 'category', 'title_template', 'message_template', 'is_default'];
+    protected $fillable = ['name', 'category', 'event_key', 'title_template', 'message_template', 'is_default'];
 
     protected function casts(): array
     {
