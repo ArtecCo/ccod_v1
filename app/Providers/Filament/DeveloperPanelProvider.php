@@ -20,7 +20,6 @@ use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
 use App\Filament\Resources\TeamsWebhookTemplates\TeamsWebhookTemplateResource;
-use App\Filament\Resources\TeamsWebhookCategories\TeamsWebhookCategoryResource;
 use App\Filament\Resources\UserGroups\UserGroupResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Filament\Widgets\DeveloperOverview;
@@ -89,7 +88,6 @@ class DeveloperPanelProvider extends PanelProvider
                 NotificationRuleResource::class,
                 TeamsWebhookResource::class,
                 TeamsWebhookTemplateResource::class,
-                TeamsWebhookCategoryResource::class,
             ])
             ->pages([
                 Dashboard::class,
