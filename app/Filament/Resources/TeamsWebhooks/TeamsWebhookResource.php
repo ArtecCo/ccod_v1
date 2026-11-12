@@ -68,13 +68,33 @@ class TeamsWebhookResource extends Resource
                         ->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])
                         ->default('all')
                         ->required(),
-                    KeyValue::make('conditions')
+                    Repeater::make('conditions')
                         ->label('Optional event conditions')
-                        ->keyLabel('Context field')
-                        ->valueLabel('Must equal')
+                        ->schema([
+                            TextInput::make('field')->label('Context field')->required()->maxLength(120),
+                            Select::make('operator')->label('Operator')->options([
+                                'equals' => 'Equals',
+                                'not_equals' => 'Does not equal',
+                                'contains' => 'Contains',
+                                'not_contains' => 'Does not contain',
+                                'greater_than' => 'Greater than',
+                                'greater_or_equal' => 'Greater than or equal',
+                                'less_than' => 'Less than',
+                                'less_or_equal' => 'Less than or equal',
+                                'in' => 'Is one of (comma separated)',
+                                'exists' => 'Exists',
+                                'not_exists' => 'Does not exist',
+                            ])->default('equals')->required(),
+                            TextInput::make('value')->label('Comparison value')->maxLength(500)
+                                ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true))
+                                ->visible(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true)),
+                        ])
+                        ->columns(3)
                         ->addActionLabel('Add condition')
                         ->reorderable()
-                        ->helperText('Optional exact-match filters. Example: overall_status = FAILED. Leave empty to receive every selected event.'),
+                        ->defaultItems(0)
+                        ->collapsible()
+                        ->helperText('Conditions can filter by event context fields such as overall_status, subscription_id, severity or cost. Leave empty to receive every selected event.'),
                 ]),
 
             Section::make('Message category and template')
