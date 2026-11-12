@@ -2,79 +2,58 @@
 
 namespace App\Support;
 
-use App\Enums\NotificationEvent;
-
 class TeamsWebhookEvents
 {
-    /**
-     * Events currently emitted by CCOD and available for webhook subscriptions.
-     *
-     * Adding an event here makes it configurable in the portal. The code that
-     * produces the event only needs to dispatch its key and context once.
-     */
     public static function options(): array
     {
-        return [
-            'server.started' => 'Server started',
-            'azure.sync.completed' => 'Azure synchronization completed',
-        ] + NotificationEvent::options();
+        return NotificationEventCatalog::options();
     }
 
     public static function defaultsForCategory(?string $category): array
     {
         return match ($category) {
             'server_start' => ['server.started'],
-            'sync_status' => ['azure.sync.completed'],
+            'sync_status' => ['sync.completed'],
             default => [],
         };
     }
 
     public static function sampleContext(string $eventKey): array
     {
+        $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
+        $event = NotificationEventCatalog::event($eventKey);
         $now = now();
         $timestamp = $now->format('Y-m-d H:i:s T');
         $started = $now->copy()->subMinutes(5)->format('Y-m-d H:i:s T');
 
+        $context = array_merge(
+            NotificationEventCatalog::COMMON_FIELDS ?? [],
+            $event['sample'] ?? [],
+        );
+
+        $context['event_key'] = $eventKey;
+        $context['event_label'] = $event['label'] ?? $eventKey;
+        $context['is_test'] = true;
+
         if ($eventKey === 'server.started') {
-            return [
-                'event_key' => $eventKey,
-                'event_label' => self::options()[$eventKey],
-                'server_boot_time' => $started,
-                'iis_status' => 'RUNNING (TEST)',
-                'iis_started_at' => $started,
-                'php_status' => 'RUNNING (TEST)',
-                'php_started_at' => $started,
-                'mysql_status' => 'RUNNING (TEST)',
-                'mysql_started_at' => $started,
-                'queue_status' => 'RUNNING (TEST)',
-                'queue_started_at' => $started,
-                'is_test' => true,
-            ];
+            $context['server_boot_time'] = $started;
+            foreach (['iis_status', 'php_status', 'mysql_status', 'queue_status'] as $field) {
+                $context[$field] = ($context[$field] ?? 'RUNNING').' (TEST)';
+            }
+            foreach (['iis_started_at', 'php_started_at', 'mysql_started_at', 'queue_started_at'] as $field) {
+                $context[$field] = $started;
+            }
         }
 
-        if ($eventKey === 'azure.sync.completed') {
-            return [
-                'event_key' => $eventKey,
-                'event_label' => self::options()[$eventKey],
-                'overall_status' => 'SUCCESS (TEST)',
-                'sync_started_at' => $started,
-                'duration' => '2 minutes (TEST)',
-                'subscriptions_status' => 'SUCCESS',
-                'resources_status' => 'SUCCESS',
-                'costs_status' => 'SUCCESS',
-                'security_status' => 'SUCCESS',
-                'alerts_status' => 'SUCCESS',
-                'web_urls_status' => 'SUCCESS',
-                'completed_at' => $timestamp,
-                'is_test' => true,
-            ];
+        if ($eventKey === 'sync.completed') {
+            $context['sync_started_at'] = $started;
+            $context['completed_at'] = $timestamp;
+            $context['duration'] = '2 minutes (TEST)';
+            $context['duration_seconds'] = 120;
         }
 
-        return [
-            'event_key' => $eventKey,
-            'event_label' => self::options()[$eventKey] ?? $eventKey,
-            'is_test' => true,
-            'test_timestamp' => $timestamp,
-        ];
+        $context['test_timestamp'] = $timestamp;
+
+        return $context;
     }
 }
