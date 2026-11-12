@@ -46,8 +46,12 @@ class TeamsWebhookResource extends Resource
             Section::make('Webhook destination')->schema([
                 TextInput::make('name')->required()->maxLength(120),
                 Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
-                Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required()
-                    ->visible(fn (Get $get): bool => $get('destination_type') !== 'chat'),
+                Select::make('message_format')
+                    ->label('Message format')
+                    ->options(['adaptive_card' => 'Adaptive Card (recommended)', 'message_card' => 'MessageCard (legacy)'])
+                    ->default('adaptive_card')
+                    ->required()
+                    ->helperText('Adaptive Cards are supported for both Teams channels and chats. MessageCard is retained for legacy channel workflows.'),
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
