@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\TeamsWebhook;
+use App\Support\TeamsWebhookEvents;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -10,55 +11,72 @@ class TeamsWebhookNotifier
 {
     public function sendServerStart(array $context): void
     {
-        $this->sendCategory('server_start', $context);
+        $this->dispatch('server.started', $context);
     }
 
     public function sendSyncStatus(array $context): void
     {
-        $this->sendCategory('sync_status', $context);
+        $this->dispatch('azure.sync.completed', $context);
+    }
+
+    /**
+     * Dispatch a named CCOD event to every enabled destination subscribed to it.
+     * Producers do not know about categories, templates, URLs or message formats.
+     */
+    public function dispatch(string $eventKey, array $context = []): int
+    {
+        $context = array_merge($context, [
+            'event_key' => $eventKey,
+            'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
+        ]);
+
+        $sent = 0;
+
+        TeamsWebhook::query()
+            ->where('enabled', true)
+            ->whereJsonContains('event_keys', $eventKey)
+            ->with('template')
+            ->orderBy('id')
+            ->chunkById(100, function ($webhooks) use ($context, &$sent): void {
+                foreach ($webhooks as $webhook) {
+                    if (! $this->matchesConditions($webhook, $context)) {
+                        continue;
+                    }
+
+                    if ($this->deliver($webhook, $context)) {
+                        $sent++;
+                    }
+                }
+            });
+
+        return $sent;
     }
 
     public function sendTest(TeamsWebhook $webhook): bool
     {
-        $testNow = now();
-        $testTimestamp = $testNow->format('Y-m-d H:i:s T');
-        $testStartedAt = $testNow->copy()->subMinutes(5)->format('Y-m-d H:i:s T');
-
-        $context = $webhook->category === 'server_start'
-            ? [
-                'server_boot_time' => $testStartedAt,
-                'iis_status' => 'RUNNING (TEST)',
-                'iis_started_at' => $testStartedAt,
-                'php_status' => 'RUNNING (TEST)',
-                'php_started_at' => $testStartedAt,
-                'mysql_status' => 'RUNNING (TEST)',
-                'mysql_started_at' => $testStartedAt,
-                'queue_status' => 'RUNNING (TEST)',
-                'queue_started_at' => $testStartedAt,
-            ]
-            : [
-                'overall_status' => 'SUCCESS (TEST)',
-                'sync_started_at' => $testStartedAt,
-                'duration' => '2 minutes (TEST)',
-                'subscriptions_status' => 'SUCCESS',
-                'resources_status' => 'SUCCESS',
-                'costs_status' => 'SUCCESS',
-                'security_status' => 'SUCCESS',
-                'alerts_status' => 'SUCCESS',
-                'web_urls_status' => 'SUCCESS',
-                'completed_at' => $testTimestamp,
-            ];
+        $eventKey = $webhook->event_keys[0] ?? 'server.started';
+        $context = TeamsWebhookEvents::sampleContext($eventKey);
 
         return $this->deliver($webhook, $context);
     }
 
-    private function sendCategory(string $category, array $context): void
+    private function matchesConditions(TeamsWebhook $webhook, array $context): bool
     {
-        TeamsWebhook::query()
-            ->where('category', $category)
-            ->where('enabled', true)
-            ->orderBy('id')
-            ->each(fn (TeamsWebhook $webhook) => $this->deliver($webhook, $context));
+        $conditions = $webhook->conditions ?? [];
+
+        if ($conditions === []) {
+            return true;
+        }
+
+        $results = [];
+        foreach ($conditions as $key => $expected) {
+            $actual = data_get($context, $key);
+            $results[] = $actual !== null && mb_strtolower((string) $actual) === mb_strtolower((string) $expected);
+        }
+
+        return ($webhook->condition_mode ?? 'all') === 'any'
+            ? in_array(true, $results, true)
+            : ! in_array(false, $results, true);
     }
 
     private function deliver(TeamsWebhook $webhook, array $context): bool
@@ -110,6 +128,10 @@ class TeamsWebhookNotifier
 
     private function payload(TeamsWebhook $webhook, string $title, string $message): array
     {
+        if ($webhook->destination_type === 'chat') {
+            return ['text' => trim(($title !== '' ? "**{$title}**\n\n" : '').$message)];
+        }
+
         if ($webhook->message_format === 'message_card') {
             return [
                 '@type' => 'MessageCard',
@@ -156,12 +178,16 @@ class TeamsWebhookNotifier
                 $value = $normalizedContext[$key] ?? $normalizedContext[str_replace(['_', '-', '.'], '', $key)] ?? null;
             }
 
+            if (is_array($value) || is_object($value)) {
+                $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+            }
+
             return $value === null ? 'Not available' : (string) $value;
         }, $template) ?? $template;
     }
 
     private function defaultTitle(string $category): string
     {
-        return $category === 'server_start' ? 'CCOD server startup' : 'CCOD Azure sync status';
+        return $category === 'server_start' ? 'CCOD server startup' : 'CCOD Azure notification';
     }
 }
