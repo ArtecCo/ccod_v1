@@ -48,11 +48,11 @@ $reportPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.html";
 $latestReportPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.html';
 
 try {
-    $app->make(\\App\\Services\\TeamsWebhookNotifier::class)->dispatch('sync.started', [
+    $app->make(\App\Services\TeamsWebhookNotifier::class)->dispatch('sync.started', [
         'run_id' => $runId,
         'sync_started_at' => $syncStartedAt,
     ]);
-} catch (\\Throwable $exception) {
+} catch (\Throwable $exception) {
     fwrite(STDERR, 'Teams sync-start notification failed: '.$exception->getMessage().PHP_EOL);
 }
 
