@@ -6,8 +6,10 @@ use App\Models\TeamsWebhook;
 use App\Models\TeamsWebhookTemplate;
 use App\Models\TeamsWebhookCategory;
 use App\Services\TeamsWebhookNotifier;
+use App\Support\TeamsWebhookEvents;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Forms\Components\KeyValue;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
@@ -43,52 +45,78 @@ class TeamsWebhookResource extends Resource
             Section::make('Webhook destination')->schema([
                 TextInput::make('name')->required()->maxLength(120),
                 Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
-                Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required(),
+                Select::make('message_format')->options(['adaptive_card' => 'Adaptive Card', 'message_card' => 'MessageCard (legacy)'])->default('adaptive_card')->required()
+                    ->visible(fn (Get $get): bool => $get('destination_type') !== 'chat'),
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
-            Section::make('Notification category and template')->description('Choose what this webhook sends. You can manage reusable message templates under Developer → Notifications → Teams Message Templates.')->schema([
-                Select::make('category')->label('Notification category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())->default('server_start')->required()->live()
-                    ->afterStateUpdated(function ($state, Set $set): void {
-                        $template = TeamsWebhookTemplate::query()
-                            ->where('category', $state)
-                            ->where('is_default', true)
-                            ->first()
-                            ?? TeamsWebhookTemplate::query()->where('category', $state)->orderBy('id')->first();
 
-                        $set('template_id', $template?->id);
-                    }),
-                Select::make('template_id')->label('Message template')->options(fn (Get $get): array => TeamsWebhookTemplate::query()
-                    ->where('category', $get('category') ?: 'server_start')
-                    ->orderByDesc('is_default')->orderBy('name')
-                    ->get()->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
-                        $template->id => $template->name.($template->is_default ? ' (Default)' : ''),
-                    ])->all())
-                    ->default(fn () => TeamsWebhookTemplate::query()->where('category', 'server_start')->where('is_default', true)->value('id'))
-                    ->searchable()->required()->live()
-                    ->helperText('The selected template must belong to the chosen category. Changes to a saved template are shared by all linked webhooks.'),
-            ])->columns(2),
+            Section::make('Event subscriptions')
+                ->description('Choose one or more events that should send a notification to this destination. New event types can be added centrally without changing each webhook.')
+                ->schema([
+                    Select::make('event_keys')
+                        ->label('Trigger events')
+                        ->multiple()
+                        ->options(TeamsWebhookEvents::options())
+                        ->searchable()
+                        ->preload()
+                        ->required()
+                        ->default(fn (Get $get): array => TeamsWebhookEvents::defaultsForCategory($get('category')))
+                        ->helperText('A destination can subscribe to multiple events.'),
+                    Select::make('condition_mode')
+                        ->label('Condition matching')
+                        ->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])
+                        ->default('all')
+                        ->required(),
+                    KeyValue::make('conditions')
+                        ->label('Optional event conditions')
+                        ->keyLabel('Context field')
+                        ->valueLabel('Must equal')
+                        ->addActionLabel('Add condition')
+                        ->reorderable()
+                        ->helperText('Optional exact-match filters. Example: overall_status = FAILED. Leave empty to receive every selected event.'),
+                ]),
+
+            Section::make('Message category and template')
+                ->description('Categories organise templates. Event subscriptions decide when this destination receives a message.')
+                ->schema([
+                    Select::make('category')
+                        ->label('Template category')
+                        ->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())
+                        ->default('server_start')
+                        ->required()
+                        ->live()
+                        ->afterStateUpdated(function ($state, Set $set): void {
+                            $template = TeamsWebhookTemplate::query()
+                                ->where('category', $state)
+                                ->where('is_default', true)
+                                ->first()
+                                ?? TeamsWebhookTemplate::query()->where('category', $state)->orderBy('id')->first();
+
+                            $set('template_id', $template?->id);
+                            $set('event_keys', TeamsWebhookEvents::defaultsForCategory($state));
+                        }),
+                    Select::make('template_id')
+                        ->label('Message template')
+                        ->options(fn (Get $get): array => TeamsWebhookTemplate::query()
+                            ->where('category', $get('category') ?: 'server_start')
+                            ->orderByDesc('is_default')->orderBy('name')
+                            ->get()->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
+                                $template->id => $template->name.($template->is_default ? ' (Default)' : ''),
+                            ])->all())
+                        ->searchable()
+                        ->required()
+                        ->live()
+                        ->helperText('Template edits are shared by all destinations linked to it.'),
+                ])->columns(2),
         ]);
-    }
-
-    public static function defaultTitleTemplate(?string $category): string
-    {
-        return $category === 'sync_status' ? 'CCOD Azure sync status' : 'CCOD server startup';
-    }
-
-    public static function defaultMessageTemplate(?string $category): string
-    {
-        if ($category === 'sync_status') {
-            return "**Overall status:** {overall_status}\n**Started:** {sync_started_at}\n**Completed:** {completed_at}\n**Duration:** {duration}\n\n**Module status**\n- **Subscriptions:** {subscriptions_status}\n- **Resources:** {resources_status}\n- **Costs:** {costs_status}\n- **Security:** {security_status}\n- **Alerts:** {alerts_status}\n- **Web URLs:** {web_urls_status}";
-        }
-
-        return "**Server boot time:** {server_boot_time}\n\n**IIS**\n- **Status:** {iis_status}\n- **Start time:** {iis_started_at}\n\n**PHP FastCGI**\n- **Status:** {php_status}\n- **Start time:** {php_started_at}\n\n**MySQL2610**\n- **Status:** {mysql_status}\n- **Start time:** {mysql_started_at}\n\n**Laravel queue**\n- **Status:** {queue_status}\n- **Start time:** {queue_started_at}";
     }
 
     public static function table(Table $table): Table
     {
         return $table->defaultSort('id', 'desc')->columns([
             TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('event_keys')->label('Subscribed events')->formatStateUsing(fn ($state): string => collect($state ?? [])->map(fn ($key) => TeamsWebhookEvents::options()[$key] ?? $key)->implode(', '))->wrap(),
             TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
             TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => $state === 'channel' ? 'Channel' : 'Chat'),
             IconColumn::make('enabled')->boolean(),
