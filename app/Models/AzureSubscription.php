@@ -1,12 +1,16 @@
 <?php
 
-namespace App\Models;
+namespace App\\Models;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use App\\Enums\\NotificationEvent;
+use App\\Services\\NotificationRuleService;
+use Illuminate\\Database\\Eloquent\\Model;
+use Illuminate\\Database\\Eloquent\\Relations\\BelongsTo;
+use Illuminate\\Database\\Eloquent\\Relations\\BelongsToMany;
+use Illuminate\\Database\\Eloquent\\Relations\\HasMany;
+use Illuminate\\Database\\Eloquent\\Relations\\HasOne;
+use Illuminate\\Support\\Facades\\DB;
+use Throwable;
 
 class AzureSubscription extends Model
 {
@@ -17,6 +21,37 @@ class AzureSubscription extends Model
     public $timestamps = false;
     protected $fillable = ['subscription_id','display_name','state','tenant_id','authorization_source','application_id','key_vault_reference','health_status','security_score','mtd_spend_eur','last_synced'];
     protected $casts = ['security_score'=>'decimal:2','mtd_spend_eur'=>'decimal:2','last_synced'=>'datetime'];
+
+    protected static function booted(): void
+    {
+        static::created(function (self $subscription): void {
+            $subscription->dispatchLifecycleNotification(NotificationEvent::AzureSubscriptionConnected);
+        });
+
+        static::deleted(function (self $subscription): void {
+            $subscription->dispatchLifecycleNotification(NotificationEvent::AzureSubscriptionDisconnected);
+        });
+    }
+
+    private function dispatchLifecycleNotification(NotificationEvent $event): void
+    {
+        $context = [
+            'subscription_id' => $this->subscription_id,
+            'subscription_name' => $this->display_name,
+            'subscription_state' => $this->state,
+            'tenant_id' => $this->tenant_id,
+            'authorization_source' => $this->authorization_source,
+            'occurred_at' => now()->toIso8601String(),
+        ];
+
+        DB::afterCommit(static function () use ($event, $context): void {
+            try {
+                app(NotificationRuleService::class)->trigger($event, $context);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        });
+    }
 
     /** @deprecated Legacy metadata retained for migration compatibility. */
     public function application(): BelongsTo { return $this->belongsTo(Application::class); }
