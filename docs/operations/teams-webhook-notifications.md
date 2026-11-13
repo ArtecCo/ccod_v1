@@ -40,6 +40,10 @@ When a destination subscribes to multiple events, the condition builder displays
 | `server.started` | Windows server startup snapshot | `server_boot_time`, `iis_status`, `iis_started_at`, `php_status`, `php_started_at`, `mysql_status`, `mysql_started_at`, `queue_status`, `queue_started_at` |
 | `sync.started` | Unified Azure sync begins | `run_id`, `sync_started_at` |
 | `sync.completed` | Unified Azure sync finishes | `overall_status`, `duration_seconds`, `failed_modules`, `successful_modules`, `error_summary`, module status fields, timestamps and run ID |
+| `azure_subscription_connected` | A subscription record is newly created in CCOD, including discovery during Azure subscription synchronization | `subscription_id`, `subscription_name`, `subscription_state`, `tenant_id`, `authorization_source`, `occurred_at` |
+| `azure_subscription_disconnected` | A subscription record is successfully deleted from CCOD | `subscription_id`, `subscription_name`, `subscription_state`, `tenant_id`, `authorization_source`, `occurred_at` |
+
+Subscription lifecycle events are dispatched from the `AzureSubscription` model after the database transaction commits. Existing subscription updates and routine syncs do not generate added notifications. A subscription removed from Azure but retained in CCOD is not treated as deleted by this event; the current sync process does not automatically remove records when they disappear from Azure discovery results.
 
 The former `azure.sync.completed` key is normalized to `sync.completed`; existing webhook subscriptions are migrated to the canonical key. Enum declarations alone do not make an event selectable. Only events registered in this catalogue and dispatched by an active producer appear in the webhook event selector.
 
