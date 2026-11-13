@@ -93,6 +93,50 @@ class NotificationEventCatalog
                 'error_summary' => '',
             ],
         ],
+        'azure_subscription_connected' => [
+            'label' => 'Azure subscription added',
+            'category' => 'Azure',
+            'description' => 'Raised after a subscription is newly added to CCOD, including discovery during Azure subscription synchronization.',
+            'scope' => ['global', 'subscription'],
+            'fields' => [
+                'subscription_id' => ['label' => 'Subscription ID', 'type' => 'string'],
+                'subscription_name' => ['label' => 'Subscription name', 'type' => 'string'],
+                'subscription_state' => ['label' => 'Subscription state', 'type' => 'string'],
+                'tenant_id' => ['label' => 'Tenant ID', 'type' => 'string'],
+                'authorization_source' => ['label' => 'Authorization source', 'type' => 'string'],
+                'occurred_at' => ['label' => 'Added at', 'type' => 'datetime'],
+            ],
+            'sample' => [
+                'subscription_id' => '00000000-0000-0000-0000-000000000001',
+                'subscription_name' => 'Production',
+                'subscription_state' => 'Enabled',
+                'tenant_id' => '00000000-0000-0000-0000-000000000002',
+                'authorization_source' => 'RoleBased',
+                'occurred_at' => '2026-11-13T08:00:00+00:00',
+            ],
+        ],
+        'azure_subscription_disconnected' => [
+            'label' => 'Azure subscription removed',
+            'category' => 'Azure',
+            'description' => 'Raised after a subscription record is successfully removed from CCOD.',
+            'scope' => ['global', 'subscription'],
+            'fields' => [
+                'subscription_id' => ['label' => 'Subscription ID', 'type' => 'string'],
+                'subscription_name' => ['label' => 'Subscription name', 'type' => 'string'],
+                'subscription_state' => ['label' => 'Subscription state', 'type' => 'string'],
+                'tenant_id' => ['label' => 'Tenant ID', 'type' => 'string'],
+                'authorization_source' => ['label' => 'Authorization source', 'type' => 'string'],
+                'occurred_at' => ['label' => 'Removed at', 'type' => 'datetime'],
+            ],
+            'sample' => [
+                'subscription_id' => '00000000-0000-0000-0000-000000000001',
+                'subscription_name' => 'Production',
+                'subscription_state' => 'Enabled',
+                'tenant_id' => '00000000-0000-0000-0000-000000000002',
+                'authorization_source' => 'RoleBased',
+                'occurred_at' => '2026-11-13T08:00:00+00:00',
+            ],
+        ],
     ];
 
     public static function all(): array
