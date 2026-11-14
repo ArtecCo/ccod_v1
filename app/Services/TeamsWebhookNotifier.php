@@ -167,9 +167,15 @@ class TeamsWebhookNotifier
             $template = $webhook->template;
             $titleTemplate = $template?->title_template ?: $webhook->title_template ?: $this->defaultTitle($webhook->category);
             $messageTemplate = $template?->message_template ?: $webhook->message_template;
+            if (($context['event_key'] ?? null) === 'sync.completed') {
+                $messageTemplate = implode("\n", array_filter(
+                    explode("\n", $messageTemplate),
+                    static fn (string $line): bool => ! str_contains($line, '{overall_status}'),
+                ));
+            }
             $title = $this->render($titleTemplate, $context);
             $message = $this->render($messageTemplate, $context);
-            $payload = $this->payload($webhook, $title, $message);
+            $payload = $this->payload($webhook, $title, $message, $context);
 
             $response = Http::acceptJson()
                 ->asJson()
@@ -201,10 +207,8 @@ class TeamsWebhookNotifier
         }
     }
 
-    private function payload(TeamsWebhook $webhook, string $title, string $message): array
+    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context): array
     {
-        // Adaptive Cards are supported for both Teams channel and chat destinations.
-        // Keep legacy MessageCard available only for channel workflows.
         if ($webhook->destination_type === 'channel' && $webhook->message_format === 'message_card') {
             return [
                 '@type' => 'MessageCard',
@@ -216,20 +220,47 @@ class TeamsWebhookNotifier
             ];
         }
 
+        $isSyncCompletion = ($context['event_key'] ?? null) === 'sync.completed';
+        $status = strtoupper((string) ($context['overall_status'] ?? ''));
+        $body = array_values(array_filter([
+            $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
+            $isSyncCompletion && in_array($status, ['SUCCESS', 'FAILED'], true) ? [
+                'type' => 'Container',
+                'style' => $status === 'SUCCESS' ? 'good' : 'attention',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
+                    'weight' => 'Bolder',
+                    'wrap' => true,
+                    'spacing' => 'None',
+                ]],
+                'spacing' => 'Small',
+            ] : null,
+            $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
+        ]));
+
+        $card = [
+            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+            'type' => 'AdaptiveCard',
+            'version' => '1.2',
+            'body' => $body,
+        ];
+
+        if ($isSyncCompletion) {
+            $dashboardUrl = rtrim((string) config('app.url'), '/') . '/developer';
+            $card['actions'] = [[
+                'type' => 'Action.OpenUrl',
+                'title' => 'Open Dashboard',
+                'url' => $dashboardUrl,
+            ]];
+        }
+
         return [
             'type' => 'message',
             'attachments' => [[
                 'contentType' => 'application/vnd.microsoft.card.adaptive',
                 'contentUrl' => null,
-                'content' => [
-                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-                    'type' => 'AdaptiveCard',
-                    'version' => '1.2',
-                    'body' => array_values(array_filter([
-                        $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
-                        ['type' => 'TextBlock', 'text' => $message, 'wrap' => true],
-                    ])),
-                ],
+                'content' => $card,
             ]],
         ];
     }
