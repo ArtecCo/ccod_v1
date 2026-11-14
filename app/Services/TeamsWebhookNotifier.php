@@ -225,14 +225,18 @@ class TeamsWebhookNotifier
         $body = array_values(array_filter([
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
             $isSyncCompletion && in_array($status, ['SUCCESS', 'FAILED'], true) ? [
-                'type' => 'Container',
-                'style' => $status === 'SUCCESS' ? 'good' : 'attention',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
-                    'weight' => 'Bolder',
-                    'wrap' => true,
-                    'spacing' => 'None',
+                'type' => 'ColumnSet',
+                'columns' => [[
+                    'type' => 'Column',
+                    'width' => 'auto',
+                    'style' => $status === 'SUCCESS' ? 'good' : 'attention',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
+                        'weight' => 'Bolder',
+                        'wrap' => true,
+                        'spacing' => 'None',
+                    ]],
                 ]],
                 'spacing' => 'Small',
             ] : null,
