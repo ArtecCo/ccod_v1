@@ -366,30 +366,38 @@ $successCount = count(array_filter($rows, static fn (array $row): bool => $row['
 $failureCount = count($rows) - $successCount;
 $generatedAt = date('Y-m-d H:i:s P');
 $stylingSettings = \App\Support\FilamentStyling::settings();
+$themeColors = \App\Support\FilamentStyling::colors();
 $brandName = (string) ($stylingSettings?->brand_name ?: 'CCOD');
-$primarySetting = (string) ($stylingSettings?->primary_color ?: 'amber');
-$primaryColor = match ($primarySetting) {
-    'black' => '#111827',
-    'gray' => '#52525b',
-    'red' => '#dc2626',
-    'orange' => '#ea580c',
-    'amber' => '#d97706',
-    'yellow' => '#ca8a04',
-    'lime' => '#65a30d',
-    'green' => '#16a34a',
-    'emerald' => '#059669',
-    'teal' => '#0d9488',
-    'cyan' => '#0891b2',
-    'sky' => '#0284c7',
-    'blue' => '#2563eb',
-    'indigo' => '#4f46e5',
-    'violet' => '#7c3aed',
-    'purple' => '#9333ea',
-    'fuchsia' => '#c026d3',
-    'pink' => '#db2777',
-    'rose' => '#e11d48',
-    default => preg_match('/^custom:(#[0-9A-Fa-f]{6})$/', $primarySetting, $matches) ? $matches[1] : '#d97706',
-};
+$cornerRadius = (string) ($stylingSettings?->corner_radius ?: '0.375rem');
+$manifestPath = $basePath . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'manifest.json';
+$themeAsset = null;
+
+if (is_file($manifestPath)) {
+    $manifest = json_decode((string) file_get_contents($manifestPath), true);
+    $themeFile = $manifest['resources/css/filament/developer/theme.css']['file'] ?? null;
+
+    if (is_string($themeFile) && $themeFile !== '') {
+        $themeAsset = rtrim((string) config('app.url'), '/') . '/build/' . ltrim($themeFile, '/');
+    }
+}
+
+$cssVariables = [
+    '--ccod-corner-radius' => $cornerRadius,
+];
+
+foreach (['primary' => 'primary', 'success' => 'success', 'warning' => 'warning', 'danger' => 'danger', 'info' => 'info', 'gray' => 'gray'] as $key => $prefix) {
+    foreach (($themeColors[$key] ?? []) as $shade => $color) {
+        if (is_numeric($shade) && is_string($color) && preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
+            $cssVariables["--{$prefix}-{$shade}"] = $color;
+        }
+    }
+}
+
+$themeCss = implode(';', array_map(
+    static fn (string $name, string $value): string => $name . ':' . $value,
+    array_keys($cssVariables),
+    array_values($cssVariables),
+));
 
 $html = <<<'HTML'
 <!doctype html>
@@ -397,141 +405,91 @@ $html = <<<'HTML'
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CCOD Azure Sync Report - __RUN_ID__</title>
+<title>__BRAND_NAME__ · Azure synchronization report · __RUN_ID__</title>
+__FILAMENT_THEME__
 <style>
-:root {
-    --bg: #f4f6fa;
-    --surface: #ffffff;
-    --surface-2: #f7f8fb;
-    --border: #e3e7ee;
-    --text: #182230;
-    --muted: #667085;
-    --success: #087443;
-    --success-bg: #e8f7ef;
-    --danger: #b42336;
-    --danger-bg: #fff0f1;
-    --accent: __PRIMARY_COLOR__;
-    --accent-soft: color-mix(in srgb, var(--accent) 9%, white);
-    --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
-}
+:root { __THEME_VARIABLES__; color-scheme: light; }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, "Segoe UI", Arial, sans-serif; line-height: 1.5; }
-.container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 38px 0 56px; }
-.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; padding: 0 0 22px; border-bottom: 3px solid var(--accent); }
-.eyebrow { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
-h1 { margin: 5px 0 7px; font-size: clamp(27px, 4vw, 34px); letter-spacing: -.035em; line-height: 1.15; }
-.subtitle { color: var(--muted); margin: 0; font-size: 13px; }
-.status { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 999px; padding: 6px 11px; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
-.status.success { color: var(--success); background: var(--success-bg); border-color: #bfe5cc; }
-.status.failed { color: var(--danger); background: var(--danger-bg); border-color: #efc2c9; }
-.summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 28px; }
-.metric { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 15px 17px; box-shadow: 0 2px 8px rgba(16, 24, 40, .035); }
-.metric span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
-.metric strong { display: block; font-size: 19px; }
-.metric.total strong { color: var(--accent); }
-.metric.good strong { color: var(--success); }
-.metric.bad strong { color: var(--danger); }
-.section-title { margin: 0 0 9px; font-size: 14px; }
-.timeline { overflow: hidden; border: 1px solid var(--border); border-radius: 11px; margin-bottom: 28px; background: var(--surface); box-shadow: 0 2px 8px rgba(16, 24, 40, .035); }
-table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
-th { background: var(--surface-2); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
-tr:last-child td { border-bottom: 0; }
-.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; }
-.dot.success { background: var(--success); }
-.dot.failed { background: var(--danger); }
-.web-coverage { margin-bottom: 28px; }
-.web-coverage table { border: 1px solid var(--border); }
-.web-coverage th, .web-coverage td { padding: 8px 11px; }
-.web-coverage td:nth-child(n+2), .web-coverage th:nth-child(n+2) { text-align: right; }
-.modules { display: grid; gap: 12px; }
-.module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; overflow: hidden; break-inside: avoid; box-shadow: 0 2px 8px rgba(16, 24, 40, .035); }
-.module-card.success { border-left: 3px solid var(--success); }
-.module-card.failed { border-left: 3px solid var(--danger); }
-.module-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 16px; }
-.module-title { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.module-number { color: var(--muted); font-family: var(--mono); font-size: 11px; }
-.module-title h2 { margin: 0; font-size: 15px; }
-.module-script { color: var(--muted); font-family: var(--mono); font-size: 10px; margin-top: 2px; }
-.module-meta { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface-2); }
-.module-meta div { padding: 9px 12px; border-right: 1px solid var(--border); }
-.module-meta div:last-child { border-right: 0; }
-.module-meta span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
-.module-meta strong { font-family: var(--mono); font-size: 10px; font-weight: 600; }
-.console { background: var(--surface-2); }
-.console summary { cursor: pointer; color: var(--muted); padding: 8px 12px; font-size: 10px; border-bottom: 1px solid var(--border); user-select: none; }
-.console pre { margin: 0; padding: 14px; overflow-x: auto; color: #344054; font-family: var(--mono); font-size: 10px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-.footer { margin-top: 24px; color: var(--muted); font-size: 10px; text-align: center; }
-@media (max-width: 800px) {
-    .container { width: min(100% - 24px, 1120px); padding-top: 22px; }
-    .header { flex-direction: column; }
-    .summary { grid-template-columns: repeat(2, 1fr); }
-    .module-meta { grid-template-columns: repeat(2, 1fr); }
-    .module-meta div:nth-child(2) { border-right: 0; }
-    .module-meta div:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
-}
-@media print {
-    @page { size: A4 portrait; margin: 12mm; }
-    body { background: #fff; color: #000; font-size: 10pt; }
-    .container { width: 100%; padding: 0; }
-    .header { margin-bottom: 14px; }
-    h1 { font-size: 22pt; }
-    .summary { grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
-    .metric { padding: 8px 10px; border-radius: 0; }
-    .timeline, .web-coverage { margin-bottom: 16px; }
-    .module-card { border-radius: 0; box-shadow: none; }
-    .modules { gap: 9px; }
-    .console { background: #fff; }
-    .console summary { display: none; }
-    .console pre { padding: 8px; font-size: 8pt; }
-    .module-card, .timeline, .web-coverage { break-inside: avoid; }
-    .module-card { page-break-inside: avoid; }
-    .status { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-}
+body { margin: 0; background: var(--gray-50, #fafafa); color: var(--gray-950, #09090b); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: .875rem; line-height: 1.5; }
+.report-shell { width: min(100% - 2rem, 88rem); margin-inline: auto; padding-block: 1.5rem 3rem; }
+.report-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }
+.report-brand { color:var(--primary-600); font-size:.75rem; font-weight:600; }
+.report-title { margin:.25rem 0; font-size:1.5rem; line-height:2rem; font-weight:600; letter-spacing:-.025em; }
+.report-subtitle { color:var(--gray-500); font-size:.8125rem; }
+.report-panel { background:white; border:1px solid var(--gray-200); border-radius:var(--ccod-corner-radius); overflow:hidden; }
+.report-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin-bottom:1.25rem; }
+.report-stat { padding:1rem; }
+.report-stat-label { color:var(--gray-500); font-size:.75rem; font-weight:500; }
+.report-stat-value { margin-top:.25rem; font-size:1.25rem; line-height:1.75rem; font-weight:600; }
+.report-stat-value.primary { color:var(--primary-600); }
+.report-stat-value.success { color:var(--success-600); }
+.report-stat-value.danger { color:var(--danger-600); }
+.report-section { margin-top:1.25rem; }
+.report-section-title { margin:0 0 .625rem; font-size:.9375rem; font-weight:600; }
+.report-table-wrap { overflow-x:auto; }
+.report-table { width:100%; border-collapse:collapse; text-align:left; }
+.report-table th { padding:.7rem .875rem; background:var(--gray-50); color:var(--gray-500); font-size:.6875rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
+.report-table td { padding:.65rem .875rem; border-top:1px solid var(--gray-200); font-size:.8125rem; }
+.report-status { display:inline-flex; align-items:center; gap:.375rem; border-radius:var(--ccod-corner-radius); padding:.2rem .55rem; font-size:.6875rem; font-weight:600; }
+.report-status.success { background:var(--success-50); color:var(--success-700); }
+.report-status.failed { background:var(--danger-50); color:var(--danger-700); }
+.report-dot { width:.4rem; height:.4rem; border-radius:999px; background:currentColor; }
+.report-module { margin-top:.75rem; }
+.report-module-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.875rem 1rem; }
+.report-module-name { display:flex; align-items:center; gap:.75rem; min-width:0; }
+.report-module-number { color:var(--gray-400); font-variant-numeric:tabular-nums; font-size:.75rem; }
+.report-module-title { font-size:.875rem; font-weight:600; }
+.report-module-script { color:var(--gray-500); font-size:.6875rem; }
+.report-module-meta { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); border-top:1px solid var(--gray-200); background:var(--gray-50); }
+.report-module-meta > div { padding:.625rem .875rem; border-right:1px solid var(--gray-200); min-width:0; }
+.report-module-meta > div:last-child { border-right:0; }
+.report-meta-label { display:block; color:var(--gray-500); font-size:.6875rem; }
+.report-meta-value { display:block; margin-top:.125rem; font-size:.75rem; font-weight:500; overflow-wrap:anywhere; }
+.report-console { border-top:1px solid var(--gray-200); }
+.report-console summary { cursor:pointer; padding:.625rem .875rem; color:var(--gray-600); font-size:.75rem; font-weight:500; }
+.report-console pre { margin:0; padding:.875rem; overflow:auto; background:var(--gray-50); color:var(--gray-700); font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:.7rem; line-height:1.55; white-space:pre-wrap; overflow-wrap:anywhere; }
+.report-footer { margin-top:1.5rem; color:var(--gray-500); font-size:.6875rem; text-align:center; }
+@media(max-width:700px) { .report-summary {grid-template-columns:repeat(2,minmax(0,1fr));} .report-header {flex-direction:column;} .report-module-meta {grid-template-columns:repeat(2,minmax(0,1fr));} .report-module-meta>div:nth-child(2) {border-right:0;} .report-module-meta>div:nth-child(-n+2) {border-bottom:1px solid var(--gray-200);} }
+@media print { @page {size:A4 portrait;margin:12mm;} body {background:#fff;} .report-shell {width:100%;padding:0;} .report-panel {break-inside:avoid;} .report-console summary {display:none;} .report-console pre {max-height:none;} .report-module {break-inside:avoid;} }
 </style>
 </head>
 <body>
-<div class="container">
-    <header class="header">
+<main class="report-shell">
+    <header class="report-header">
         <div>
-            <div class="eyebrow">__BRAND_NAME__ · Azure Operations</div>
-            <h1>Synchronization Report</h1>
-            <p class="subtitle">Run __RUN_ID__ · Completed __COMPLETED_AT__</p>
+            <div class="report-brand">__BRAND_NAME__ · Azure Operations</div>
+            <h1 class="report-title">Synchronization report</h1>
+            <div class="report-subtitle">Run __RUN_ID__ · Completed __COMPLETED_AT__</div>
         </div>
-        <div class="status __OVERALL_CLASS__">__OVERALL_STATUS__</div>
+        <span class="report-status __OVERALL_CLASS__">__OVERALL_STATUS__</span>
     </header>
-
-    <section class="summary">
-        <div class="metric total"><span>Total elapsed</span><strong>__TOTAL_DURATION__</strong></div>
-        <div class="metric"><span>Modules</span><strong>__MODULE_COUNT__</strong></div>
-        <div class="metric good"><span>Successful</span><strong>__SUCCESS_COUNT__</strong></div>
-        <div class="metric bad"><span>Failed</span><strong>__FAILURE_COUNT__</strong></div>
+    <section class="report-summary">
+        <div class="report-panel report-stat"><div class="report-stat-label">Total elapsed</div><div class="report-stat-value primary">__TOTAL_DURATION__</div></div>
+        <div class="report-panel report-stat"><div class="report-stat-label">Modules</div><div class="report-stat-value">__MODULE_COUNT__</div></div>
+        <div class="report-panel report-stat"><div class="report-stat-label">Successful</div><div class="report-stat-value success">__SUCCESS_COUNT__</div></div>
+        <div class="report-panel report-stat"><div class="report-stat-label">Failed</div><div class="report-stat-value danger">__FAILURE_COUNT__</div></div>
     </section>
-
-    <h2 class="section-title">Execution timeline</h2>
-    <section class="timeline">
-        <table>
-            <thead><tr><th>#</th><th>Module</th><th>Status</th><th>Elapsed</th><th>Completed</th></tr></thead>
-            <tbody>__TIMELINE_ROWS__</tbody>
-        </table>
+    <section class="report-section">
+        <h2 class="report-section-title">Execution timeline</h2>
+        <div class="report-panel report-table-wrap"><table class="report-table"><thead><tr><th>#</th><th>Module</th><th>Status</th><th>Elapsed</th><th>Completed</th></tr></thead><tbody>__TIMELINE_ROWS__</tbody></table></div>
     </section>
-
-    <section class="web-coverage">
-        <h2 class="section-title">Web URL coverage by project</h2>
-        <table>
-            <thead><tr><th>Project</th><th>Links checked</th><th>Live</th><th>Down</th></tr></thead>
-            <tbody>__WEB_URL_ROWS__</tbody>
-        </table>
+    <section class="report-section">
+        <h2 class="report-section-title">Web URL coverage by project</h2>
+        <div class="report-panel report-table-wrap"><table class="report-table"><thead><tr><th>Project</th><th>Links checked</th><th>Live</th><th>Down</th></tr></thead><tbody>__WEB_URL_ROWS__</tbody></table></div>
     </section>
-
-    <h2 class="section-title">Module details</h2>
-    <section class="modules">__MODULE_CARDS__</section>
-
-    <footer class="footer">Generated by CCOD scheduler · __GENERATED_AT__</footer>
-</div>
+    <section class="report-section">
+        <h2 class="report-section-title">Module details</h2>
+        <div>__MODULE_CARDS__</div>
+    </section>
+    <footer class="report-footer">Generated by __BRAND_NAME__ scheduler · __GENERATED_AT__</footer>
+</main>
 </body>
 </html>
 HTML;
+
+$filamentThemeLink = $themeAsset !== null
+    ? '<link rel="stylesheet" href="' . htmlspecialchars($themeAsset, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '">'
+    : '';
 
 $replacements = [
     '__BRAND_NAME__' => $escape($brandName),
