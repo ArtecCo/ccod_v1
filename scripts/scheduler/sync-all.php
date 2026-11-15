@@ -49,6 +49,8 @@ $syncStartedAt = date('Y-m-d H:i:s P');
 $runId = date('Ymd-His');
 $reportPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.html";
 $latestReportPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.html';
+$reportJsonPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.json";
+$latestReportJsonPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.json';
 
 try {
     $app->make(\App\Services\TeamsWebhookNotifier::class)->dispatch('sync.started', [
@@ -281,6 +283,7 @@ $escape = static fn (string $value): string => htmlspecialchars($value, ENT_QUOT
 $moduleCards = '';
 $timelineRows = '';
 $webUrlRows = '';
+$webUrlProjects = [];
 
 foreach ($rows as $index => $row) {
     $statusClass = $row['status'] === 'SUCCESS' ? 'success' : 'failed';
@@ -300,12 +303,21 @@ foreach ($rows as $index => $row) {
             if (preg_match('/^(.+?)\s+(\d+)\s+(\d+)\s+(\d+)$/', trim($line), $matches)) {
                 $project = trim($matches[1]);
                 if ($project !== 'Project' && ! str_starts_with($project, '---')) {
+                    $checked = (int) $matches[2];
+                    $live = (int) $matches[3];
+                    $down = (int) $matches[4];
+                    $webUrlProjects[] = [
+                        'name' => $project,
+                        'checked' => $checked,
+                        'live' => $live,
+                        'down' => $down,
+                    ];
                     $webUrlRows .= sprintf(
                         '<tr><td>%s</td><td>%d</td><td>%d</td><td>%d</td></tr>',
                         $escape($project),
-                        (int) $matches[2],
-                        (int) $matches[3],
-                        (int) $matches[4],
+                        $checked,
+                        $live,
+                        $down,
                     );
                 }
             }
@@ -553,6 +565,49 @@ $replacements = [
 ];
 
 $html = strtr($html, $replacements);
+
+$reportData = [
+    'run_id' => $runId,
+    'started_at' => $syncStartedAt,
+    'completed_at' => $completedAt,
+    'generated_at' => $generatedAt,
+    'overall_status' => $overallStatus,
+    'duration' => $formatDuration($totalDuration),
+    'duration_seconds' => round($totalDuration, 3),
+    'success_count' => $successCount,
+    'failure_count' => $failureCount,
+    'modules' => array_map(
+        static function (array $row) use ($formatDuration): array {
+            $output = $row['stdout'];
+            if ($row['stderr'] !== '') {
+                $output .= ($output !== '' ? PHP_EOL . PHP_EOL : '') . '[stderr]' . PHP_EOL . $row['stderr'];
+            }
+
+            return [
+                'name' => $row['name'],
+                'script' => $row['script'],
+                'started_at' => $row['started_at'],
+                'ended_at' => $row['ended_at'],
+                'duration_formatted' => $formatDuration((float) $row['duration']),
+                'duration_seconds' => round((float) $row['duration'], 3),
+                'exit_code' => $row['exit_code'],
+                'status' => $row['status'],
+                'output' => $output !== '' ? $output : 'No console output was produced by this module.',
+            ];
+        },
+        $rows,
+    ),
+    'web_url_projects' => $webUrlProjects,
+];
+
+$reportJson = json_encode($reportData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE);
+
+if (! is_string($reportJson)
+    || file_put_contents($reportJsonPath, $reportJson) === false
+    || file_put_contents($latestReportJsonPath, $reportJson) === false) {
+    fwrite(STDERR, "Unable to write scheduler JSON report." . PHP_EOL);
+    exit(1);
+}
 
 if (file_put_contents($reportPath, $html) === false || file_put_contents($latestReportPath, $html) === false) {
     fwrite(STDERR, "Unable to write scheduler HTML report." . PHP_EOL);
