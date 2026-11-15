@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
-
 use App\Models\SubscriptionWebUrl;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
@@ -43,6 +42,8 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
         return $schema->components([
             TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048),
             Toggle::make('is_active')->label('Active')->default(true),
+            Toggle::make('use_proxy')->label('Use corporate proxy')->default(false)
+                ->helperText('Route this URL check through the corporate HTTP proxy.'),
         ]);
     }
 
@@ -53,6 +54,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('url')->label('URL')->searchable()->sortable()->copyable()->copyMessage('URL copied')->wrap()->weight('medium'),
                 IconColumn::make('is_active')->label('Active')->boolean(),
+                IconColumn::make('use_proxy')->label('Proxy')->boolean()->tooltip('Uses the configured corporate HTTP proxy'),
                 IconColumn::make('is_live')->label('Live')->boolean()->placeholder('Not checked'),
                 TextColumn::make('http_status')->label('HTTP')->placeholder('—')->sortable(),
                 TextColumn::make('response_time_ms')->label('Response')->formatStateUsing(fn ($state): string => $state === null ? '—' : $state.' ms')->sortable(),
@@ -88,30 +90,33 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                 DeleteAction::make()->authorize(fn (SubscriptionWebUrl $record): bool => Gate::forUser(auth()->user())->allows('delete', $record)),
             ])
             ->toolbarActions([
-                    Action::make('addWebUrl')
-                        ->label('Add Web URL')
-                        ->icon(Heroicon::OutlinedGlobeAlt)
-                        ->visible(fn (): bool => Gate::forUser(auth()->user())->allows(
-                            'create',
-                            [SubscriptionWebUrl::class, $this->getOwnerRecord()],
-                        ))
-                        ->modalHeading('Add Web URL')
-                        ->modalSubmitActionLabel('Add URL')
-                        ->form([
-                            TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048),
-                            Toggle::make('is_active')->label('Active')->default(true),
-                        ])
-                        ->action(function (array $data): void {
-                            $url = rtrim(trim($data['url']), '/');
-                            $this->getOwnerRecord()->webUrls()->create([
-                                'url' => $url,
-                                'url_hash' => hash('sha256', $url),
-                                'is_active' => (bool) ($data['is_active'] ?? true),
-                            ]);
-    
-                            $this->dispatch('web-url-added');
-                        })
-                        ->successNotificationTitle('Web URL added'),
+                Action::make('addWebUrl')
+                    ->label('Add Web URL')
+                    ->icon(Heroicon::OutlinedGlobeAlt)
+                    ->visible(fn (): bool => Gate::forUser(auth()->user())->allows(
+                        'create',
+                        [SubscriptionWebUrl::class, $this->getOwnerRecord()],
+                    ))
+                    ->modalHeading('Add Web URL')
+                    ->modalSubmitActionLabel('Add URL')
+                    ->form([
+                        TextInput::make('url')->label('Web URL')->url()->required()->maxLength(2048),
+                        Toggle::make('is_active')->label('Active')->default(true),
+                        Toggle::make('use_proxy')->label('Use corporate proxy')->default(false)
+                            ->helperText('Route this URL check through the corporate HTTP proxy.'),
+                    ])
+                    ->action(function (array $data): void {
+                        $url = rtrim(trim($data['url']), '/');
+                        $this->getOwnerRecord()->webUrls()->create([
+                            'url' => $url,
+                            'url_hash' => hash('sha256', $url),
+                            'is_active' => (bool) ($data['is_active'] ?? true),
+                            'use_proxy' => (bool) ($data['use_proxy'] ?? false),
+                        ]);
+
+                        $this->dispatch('web-url-added');
+                    })
+                    ->successNotificationTitle('Web URL added'),
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
             ])
