@@ -281,46 +281,23 @@ class TeamsWebhookNotifier
             'web_urls_status' => 'Web URLs',
         ];
 
-        $statusBadge = static function (string $value): array {
+        $overallStatus = strtoupper((string) ($context['overall_status'] ?? 'FAILED'));
+        $overallLabel = $overallStatus === 'SUCCESS' ? 'Success' : 'Failed';
+        $moduleTile = static function (string $label, string $value): array {
             $success = strtoupper($value) === 'SUCCESS';
 
             return [
-                'type' => 'Badge',
-                'text' => $success ? 'Success' : 'Failed',
-                'style' => $success ? 'Good' : 'Attention',
-                'appearance' => 'Tint',
-                'shape' => 'Rounded',
-                'size' => 'Medium',
+                'type' => 'Container',
+                'style' => $success ? 'good' : 'attention',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => $label . ': ' . ($success ? 'Success' : 'Failed'),
+                    'weight' => 'Bolder',
+                    'wrap' => true,
+                ]],
             ];
         };
 
-        $moduleRow = static function (string $label, string $value) use ($statusBadge): array {
-            return [
-                'type' => 'ColumnSet',
-                'spacing' => 'Small',
-                'columns' => [
-                    [
-                        'type' => 'Column',
-                        'width' => 'stretch',
-                        'verticalContentAlignment' => 'Center',
-                        'items' => [[
-                            'type' => 'TextBlock',
-                            'text' => $label,
-                            'weight' => 'Bolder',
-                            'wrap' => true,
-                        ]],
-                    ],
-                    [
-                        'type' => 'Column',
-                        'width' => 'auto',
-                        'verticalContentAlignment' => 'Center',
-                        'items' => [$statusBadge($value)],
-                    ],
-                ],
-            ];
-        };
-
-        $overallStatus = strtoupper((string) ($context['overall_status'] ?? 'FAILED'));
         $body = [];
 
         if ($title !== '') {
@@ -334,27 +311,15 @@ class TeamsWebhookNotifier
         }
 
         $body[] = [
-            'type' => 'ColumnSet',
+            'type' => 'Container',
+            'style' => $overallStatus === 'SUCCESS' ? 'good' : 'attention',
             'spacing' => 'Medium',
-            'columns' => [
-                [
-                    'type' => 'Column',
-                    'width' => 'stretch',
-                    'verticalContentAlignment' => 'Center',
-                    'items' => [[
-                        'type' => 'TextBlock',
-                        'text' => 'Overall status',
-                        'weight' => 'Bolder',
-                        'wrap' => true,
-                    ]],
-                ],
-                [
-                    'type' => 'Column',
-                    'width' => 'auto',
-                    'verticalContentAlignment' => 'Center',
-                    'items' => [$statusBadge($overallStatus)],
-                ],
-            ],
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => 'Overall: ' . $overallLabel,
+                'weight' => 'Bolder',
+                'wrap' => true,
+            ]],
         ];
 
         $body[] = [
@@ -375,14 +340,19 @@ class TeamsWebhookNotifier
             'wrap' => true,
         ];
 
-        foreach (array_chunk($statusDefinitions, 2, true) as $pair) {
+        $moduleTiles = [];
+        foreach ($statusDefinitions as $key => $label) {
+            $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
+            $moduleTiles[] = $moduleTile($label, $value);
+        }
+
+        foreach (array_chunk($moduleTiles, 2) as $pair) {
             $columns = [];
-            foreach ($pair as $key => $label) {
-                $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
+            foreach ($pair as $tile) {
                 $columns[] = [
                     'type' => 'Column',
                     'width' => 'stretch',
-                    'items' => [$moduleRow($label, $value === 'SUCCESS' ? 'SUCCESS' : 'FAILED')],
+                    'items' => [$tile],
                 ];
             }
 
@@ -402,25 +372,31 @@ class TeamsWebhookNotifier
             'spacing' => 'Medium',
         ];
 
+        $card = [
+            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+            'type' => 'AdaptiveCard',
+            'version' => '1.2',
+            'body' => $body,
+            'actions' => [],
+        ];
+
+        if (
+            $overallStatus === 'SUCCESS'
+            && filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)
+        ) {
+            $card['actions'][] = [
+                'type' => 'Action.OpenUrl',
+                'title' => 'View Sync Report',
+                'url' => $context['report_url'],
+            ];
+        }
+
         return [
             'type' => 'message',
             'attachments' => [[
                 'contentType' => 'application/vnd.microsoft.card.adaptive',
                 'contentUrl' => null,
-                'content' => [
-                    '$schema' => 'https://adaptivecards.io/schemas/adaptive-card.json',
-                    'type' => 'AdaptiveCard',
-                    'version' => '1.5',
-                    'body' => $body,
-                    'actions' => strtoupper((string) ($context['overall_status'] ?? '')) === 'SUCCESS'
-                        && filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)
-                        ? [[
-                            'type' => 'Action.OpenUrl',
-                            'title' => 'View Sync Report',
-                            'url' => $context['report_url'],
-                        ]]
-                        : [],
-                ],
+                'content' => $card,
             ]],
         ];
     }
