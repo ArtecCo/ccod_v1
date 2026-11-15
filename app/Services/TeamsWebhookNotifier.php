@@ -287,6 +287,7 @@ class TeamsWebhookNotifier
             return [
                 'type' => 'Container',
                 'style' => $success ? 'good' : 'attention',
+                'showBorder' => true,
                 'roundedCorners' => true,
                 'items' => [[
                     'type' => 'TextBlock',
