@@ -186,6 +186,10 @@
     @endif
 
     <section class="section">
+        <div class="section-head">
+            <h2>Module execution</h2>
+            <span class="section-note">Execution details and console output for each module</span>
+        </div>
         @if (count($modules))
             <div class="module-list">
                 @foreach ($modules as $index => $module)
