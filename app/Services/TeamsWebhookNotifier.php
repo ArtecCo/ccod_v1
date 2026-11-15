@@ -281,27 +281,20 @@ class TeamsWebhookNotifier
             'web_urls_status' => 'Web URLs',
         ];
 
-        $statusPill = static function (string $value): array {
+        $statusBadge = static function (string $value): array {
             $success = strtoupper($value) === 'SUCCESS';
 
             return [
-                'type' => 'Container',
-                'style' => $success ? 'good' : 'attention',
-                'showBorder' => true,
-                'roundedCorners' => true,
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $success ? 'Success' : 'Failed',
-                    'color' => $success ? 'good' : 'attention',
-                    'weight' => 'Bolder',
-                    'size' => 'Small',
-                    'wrap' => false,
-                    'spacing' => 'None',
-                ]],
+                'type' => 'Badge',
+                'text' => $success ? 'Success' : 'Failed',
+                'style' => $success ? 'Good' : 'Attention',
+                'appearance' => 'Tint',
+                'shape' => 'Rounded',
+                'size' => 'Medium',
             ];
         };
 
-        $moduleRow = static function (string $label, string $value) use ($statusPill): array {
+        $moduleRow = static function (string $label, string $value) use ($statusBadge): array {
             return [
                 'type' => 'ColumnSet',
                 'spacing' => 'Small',
@@ -321,7 +314,7 @@ class TeamsWebhookNotifier
                         'type' => 'Column',
                         'width' => 'auto',
                         'verticalContentAlignment' => 'Center',
-                        'items' => [$statusPill($value)],
+                        'items' => [$statusBadge($value)],
                     ],
                 ],
             ];
@@ -359,7 +352,7 @@ class TeamsWebhookNotifier
                     'type' => 'Column',
                     'width' => 'auto',
                     'verticalContentAlignment' => 'Center',
-                    'items' => [$statusPill($overallStatus)],
+                    'items' => [$statusBadge($overallStatus)],
                 ],
             ],
         ];
@@ -409,26 +402,6 @@ class TeamsWebhookNotifier
             'spacing' => 'Medium',
         ];
 
-        $dashboardUrl = rtrim((string) config('app.url'), '/') . '/developer';
-        $body[] = [
-            'type' => 'Container',
-            'style' => 'accent',
-            'roundedCorners' => true,
-            'selectAction' => [
-                'type' => 'Action.OpenUrl',
-                'url' => $dashboardUrl,
-            ],
-            'items' => [[
-                'type' => 'TextBlock',
-                'text' => '▣  Open CCOD Dashboard',
-                'color' => 'light',
-                'weight' => 'Bolder',
-                'horizontalAlignment' => 'Center',
-                'wrap' => true,
-            ]],
-            'spacing' => 'Medium',
-        ];
-
         return [
             'type' => 'message',
             'attachments' => [[
@@ -439,6 +412,11 @@ class TeamsWebhookNotifier
                     'type' => 'AdaptiveCard',
                     'version' => '1.5',
                     'body' => $body,
+                    'actions' => [[
+                        'type' => 'Action.OpenUrl',
+                        'title' => 'Open CCOD Dashboard',
+                        'url' => rtrim((string) config('app.url'), '/') . '/developer',
+                    ]],
                 ],
             ]],
         ];
