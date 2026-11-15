@@ -34,7 +34,7 @@
         .brand { display:flex; align-items:center; min-width:0; gap:14px; }
         .logo { display:block; max-width:170px; max-height:46px; width:auto; height:auto; object-fit:contain; }
         .brand-name { color:#303846; font-size:15px; font-weight:700; letter-spacing:-.02em; }
-        .masthead-note { color:var(--ink); font-size:12px; font-weight:700; text-align:right; white-space:nowrap; } .masthead-subtitle { color:var(--muted); font-size:11px; font-weight:400; }
+        .masthead-note { color:var(--ink); font-size:12px; font-weight:700; text-align:right; white-space:nowrap; } .masthead-subtitle { color:var(--muted); font-size:11px; font-weight:400; white-space:nowrap; }
         .heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:30px 0 22px; }
         h1 { margin:0; font-size:27px; line-height:1.2; letter-spacing:-.045em; font-weight:700; }
         .subtitle { margin:7px 0 0; color:var(--muted); font-size:13px; }
@@ -94,7 +94,7 @@
             @page { size:A4 portrait; margin:12mm; }
             html,body{background:#fff!important;color:#111!important;font-size:10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
             .page{width:100%;padding:0;margin:0}
-            .masthead{padding-bottom:12px}.logo{max-height:34px}.heading{padding:18px 0 14px}h1{font-size:21pt}
+            .masthead{padding-bottom:12px}.masthead-note{white-space:nowrap;font-size:10px}.masthead-subtitle{white-space:nowrap}.logo{max-height:34px}.heading{padding:18px 0 14px}h1{font-size:21pt}
             .stats{gap:8px;margin-bottom:16px}.run-meta{gap:8px;margin-bottom:16px}.run-meta .stat{min-height:0}.run-meta .stat-value{font-size:12pt}.stat{min-height:0;padding:11px 13px;break-inside:avoid}.stat-value{font-size:19pt}
             .section{margin-top:17px}.panel,.stat{box-shadow:none;border-color:#d9dee6}
             .table-wrap{overflow:visible}table{width:100%}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:7px 8px;font-size:8pt}
@@ -115,7 +115,7 @@
                 <span class="brand-name">{{ $brandName }}</span>
             @endif
         </div>
-        <div class="masthead-note">Consolidated Cloud Ops Dashboard<br><span class="masthead-subtitle">Automated synchronization report</span></div>
+        <div class="masthead-note">Consolidated Cloud Ops Dashboard <span class="masthead-subtitle">· Automated synchronization report</span></div>
     </header>
 
     <section class="heading">
