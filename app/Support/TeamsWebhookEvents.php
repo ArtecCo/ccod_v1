@@ -41,6 +41,15 @@ class TeamsWebhookEvents
             $context['completed_at'] = $timestamp;
             $context['duration'] = '2 minutes (TEST)';
             $context['duration_seconds'] = 120;
+            $context['overall_status'] = 'FAILED';
+            $context['subscriptions_status'] = 'SUCCESS';
+            $context['resources_status'] = 'FAILED';
+            $context['costs_status'] = 'SUCCESS';
+            $context['security_status'] = 'SUCCESS';
+            $context['alerts_status'] = 'FAILED';
+            $context['web_urls_status'] = 'SUCCESS';
+            $context['run_id'] = 'TEST-' . $now->format('Ymd-His');
+            $context['report_url'] = rtrim((string) config('app.url'), '/') . '/sync-report/latest';
         }
 
         $context['test_timestamp'] = $timestamp;
