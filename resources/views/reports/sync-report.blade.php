@@ -100,8 +100,16 @@
             .stats{gap:8px;margin-bottom:16px}.summary-stats{gap:8px;margin-bottom:12px}.summary-stats .stat{min-height:0;padding:9px 10px}.summary-stats .stat-value{font-size:17pt}.run-meta{gap:8px;margin-bottom:16px}.run-meta .stat{min-height:0}.run-meta .stat-value{font-size:12pt}.stat{min-height:0;padding:11px 13px;break-inside:avoid}.stat-value{font-size:19pt}
             .section{margin-top:17px}.panel,.stat{box-shadow:none;border-color:#d9dee6}
             .table-wrap{overflow:visible}table{width:100%}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:7px 8px;font-size:8pt}
-            .module-list{gap:12px}.module{break-inside:avoid}.module summary{padding:9px 11px}.module summary:after{display:none}
-            details:not([open]) > :not(summary){display:block!important}.console pre{max-height:none;overflow:visible;white-space:pre-wrap}
+            .module-list{gap:10px;width:100%}
+            .module,.panel,.stat{max-width:100%;box-shadow:none!important}
+            .module{width:100%;overflow:visible;border:1px solid #cfd6df;border-radius:6px;break-inside:avoid;page-break-inside:avoid}
+            .module summary{padding:9px 11px;border-radius:5px 5px 0 0}
+            .module summary:after{display:none}
+            .module-content,.module-meta,.console{max-width:100%;overflow:visible}
+            .module-meta{border-radius:0}
+            .meta-item{overflow-wrap:anywhere}
+            .console pre{width:100%;max-width:100%;max-height:none;overflow:visible;white-space:pre-wrap;overflow-wrap:anywhere}
+            details:not([open]) > :not(summary){display:block!important}
             .print-button,.expand-all{display:none!important}.footer{margin-top:16px}
             a{color:inherit;text-decoration:none}
         }
