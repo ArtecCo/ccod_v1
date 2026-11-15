@@ -368,6 +368,7 @@ $generatedAt = date('Y-m-d H:i:s P');
 $stylingSettings = \App\Support\FilamentStyling::settings();
 $themeColors = \App\Support\FilamentStyling::colors();
 $brandName = (string) ($stylingSettings?->brand_name ?: 'CCOD');
+$brandLogo = \\App\\Support\\FilamentStyling::logoLight();
 $cornerRadius = (string) ($stylingSettings?->corner_radius ?: '0.375rem');
 $manifestPath = $basePath . DIRECTORY_SEPARATOR . 'public' . DIRECTORY_SEPARATOR . 'build' . DIRECTORY_SEPARATOR . 'manifest.json';
 $themeAsset = null;
@@ -396,9 +397,16 @@ foreach (['primary' => 'primary', 'success' => 'success', 'warning' => 'warning'
             continue;
         }
 
-        if (preg_match('/^\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*$/', $color, $matches)) {
+        if (preg_match('/^rgb\(\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s*\)$/i', $color, $matches)
+            || preg_match('/^\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*$/', $color, $matches)
+            || preg_match('/^\s*(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s*$/', $color, $matches)) {
             $channels = array_map(static fn (string $channel): int => min(255, (int) $channel), array_slice($matches, 1));
             $cssVariables["--{$prefix}-{$shade}"] = sprintf('#%02x%02x%02x', ...$channels);
+            continue;
+        }
+
+        if (preg_match('/^(?:oklch|hsl|hsla|rgb|rgba)\([0-9.%\s,\/+-]+\)$/i', $color)) {
+            $cssVariables["--{$prefix}-{$shade}"] = $color;
         }
     }
 }
@@ -420,13 +428,13 @@ __FILAMENT_THEME__
 <style>
 :root { __THEME_VARIABLES__; color-scheme: light; }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--gray-50, #fafafa); color: var(--gray-950, #09090b); font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: .875rem; line-height: 1.5; }
+body { margin: 0; background: var(--gray-50, #f8fafc); color: var(--gray-950, #09090b); font-family: "Instrument Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-size: .875rem; line-height: 1.5; }
 .report-shell { width: min(100% - 2rem, 88rem); margin-inline: auto; padding-block: 1.5rem 3rem; }
-.report-header { display:flex; align-items:flex-start; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; }
+.report-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; margin-bottom:1.25rem; padding:1.1rem 1.35rem; background:#fff; border:1px solid var(--gray-200); border-top:4px solid var(--primary-600); border-radius:var(--ccod-corner-radius); box-shadow:0 1px 2px rgb(15 23 42 / .04); } .report-brand-row { display:flex; align-items:center; gap:.85rem; margin-bottom:.4rem; } .report-logo { display:block; max-width:156px; max-height:42px; width:auto; height:auto; object-fit:contain; } .report-brand-name { color:var(--primary-700); font-size:.75rem; font-weight:700; letter-spacing:.09em; text-transform:uppercase; }
 .report-brand { color:var(--primary-600); font-size:.75rem; font-weight:600; }
 .report-title { margin:.25rem 0; font-size:1.5rem; line-height:2rem; font-weight:600; letter-spacing:-.025em; }
 .report-subtitle { color:var(--gray-500); font-size:.8125rem; }
-.report-panel { background:white; border:1px solid var(--gray-200); border-radius:var(--ccod-corner-radius); overflow:hidden; }
+.report-panel { background:#fff; border:1px solid var(--gray-200); border-radius:var(--ccod-corner-radius); overflow:hidden; box-shadow:0 1px 2px rgb(15 23 42 / .035); }
 .report-summary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:.75rem; margin-bottom:1.25rem; }
 .report-stat { padding:1rem; }
 .report-stat-label { color:var(--gray-500); font-size:.75rem; font-weight:500; }
@@ -441,8 +449,8 @@ body { margin: 0; background: var(--gray-50, #fafafa); color: var(--gray-950, #0
 .report-table th { padding:.7rem .875rem; background:var(--gray-50); color:var(--gray-500); font-size:.6875rem; font-weight:600; letter-spacing:.04em; text-transform:uppercase; white-space:nowrap; }
 .report-table td { padding:.65rem .875rem; border-top:1px solid var(--gray-200); font-size:.8125rem; }
 .report-status { display:inline-flex; align-items:center; gap:.375rem; border-radius:var(--ccod-corner-radius); padding:.2rem .55rem; font-size:.6875rem; font-weight:600; }
-.report-status.success { background:var(--success-50); color:var(--success-700); }
-.report-status.failed { background:var(--danger-50); color:var(--danger-700); }
+.report-status.success { background:var(--success-50, #dcfce7); color:var(--success-700, #15803d); }
+.report-status.failed { background:var(--danger-50, #fee2e2); color:var(--danger-700, #b91c1c); }
 .report-dot { width:.4rem; height:.4rem; border-radius:999px; background:currentColor; }
 .report-module { margin-top:.75rem; }
 .report-module-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.875rem 1rem; }
@@ -461,11 +469,11 @@ body { margin: 0; background: var(--gray-50, #fafafa); color: var(--gray-950, #0
 .report-footer { margin-top:1.5rem; color:var(--gray-500); font-size:.6875rem; text-align:center; }
 
 .status { display:inline-flex; align-items:center; justify-content:center; border-radius:var(--ccod-corner-radius); padding:.2rem .55rem; font-size:.6875rem; font-weight:600; }
-.status.success { background:var(--success-50); color:var(--success-700); }
-.status.failed { background:var(--danger-50); color:var(--danger-700); }
-.module-card { margin-top:.75rem; background:#fff; border:1px solid var(--gray-200); border-radius:var(--ccod-corner-radius); overflow:hidden; break-inside:avoid; }
-.module-card.success { border-left:3px solid var(--success-600); }
-.module-card.failed { border-left:3px solid var(--danger-600); }
+.status.success { background:var(--success-50, #dcfce7); color:var(--success-700, #15803d); }
+.status.failed { background:var(--danger-50, #fee2e2); color:var(--danger-700, #b91c1c); }
+.module-card { margin-top:.75rem; background:#fff; border:1px solid var(--gray-200); border-radius:var(--ccod-corner-radius); overflow:hidden; break-inside:avoid; box-shadow:0 1px 2px rgb(15 23 42 / .035); }
+.module-card.success { border-left:3px solid var(--success-600, #16a34a); }
+.module-card.failed { border-left:3px solid var(--danger-600, #dc2626); }
 .module-head { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:.875rem 1rem; }
 .module-title { display:flex; align-items:center; gap:.75rem; min-width:0; }
 .module-title h2 { margin:0; font-size:.875rem; font-weight:600; }
@@ -527,6 +535,7 @@ $filamentThemeLink = $themeAsset !== null
 
 $replacements = [
     '__BRAND_NAME__' => $escape($brandName),
+    '__BRAND_LOGO__' => $brandLogo ? '<img class="report-logo" src="' . $escape($brandLogo) . '" alt="' . $escape($brandName) . '">' : '',
     '__THEME_VARIABLES__' => $themeCss,
     '__FILAMENT_THEME__' => $filamentThemeLink,
     '__RUN_ID__' => $escape($runId),
