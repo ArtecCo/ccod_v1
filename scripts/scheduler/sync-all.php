@@ -363,7 +363,7 @@ $overallClass = $overallStatus === 'SUCCESS' ? 'success' : 'failed';
 $successCount = count(array_filter($rows, static fn (array $row): bool => $row['status'] === 'SUCCESS'));
 $failureCount = count($rows) - $successCount;
 $generatedAt = date('Y-m-d H:i:s P');
-$stylingSettings = \\App\\Support\\FilamentStyling::settings();
+$stylingSettings = \App\Support\FilamentStyling::settings();
 $brandName = (string) ($stylingSettings?->brand_name ?: 'CCOD');
 $primarySetting = (string) ($stylingSettings?->primary_color ?: 'amber');
 $primaryColor = match ($primarySetting) {
