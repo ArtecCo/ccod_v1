@@ -581,6 +581,7 @@ try {
         'duration' => $formatDuration($totalDuration),
         'duration_seconds' => round($totalDuration, 3),
         'run_id' => $runId,
+        'report_url' => $overallStatus === 'SUCCESS' ? rtrim((string) $app['config']['app.url'], '/') . '/sync-report/latest' : null,
         'failed_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))),
         'successful_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] === 'SUCCESS'))),
         'error_summary' => implode(' | ', array_values(array_filter(array_map(static fn (array $row): string => trim($row['stderr']), array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))))),
