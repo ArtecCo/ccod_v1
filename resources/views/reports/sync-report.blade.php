@@ -184,7 +184,12 @@
         </section>
     @endif
 
-    @if (count($modules))
+    <section class="section">
+        <div class="section-head details-toolbar">
+            <h2>Synchronization details</h2>
+            <button type="button" class="expand-all" id="toggle-all" aria-expanded="false">Expand all</button>
+        </div>
+        @if (count($modules))
             <div class="module-list">
                 @foreach ($modules as $index => $module)
                     <details class="panel module" {{ ($module['status'] ?? '') !== 'SUCCESS' ? 'open' : '' }}>
