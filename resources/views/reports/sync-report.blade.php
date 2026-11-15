@@ -86,7 +86,7 @@
         .console pre { max-height:420px; margin:0; padding:14px 16px; overflow:auto; color:#e5eaf1; background:#202733; font:11px/1.6 Consolas, "Courier New", monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
         .empty { padding:22px; color:var(--muted); text-align:center; font-size:12px; }
         .footer { display:flex; justify-content:space-between; gap:16px; margin-top:25px; padding-top:15px; border-top:1px solid var(--line); color:#8993a2; font-size:10px; }
-        .print-button { border:1px solid var(--line); border-radius:7px; padding:8px 12px; color:#354052; background:#fff; font:600 11px inherit; cursor:pointer; }
+        .print-button { border:1px solid var(--line); border-radius:7px; padding:8px 12px; color:#354052; background:#fff; font-family:inherit; font-size:11px; font-weight:600; cursor:pointer; }
         .print-button:hover { border-color:var(--accent); color:var(--accent); }
         @media(max-width:760px) { .page{width:calc(100% - 28px);padding-top:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.heading{align-items:flex-start;flex-direction:column}h1{font-size:23px}.module-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.meta-item:nth-child(2){border-right:0}.meta-item:nth-child(-n+2){border-bottom:1px solid var(--line)}.masthead-note{max-width:130px} }
         @media(max-width:420px) { .brand-name{font-size:13px}.logo{max-width:125px}.stat{padding:14px}.stat-value{font-size:22px}.footer{flex-direction:column} }
