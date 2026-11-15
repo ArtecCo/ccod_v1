@@ -377,7 +377,7 @@ if (is_file($manifestPath)) {
     $themeFile = $manifest['resources/css/filament/developer/theme.css']['file'] ?? null;
 
     if (is_string($themeFile) && $themeFile !== '') {
-        $themeAsset = rtrim((string) config('app.url'), '/') . '/build/' . ltrim($themeFile, '/');
+        $themeAsset = '/build/' . ltrim($themeFile, '/');
     }
 }
 
