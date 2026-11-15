@@ -281,20 +281,48 @@ class TeamsWebhookNotifier
             'web_urls_status' => 'Web URLs',
         ];
 
-        $pill = static function (string $label, string $value): array {
+        $statusPill = static function (string $value): array {
             $success = strtoupper($value) === 'SUCCESS';
 
             return [
                 'type' => 'Container',
                 'style' => $success ? 'good' : 'attention',
+                'roundedCorners' => true,
                 'items' => [[
                     'type' => 'TextBlock',
-                    'text' => $label . ': ' . ( $success ? 'Success' : 'Failed'),
+                    'text' => $success ? 'Success' : 'Failed',
+                    'color' => $success ? 'good' : 'attention',
                     'weight' => 'Bolder',
-                    'wrap' => true,
+                    'size' => 'Small',
+                    'wrap' => false,
                     'spacing' => 'None',
                 ]],
+            ];
+        };
+
+        $moduleRow = static function (string $label, string $value) use ($statusPill): array {
+            return [
+                'type' => 'ColumnSet',
                 'spacing' => 'Small',
+                'columns' => [
+                    [
+                        'type' => 'Column',
+                        'width' => 'stretch',
+                        'verticalContentAlignment' => 'Center',
+                        'items' => [[
+                            'type' => 'TextBlock',
+                            'text' => $label,
+                            'weight' => 'Bolder',
+                            'wrap' => true,
+                        ]],
+                    ],
+                    [
+                        'type' => 'Column',
+                        'width' => 'auto',
+                        'verticalContentAlignment' => 'Center',
+                        'items' => [$statusPill($value)],
+                    ],
+                ],
             ];
         };
 
@@ -311,10 +339,33 @@ class TeamsWebhookNotifier
             ];
         }
 
-        $body[] = $pill('Overall', $overallStatus);
+        $body[] = [
+            'type' => 'ColumnSet',
+            'spacing' => 'Medium',
+            'columns' => [
+                [
+                    'type' => 'Column',
+                    'width' => 'stretch',
+                    'verticalContentAlignment' => 'Center',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => 'Overall status',
+                        'weight' => 'Bolder',
+                        'wrap' => true,
+                    ]],
+                ],
+                [
+                    'type' => 'Column',
+                    'width' => 'auto',
+                    'verticalContentAlignment' => 'Center',
+                    'items' => [$statusPill($overallStatus)],
+                ],
+            ],
+        ];
 
         $body[] = [
             'type' => 'FactSet',
+            'spacing' => 'Medium',
             'facts' => [
                 ['title' => 'Started', 'value' => (string) ($context['sync_started_at'] ?? 'Not available')],
                 ['title' => 'Completed', 'value' => (string) ($context['completed_at'] ?? 'Not available')],
@@ -330,23 +381,21 @@ class TeamsWebhookNotifier
             'wrap' => true,
         ];
 
-        $modulePills = [];
-        foreach ($statusDefinitions as $key => $label) {
-            $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
-            $modulePills[] = $pill($label, $value === 'SUCCESS' ? 'SUCCESS' : 'FAILED');
-        }
-
-        foreach (array_chunk($modulePills, 2) as $pair) {
-            $columns = array_map(static fn (array $item): array => [
-                'type' => 'Column',
-                'width' => 'stretch',
-                'items' => [$item],
-            ], $pair);
+        foreach (array_chunk($statusDefinitions, 2, true) as $pair) {
+            $columns = [];
+            foreach ($pair as $key => $label) {
+                $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
+                $columns[] = [
+                    'type' => 'Column',
+                    'width' => 'stretch',
+                    'items' => [$moduleRow($label, $value === 'SUCCESS' ? 'SUCCESS' : 'FAILED')],
+                ];
+            }
 
             $body[] = [
                 'type' => 'ColumnSet',
-                'columns' => $columns,
                 'spacing' => 'Small',
+                'columns' => $columns,
             ];
         }
 
@@ -359,22 +408,36 @@ class TeamsWebhookNotifier
             'spacing' => 'Medium',
         ];
 
+        $dashboardUrl = rtrim((string) config('app.url'), '/') . '/developer';
+        $body[] = [
+            'type' => 'Container',
+            'style' => 'accent',
+            'roundedCorners' => true,
+            'selectAction' => [
+                'type' => 'Action.OpenUrl',
+                'url' => $dashboardUrl,
+            ],
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => '▣  Open CCOD Dashboard',
+                'color' => 'light',
+                'weight' => 'Bolder',
+                'horizontalAlignment' => 'Center',
+                'wrap' => true,
+            ]],
+            'spacing' => 'Medium',
+        ];
+
         return [
             'type' => 'message',
             'attachments' => [[
                 'contentType' => 'application/vnd.microsoft.card.adaptive',
                 'contentUrl' => null,
                 'content' => [
-                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    '$schema' => 'https://adaptivecards.io/schemas/adaptive-card.json',
                     'type' => 'AdaptiveCard',
-                    'version' => '1.2',
+                    'version' => '1.5',
                     'body' => $body,
-                    'actions' => [[
-                        'type' => 'Action.OpenUrl',
-                        'title' => 'Open CCOD Dashboard',
-                        'style' => 'positive',
-                        'url' => rtrim((string) config('app.url'), '/') . '/developer',
-                    ]],
                 ],
             ]],
         ];
