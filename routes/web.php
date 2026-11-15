@@ -19,5 +19,16 @@ Route::middleware('auth:web,developers')->prefix('subscriptions/{subscription:su
 });
 
 Route::get('/sync-report/latest', function () {
-    return redirect('/developer/sync-report');
+    $path = storage_path('logs/scheduler/reports/latest.json');
+
+    abort_unless(is_file($path), 404, 'No synchronization report has been generated yet.');
+
+    $report = json_decode((string) file_get_contents($path), true);
+
+    abort_unless(is_array($report) && isset($report['modules']), 404, 'The synchronization report is invalid.');
+
+    return response()
+        ->view('reports.sync-report', ['report' => $report])
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
 })->name('sync-report.latest');
