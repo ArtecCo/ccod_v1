@@ -221,6 +221,10 @@ class TeamsWebhookNotifier
         }
 
         $isSyncCompletion = ($context['event_key'] ?? null) === 'sync.completed';
+        if ($isSyncCompletion) {
+            return $this->syncCompletionPayload($title, $context);
+        }
+
         $status = strtoupper((string) ($context['overall_status'] ?? ''));
         $body = array_values(array_filter([
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
@@ -262,6 +266,116 @@ class TeamsWebhookNotifier
                 'contentType' => 'application/vnd.microsoft.card.adaptive',
                 'contentUrl' => null,
                 'content' => $card,
+            ]],
+        ];
+    }
+
+    private function syncCompletionPayload(string $title, array $context): array
+    {
+        $statusDefinitions = [
+            'subscriptions_status' => 'Subscriptions',
+            'resources_status' => 'Resources',
+            'costs_status' => 'Costs',
+            'security_status' => 'Security',
+            'alerts_status' => 'Alerts',
+            'web_urls_status' => 'Web URLs',
+        ];
+
+        $pill = static function (string $label, string $value): array {
+            $success = strtoupper($value) === 'SUCCESS';
+
+            return [
+                'type' => 'Container',
+                'style' => $success ? 'good' : 'attention',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => $label . ': ' . ( $success ? 'Success' : 'Failed'),
+                    'weight' => 'Bolder',
+                    'wrap' => true,
+                    'spacing' => 'None',
+                ]],
+                'spacing' => 'Small',
+            ];
+        };
+
+        $overallStatus = strtoupper((string) ($context['overall_status'] ?? 'FAILED'));
+        $body = [];
+
+        if ($title !== '') {
+            $body[] = [
+                'type' => 'TextBlock',
+                'text' => $title,
+                'weight' => 'Bolder',
+                'size' => 'Large',
+                'wrap' => true,
+            ];
+        }
+
+        $body[] = $pill('Overall', $overallStatus);
+
+        $body[] = [
+            'type' => 'FactSet',
+            'facts' => [
+                ['title' => 'Started', 'value' => (string) ($context['sync_started_at'] ?? 'Not available')],
+                ['title' => 'Completed', 'value' => (string) ($context['completed_at'] ?? 'Not available')],
+                ['title' => 'Duration', 'value' => (string) ($context['duration'] ?? 'Not available')],
+            ],
+        ];
+
+        $body[] = [
+            'type' => 'TextBlock',
+            'text' => 'Module status',
+            'weight' => 'Bolder',
+            'spacing' => 'Medium',
+            'wrap' => true,
+        ];
+
+        $modulePills = [];
+        foreach ($statusDefinitions as $key => $label) {
+            $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
+            $modulePills[] = $pill($label, $value === 'SUCCESS' ? 'SUCCESS' : 'FAILED');
+        }
+
+        foreach (array_chunk($modulePills, 2) as $pair) {
+            $columns = array_map(static fn (array $item): array => [
+                'type' => 'Column',
+                'width' => 'stretch',
+                'items' => [$item],
+            ], $pair);
+
+            $body[] = [
+                'type' => 'ColumnSet',
+                'columns' => $columns,
+                'spacing' => 'Small',
+            ];
+        }
+
+        $body[] = [
+            'type' => 'TextBlock',
+            'text' => 'Run ID: ' . (string) ($context['run_id'] ?? 'Not available'),
+            'size' => 'Small',
+            'isSubtle' => true,
+            'wrap' => true,
+            'spacing' => 'Medium',
+        ];
+
+        return [
+            'type' => 'message',
+            'attachments' => [[
+                'contentType' => 'application/vnd.microsoft.card.adaptive',
+                'contentUrl' => null,
+                'content' => [
+                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    'type' => 'AdaptiveCard',
+                    'version' => '1.2',
+                    'body' => $body,
+                    'actions' => [[
+                        'type' => 'Action.OpenUrl',
+                        'title' => 'Open CCOD Dashboard',
+                        'style' => 'positive',
+                        'url' => rtrim((string) config('app.url'), '/') . '/developer',
+                    ]],
+                ],
             ]],
         ];
     }
