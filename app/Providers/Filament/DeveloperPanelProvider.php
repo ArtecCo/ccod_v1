@@ -8,7 +8,6 @@ use App\Filament\Pages\MaintenanceMode;
 use App\Filament\Pages\PillColors;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Pages\Styling;
-use App\Filament\Pages\SyncReport;
 use App\Filament\Pages\TabAccess;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AuditLogs\AuditLogResource;
@@ -93,7 +92,6 @@ class DeveloperPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 Styling::class,
-                SyncReport::class,
                 TabAccess::class,
                 SendNotification::class,
                 PillColors::class,
