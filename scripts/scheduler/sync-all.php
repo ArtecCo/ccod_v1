@@ -314,7 +314,7 @@ foreach ($rows as $index => $row) {
 
     $moduleCards .= sprintf(
         <<<'HTML'
-        <section class="module-card %s">
+        <section class="module-card panel">
             <div class="module-head">
                 <div class="module-title">
                     <span class="module-number">%02d</span>
@@ -366,30 +366,37 @@ $successCount = count(array_filter($rows, static fn (array $row): bool => $row['
 $failureCount = count($rows) - $successCount;
 $generatedAt = date('Y-m-d H:i:s P');
 $stylingSettings = \App\Support\FilamentStyling::settings();
+$themeColors = \App\Support\FilamentStyling::colors();
 $brandName = (string) ($stylingSettings?->brand_name ?: 'CCOD');
-$primarySetting = (string) ($stylingSettings?->primary_color ?: 'amber');
-$primaryColor = match ($primarySetting) {
-    'black' => '#111827',
-    'gray' => '#52525b',
-    'red' => '#dc2626',
-    'orange' => '#ea580c',
-    'amber' => '#d97706',
-    'yellow' => '#ca8a04',
-    'lime' => '#65a30d',
-    'green' => '#16a34a',
-    'emerald' => '#059669',
-    'teal' => '#0d9488',
-    'cyan' => '#0891b2',
-    'sky' => '#0284c7',
-    'blue' => '#2563eb',
-    'indigo' => '#4f46e5',
-    'violet' => '#7c3aed',
-    'purple' => '#9333ea',
-    'fuchsia' => '#c026d3',
-    'pink' => '#db2777',
-    'rose' => '#e11d48',
-    default => preg_match('/^custom:(#[0-9A-Fa-f]{6})$/', $primarySetting, $matches) ? $matches[1] : '#d97706',
-};
+$primaryPalette = $themeColors['primary'] ?? [];
+$grayPalette = $themeColors['gray'] ?? [];
+$successPalette = $themeColors['success'] ?? [];
+$dangerPalette = $themeColors['danger'] ?? [];
+$cssColor = static fn (array $palette, int $shade, string $fallback): string => (string) ($palette[$shade] ?? $palette[(string) $shade] ?? $fallback);
+$themeVariables = [
+    '--app-accent' => $cssColor($primaryPalette, 600, '#d97706'),
+    '--app-accent-hover' => $cssColor($primaryPalette, 700, '#b45309'),
+    '--app-accent-soft' => $cssColor($primaryPalette, 50, '#fffbeb'),
+    '--app-accent-border' => $cssColor($primaryPalette, 200, '#fde68a'),
+    '--app-bg' => $cssColor($grayPalette, 50, '#fafafa'),
+    '--app-surface' => '#ffffff',
+    '--app-surface-muted' => $cssColor($grayPalette, 50, '#fafafa'),
+    '--app-border' => $cssColor($grayPalette, 200, '#e4e4e7'),
+    '--app-text' => $cssColor($grayPalette, 950, '#09090b'),
+    '--app-muted' => $cssColor($grayPalette, 500, '#71717a'),
+    '--app-success' => $cssColor($successPalette, 700, '#15803d'),
+    '--app-success-bg' => $cssColor($successPalette, 50, '#f0fdf4'),
+    '--app-success-border' => $cssColor($successPalette, 200, '#bbf7d0'),
+    '--app-danger' => $cssColor($dangerPalette, 700, '#b91c1c'),
+    '--app-danger-bg' => $cssColor($dangerPalette, 50, '#fef2f2'),
+    '--app-danger-border' => $cssColor($dangerPalette, 200, '#fecaca'),
+    '--app-radius' => (string) ($stylingSettings?->corner_radius ?: '0.375rem'),
+];
+$themeCss = implode(';', array_map(
+    static fn (string $name, string $value): string => $name . ':' . $value,
+    array_keys($themeVariables),
+    array_values($themeVariables),
+));
 
 $html = <<<'HTML'
 <!doctype html>
@@ -399,102 +406,64 @@ $html = <<<'HTML'
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CCOD Azure Sync Report - __RUN_ID__</title>
 <style>
-:root {
-    --bg: #f4f6fa;
-    --surface: #ffffff;
-    --surface-2: #f7f8fb;
-    --border: #e3e7ee;
-    --text: #182230;
-    --muted: #667085;
-    --success: #087443;
-    --success-bg: #e8f7ef;
-    --danger: #b42336;
-    --danger-bg: #fff0f1;
-    --accent: __PRIMARY_COLOR__;
-    --accent-soft: color-mix(in srgb, var(--accent) 9%, white);
-    --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
-}
+:root { __THEME_CSS__; --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
 * { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); font-family: Inter, "Segoe UI", Arial, sans-serif; line-height: 1.5; }
-.container { width: min(1120px, calc(100% - 40px)); margin: 0 auto; padding: 38px 0 56px; }
-.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 24px; padding: 0 0 22px; border-bottom: 3px solid var(--accent); }
-.eyebrow { color: var(--accent); font-size: 11px; font-weight: 800; letter-spacing: .13em; text-transform: uppercase; }
-h1 { margin: 5px 0 7px; font-size: clamp(27px, 4vw, 34px); letter-spacing: -.035em; line-height: 1.15; }
-.subtitle { color: var(--muted); margin: 0; font-size: 13px; }
-.status { display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 999px; padding: 6px 11px; font-size: 10px; font-weight: 800; letter-spacing: .08em; }
-.status.success { color: var(--success); background: var(--success-bg); border-color: #bfe5cc; }
-.status.failed { color: var(--danger); background: var(--danger-bg); border-color: #efc2c9; }
-.summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 28px; }
-.metric { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; padding: 15px 17px; box-shadow: 0 2px 8px rgba(16, 24, 40, .035); }
-.metric span { display: block; color: var(--muted); font-size: 11px; margin-bottom: 3px; }
-.metric strong { display: block; font-size: 19px; }
-.metric.total strong { color: var(--accent); }
-.metric.good strong { color: var(--success); }
-.metric.bad strong { color: var(--danger); }
-.section-title { margin: 0 0 9px; font-size: 14px; }
-.timeline { overflow: hidden; border: 1px solid var(--border); border-radius: 11px; margin-bottom: 28px; background: var(--surface); box-shadow: 0 2px 8px rgba(16, 24, 40, .035); }
+html { color-scheme: light; }
+body { margin: 0; background: var(--app-bg); color: var(--app-text); font-family: var(--font-sans); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.container { width: min(1180px, calc(100% - 48px)); margin: 0 auto; padding: 36px 0 48px; }
+.header { display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; margin-bottom: 22px; }
+.brandline { display: flex; align-items: center; gap: 9px; color: var(--app-muted); font-size: 12px; font-weight: 600; letter-spacing: .025em; }
+.brand-mark { width: 8px; height: 8px; border-radius: 3px; background: var(--app-accent); box-shadow: 0 0 0 4px var(--app-accent-soft); }
+h1 { margin: 9px 0 4px; font-size: clamp(24px, 3vw, 30px); font-weight: 650; letter-spacing: -.035em; line-height: 1.2; }
+.subtitle { margin: 0; color: var(--app-muted); font-size: 13px; }
+.status { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--app-border); border-radius: var(--app-radius); padding: 7px 11px; font-size: 11px; font-weight: 650; white-space: nowrap; }
+.status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+.status.success { color: var(--app-success); background: var(--app-success-bg); border-color: var(--app-success-border); }
+.status.failed { color: var(--app-danger); background: var(--app-danger-bg); border-color: var(--app-danger-border); }
+.panel { background: var(--app-surface); border: 1px solid var(--app-border); border-radius: var(--app-radius); box-shadow: 0 1px 2px rgb(0 0 0 / .04); }
+.summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 26px; }
+.metric { min-height: 92px; padding: 16px 18px; }
+.metric span { display: block; margin-bottom: 7px; color: var(--app-muted); font-size: 12px; font-weight: 500; }
+.metric strong { display: block; color: var(--app-text); font-size: 23px; font-weight: 650; letter-spacing: -.025em; line-height: 1.2; }
+.metric.total strong { color: var(--app-accent); }
+.metric.good strong { color: var(--app-success); }
+.metric.bad strong { color: var(--app-danger); }
+.section { margin-bottom: 26px; }
+.section-title { margin: 0 0 11px; font-size: 15px; font-weight: 650; letter-spacing: -.01em; }
+.table-wrap { overflow: hidden; }
 table { width: 100%; border-collapse: collapse; }
-th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); font-size: 12px; }
-th { background: var(--surface-2); color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: .07em; }
+th, td { padding: 11px 15px; border-bottom: 1px solid var(--app-border); text-align: left; font-size: 12px; }
+th { background: var(--app-surface-muted); color: var(--app-muted); font-size: 10px; font-weight: 650; letter-spacing: .055em; text-transform: uppercase; }
 tr:last-child td { border-bottom: 0; }
-.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 7px; }
-.dot.success { background: var(--success); }
-.dot.failed { background: var(--danger); }
-.web-coverage { margin-bottom: 28px; }
-.web-coverage table { border: 1px solid var(--border); }
-.web-coverage th, .web-coverage td { padding: 8px 11px; }
-.web-coverage td:nth-child(n+2), .web-coverage th:nth-child(n+2) { text-align: right; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.dot.success { background: var(--app-success); }
+.dot.failed { background: var(--app-danger); }
+.web-coverage table td:nth-child(n+2), .web-coverage table th:nth-child(n+2) { text-align: right; }
 .modules { display: grid; gap: 12px; }
-.module-card { background: var(--surface); border: 1px solid var(--border); border-radius: 11px; overflow: hidden; break-inside: avoid; box-shadow: 0 2px 8px rgba(16, 24, 40, .035); }
-.module-card.success { border-left: 3px solid var(--success); }
-.module-card.failed { border-left: 3px solid var(--danger); }
-.module-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 14px 16px; }
-.module-title { display: flex; align-items: center; gap: 11px; min-width: 0; }
-.module-number { color: var(--muted); font-family: var(--mono); font-size: 11px; }
-.module-title h2 { margin: 0; font-size: 15px; }
-.module-script { color: var(--muted); font-family: var(--mono); font-size: 10px; margin-top: 2px; }
-.module-meta { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface-2); }
-.module-meta div { padding: 9px 12px; border-right: 1px solid var(--border); }
+.module-card { overflow: hidden; }
+.module-head { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding: 15px 18px; }
+.module-title { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.module-number { display: grid; place-items: center; width: 30px; height: 30px; flex: 0 0 30px; border-radius: calc(var(--app-radius) * .75); background: var(--app-accent-soft); color: var(--app-accent); font-size: 11px; font-weight: 700; }
+.module-title h2 { margin: 0; font-size: 14px; font-weight: 650; }
+.module-script { margin-top: 2px; color: var(--app-muted); font-size: 11px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+.module-meta { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--app-border); background: var(--app-surface-muted); }
+.module-meta div { min-width: 0; padding: 10px 14px; border-right: 1px solid var(--app-border); }
 .module-meta div:last-child { border-right: 0; }
-.module-meta span { display: block; color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .07em; margin-bottom: 2px; }
-.module-meta strong { font-family: var(--mono); font-size: 10px; font-weight: 600; }
-.console { background: var(--surface-2); }
-.console summary { cursor: pointer; color: var(--muted); padding: 8px 12px; font-size: 10px; border-bottom: 1px solid var(--border); user-select: none; }
-.console pre { margin: 0; padding: 14px; overflow-x: auto; color: #344054; font-family: var(--mono); font-size: 10px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-.footer { margin-top: 24px; color: var(--muted); font-size: 10px; text-align: center; }
-@media (max-width: 800px) {
-    .container { width: min(100% - 24px, 1120px); padding-top: 22px; }
-    .header { flex-direction: column; }
-    .summary { grid-template-columns: repeat(2, 1fr); }
-    .module-meta { grid-template-columns: repeat(2, 1fr); }
-    .module-meta div:nth-child(2) { border-right: 0; }
-    .module-meta div:nth-child(-n+2) { border-bottom: 1px solid var(--border); }
-}
-@media print {
-    @page { size: A4 portrait; margin: 12mm; }
-    body { background: #fff; color: #000; font-size: 10pt; }
-    .container { width: 100%; padding: 0; }
-    .header { margin-bottom: 14px; }
-    h1 { font-size: 22pt; }
-    .summary { grid-template-columns: repeat(4, 1fr); margin-bottom: 16px; }
-    .metric { padding: 8px 10px; border-radius: 0; }
-    .timeline, .web-coverage { margin-bottom: 16px; }
-    .module-card { border-radius: 0; box-shadow: none; }
-    .modules { gap: 9px; }
-    .console { background: #fff; }
-    .console summary { display: none; }
-    .console pre { padding: 8px; font-size: 8pt; }
-    .module-card, .timeline, .web-coverage { break-inside: avoid; }
-    .module-card { page-break-inside: avoid; }
-    .status { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-}
-</style>
+.module-meta span { display: block; margin-bottom: 3px; color: var(--app-muted); font-size: 10px; }
+.module-meta strong { display: block; overflow-wrap: anywhere; font-size: 11px; font-weight: 550; }
+.console { border-top: 1px solid var(--app-border); }
+.console summary { cursor: pointer; padding: 10px 15px; color: var(--app-muted); font-size: 12px; font-weight: 550; user-select: none; }
+.console[open] summary { border-bottom: 1px solid var(--app-border); }
+.console pre { max-height: 480px; overflow: auto; margin: 0; padding: 15px 17px; background: var(--app-surface-muted); color: var(--app-text); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 11px; line-height: 1.65; white-space: pre-wrap; overflow-wrap: anywhere; }
+.footer { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; padding-top: 14px; border-top: 1px solid var(--app-border); color: var(--app-muted); font-size: 11px; }
+@media (max-width: 760px) { .container { width: min(100% - 24px, 1180px); padding-top: 22px; } .header { flex-direction: column; } .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; } .metric { min-height: 82px; padding: 13px 14px; } .metric strong { font-size: 20px; } .module-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); } .module-meta div:nth-child(2) { border-right: 0; } .module-meta div:nth-child(-n+2) { border-bottom: 1px solid var(--app-border); } .table-wrap { overflow-x: auto; } .footer { flex-direction: column; } }
+@media print { @page { size: A4 portrait; margin: 12mm; } body { background: #fff; } .container { width: 100%; padding: 0; } .panel, .module-card { box-shadow: none; break-inside: avoid; } .summary { gap: 8px; margin-bottom: 16px; } .metric { min-height: auto; padding: 10px 12px; } .module-card { break-inside: avoid; } .console summary { display: none; } .console pre { max-height: none; } .status, .module-number, th, .module-meta { print-color-adjust: exact; -webkit-print-color-adjust: exact; } }</style>
 </head>
 <body>
 <div class="container">
     <header class="header">
         <div>
-            <div class="eyebrow">__BRAND_NAME__ · Azure Operations</div>
+            <div class="brandline"><span class="brand-mark"></span><span>__BRAND_NAME__</span><span>·</span><span>Azure Operations</span></div>
             <h1>Synchronization Report</h1>
             <p class="subtitle">Run __RUN_ID__ · Completed __COMPLETED_AT__</p>
         </div>
@@ -502,21 +471,21 @@ tr:last-child td { border-bottom: 0; }
     </header>
 
     <section class="summary">
-        <div class="metric total"><span>Total elapsed</span><strong>__TOTAL_DURATION__</strong></div>
-        <div class="metric"><span>Modules</span><strong>__MODULE_COUNT__</strong></div>
-        <div class="metric good"><span>Successful</span><strong>__SUCCESS_COUNT__</strong></div>
-        <div class="metric bad"><span>Failed</span><strong>__FAILURE_COUNT__</strong></div>
+        <div class="metric panel total"><span>Total elapsed</span><strong>__TOTAL_DURATION__</strong></div>
+        <div class="metric panel"><span>Modules</span><strong>__MODULE_COUNT__</strong></div>
+        <div class="metric panel good"><span>Successful</span><strong>__SUCCESS_COUNT__</strong></div>
+        <div class="metric panel bad"><span>Failed</span><strong>__FAILURE_COUNT__</strong></div>
     </section>
 
     <h2 class="section-title">Execution timeline</h2>
-    <section class="timeline">
+    <section class="timeline panel table-wrap">
         <table>
             <thead><tr><th>#</th><th>Module</th><th>Status</th><th>Elapsed</th><th>Completed</th></tr></thead>
             <tbody>__TIMELINE_ROWS__</tbody>
         </table>
     </section>
 
-    <section class="web-coverage">
+    <section class="web-coverage section">
         <h2 class="section-title">Web URL coverage by project</h2>
         <table>
             <thead><tr><th>Project</th><th>Links checked</th><th>Live</th><th>Down</th></tr></thead>
@@ -535,7 +504,7 @@ HTML;
 
 $replacements = [
     '__BRAND_NAME__' => $escape($brandName),
-    '__PRIMARY_COLOR__' => $escape($primaryColor),
+    '__THEME_CSS__' => $escape($themeCss),
     '__RUN_ID__' => $escape($runId),
     '__COMPLETED_AT__' => $escape($completedAt),
     '__GENERATED_AT__' => $escape($generatedAt),
