@@ -411,21 +411,7 @@ class TeamsWebhookNotifier
                     '$schema' => 'https://adaptivecards.io/schemas/adaptive-card.json',
                     'type' => 'AdaptiveCard',
                     'version' => '1.5',
-                    'body' => array_merge($body, [[
-                        'type' => 'CompoundButton',
-                        'title' => 'Open CCOD Dashboard',
-                        'description' => 'View sync health and Azure resources',
-                        'icon' => [
-                            'name' => 'Open',
-                            'style' => 'Filled',
-                            'color' => 'Accent',
-                        ],
-                        'selectAction' => [
-                            'type' => 'Action.OpenUrl',
-                            'url' => rtrim((string) config('app.url'), '/') . '/developer',
-                        ],
-                        'spacing' => 'Medium',
-                    ]]),
+                    'body' => $body,
                     'actions' => strtoupper((string) ($context['overall_status'] ?? '')) === 'SUCCESS'
                         && filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)
                         ? [[
