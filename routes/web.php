@@ -19,26 +19,5 @@ Route::middleware('auth:web,developers')->prefix('subscriptions/{subscription:su
 });
 
 Route::get('/sync-report/latest', function () {
-    $report = storage_path('logs/scheduler/reports/latest.html');
-    abort_unless(is_file($report), 404, 'No synchronization report has been generated yet.');
-
-    return response()->file($report, [
-        'Content-Type' => 'text/html; charset=UTF-8',
-        'Cache-Control' => 'public, no-cache, must-revalidate',
-        'X-Content-Type-Options' => 'nosniff',
-        'Referrer-Policy' => 'no-referrer',
-    ]);
+    return redirect('/developer/sync-report');
 })->name('sync-report.latest');
-
-Route::middleware('auth:developers')->get('/developer/sync-report', function () {
-    abort_unless(auth('developers')->user()?->is_active === true, 403);
-
-    $report = storage_path('logs/scheduler/reports/latest.html');
-    abort_unless(is_file($report), 404, 'No synchronization report has been generated yet.');
-
-    return response()->file($report, [
-        'Content-Type' => 'text/html; charset=UTF-8',
-        'Cache-Control' => 'private, no-store, max-age=0',
-        'X-Content-Type-Options' => 'nosniff',
-    ]);
-})->name('developer.sync-report');
