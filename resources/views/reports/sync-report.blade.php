@@ -66,9 +66,11 @@
         .pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 8px; font-size:10px; line-height:1.2; font-weight:700; letter-spacing:.035em; }
         .pill.success { color:var(--good); background:var(--good-bg); }
         .pill.failed { color:var(--bad); background:var(--bad-bg); }
-        .module-list { display:grid; gap:10px; }
-        .module { overflow:hidden; cursor:pointer; }
-        .module summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 17px; cursor:pointer; list-style:none; }
+        .module-list { display:grid; gap:16px; }
+        .module { overflow:hidden; cursor:pointer; border:1px solid #dce2eb; border-radius:12px; box-shadow:0 2px 7px rgba(25, 38, 58, .045); transition:border-color .15s ease, box-shadow .15s ease; }
+        .module:hover { border-color:#c5cedb; box-shadow:0 4px 12px rgba(25, 38, 58, .075); }
+        .module[open] { border-color:#cfd7e2; }
+        .module summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:16px 19px; cursor:pointer; list-style:none; }
         .module summary::-webkit-details-marker { display:none; }
         .module summary:after { content:"＋"; color:#8993a2; font-size:15px; }
         .module[open] summary:after { content:"−"; }
@@ -98,7 +100,7 @@
             .stats{gap:8px;margin-bottom:16px}.summary-stats{gap:8px;margin-bottom:12px}.summary-stats .stat{min-height:0;padding:9px 10px}.summary-stats .stat-value{font-size:17pt}.run-meta{gap:8px;margin-bottom:16px}.run-meta .stat{min-height:0}.run-meta .stat-value{font-size:12pt}.stat{min-height:0;padding:11px 13px;break-inside:avoid}.stat-value{font-size:19pt}
             .section{margin-top:17px}.panel,.stat{box-shadow:none;border-color:#d9dee6}
             .table-wrap{overflow:visible}table{width:100%}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:7px 8px;font-size:8pt}
-            .module-list{gap:7px}.module{break-inside:avoid}.module summary{padding:9px 11px}.module summary:after{display:none}
+            .module-list{gap:12px}.module{break-inside:avoid}.module summary{padding:9px 11px}.module summary:after{display:none}
             details:not([open]) > :not(summary){display:block!important}.console pre{max-height:none;overflow:visible;white-space:pre-wrap}
             .print-button,.expand-all{display:none!important}.footer{margin-top:16px}
             a{color:inherit;text-decoration:none}
