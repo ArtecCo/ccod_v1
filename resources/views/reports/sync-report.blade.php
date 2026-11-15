@@ -4,220 +4,220 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="color-scheme" content="light">
     <title>Synchronization report · {{ \App\Support\FilamentStyling::brandName() }}</title>
     @if ($favicon = \App\Support\FilamentStyling::favicon())
         <link rel="icon" href="{{ $favicon }}">
     @endif
-    @vite(['resources/css/app.css', 'resources/css/filament/developer/theme.css'])
     @php
-        $palettes = \App\Support\FilamentStyling::colors();
-        $themeVariables = [];
-        foreach (['primary', 'success', 'warning', 'danger', 'info', 'gray'] as $palette) {
-            foreach (($palettes[$palette] ?? []) as $shade => $value) {
-                if (is_string($value) && (str_starts_with($value, '#') || preg_match('/^(oklch|rgb|hsl|color)\(/i', $value))) {
-                    $themeVariables["--{$palette}-{$shade}"] = $value;
-                }
-            }
+        $settings = \App\Support\FilamentStyling::settings();
+        $palette = \App\Support\FilamentStyling::colors()['primary'] ?? [];
+        $accent = $palette[600] ?? $palette[500] ?? '#b7791f';
+        if (is_array($accent)) {
+            $accent = sprintf('rgb(%d %d %d)', $accent[0] ?? 183, $accent[1] ?? 121, $accent[2] ?? 31);
         }
-        $themeVariables['--ccod-corner-radius'] = \App\Support\FilamentStyling::cornerRadius();
         $brandName = \App\Support\FilamentStyling::brandName();
         $brandLogo = \App\Support\FilamentStyling::logoLight();
+        $modules = $report['modules'] ?? [];
+        $successful = (int) ($report['success_count'] ?? collect($modules)->where('status', 'SUCCESS')->count());
+        $failed = (int) ($report['failure_count'] ?? (count($modules) - $successful));
+        $overallSuccess = ($report['overall_status'] ?? 'FAILED') === 'SUCCESS';
+        $webProjects = $report['web_url_projects'] ?? [];
     @endphp
     <style>
-        :root { {!! collect($themeVariables)->map(fn ($value, $key) => $key . ':' . $value)->implode(';') !!}; }
-        html { font-size: 13px; }
-        body { min-height: 100vh; background: var(--gray-50, #f9fafb); }
-        .public-report-shell { max-width: 1440px; margin-inline: auto; padding: 1.5rem; }
-        .public-report-brand { display:flex; align-items:center; gap:.85rem; min-width:0; }
-        .public-report-logo { max-width: 160px; max-height: 42px; object-fit:contain; }
-        .public-report-brand-name { font-size:1rem; font-weight:650; letter-spacing:-.02em; color:var(--gray-950,#111827); }
-        .public-report-header { display:flex; align-items:center; justify-content:space-between; gap:1rem; padding:1rem 1.25rem; margin-bottom:1.5rem; background:white; border:1px solid var(--gray-200,#e5e7eb); border-radius:var(--ccod-corner-radius,.375rem); }
-        .public-report-header-meta { color:var(--gray-500,#6b7280); font-size:.75rem; }
-        @media(max-width:640px) { .public-report-shell { padding: .75rem; } .public-report-header { align-items:flex-start; flex-direction:column; } }
-        @media print { body { background:white !important; } .public-report-shell { max-width:none; padding:0; } }
+        :root { --accent: {{ $accent }}; --ink: #202733; --muted: #687386; --line: #e5e9ef; --surface: #ffffff; --canvas: #f5f7fa; --good: #18794e; --good-bg: #eaf6ef; --bad: #b42318; --bad-bg: #fff0ef; }
+        * { box-sizing: border-box; }
+        html { background: var(--canvas); }
+        body { margin: 0; color: var(--ink); background: var(--canvas); font-family: Inter, "Segoe UI", Arial, sans-serif; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+        .page { width: min(1120px, calc(100% - 48px)); margin: 0 auto; padding: 34px 0 48px; }
+        .masthead { display:flex; align-items:center; justify-content:space-between; gap:24px; padding:0 0 22px; border-bottom:1px solid var(--line); }
+        .brand { display:flex; align-items:center; min-width:0; gap:14px; }
+        .logo { display:block; max-width:170px; max-height:46px; width:auto; height:auto; object-fit:contain; }
+        .brand-name { color:#303846; font-size:15px; font-weight:700; letter-spacing:-.02em; }
+        .masthead-note { color:var(--muted); font-size:12px; text-align:right; }
+        .heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:30px 0 22px; }
+        h1 { margin:0; font-size:27px; line-height:1.2; letter-spacing:-.045em; font-weight:700; }
+        .subtitle { margin:7px 0 0; color:var(--muted); font-size:13px; }
+        .status { display:inline-flex; align-items:center; gap:7px; border-radius:999px; padding:7px 12px; font-size:11px; font-weight:700; letter-spacing:.045em; white-space:nowrap; }
+        .status:before { content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
+        .status.success { color:var(--good); background:var(--good-bg); }
+        .status.failed { color:var(--bad); background:var(--bad-bg); }
+        .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:26px; }
+        .stat, .panel { background:var(--surface); border:1px solid var(--line); border-radius:10px; }
+        .stat { min-height:104px; padding:17px 19px; }
+        .stat-label { color:var(--muted); font-size:12px; font-weight:500; }
+        .stat-value { margin-top:8px; color:#202733; font-size:25px; line-height:1.1; font-weight:700; letter-spacing:-.04em; font-variant-numeric:tabular-nums; }
+        .stat-value.accent { color:var(--accent); }
+        .stat-value.good { color:var(--good); }
+        .stat-value.bad { color:var(--bad); }
+        .section { margin-top:25px; }
+        .section-head { display:flex; align-items:baseline; justify-content:space-between; gap:16px; margin-bottom:11px; }
+        h2 { margin:0; font-size:15px; font-weight:700; letter-spacing:-.015em; }
+        .section-note { color:var(--muted); font-size:12px; }
+        .panel { overflow:hidden; }
+        .table-wrap { overflow-x:auto; }
+        table { width:100%; border-collapse:collapse; text-align:left; }
+        thead { background:#f8f9fb; }
+        th { padding:11px 15px; color:#687386; font-size:10px; font-weight:700; letter-spacing:.075em; text-transform:uppercase; white-space:nowrap; }
+        td { padding:12px 15px; border-top:1px solid #edf0f4; color:#354052; font-size:12px; vertical-align:middle; }
+        tbody tr:first-child td { border-top:0; }
+        .num, .time { font-variant-numeric:tabular-nums; white-space:nowrap; }
+        .module-name { color:#202733; font-weight:650; }
+        .pill { display:inline-flex; align-items:center; border-radius:999px; padding:4px 8px; font-size:10px; line-height:1.2; font-weight:700; letter-spacing:.035em; }
+        .pill.success { color:var(--good); background:var(--good-bg); }
+        .pill.failed { color:var(--bad); background:var(--bad-bg); }
+        .module-list { display:grid; gap:10px; }
+        .module { overflow:hidden; }
+        .module summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 17px; cursor:pointer; list-style:none; }
+        .module summary::-webkit-details-marker { display:none; }
+        .module summary:after { content:"＋"; color:#8993a2; font-size:15px; }
+        .module[open] summary:after { content:"−"; }
+        .module-title { display:flex; align-items:center; gap:12px; min-width:0; }
+        .module-index { color:#929baa; font-size:11px; font-weight:650; font-variant-numeric:tabular-nums; }
+        .module-script { margin-top:2px; color:var(--muted); font-size:11px; overflow-wrap:anywhere; }
+        .module-content { border-top:1px solid var(--line); }
+        .module-meta { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); background:#fafbfc; }
+        .meta-item { padding:12px 15px; border-right:1px solid var(--line); min-width:0; }
+        .meta-item:last-child { border-right:0; }
+        .meta-label { display:block; color:var(--muted); font-size:10px; }
+        .meta-value { display:block; margin-top:3px; color:#354052; font-size:11px; font-weight:600; overflow-wrap:anywhere; }
+        .console { border-top:1px solid var(--line); }
+        .console summary { padding:10px 15px; color:#566174; background:#fff; font-size:11px; font-weight:600; }
+        .console pre { max-height:420px; margin:0; padding:14px 16px; overflow:auto; color:#e5eaf1; background:#202733; font:11px/1.6 Consolas, "Courier New", monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
+        .empty { padding:22px; color:var(--muted); text-align:center; font-size:12px; }
+        .footer { display:flex; justify-content:space-between; gap:16px; margin-top:25px; padding-top:15px; border-top:1px solid var(--line); color:#8993a2; font-size:10px; }
+        .print-button { border:1px solid var(--line); border-radius:7px; padding:8px 12px; color:#354052; background:#fff; font:600 11px inherit; cursor:pointer; }
+        .print-button:hover { border-color:var(--accent); color:var(--accent); }
+        @media(max-width:760px) { .page{width:calc(100% - 28px);padding-top:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.heading{align-items:flex-start;flex-direction:column}h1{font-size:23px}.module-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.meta-item:nth-child(2){border-right:0}.meta-item:nth-child(-n+2){border-bottom:1px solid var(--line)}.masthead-note{max-width:130px} }
+        @media(max-width:420px) { .brand-name{font-size:13px}.logo{max-width:125px}.stat{padding:14px}.stat-value{font-size:22px}.footer{flex-direction:column} }
+        @media print {
+            @page { size:A4 portrait; margin:12mm; }
+            html,body{background:#fff!important;color:#111!important;font-size:10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+            .page{width:100%;padding:0;margin:0}
+            .masthead{padding-bottom:12px}.logo{max-height:34px}.heading{padding:18px 0 14px}h1{font-size:21pt}
+            .stats{gap:8px;margin-bottom:16px}.stat{min-height:0;padding:11px 13px;break-inside:avoid}.stat-value{font-size:19pt}
+            .section{margin-top:17px}.panel,.stat{box-shadow:none;border-color:#d9dee6}
+            .table-wrap{overflow:visible}table{width:100%}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:7px 8px;font-size:8pt}
+            .module-list{gap:7px}.module{break-inside:avoid}.module summary{padding:9px 11px}.module summary:after{display:none}
+            details:not([open]) > :not(summary){display:block!important}.console pre{max-height:none;overflow:visible;white-space:pre-wrap}
+            .print-button{display:none!important}.footer{margin-top:16px}
+            a{color:inherit;text-decoration:none}
+        }
     </style>
 </head>
 <body>
-    <main class="public-report-shell">
-        <header class="public-report-header">
-            <div class="public-report-brand">
-                @if ($brandLogo)
-                    <img class="public-report-logo" src="{{ $brandLogo }}" alt="{{ $brandName }}">
-                @else
-                    <span class="public-report-brand-name">{{ $brandName }}</span>
-                @endif
-            </div>
-            <div class="public-report-header-meta">Azure Operations · Synchronization report</div>
-        </header>
-        <div class="mb-5">
-            <h1 class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">Azure synchronization report</h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Latest unified scheduler execution</p>
+<main class="page">
+    <header class="masthead">
+        <div class="brand">
+            @if ($brandLogo)
+                <img class="logo" src="{{ $brandLogo }}" alt="{{ $brandName }}">
+            @else
+                <span class="brand-name">{{ $brandName }}</span>
+            @endif
         </div>
-            @php
-        $modules = $report['modules'] ?? [];
-        $successful = (int) ($report['success_count'] ?? 0);
-        $failed = (int) ($report['failure_count'] ?? 0);
-        $overallSuccess = ($report['overall_status'] ?? 'FAILED') === 'SUCCESS';
-    @endphp
+        <div class="masthead-note">Azure operations<br>Automated synchronization report</div>
+    </header>
 
-    <div class="space-y-6">
-        <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
-                <span class="inline-flex items-center gap-1.5">
-                    <x-filament::icon icon="heroicon-o-clock" class="h-4 w-4" />
-                    {{ $report['started_at'] ?? '—' }}
-                </span>
-                <span class="text-gray-300 dark:text-gray-600">→</span>
-                <span>{{ $report['completed_at'] ?? '—' }}</span>
-                <span class="text-gray-300 dark:text-gray-600">·</span>
-                <span class="font-mono text-xs">{{ $report['run_id'] ?? '—' }}</span>
-            </div>
-            <x-filament::badge :color="$overallSuccess ? 'success' : 'danger'" size="lg">
-                {{ $report['overall_status'] ?? 'UNKNOWN' }}
-            </x-filament::badge>
+    <section class="heading">
+        <div>
+            <h1>Synchronization report</h1>
+            <p class="subtitle">Run {{ $report['run_id'] ?? '—' }} &nbsp;·&nbsp; {{ $report['started_at'] ?? '—' }} to {{ $report['completed_at'] ?? '—' }}</p>
         </div>
+        <span class="status {{ $overallSuccess ? 'success' : 'failed' }}">{{ $report['overall_status'] ?? 'UNKNOWN' }}</span>
+    </section>
 
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-filament::section compact>
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-clock" class="h-5 w-5 text-primary-600 dark:text-primary-400" />
-                    <div class="min-w-0">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Total elapsed</div>
-                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $report['duration'] ?? '—' }}</div>
-                    </div>
-                </div>
-            </x-filament::section>
-            <x-filament::section compact>
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-queue-list" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
-                    <div class="min-w-0">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Modules executed</div>
-                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ count($modules) }}</div>
-                    </div>
-                </div>
-            </x-filament::section>
-            <x-filament::section compact>
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5 text-success-600 dark:text-success-400" />
-                    <div class="min-w-0">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Successful</div>
-                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $successful }}</div>
-                    </div>
-                </div>
-            </x-filament::section>
-            <x-filament::section compact>
-                <div class="flex items-center gap-3">
-                    <x-filament::icon icon="heroicon-o-x-circle" class="h-5 w-5 text-danger-600 dark:text-danger-400" />
-                    <div class="min-w-0">
-                        <div class="text-sm text-gray-500 dark:text-gray-400">Failed</div>
-                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $failed }}</div>
-                    </div>
-                </div>
-            </x-filament::section>
-        </div>
+    <section class="stats" aria-label="Run summary">
+        <article class="stat"><div class="stat-label">Total duration</div><div class="stat-value accent">{{ $report['duration'] ?? '—' }}</div></article>
+        <article class="stat"><div class="stat-label">Modules executed</div><div class="stat-value">{{ count($modules) }}</div></article>
+        <article class="stat"><div class="stat-label">Successful</div><div class="stat-value good">{{ $successful }}</div></article>
+        <article class="stat"><div class="stat-label">Failed</div><div class="stat-value bad">{{ $failed }}</div></article>
+    </section>
 
-        <x-filament::section heading="Execution timeline" icon="heroicon-o-list-bullet">
-            <div class="-mx-4 overflow-x-auto sm:-mx-6">
-                <table class="w-full divide-y divide-gray-200 text-start dark:divide-white/10">
-                    <thead class="bg-gray-50 dark:bg-white/5">
+    <section class="section">
+        <div class="section-head"><h2>Execution timeline</h2><span class="section-note">{{ count($modules) }} modules in this run</span></div>
+        <div class="panel table-wrap">
+            @if (count($modules))
+                <table>
+                    <thead><tr><th>#</th><th>Module</th><th>Status</th><th>Duration</th><th>Completed</th></tr></thead>
+                    <tbody>
+                    @foreach ($modules as $index => $module)
                         <tr>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">#</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Module</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Status</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Elapsed</th>
-                            <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Completed</th>
+                            <td class="num">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</td>
+                            <td class="module-name">{{ $module['name'] ?? '—' }}</td>
+                            <td><span class="pill {{ ($module['status'] ?? '') === 'SUCCESS' ? 'success' : 'failed' }}">{{ $module['status'] ?? 'UNKNOWN' }}</span></td>
+                            <td class="num">{{ $module['duration_formatted'] ?? '—' }}</td>
+                            <td class="time">{{ $module['ended_at'] ?? '—' }}</td>
                         </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-white/10">
-                        @foreach ($modules as $index => $module)
-                            <tr class="transition-colors hover:bg-gray-50 dark:hover:bg-white/5">
-                                <td class="whitespace-nowrap px-4 py-3 text-sm tabular-nums text-gray-500 sm:px-6">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-950 dark:text-white">{{ $module['name'] ?? '—' }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 sm:px-6">
-                                    <x-filament::badge :color="($module['status'] ?? '') === 'SUCCESS' ? 'success' : 'danger'">{{ $module['status'] ?? 'UNKNOWN' }}</x-filament::badge>
-                                </td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm tabular-nums text-gray-700 dark:text-gray-300">{{ $module['duration_formatted'] ?? '—' }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $module['ended_at'] ?? '—' }}</td>
-                            </tr>
-                        @endforeach
+                    @endforeach
+                    </tbody>
+                </table>
+            @else
+                <div class="empty">No module results are available for this run.</div>
+            @endif
+        </div>
+    </section>
+
+    @if (count($webProjects))
+        <section class="section">
+            <div class="section-head"><h2>Web URL coverage by project</h2><span class="section-note">{{ count($webProjects) }} projects</span></div>
+            <div class="panel table-wrap">
+                <table>
+                    <thead><tr><th>Project</th><th>Links checked</th><th>Live</th><th>Down</th></tr></thead>
+                    <tbody>
+                    @foreach ($webProjects as $project)
+                        <tr>
+                            <td class="module-name">{{ $project['name'] ?? '—' }}</td>
+                            <td class="num">{{ $project['checked'] ?? 0 }}</td>
+                            <td class="num">{{ $project['live'] ?? 0 }}</td>
+                            <td class="num">{{ $project['down'] ?? 0 }}</td>
+                        </tr>
+                    @endforeach
                     </tbody>
                 </table>
             </div>
-        </x-filament::section>
+        </section>
+    @endif
 
-        @if (! empty($report['web_url_projects']))
-            <x-filament::section heading="Web URL coverage by project" icon="heroicon-o-globe-alt">
-                <div class="-mx-4 overflow-x-auto sm:-mx-6">
-                    <table class="w-full divide-y divide-gray-200 text-start dark:divide-white/10">
-                        <thead class="bg-gray-50 dark:bg-white/5">
-                            <tr>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Project</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Links checked</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Live</th>
-                                <th class="px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500 sm:px-6">Down</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-200 dark:divide-white/10">
-                            @foreach ($report['web_url_projects'] as $project)
-                                <tr class="hover:bg-gray-50 dark:hover:bg-white/5">
-                                    <td class="px-4 py-3 text-sm font-medium text-gray-950 dark:text-white sm:px-6">{{ $project['name'] }}</td>
-                                    <td class="px-4 py-3 text-sm tabular-nums text-gray-700 dark:text-gray-300 sm:px-6">{{ $project['checked'] }}</td>
-                                    <td class="px-4 py-3 text-sm tabular-nums text-success-600 dark:text-success-400 sm:px-6">{{ $project['live'] }}</td>
-                                    <td class="px-4 py-3 text-sm tabular-nums text-danger-600 dark:text-danger-400 sm:px-6">{{ $project['down'] }}</td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                </div>
-            </x-filament::section>
-        @endif
-
-        <x-filament::section heading="Module details" icon="heroicon-o-rectangle-stack">
-            <div class="space-y-3">
+    <section class="section">
+        <div class="section-head"><h2>Module details</h2><span class="section-note">Expand a module to inspect its execution output</span></div>
+        @if (count($modules))
+            <div class="module-list">
                 @foreach ($modules as $index => $module)
-                    <x-filament::section collapsible :collapsed="($module['status'] ?? '') === 'SUCCESS'" compact>
-                        <x-slot name="heading">
-                            <span class="mr-2 text-gray-400">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
-                            {{ $module['name'] ?? 'Module' }}
-                        </x-slot>
-                        <x-slot name="description">{{ $module['script'] ?? '' }}</x-slot>
-
-                        <div class="mb-3">
-                            <x-filament::badge :color="($module['status'] ?? '') === 'SUCCESS' ? 'success' : 'danger'">{{ $module['status'] ?? 'UNKNOWN' }}</x-filament::badge>
+                    <details class="panel module" {{ ($module['status'] ?? '') !== 'SUCCESS' ? 'open' : '' }}>
+                        <summary>
+                            <div class="module-title">
+                                <span class="module-index">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
+                                <div>
+                                    <div class="module-name">{{ $module['name'] ?? 'Module' }}</div>
+                                    <div class="module-script">{{ $module['script'] ?? '' }}</div>
+                                </div>
+                            </div>
+                            <span class="pill {{ ($module['status'] ?? '') === 'SUCCESS' ? 'success' : 'failed' }}">{{ $module['status'] ?? 'UNKNOWN' }}</span>
+                        </summary>
+                        <div class="module-content">
+                            <div class="module-meta">
+                                <div class="meta-item"><span class="meta-label">Started</span><span class="meta-value">{{ $module['started_at'] ?? '—' }}</span></div>
+                                <div class="meta-item"><span class="meta-label">Completed</span><span class="meta-value">{{ $module['ended_at'] ?? '—' }}</span></div>
+                                <div class="meta-item"><span class="meta-label">Duration</span><span class="meta-value">{{ $module['duration_formatted'] ?? '—' }}</span></div>
+                                <div class="meta-item"><span class="meta-label">Exit code</span><span class="meta-value">{{ $module['exit_code'] ?? '—' }}</span></div>
+                            </div>
+                            <details class="console">
+                                <summary>View console output</summary>
+                                <pre>{{ $module['output'] ?? 'No console output was recorded.' }}</pre>
+                            </details>
                         </div>
-
-                        <div class="grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 dark:border-white/10 sm:grid-cols-2 xl:grid-cols-4">
-                            <div>
-                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Started</div>
-                                <div class="mt-1 text-sm text-gray-950 dark:text-white">{{ $module['started_at'] ?? '—' }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Ended</div>
-                                <div class="mt-1 text-sm text-gray-950 dark:text-white">{{ $module['ended_at'] ?? '—' }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Elapsed</div>
-                                <div class="mt-1 text-sm tabular-nums text-gray-950 dark:text-white">{{ $module['duration_formatted'] ?? '—' }}</div>
-                            </div>
-                            <div>
-                                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Exit code</div>
-                                <div class="mt-1 text-sm tabular-nums text-gray-950 dark:text-white">{{ $module['exit_code'] ?? '—' }}</div>
-                            </div>
-                        </div>
-
-                        <details class="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-white/10">
-                            <summary class="cursor-pointer bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 dark:bg-white/5 dark:text-gray-300">Console output</summary>
-                            <pre class="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words bg-gray-950 p-4 text-xs leading-relaxed text-gray-100">{{ $module['output'] ?? 'No console output was recorded.' }}</pre>
-                        </details>
-                    </x-filament::section>
+                    </details>
                 @endforeach
             </div>
-        </x-filament::section>
+        @else
+            <div class="panel empty">No module details are available.</div>
+        @endif
+    </section>
 
-        <div class="text-xs text-gray-400 dark:text-gray-500">
-            Generated {{ $report['generated_at'] ?? '—' }} · Run ID {{ $report['run_id'] ?? '—' }}
-        </div>
-    </div>
-    </main>
+    <footer class="footer">
+        <span>Generated {{ $report['generated_at'] ?? '—' }}</span>
+        <span>Run ID: {{ $report['run_id'] ?? '—' }}</span>
+    </footer>
+</main>
 </body>
 </html>
