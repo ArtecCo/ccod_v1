@@ -1,18 +1,22 @@
 <x-filament-panels::page>
     @php
+        $modules = $report['modules'] ?? [];
         $successful = (int) ($report['success_count'] ?? 0);
         $failed = (int) ($report['failure_count'] ?? 0);
         $overallSuccess = ($report['overall_status'] ?? 'FAILED') === 'SUCCESS';
-        $duration = $report['duration'] ?? '—';
     @endphp
 
     <div class="space-y-6">
         <div class="flex flex-wrap items-center justify-between gap-3">
-            <div class="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-                <x-filament::icon icon="heroicon-o-clock" class="h-4 w-4" />
-                <span>Started {{ $report['started_at'] ?? '—' }}</span>
+            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                <span class="inline-flex items-center gap-1.5">
+                    <x-filament::icon icon="heroicon-o-clock" class="h-4 w-4" />
+                    {{ $report['started_at'] ?? '—' }}
+                </span>
                 <span class="text-gray-300 dark:text-gray-600">→</span>
-                <span>Finished {{ $report['completed_at'] ?? '—' }}</span>
+                <span>{{ $report['completed_at'] ?? '—' }}</span>
+                <span class="text-gray-300 dark:text-gray-600">·</span>
+                <span class="font-mono text-xs">{{ $report['run_id'] ?? '—' }}</span>
             </div>
             <x-filament::badge :color="$overallSuccess ? 'success' : 'danger'" size="lg">
                 {{ $report['overall_status'] ?? 'UNKNOWN' }}
@@ -22,32 +26,26 @@
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <x-filament::section compact>
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-primary-50 p-2 text-primary-600 dark:bg-primary-400/10 dark:text-primary-400">
-                        <x-filament::icon icon="heroicon-o-clock" class="h-5 w-5" />
-                    </div>
-                    <div>
+                    <x-filament::icon icon="heroicon-o-clock" class="h-5 w-5 text-primary-600 dark:text-primary-400" />
+                    <div class="min-w-0">
                         <div class="text-sm text-gray-500 dark:text-gray-400">Total elapsed</div>
-                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $duration }}</div>
+                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $report['duration'] ?? '—' }}</div>
                     </div>
                 </div>
             </x-filament::section>
             <x-filament::section compact>
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-gray-100 p-2 text-gray-600 dark:bg-white/10 dark:text-gray-300">
-                        <x-filament::icon icon="heroicon-o-queue-list" class="h-5 w-5" />
-                    </div>
-                    <div>
+                    <x-filament::icon icon="heroicon-o-queue-list" class="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <div class="min-w-0">
                         <div class="text-sm text-gray-500 dark:text-gray-400">Modules executed</div>
-                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ count($report['modules'] ?? []) }}</div>
+                        <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ count($modules) }}</div>
                     </div>
                 </div>
             </x-filament::section>
             <x-filament::section compact>
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-success-50 p-2 text-success-600 dark:bg-success-400/10 dark:text-success-400">
-                        <x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5" />
-                    </div>
-                    <div>
+                    <x-filament::icon icon="heroicon-o-check-circle" class="h-5 w-5 text-success-600 dark:text-success-400" />
+                    <div class="min-w-0">
                         <div class="text-sm text-gray-500 dark:text-gray-400">Successful</div>
                         <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $successful }}</div>
                     </div>
@@ -55,10 +53,8 @@
             </x-filament::section>
             <x-filament::section compact>
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-danger-50 p-2 text-danger-600 dark:bg-danger-400/10 dark:text-danger-400">
-                        <x-filament::icon icon="heroicon-o-x-circle" class="h-5 w-5" />
-                    </div>
-                    <div>
+                    <x-filament::icon icon="heroicon-o-x-circle" class="h-5 w-5 text-danger-600 dark:text-danger-400" />
+                    <div class="min-w-0">
                         <div class="text-sm text-gray-500 dark:text-gray-400">Failed</div>
                         <div class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ $failed }}</div>
                     </div>
@@ -79,15 +75,15 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-200 dark:divide-white/10">
-                        @foreach (($report['modules'] ?? []) as $index => $module)
-                            <tr class="hover:bg-gray-50 dark:hover:bg-white/5">
+                        @foreach ($modules as $index => $module)
+                            <tr class="transition-colors hover:bg-gray-50 dark:hover:bg-white/5">
                                 <td class="whitespace-nowrap px-4 py-3 text-sm tabular-nums text-gray-500 sm:px-6">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-950 dark:text-white sm:px-6">{{ $module['name'] }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-950 dark:text-white">{{ $module['name'] ?? '—' }}</td>
                                 <td class="whitespace-nowrap px-4 py-3 sm:px-6">
-                                    <x-filament::badge :color="$module['status'] === 'SUCCESS' ? 'success' : 'danger'">{{ $module['status'] }}</x-filament::badge>
+                                    <x-filament::badge :color="($module['status'] ?? '') === 'SUCCESS' ? 'success' : 'danger'">{{ $module['status'] ?? 'UNKNOWN' }}</x-filament::badge>
                                 </td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm tabular-nums text-gray-700 dark:text-gray-300 sm:px-6">{{ $module['duration_formatted'] }}</td>
-                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400 sm:px-6">{{ $module['ended_at'] }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm tabular-nums text-gray-700 dark:text-gray-300">{{ $module['duration_formatted'] ?? '—' }}</td>
+                                <td class="whitespace-nowrap px-4 py-3 text-sm text-gray-500 dark:text-gray-400">{{ $module['ended_at'] ?? '—' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -109,11 +105,11 @@
                         </thead>
                         <tbody class="divide-y divide-gray-200 dark:divide-white/10">
                             @foreach ($report['web_url_projects'] as $project)
-                                <tr>
+                                <tr class="hover:bg-gray-50 dark:hover:bg-white/5">
                                     <td class="px-4 py-3 text-sm font-medium text-gray-950 dark:text-white sm:px-6">{{ $project['name'] }}</td>
                                     <td class="px-4 py-3 text-sm tabular-nums text-gray-700 dark:text-gray-300 sm:px-6">{{ $project['checked'] }}</td>
-                                    <td class="px-4 py-3 text-sm tabular-nums text-success-600 sm:px-6">{{ $project['live'] }}</td>
-                                    <td class="px-4 py-3 text-sm tabular-nums text-danger-600 sm:px-6">{{ $project['down'] }}</td>
+                                    <td class="px-4 py-3 text-sm tabular-nums text-success-600 dark:text-success-400 sm:px-6">{{ $project['live'] }}</td>
+                                    <td class="px-4 py-3 text-sm tabular-nums text-danger-600 dark:text-danger-400 sm:px-6">{{ $project['down'] }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -124,39 +120,40 @@
 
         <x-filament::section heading="Module details" icon="heroicon-o-rectangle-stack">
             <div class="space-y-3">
-                @foreach (($report['modules'] ?? []) as $index => $module)
-                    <x-filament::section collapsible :collapsed="$module['status'] === 'SUCCESS'" compact>
+                @foreach ($modules as $index => $module)
+                    <x-filament::section collapsible :collapsed="($module['status'] ?? '') === 'SUCCESS'" compact>
                         <x-slot name="heading">
                             <span class="mr-2 text-gray-400">{{ str_pad((string) ($index + 1), 2, '0', STR_PAD_LEFT) }}</span>
-                            {{ $module['name'] }}
+                            {{ $module['name'] ?? 'Module' }}
                         </x-slot>
-                        <x-slot name="description">{{ $module['script'] }}</x-slot>
-                        <x-slot name="headerEnd">
-                            <x-filament::badge :color="$module['status'] === 'SUCCESS' ? 'success' : 'danger'">{{ $module['status'] }}</x-filament::badge>
-                        </x-slot>
+                        <x-slot name="description">{{ $module['script'] ?? '' }}</x-slot>
+
+                        <div class="mb-3">
+                            <x-filament::badge :color="($module['status'] ?? '') === 'SUCCESS' ? 'success' : 'danger'">{{ $module['status'] ?? 'UNKNOWN' }}</x-filament::badge>
+                        </div>
 
                         <div class="grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 dark:border-white/10 sm:grid-cols-2 xl:grid-cols-4">
                             <div>
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Started</div>
-                                <div class="mt-1 text-sm text-gray-950 dark:text-white">{{ $module['started_at'] }}</div>
+                                <div class="mt-1 text-sm text-gray-950 dark:text-white">{{ $module['started_at'] ?? '—' }}</div>
                             </div>
                             <div>
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Ended</div>
-                                <div class="mt-1 text-sm text-gray-950 dark:text-white">{{ $module['ended_at'] }}</div>
+                                <div class="mt-1 text-sm text-gray-950 dark:text-white">{{ $module['ended_at'] ?? '—' }}</div>
                             </div>
                             <div>
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Elapsed</div>
-                                <div class="mt-1 text-sm tabular-nums text-gray-950 dark:text-white">{{ $module['duration_formatted'] }}</div>
+                                <div class="mt-1 text-sm tabular-nums text-gray-950 dark:text-white">{{ $module['duration_formatted'] ?? '—' }}</div>
                             </div>
                             <div>
                                 <div class="text-xs font-medium text-gray-500 dark:text-gray-400">Exit code</div>
-                                <div class="mt-1 text-sm tabular-nums text-gray-950 dark:text-white">{{ $module['exit_code'] }}</div>
+                                <div class="mt-1 text-sm tabular-nums text-gray-950 dark:text-white">{{ $module['exit_code'] ?? '—' }}</div>
                             </div>
                         </div>
 
                         <details class="mt-4 overflow-hidden rounded-lg border border-gray-200 dark:border-white/10">
                             <summary class="cursor-pointer bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 dark:bg-white/5 dark:text-gray-300">Console output</summary>
-                            <pre class="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words bg-gray-950 p-4 text-xs leading-relaxed text-gray-100">{{ $module['output'] }}</pre>
+                            <pre class="max-h-[32rem] overflow-auto whitespace-pre-wrap break-words bg-gray-950 p-4 text-xs leading-relaxed text-gray-100">{{ $module['output'] ?? 'No console output was recorded.' }}</pre>
                         </details>
                     </x-filament::section>
                 @endforeach
