@@ -10,7 +10,7 @@ return [
     | This file is for storing the credentials for third party services such
     | as Mailgun, Postmark, AWS and more. This file provides the de facto
     | location for this type of information, allowing packages to have a
-    | conventional file to locate the various service credentials.
+    | conventional place to locate credentials.
     |
     */
 
@@ -33,6 +33,14 @@ return [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
+    ],
+
+    'ccod_url_proxy' => [
+        'enabled' => (bool) env('CCOD_URL_PROXY_ENABLED', false),
+        'host' => env('CCOD_URL_PROXY_HOST'),
+        'port' => (int) env('CCOD_URL_PROXY_PORT', 8080),
+        'username' => env('CCOD_URL_PROXY_USERNAME'),
+        'password' => env('CCOD_URL_PROXY_PASSWORD'),
     ],
 
     'azure' => [
