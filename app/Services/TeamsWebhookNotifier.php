@@ -382,10 +382,7 @@ class TeamsWebhookNotifier
             'actions' => [],
         ];
 
-        if (
-            $overallStatus === 'SUCCESS'
-            && filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)
-        ) {
+        if (filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)) {
             $card['actions'][] = [
                 'type' => 'Action.OpenUrl',
                 'title' => 'View Sync Report',
