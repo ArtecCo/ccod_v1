@@ -411,7 +411,6 @@ class TeamsWebhookNotifier
                     '$schema' => 'https://adaptivecards.io/schemas/adaptive-card.json',
                     'type' => 'AdaptiveCard',
                     'version' => '1.5',
-                    'body' => $body,
                     'body' => array_merge($body, [[
                         'type' => 'CompoundButton',
                         'title' => 'Open CCOD Dashboard',
