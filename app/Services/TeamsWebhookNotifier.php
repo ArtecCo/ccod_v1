@@ -292,6 +292,7 @@ class TeamsWebhookNotifier
                 'items' => [[
                     'type' => 'TextBlock',
                     'text' => $label . ': ' . ($success ? 'Success' : 'Failed'),
+                    'color' => $success ? 'Good' : 'Attention',
                     'weight' => 'Bolder',
                     'wrap' => true,
                 ]],
@@ -317,6 +318,7 @@ class TeamsWebhookNotifier
             'items' => [[
                 'type' => 'TextBlock',
                 'text' => 'Overall: ' . $overallLabel,
+                'color' => $overallStatus === 'SUCCESS' ? 'Good' : 'Attention',
                 'weight' => 'Bolder',
                 'wrap' => true,
             ]],
