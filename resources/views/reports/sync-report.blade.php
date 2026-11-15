@@ -34,7 +34,7 @@
         .brand { display:flex; align-items:center; min-width:0; gap:14px; }
         .logo { display:block; max-width:170px; max-height:46px; width:auto; height:auto; object-fit:contain; }
         .brand-name { color:#303846; font-size:15px; font-weight:700; letter-spacing:-.02em; }
-        .masthead-note { color:var(--muted); font-size:12px; text-align:right; }
+        .masthead-note { color:var(--ink); font-size:12px; font-weight:700; text-align:right; white-space:nowrap; } .masthead-subtitle { color:var(--muted); font-size:11px; font-weight:400; }
         .heading { display:flex; align-items:flex-end; justify-content:space-between; gap:20px; padding:30px 0 22px; }
         h1 { margin:0; font-size:27px; line-height:1.2; letter-spacing:-.045em; font-weight:700; }
         .subtitle { margin:7px 0 0; color:var(--muted); font-size:13px; }
@@ -42,7 +42,7 @@
         .status:before { content:""; width:7px; height:7px; border-radius:50%; background:currentColor; }
         .status.success { color:var(--good); background:var(--good-bg); }
         .status.failed { color:var(--bad); background:var(--bad-bg); }
-        .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-bottom:26px; }
+        .stats { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin:0 0 18px; } .run-meta { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin:0 0 24px; } .run-meta .stat { min-height:88px; } .run-meta .stat-value { font-size:18px; overflow-wrap:anywhere; } .details-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; } .expand-all { border:0; padding:0; color:var(--muted); background:none; font:inherit; font-size:12px; text-decoration:underline; text-underline-offset:3px; cursor:pointer; }
         .stat, .panel { background:var(--surface); border:1px solid var(--line); border-radius:10px; }
         .stat { min-height:104px; padding:17px 19px; }
         .stat-label { color:var(--muted); font-size:12px; font-weight:500; }
@@ -67,7 +67,7 @@
         .pill.success { color:var(--good); background:var(--good-bg); }
         .pill.failed { color:var(--bad); background:var(--bad-bg); }
         .module-list { display:grid; gap:10px; }
-        .module { overflow:hidden; }
+        .module { overflow:hidden; cursor:pointer; }
         .module summary { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 17px; cursor:pointer; list-style:none; }
         .module summary::-webkit-details-marker { display:none; }
         .module summary:after { content:"＋"; color:#8993a2; font-size:15px; }
@@ -82,25 +82,25 @@
         .meta-label { display:block; color:var(--muted); font-size:10px; }
         .meta-value { display:block; margin-top:3px; color:#354052; font-size:11px; font-weight:600; overflow-wrap:anywhere; }
         .console { border-top:1px solid var(--line); }
-        .console summary { padding:10px 15px; color:#566174; background:#fff; font-size:11px; font-weight:600; }
+        .console-label { padding:9px 15px; color:#566174; background:#fff; font-size:11px; font-weight:600; }
         .console pre { max-height:420px; margin:0; padding:14px 16px; overflow:auto; color:#e5eaf1; background:#202733; font:11px/1.6 Consolas, "Courier New", monospace; white-space:pre-wrap; overflow-wrap:anywhere; }
         .empty { padding:22px; color:var(--muted); text-align:center; font-size:12px; }
-        .footer { display:flex; justify-content:space-between; gap:16px; margin-top:25px; padding-top:15px; border-top:1px solid var(--line); color:#8993a2; font-size:10px; }
+        .footer { display:flex; justify-content:space-between; gap:16px; margin-top:25px; padding-top:15px; border-top:1px solid var(--line); color:#687386; font-size:12px; font-weight:600; }
         .print-button { border:1px solid var(--line); border-radius:7px; padding:8px 12px; color:#354052; background:#fff; font-family:inherit; font-size:11px; font-weight:600; cursor:pointer; }
         .print-button:hover { border-color:var(--accent); color:var(--accent); }
-        @media(max-width:760px) { .page{width:calc(100% - 28px);padding-top:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.heading{align-items:flex-start;flex-direction:column}h1{font-size:23px}.module-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.meta-item:nth-child(2){border-right:0}.meta-item:nth-child(-n+2){border-bottom:1px solid var(--line)}.masthead-note{max-width:130px} }
+        @media(max-width:760px) { .page{width:calc(100% - 28px);padding-top:20px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.run-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.heading{align-items:flex-start;flex-direction:column}h1{font-size:23px}.module-meta{grid-template-columns:repeat(2,minmax(0,1fr))}.meta-item:nth-child(2){border-right:0}.meta-item:nth-child(-n+2){border-bottom:1px solid var(--line)}.masthead-note{max-width:none;font-size:11px} }
         @media(max-width:420px) { .brand-name{font-size:13px}.logo{max-width:125px}.stat{padding:14px}.stat-value{font-size:22px}.footer{flex-direction:column} }
         @media print {
             @page { size:A4 portrait; margin:12mm; }
             html,body{background:#fff!important;color:#111!important;font-size:10pt;-webkit-print-color-adjust:exact;print-color-adjust:exact}
             .page{width:100%;padding:0;margin:0}
             .masthead{padding-bottom:12px}.logo{max-height:34px}.heading{padding:18px 0 14px}h1{font-size:21pt}
-            .stats{gap:8px;margin-bottom:16px}.stat{min-height:0;padding:11px 13px;break-inside:avoid}.stat-value{font-size:19pt}
+            .stats{gap:8px;margin-bottom:16px}.run-meta{gap:8px;margin-bottom:16px}.run-meta .stat{min-height:0}.run-meta .stat-value{font-size:12pt}.stat{min-height:0;padding:11px 13px;break-inside:avoid}.stat-value{font-size:19pt}
             .section{margin-top:17px}.panel,.stat{box-shadow:none;border-color:#d9dee6}
             .table-wrap{overflow:visible}table{width:100%}thead{display:table-header-group}tr{break-inside:avoid}th,td{padding:7px 8px;font-size:8pt}
             .module-list{gap:7px}.module{break-inside:avoid}.module summary{padding:9px 11px}.module summary:after{display:none}
             details:not([open]) > :not(summary){display:block!important}.console pre{max-height:none;overflow:visible;white-space:pre-wrap}
-            .print-button{display:none!important}.footer{margin-top:16px}
+            .print-button,.expand-all{display:none!important}.footer{margin-top:16px}
             a{color:inherit;text-decoration:none}
         }
     </style>
@@ -115,26 +115,32 @@
                 <span class="brand-name">{{ $brandName }}</span>
             @endif
         </div>
-        <div class="masthead-note">Azure operations<br>Automated synchronization report</div>
+        <div class="masthead-note">Consolidated Cloud Ops Dashboard<br><span class="masthead-subtitle">Automated synchronization report</span></div>
     </header>
 
     <section class="heading">
         <div>
             <h1>Synchronization report</h1>
-            <p class="subtitle">Run {{ $report['run_id'] ?? '—' }} &nbsp;·&nbsp; {{ $report['started_at'] ?? '—' }} to {{ $report['completed_at'] ?? '—' }}</p>
+            <p class="subtitle">Consolidated execution across configured synchronization modules</p>
         </div>
         <span class="status {{ $overallSuccess ? 'success' : 'failed' }}">{{ $report['overall_status'] ?? 'UNKNOWN' }}</span>
     </section>
 
-    <section class="stats" aria-label="Run summary">
+    <section class="run-meta" aria-label="Run information">
+        <article class="stat"><div class="stat-label">Run ID</div><div class="stat-value accent">{{ $report['run_id'] ?? '—' }}</div></article>
+        <article class="stat"><div class="stat-label">Start time</div><div class="stat-value">{{ $report['started_at'] ?? '—' }}</div></article>
+        <article class="stat"><div class="stat-label">End time</div><div class="stat-value">{{ $report['completed_at'] ?? '—' }}</div></article>
         <article class="stat"><div class="stat-label">Total duration</div><div class="stat-value accent">{{ $report['duration'] ?? '—' }}</div></article>
-        <article class="stat"><div class="stat-label">Modules executed</div><div class="stat-value">{{ count($modules) }}</div></article>
-        <article class="stat"><div class="stat-label">Successful</div><div class="stat-value good">{{ $successful }}</div></article>
-        <article class="stat"><div class="stat-label">Failed</div><div class="stat-value bad">{{ $failed }}</div></article>
     </section>
 
     <section class="section">
-        <div class="section-head"><h2>Execution timeline</h2><span class="section-note">{{ count($modules) }} modules in this run</span></div>
+        <div class="section-head details-toolbar"><h2>Synchronization details</h2><button type="button" class="expand-all" id="toggle-all" aria-expanded="false">Expand all</button></div>
+        <section class="stats" aria-label="Run summary">
+            <article class="stat"><div class="stat-label">Modules executed</div><div class="stat-value">{{ count($modules) }}</div></article>
+            <article class="stat"><div class="stat-label">Successful</div><div class="stat-value good">{{ $successful }}</div></article>
+            <article class="stat"><div class="stat-label">Failed</div><div class="stat-value bad">{{ $failed }}</div></article>
+            <article class="stat"><div class="stat-label">Overall status</div><div class="stat-value {{ $overallSuccess ? 'good' : 'bad' }}">{{ $report['overall_status'] ?? 'UNKNOWN' }}</div></article>
+        </section>
         <div class="panel table-wrap">
             @if (count($modules))
                 <table>
@@ -178,9 +184,7 @@
         </section>
     @endif
 
-    <section class="section">
-        <div class="section-head"><h2>Module details</h2><span class="section-note">Expand a module to inspect its execution output</span></div>
-        @if (count($modules))
+    @if (count($modules))
             <div class="module-list">
                 @foreach ($modules as $index => $module)
                     <details class="panel module" {{ ($module['status'] ?? '') !== 'SUCCESS' ? 'open' : '' }}>
@@ -201,10 +205,10 @@
                                 <div class="meta-item"><span class="meta-label">Duration</span><span class="meta-value">{{ $module['duration_formatted'] ?? '—' }}</span></div>
                                 <div class="meta-item"><span class="meta-label">Exit code</span><span class="meta-value">{{ $module['exit_code'] ?? '—' }}</span></div>
                             </div>
-                            <details class="console">
-                                <summary>View console output</summary>
+                            <div class="console">
+                                <div class="console-label">Console output</div>
                                 <pre>{{ $module['output'] ?? 'No console output was recorded.' }}</pre>
-                            </details>
+                            </div>
                         </div>
                     </details>
                 @endforeach
@@ -216,8 +220,30 @@
 
     <footer class="footer">
         <span>Generated {{ $report['generated_at'] ?? '—' }}</span>
-        <span>Run ID: {{ $report['run_id'] ?? '—' }}</span>
+        <span>Generated by CCOD Scheduler</span>
     </footer>
 </main>
+<script>
+    (() => {
+        const modules = Array.from(document.querySelectorAll('.module'));
+        const toggle = document.getElementById('toggle-all');
+        if (!toggle || !modules.length) {
+            if (toggle) toggle.hidden = true;
+            return;
+        }
+        const syncLabel = () => {
+            const expanded = modules.every((module) => module.open);
+            toggle.textContent = expanded ? 'Collapse all' : 'Expand all';
+            toggle.setAttribute('aria-expanded', String(expanded));
+        };
+        toggle.addEventListener('click', () => {
+            const expand = !modules.every((module) => module.open);
+            modules.forEach((module) => { module.open = expand; });
+            syncLabel();
+        });
+        modules.forEach((module) => module.addEventListener('toggle', syncLabel));
+        syncLabel();
+    })();
+</script>
 </body>
 </html>
