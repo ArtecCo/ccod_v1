@@ -75,7 +75,7 @@ The queue worker is detected from the running `php.exe artisan queue:work` proce
 
 ## Sync notifications
 
-The unified `scripts\scheduler\sync-all.php` runner emits `sync.started` before executing the six modules and `sync.completed` after writing the report. The completion payload includes overall status, per-module status, duration in seconds, successful and failed module names, an error summary and the run ID. Standalone module scripts do not send duplicate aggregate notifications.
+The unified `scripts\scheduler\sync-all.php` runner emits `sync.started` before executing the six modules and `sync.completed` after writing the report. The completion payload includes overall status, per-module status, duration in seconds, successful and failed module names, an error summary and the run ID. Standalone module scripts do not send duplicate aggregate notifications. The runner writes the latest structured report to `storage/logs/scheduler/reports/latest.json`; the report is rendered inside the authenticated Developer Filament panel at `/developer/sync-report`. The legacy `/sync-report/latest` URL redirects to that page.
 
 ## Template placeholders
 
