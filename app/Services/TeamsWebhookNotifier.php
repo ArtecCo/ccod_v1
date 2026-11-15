@@ -426,6 +426,14 @@ class TeamsWebhookNotifier
                         ],
                         'spacing' => 'Medium',
                     ]]),
+                    'actions' => strtoupper((string) ($context['overall_status'] ?? '')) === 'SUCCESS'
+                        && filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)
+                        ? [[
+                            'type' => 'Action.OpenUrl',
+                            'title' => 'View Sync Report',
+                            'url' => $context['report_url'],
+                        ]]
+                        : [],
                 ],
             ]],
         ];
