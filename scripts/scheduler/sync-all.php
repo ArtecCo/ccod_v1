@@ -387,8 +387,18 @@ $cssVariables = [
 
 foreach (['primary' => 'primary', 'success' => 'success', 'warning' => 'warning', 'danger' => 'danger', 'info' => 'info', 'gray' => 'gray'] as $key => $prefix) {
     foreach (($themeColors[$key] ?? []) as $shade => $color) {
-        if (is_numeric($shade) && is_string($color) && preg_match('/^#[0-9A-Fa-f]{6}$/', $color)) {
-            $cssVariables["--{$prefix}-{$shade}"] = $color;
+        if (! is_numeric($shade) || ! is_string($color)) {
+            continue;
+        }
+
+        if (preg_match('/^#([0-9A-Fa-f]{6})$/', $color, $matches)) {
+            $cssVariables["--{$prefix}-{$shade}"] = '#' . strtolower($matches[1]);
+            continue;
+        }
+
+        if (preg_match('/^\s*(\d{1,3})\s*,\s*(\d{1,3})\s*,\s*(\d{1,3})\s*$/', $color, $matches)) {
+            $channels = array_map(static fn (string $channel): int => min(255, (int) $channel), array_slice($matches, 1));
+            $cssVariables["--{$prefix}-{$shade}"] = sprintf('#%02x%02x%02x', ...$channels);
         }
     }
 }
@@ -473,7 +483,7 @@ body { margin: 0; background: var(--gray-50, #fafafa); color: var(--gray-950, #0
 .dot.success { color:var(--success-600); }
 .dot.failed { color:var(--danger-600); }
 
-@media(max-width:700px) { .report-summary {grid-template-columns:repeat(2,minmax(0,1fr));} .report-header {flex-direction:column;} .report-module-meta {grid-template-columns:repeat(2,minmax(0,1fr));} .report-module-meta>div:nth-child(2) {border-right:0;} .report-module-meta>div:nth-child(-n+2) {border-bottom:1px solid var(--gray-200);} }
+@media(max-width:700px) { .report-summary {grid-template-columns:repeat(2,minmax(0,1fr));} .report-header {flex-direction:column;} .module-meta {grid-template-columns:repeat(2,minmax(0,1fr));} .module-meta>div:nth-child(2) {border-right:0;} .module-meta>div:nth-child(-n+2) {border-bottom:1px solid var(--gray-200);} }
 @media print { @page {size:A4 portrait;margin:12mm;} body {background:#fff;} .report-shell {width:100%;padding:0;} .report-panel {break-inside:avoid;} .report-console summary {display:none;} .report-console pre {max-height:none;} .report-module {break-inside:avoid;} }
 </style>
 </head>
