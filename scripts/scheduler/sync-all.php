@@ -493,7 +493,8 @@ $filamentThemeLink = $themeAsset !== null
 
 $replacements = [
     '__BRAND_NAME__' => $escape($brandName),
-    '__PRIMARY_COLOR__' => $escape($primaryColor),
+    '__THEME_VARIABLES__' => $themeCss,
+    '__FILAMENT_THEME__' => $filamentThemeLink,
     '__RUN_ID__' => $escape($runId),
     '__COMPLETED_AT__' => $escape($completedAt),
     '__GENERATED_AT__' => $escape($generatedAt),
