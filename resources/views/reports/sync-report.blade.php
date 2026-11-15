@@ -184,10 +184,6 @@
     @endif
 
     <section class="section">
-        <div class="section-head details-toolbar">
-            <h2>Synchronization details</h2>
-            <button type="button" class="expand-all" id="toggle-all" aria-expanded="false">Expand all</button>
-        </div>
         @if (count($modules))
             <div class="module-list">
                 @foreach ($modules as $index => $module)
@@ -231,22 +227,31 @@
     (() => {
         const modules = Array.from(document.querySelectorAll('.module'));
         const toggle = document.getElementById('toggle-all');
-        if (!toggle || !modules.length) {
+        if (!toggle || modules.length === 0) {
             if (toggle) toggle.hidden = true;
             return;
         }
-        const syncLabel = () => {
-            const expanded = modules.every((module) => module.open);
-            toggle.textContent = expanded ? 'Collapse all' : 'Expand all';
-            toggle.setAttribute('aria-expanded', String(expanded));
+
+        const allExpanded = () => modules.every((module) => module.open);
+        const updateToggle = () => {
+            toggle.textContent = allExpanded() ? 'Collapse all' : 'Expand all';
+            toggle.setAttribute('aria-expanded', String(allExpanded()));
         };
-        toggle.addEventListener('click', () => {
-            const expand = !modules.every((module) => module.open);
-            modules.forEach((module) => { module.open = expand; });
-            syncLabel();
+
+        toggle.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const shouldExpand = !allExpanded();
+            modules.forEach((module) => {
+                module.open = shouldExpand;
+            });
+            updateToggle();
         });
-        modules.forEach((module) => module.addEventListener('toggle', syncLabel));
-        syncLabel();
+
+        modules.forEach((module) => {
+            module.addEventListener('toggle', updateToggle);
+        });
+        updateToggle();
     })();
 </script>
 </body>
