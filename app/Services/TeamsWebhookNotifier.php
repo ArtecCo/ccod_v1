@@ -225,18 +225,14 @@ class TeamsWebhookNotifier
         $body = array_values(array_filter([
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
             $isSyncCompletion && in_array($status, ['SUCCESS', 'FAILED'], true) ? [
-                'type' => 'ColumnSet',
-                'columns' => [[
-                    'type' => 'Column',
-                    'width' => 'auto',
-                    'style' => $status === 'SUCCESS' ? 'good' : 'attention',
-                    'items' => [[
-                        'type' => 'TextBlock',
-                        'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
-                        'weight' => 'Bolder',
-                        'wrap' => true,
-                        'spacing' => 'None',
-                    ]],
+                'type' => 'Container',
+                'style' => $status === 'SUCCESS' ? 'good' : 'attention',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
+                    'weight' => 'Bolder',
+                    'wrap' => true,
+                    'spacing' => 'None',
                 ]],
                 'spacing' => 'Small',
             ] : null,
@@ -254,7 +250,8 @@ class TeamsWebhookNotifier
             $dashboardUrl = rtrim((string) config('app.url'), '/') . '/developer';
             $card['actions'] = [[
                 'type' => 'Action.OpenUrl',
-                'title' => 'Open Dashboard',
+                'title' => 'Open CCOD Dashboard',
+                'style' => 'positive',
                 'url' => $dashboardUrl,
             ]];
         }
