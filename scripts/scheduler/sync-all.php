@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 /**
  * Unified scheduler runner for Windows Task Scheduler.
- * Runs all six lightweight scheduler scripts sequentially and writes a
- * printer-friendly HTML report for every run.
+ * Runs all six lightweight scheduler scripts sequentially and writes
+ * structured report data for the Developer Panel.
  */
 
 $basePath = dirname(__DIR__, 2);
