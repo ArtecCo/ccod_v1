@@ -120,7 +120,7 @@
 
     <section class="heading">
         <div>
-            <h1>Synchronization report</h1>
+            <h1>Azure Synchronization report</h1>
             <p class="subtitle">Consolidated execution across configured synchronization modules</p>
         </div>
         <span class="status {{ $overallSuccess ? 'success' : 'failed' }}">{{ $report['overall_status'] ?? 'UNKNOWN' }}</span>
