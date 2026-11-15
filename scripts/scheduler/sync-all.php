@@ -10,6 +10,9 @@ declare(strict_types=1);
 
 $basePath = dirname(__DIR__, 2);
 
+fwrite(STDOUT, PHP_EOL . "Initializing CCOD unified Azure synchronization..." . PHP_EOL);
+fflush(STDOUT);
+
 define('LARAVEL_START', microtime(true));
 require $basePath . '/vendor/autoload.php';
 
@@ -68,9 +71,8 @@ $modules = [
 $rows = [];
 $anyFailure = false;
 
-fwrite(STDOUT, PHP_EOL . "CCOD unified Azure synchronization" . PHP_EOL);
-fwrite(STDOUT, "=================================" . PHP_EOL);
 fwrite(STDOUT, "Run ID: {$runId}" . PHP_EOL . PHP_EOL);
+fflush(STDOUT);
 
 foreach ($modules as $module) {
     $moduleKey = match ($module['name']) {
