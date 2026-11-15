@@ -412,11 +412,21 @@ class TeamsWebhookNotifier
                     'type' => 'AdaptiveCard',
                     'version' => '1.5',
                     'body' => $body,
-                    'actions' => [[
-                        'type' => 'Action.OpenUrl',
+                    'body' => array_merge($body, [[
+                        'type' => 'CompoundButton',
                         'title' => 'Open CCOD Dashboard',
-                        'url' => rtrim((string) config('app.url'), '/') . '/developer',
-                    ]],
+                        'description' => 'View sync health and Azure resources',
+                        'icon' => [
+                            'name' => 'Open',
+                            'style' => 'Filled',
+                            'color' => 'Accent',
+                        ],
+                        'selectAction' => [
+                            'type' => 'Action.OpenUrl',
+                            'url' => rtrim((string) config('app.url'), '/') . '/developer',
+                        ],
+                        'spacing' => 'Medium',
+                    ]]),
                 ],
             ]],
         ];
