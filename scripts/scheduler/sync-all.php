@@ -363,6 +363,31 @@ $overallClass = $overallStatus === 'SUCCESS' ? 'success' : 'failed';
 $successCount = count(array_filter($rows, static fn (array $row): bool => $row['status'] === 'SUCCESS'));
 $failureCount = count($rows) - $successCount;
 $generatedAt = date('Y-m-d H:i:s P');
+$stylingSettings = \\App\\Support\\FilamentStyling::settings();
+$brandName = (string) ($stylingSettings?->brand_name ?: 'CCOD');
+$primarySetting = (string) ($stylingSettings?->primary_color ?: 'amber');
+$primaryColor = match ($primarySetting) {
+    'black' => '#111827',
+    'gray' => '#52525b',
+    'red' => '#dc2626',
+    'orange' => '#ea580c',
+    'amber' => '#d97706',
+    'yellow' => '#ca8a04',
+    'lime' => '#65a30d',
+    'green' => '#16a34a',
+    'emerald' => '#059669',
+    'teal' => '#0d9488',
+    'cyan' => '#0891b2',
+    'sky' => '#0284c7',
+    'blue' => '#2563eb',
+    'indigo' => '#4f46e5',
+    'violet' => '#7c3aed',
+    'purple' => '#9333ea',
+    'fuchsia' => '#c026d3',
+    'pink' => '#db2777',
+    'rose' => '#e11d48',
+    default => preg_match('/^custom:(#[0-9A-Fa-f]{6})$/', $primarySetting, $matches) ? $matches[1] : '#d97706',
+};
 
 $html = <<<'HTML'
 <!doctype html>
@@ -383,7 +408,7 @@ $html = <<<'HTML'
     --success-bg: #edf8f1;
     --danger: #b42336;
     --danger-bg: #fff0f2;
-    --accent: #315f9b;
+    --accent: __PRIMARY_COLOR__;
     --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
 }
 * { box-sizing: border-box; }
@@ -466,7 +491,7 @@ tr:last-child td { border-bottom: 0; }
 <div class="container">
     <header class="header">
         <div>
-            <div class="eyebrow">CCOD · Azure Operations</div>
+            <div class="eyebrow">__BRAND_NAME__ · Azure Operations</div>
             <h1>Synchronization Report</h1>
             <p class="subtitle">Run __RUN_ID__ · Completed __COMPLETED_AT__</p>
         </div>
@@ -506,6 +531,8 @@ tr:last-child td { border-bottom: 0; }
 HTML;
 
 $replacements = [
+    '__BRAND_NAME__' => $escape($brandName),
+    '__PRIMARY_COLOR__' => $escape($primaryColor),
     '__RUN_ID__' => $escape($runId),
     '__COMPLETED_AT__' => $escape($completedAt),
     '__GENERATED_AT__' => $escape($generatedAt),
