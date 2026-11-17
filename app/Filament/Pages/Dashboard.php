@@ -162,8 +162,22 @@ class Dashboard extends BaseDashboard
         }
 
         $user = auth()->guard('web')->user();
-        return $user instanceof User
-            && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $this->record);
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $authorization = app(AccessAuthorizationService::class);
+
+        // Consolidated cost access is granted when the user can view costs
+        // for at least one subscription in their authorized subscription scope.
+        if (in_array($permission, ['cost.view', 'cost.breakdown.view'], true)) {
+            return $authorization->accessibleSubscriptionQuery($user)->get()
+                ->contains(fn (AzureSubscription $subscription): bool =>
+                    $authorization->hasPermission($user, $permission, $subscription)
+                );
+        }
+
+        return $authorization->hasPermission($user, $permission, $this->record);
     }
 
     protected function getHeaderActions(): array
