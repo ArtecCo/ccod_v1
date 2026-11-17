@@ -16,6 +16,7 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Livewire\Attributes\Reactive;
 use Livewire\Attributes\Url;
 
 class ConsolidatedDashboardStats extends BaseWidget
@@ -164,7 +165,7 @@ class ConsolidatedDashboardStats extends BaseWidget
                         : (($difference > 0 ? '+' : ($difference < 0 ? '-' : '')) . $currency . ' ' . number_format(abs($difference), 2)))
                     ->description($differencePercent === null
                         ? 'Previous month unavailable'
-                        : (($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month'))
+                        : (($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month total'))
                     ->descriptionColor($trendColor)->color($trendColor)->icon('heroicon-o-arrow-trending-up'),
                 Stat::make('Subscriptions', (string) count($ids))->icon('heroicon-o-cloud')->color('gray'),
             ];
