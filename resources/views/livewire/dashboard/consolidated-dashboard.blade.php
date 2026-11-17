@@ -36,7 +36,7 @@
     </div>
 
     @if ($activeTab === 'overview')
-        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" :key="'dashboard-stats-'.$filter" />
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="overview" :key="'dashboard-stats-overview-'.$filter" />
 
         <x-filament::section heading="Subscriptions in scope">
             @forelse ($subscriptions as $subscription)
@@ -54,18 +54,7 @@
             @endforelse
         </x-filament::section>
     @elseif ($activeTab === 'cost')
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            @forelse ($costTotals as $total)
-                <x-filament::section>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">Month-to-date cost · {{ $total['currency'] }}</div>
-                    <div class="mt-2 text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ number_format($total['amount'], 2) }}</div>
-                </x-filament::section>
-            @empty
-                <x-filament::section>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">No cost data is available for this scope.</p>
-                </x-filament::section>
-            @endforelse
-        </div>
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="cost" :key="'dashboard-stats-cost-'.$filter" />
         <x-filament::section heading="Subscription cost summary">
             @forelse ($costSubscriptions as $subscription)
                 <div class="flex items-center justify-between gap-4 border-t border-gray-200 py-3 first:border-t-0 dark:border-white/10">
@@ -77,18 +66,7 @@
             @endforelse
         </x-filament::section>
     @elseif ($activeTab === 'alerts')
-        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
-            @foreach (['Sev0', 'Sev1', 'Sev2', 'Sev3', 'Sev4'] as $severity)
-                <x-filament::section>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">{{ $severity }}</div>
-                    <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ number_format((int) ($alertCounts[$severity] ?? 0)) }}</div>
-                </x-filament::section>
-            @endforeach
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Total</div>
-                <div class="mt-2 text-2xl font-semibold text-gray-950 dark:text-white">{{ number_format($alertTotal) }}</div>
-            </x-filament::section>
-        </div>
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="alerts" :key="'dashboard-stats-alerts-'.$filter" />
         <x-filament::section heading="Latest alerts">
             @forelse ($recentAlerts as $alert)
                 <div class="flex flex-col gap-2 border-t border-gray-200 py-3 first:border-t-0 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
@@ -103,28 +81,12 @@
             @endforelse
         </x-filament::section>
     @elseif ($activeTab === 'security')
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Assessments</div>
-                <div class="mt-2 text-3xl font-semibold text-gray-950 dark:text-white">{{ number_format((int) ($securityStats?->total ?? 0)) }}</div>
-            </x-filament::section>
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Unhealthy</div>
-                <div class="mt-2 text-3xl font-semibold text-gray-950 dark:text-white">{{ number_format((int) ($securityStats?->unhealthy ?? 0)) }}</div>
-            </x-filament::section>
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">High severity</div>
-                <div class="mt-2 text-3xl font-semibold text-gray-950 dark:text-white">{{ number_format((int) ($securityStats?->high ?? 0)) }}</div>
-            </x-filament::section>
-        </div>
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="security" :key="'dashboard-stats-security-'.$filter" />
         <x-filament::section>
             <p class="text-sm text-gray-500 dark:text-gray-400">Security assessment totals are calculated only from subscriptions in the selected dashboard scope.</p>
         </x-filament::section>
     @elseif ($activeTab === 'resources')
-        <x-filament::section>
-            <x-slot name="heading">Total discovered resources</x-slot>
-            <div class="text-3xl font-semibold text-gray-950 dark:text-white">{{ number_format($resourceCount) }}</div>
-        </x-filament::section>
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="resources" :key="'dashboard-stats-resources-'.$filter" />
         <x-filament::section heading="Resource types">
             @forelse ($resourcesByType as $resourceType)
                 <div class="flex items-center justify-between gap-4 border-t border-gray-200 py-3 first:border-t-0 dark:border-white/10">
