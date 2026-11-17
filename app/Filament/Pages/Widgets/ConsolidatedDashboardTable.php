@@ -27,7 +27,7 @@ class ConsolidatedDashboardTable extends BaseWidget
 
     protected static bool $isLazy = true;
 
-    protected int | string | array | null $columnSpan = 'full';
+    protected int | string | array $columnSpan = 'full';
 
     protected function getTableQuery(): Builder
     {
