@@ -11,10 +11,12 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Livewire\Attributes\Reactive;
 
 class ConsolidatedDashboardStats extends BaseWidget
 {
-    #[Reactive]\n    public string $filter = 'all';
+    #[Reactive]
+    public string $filter = 'all';
 
     protected static bool $isLazy = true;
 
