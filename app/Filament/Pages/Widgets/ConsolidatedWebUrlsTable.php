@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Grouping\Group;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
 use Livewire\Attributes\On;
@@ -108,6 +109,12 @@ class ConsolidatedWebUrlsTable extends TableWidget
                 TextColumn::make('ssl_days_remaining')->label('SSL Days')->placeholder('—')->sortable(),
                 TextColumn::make('last_checked_at')->label('Last Checked')->dateTime()->placeholder('Never')->sortable(),
             ])
+            ->groups([
+                Group::make('subscription.display_name')
+                    ->label('Subscription')
+                    ->collapsible(),
+            ])
+            ->defaultGroup('subscription.display_name')
             ->defaultSort('url')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(25)
