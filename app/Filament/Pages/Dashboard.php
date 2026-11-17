@@ -42,10 +42,10 @@ class Dashboard extends BaseDashboard
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'cost'])->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedCostHistoryChart::class)->lazy()->columnSpan(1),
                     Livewire::make(ConsolidatedCostHistoryTable::class)->lazy()->columnSpan(1),
-                    Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'cost'])->lazy()->columnSpanFull(),
                 ], 2),
                 $this->dashboardTab('Alerts', 'alerts.view', 'alerts', [
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
+                    Livewire::make(ConsolidatedSeverityChart::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
                 ], 1),
                 $this->dashboardTab('Security', 'security.view', 'security', [
