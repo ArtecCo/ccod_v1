@@ -6,7 +6,6 @@ namespace App\Filament\Pages\Widgets;
 
 use App\Models\AzureAlert;
 use App\Models\AzureSecurityAssessment;
-use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
@@ -16,7 +15,7 @@ use Livewire\Attributes\Reactive;
 class ConsolidatedSeverityChart extends ChartWidget
 {
     #[Reactive]
-    public string $filter = 'all';
+    public ?string $filter = 'all';
 
     #[Reactive]
     public string $activeTab = 'alerts';
@@ -41,9 +40,9 @@ class ConsolidatedSeverityChart extends ChartWidget
         $authorization = app(AccessAuthorizationService::class);
         $query = $authorization->accessibleSubscriptionQuery($user);
 
-        if (preg_match('/^project:(\d+)$/', $this->filter, $matches) === 1) {
+        if (preg_match('/^project:(\\d+)$/', (string) $this->filter, $matches) === 1) {
             $query->whereHas('projects', fn ($q) => $q->whereKey((int) $matches[1]));
-        } elseif (preg_match('/^business_unit:(\d+)$/', $this->filter, $matches) === 1) {
+        } elseif (preg_match('/^business_unit:(\\d+)$/', (string) $this->filter, $matches) === 1) {
             $query->whereHas('projects', fn ($q) => $q->where('business_unit_id', (int) $matches[1]));
         } elseif ($this->filter !== 'all') {
             abort(403);
