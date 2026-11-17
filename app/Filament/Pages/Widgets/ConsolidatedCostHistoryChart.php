@@ -10,11 +10,11 @@ use App\Services\AccessAuthorizationService;
 use App\Services\ConsolidatedCostHistoryService;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
-use Livewire\Attributes\Reactive;
+use Livewire\Attributes\Url;
 
 class ConsolidatedCostHistoryChart extends ChartWidget
 {
-    #[Reactive]
+    #[Url(as: 'scope', history: true)]
     public string $scopeFilter = 'all';
 
     protected ?string $heading = 'Cost Trend';
