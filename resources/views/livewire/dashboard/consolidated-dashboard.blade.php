@@ -49,30 +49,7 @@
     </div>
 
     @if ($activeTab === 'overview')
-        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Accessible subscriptions</div>
-                <div class="mt-2 text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ number_format($subscriptionCount) }}</div>
-                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Within your access scope</div>
-            </x-filament::section>
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Projects in scope</div>
-                <div class="mt-2 text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ number_format($projectCount) }}</div>
-                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Matching selected filter</div>
-            </x-filament::section>
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Active alerts</div>
-                <div class="mt-2 text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ number_format($alertTotal) }}</div>
-                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Across permitted subscriptions</div>
-            </x-filament::section>
-            <x-filament::section>
-                <div class="text-sm text-gray-500 dark:text-gray-400">Resources</div>
-                <div class="mt-2 text-3xl font-semibold tracking-tight text-gray-950 dark:text-white">{{ number_format($resourceCount) }}</div>
-                <div class="mt-1 text-xs text-gray-500 dark:text-gray-400">Discovered resources</div>
-            </x-filament::section>
-        </div>
-
-        <x-filament::section heading="Subscriptions in scope">
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" :key="'dashboard-stats-'.$filter" />\n\n        <x-filament::section heading="Subscriptions in scope">
             @forelse ($subscriptions as $subscription)
                 <div class="flex flex-col gap-2 border-t border-gray-200 py-3 first:border-t-0 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
