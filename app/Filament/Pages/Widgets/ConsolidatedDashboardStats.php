@@ -62,35 +62,100 @@ class ConsolidatedDashboardStats extends BaseWidget
 
         if ($this->activeTab === 'cost') {
             $ids = $idsFor('cost.view');
-            $latestPeriod = AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)
-                ->where('granularity', 'monthly')->max('period_start');
-            $current = $latestPeriod !== null
-                ? (float) AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)->where('granularity', 'monthly')->whereDate('period_start', $latestPeriod)->sum('amount')
-                : (float) AzureSubscription::query()->whereIn('subscription_id', $ids)->sum('mtd_spend_eur');
-            $previousPeriod = $latestPeriod !== null
-                ? AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)->where('granularity', 'monthly')->whereDate('period_start', '<', $latestPeriod)->max('period_start')
-                : null;
-            $previous = $previousPeriod !== null
-                ? (float) AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)->where('granularity', 'monthly')->whereDate('period_start', $previousPeriod)->sum('amount')
-                : null;
-            $difference = $previous !== null ? $current - $previous : null;
-            $differencePercent = $previous !== null && $previous != 0.0 ? ($difference / abs($previous)) * 100 : null;
+            $currentMonth = now()->startOfMonth();
+            $historyStart = $currentMonth->copy()->subMonths(11);
 
-            $budget = (float) AzureBudget::query()->whereIn('subscription_id', $ids)->sum('amount');
-            $forecast = (float) AzureSubscription::query()->whereIn('subscription_id', $ids)
-                ->with('costForecast')->get()
-                ->sum(fn (AzureSubscription $subscription): float =>
-                    (float) ($subscription->costs()->where('granularity', 'monthly')->orderByDesc('period_start')->value('amount') ?? 0)
-                    + (float) ($subscription->costForecast?->forecast_amount ?? 0)
-                );
+            // One bounded read for the current month and the preceding 11 months.
+            $costRows = AzureSubscriptionCost::query()
+                ->whereIn('subscription_id', $ids)
+                ->where('granularity', 'monthly')
+                ->whereBetween('period_start', [$historyStart->toDateString(), $currentMonth->toDateString()])
+                ->orderBy('period_start')
+                ->get(['period_start', 'amount', 'currency']);
+
+            // Amounts in different currencies must never be added together.
+            $costCurrencies = $costRows->pluck('currency')->filter()->unique()->values();
+            $currency = $costCurrencies->count() === 1 ? (string) $costCurrencies->first() : null;
+
+            $monthlyTotals = $currency !== null
+                ? $costRows->groupBy(fn (AzureSubscriptionCost $row): string => $row->period_start->format('Y-m'))
+                    ->map(fn ($rows): float => (float) $rows->sum(fn (AzureSubscriptionCost $row): float => (float) $row->amount))
+                : collect();
+
+            $currentKey = $currentMonth->format('Y-m');
+            $previousKey = $currentMonth->copy()->subMonth()->format('Y-m');
+            $current = $monthlyTotals->has($currentKey) ? $monthlyTotals->get($currentKey) : null;
+            $previous = $monthlyTotals->has($previousKey) ? $monthlyTotals->get($previousKey) : null;
+            $difference = $current !== null && $previous !== null ? $current - $previous : null;
+            $differencePercent = $difference !== null && $previous != 0.0
+                ? ($difference / abs($previous)) * 100
+                : null;
+
+            $labels = [];
+            $sparkline = [];
+            for ($month = $historyStart->copy(); $month->lte($currentMonth); $month->addMonth()) {
+                $key = $month->format('Y-m');
+                $labels[] = $month->format('M');
+                $sparkline[] = $monthlyTotals->has($key) ? $monthlyTotals->get($key) : null;
+            }
+
+            $budgetRows = AzureBudget::query()
+                ->whereIn('subscription_id', $ids)
+                ->get(['amount', 'currency']);
+            $budgetCurrencies = $budgetRows->pluck('currency')->filter()->unique();
+            $budgetCurrency = $budgetCurrencies->count() === 1 ? (string) $budgetCurrencies->first() : null;
+            $budget = $budgetCurrency !== null
+                ? (float) $budgetRows->sum(fn (AzureBudget $row): float => (float) $row->amount)
+                : null;
+
+            $forecastRows = \\App\\Models\\AzureCostForecast::query()
+                ->whereIn('subscription_id', $ids)
+                ->get(['forecast_amount', 'currency']);
+            $forecastCurrencies = $forecastRows->pluck('currency')->filter()->unique();
+            $forecastCurrency = $forecastCurrencies->count() === 1 ? (string) $forecastCurrencies->first() : null;
+            $forecast = $forecastCurrency !== null && $current !== null && $currency === $forecastCurrency
+                ? $current + (float) $forecastRows->sum(fn ($row): float => (float) $row->forecast_amount)
+                : null;
 
             $trendColor = $difference === null ? 'gray' : ($difference > 0 ? 'danger' : ($difference < 0 ? 'success' : 'primary'));
+            $mtdStat = Stat::make('MTD Cost', $current === null || $currency === null
+                    ? '—'
+                    : $currency . ' ' . number_format($current, 2))
+                ->icon('heroicon-o-banknotes')
+                ->color($trendColor);
+
+            if (count(array_filter($sparkline, fn ($value): bool => $value !== null)) >= 2 && $currency !== null) {
+                $mtdStat = $mtdStat->chart($sparkline)->chartColor($trendColor);
+            }
+
+            if ($differencePercent !== null) {
+                $mtdStat = $mtdStat
+                    ->description(($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month')
+                    ->descriptionIcon($difference > 0
+                        ? 'heroicon-m-arrow-trending-up'
+                        : ($difference < 0 ? 'heroicon-m-arrow-trending-down' : 'heroicon-m-minus'))
+                    ->descriptionColor($trendColor);
+            } else {
+                $mtdStat = $mtdStat->description('Previous month unavailable');
+            }
+
             return [
-                Stat::make('MTD Cost', 'EUR ' . number_format($current, 2))->icon('heroicon-o-banknotes')->color($trendColor),
-                Stat::make('Budget', 'EUR ' . number_format($budget, 2))->icon('heroicon-o-wallet')->color('primary'),
-                Stat::make('Forecast', 'EUR ' . number_format($forecast, 2))->icon('heroicon-o-chart-bar')->color('primary'),
-                Stat::make('MoM Difference', $difference === null ? '—' : (($difference > 0 ? '+' : ($difference < 0 ? '-' : '')) . 'EUR ' . number_format(abs($difference), 2)))
-                    ->description($differencePercent === null ? 'Previous month unavailable' : (($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month'))
+                $mtdStat,
+                Stat::make('Budget', $budget === null || $budgetCurrency === null
+                        ? '—'
+                        : $budgetCurrency . ' ' . number_format($budget, 2))
+                    ->icon('heroicon-o-wallet')->color('primary'),
+                Stat::make('Forecast', $forecast === null || $forecastCurrency === null
+                        ? '—'
+                        : $forecastCurrency . ' ' . number_format($forecast, 2))
+                    ->description('For ' . $currentMonth->format('M Y'))
+                    ->icon('heroicon-o-chart-bar')->color('primary'),
+                Stat::make('MoM Difference', $difference === null || $currency === null
+                        ? '—'
+                        : (($difference > 0 ? '+' : ($difference < 0 ? '-' : '')) . $currency . ' ' . number_format(abs($difference), 2)))
+                    ->description($differencePercent === null
+                        ? 'Previous month unavailable'
+                        : (($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month'))
                     ->descriptionColor($trendColor)->color($trendColor)->icon('heroicon-o-arrow-trending-up'),
                 Stat::make('Subscriptions', (string) count($ids))->icon('heroicon-o-cloud')->color('gray'),
             ];
