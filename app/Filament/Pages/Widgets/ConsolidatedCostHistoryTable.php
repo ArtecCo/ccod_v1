@@ -12,11 +12,11 @@ use App\Services\ConsolidatedCostHistoryService;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
-use Livewire\Attributes\Reactive;
+use Livewire\Attributes\Url;
 
 class ConsolidatedCostHistoryTable extends TableWidget
 {
-    #[Reactive]
+    #[Url(as: 'scope', history: true)]
     public string $scopeFilter = 'all';
 
     protected static bool $isLazy = true;
