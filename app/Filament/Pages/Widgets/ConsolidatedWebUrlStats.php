@@ -55,10 +55,10 @@ class ConsolidatedWebUrlStats extends BaseWidget
         ];
 
         return [
-            Stat::make('Total URLs', new HtmlString('<span style="color: #2563eb;">' . e(number_format($total)) . '</span>'))
+            Stat::make('Total URLs', number_format($total))
                 ->icon('heroicon-o-globe-alt')
                 ->extraAttributes($card('all')),
-            Stat::make('Total Live', new HtmlString('<span style="color: #16a34a;">' . e(number_format($live)) . '</span>'))
+            Stat::make('Total Live', number_format($live))
                 ->icon('heroicon-o-check-circle')
                 ->extraAttributes($card('live')),
             Stat::make('Total Down', new HtmlString('<span style="color: #dc2626;">' . e(number_format($down)) . '</span>'))
