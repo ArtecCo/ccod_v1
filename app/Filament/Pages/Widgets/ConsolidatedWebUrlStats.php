@@ -10,7 +10,6 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Illuminate\Support\Facades\URL;
 
 class ConsolidatedWebUrlStats extends BaseWidget
 {
