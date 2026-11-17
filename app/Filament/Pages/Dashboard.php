@@ -1,22 +1,22 @@
 <?php
 
-namespace App\\Filament\\Pages;
+namespace App\Filament\Pages;
 
-use App\\Livewire\\Dashboard\\ConsolidatedDashboard;
-use App\\Filament\\Pages\\Widgets\\ConsolidatedDashboardStats;
-use App\\Filament\\Pages\\Widgets\\ConsolidatedSeverityChart;
-use App\\Filament\\Pages\\Widgets\\ConsolidatedDashboardTable;
-use App\\Filament\\Pages\\Widgets\\ConsolidatedCostHistoryChart;
-use App\\Filament\\Pages\\Widgets\\ConsolidatedCostHistoryTable;
-use App\\Models\\AzureSubscription;
-use App\\Models\\User;
-use App\\Services\\AccessAuthorizationService;
-use Filament\\Actions\\Action;
-use Filament\\Pages\\Dashboard as BaseDashboard;
-use Filament\\Schemas\\Components\\Livewire;
-use Filament\\Schemas\\Components\\Tabs;
-use Filament\\Schemas\\Components\\Tabs\\Tab;
-use Filament\\Schemas\\Schema;
+use App\Livewire\Dashboard\ConsolidatedDashboard;
+use App\Filament\Pages\Widgets\ConsolidatedDashboardStats;
+use App\Filament\Pages\Widgets\ConsolidatedSeverityChart;
+use App\Filament\Pages\Widgets\ConsolidatedDashboardTable;
+use App\Filament\Pages\Widgets\ConsolidatedCostHistoryChart;
+use App\Filament\Pages\Widgets\ConsolidatedCostHistoryTable;
+use App\Models\AzureSubscription;
+use App\Models\User;
+use App\Services\AccessAuthorizationService;
+use Filament\Actions\Action;
+use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
 {
