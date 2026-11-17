@@ -163,6 +163,7 @@ class ConsolidatedWebUrlsTable extends TableWidget
                     ->collapsible(),
             ])
             ->defaultGroup('subscription.display_name')
+            ->groupingDirectionSettingHidden()
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(25)
             ->striped(false)
