@@ -8,6 +8,7 @@ use App\Models\AzureSubscription;
 use App\Models\SubscriptionWebUrl;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
+use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
@@ -78,6 +79,30 @@ class ConsolidatedWebUrlsTable extends TableWidget
         return $query;
     }
 
+    private function exportableSubscriptionIds(): array
+    {
+        $user = auth()->guard('web')->user();
+
+        if (! $user instanceof User) {
+            return [];
+        }
+
+        $authorization = app(AccessAuthorizationService::class);
+
+        return $authorization->accessibleSubscriptionQuery($user)
+            ->get()
+            ->filter(fn (AzureSubscription $subscription): bool =>
+                $authorization->hasPermission($user, 'urls.export', $subscription)
+            )
+            ->pluck('subscription_id')
+            ->all();
+    }
+
+    private function canExport(): bool
+    {
+        return $this->exportableSubscriptionIds() !== [];
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -108,7 +133,6 @@ class ConsolidatedWebUrlsTable extends TableWidget
                 TextColumn::make('subscription.display_name')
                     ->label('Subscription')
                     ->searchable()
-                    ->sortable()
                     ->weight('medium'),
                 TextColumn::make('url')
                     ->label('URL')
@@ -120,11 +144,11 @@ class ConsolidatedWebUrlsTable extends TableWidget
                 IconColumn::make('is_active')->label('Active')->boolean(),
                 IconColumn::make('use_proxy')->label('Proxy')->boolean()->tooltip('Uses the configured corporate HTTP proxy'),
                 IconColumn::make('is_live')->label('Live')->boolean()->placeholder('Not checked'),
-                TextColumn::make('http_status')->label('HTTP')->placeholder('—')->sortable(),
+                TextColumn::make('http_status')->label('HTTP')->placeholder('—'),
                 TextColumn::make('response_time_ms')
                     ->label('Response')
                     ->formatStateUsing(fn ($state): string => $state === null ? '—' : $state . ' ms')
-                    ->sortable(),
+                    ,
                 IconColumn::make('ssl_status')->label('SSL')->boolean()->placeholder('N/A'),
                 TextColumn::make('ssl_provider')->label('SSL Provider')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ssl_subject')->label('SSL Subject')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
@@ -140,11 +164,16 @@ class ConsolidatedWebUrlsTable extends TableWidget
                     ->collapsible(),
             ])
             ->defaultGroup('subscription.display_name')
-            ->defaultSort('url')
             ->paginated([25, 50, 100])
             ->defaultPaginationPageOption(25)
             ->striped(false)
             ->recordActions([])
-            ->toolbarActions([]);
+            ->toolbarActions([
+                XlsxExportAction::make()
+                    ->visible(fn (): bool => $this->canExport())
+                    ->queryUsing(fn (\\Illuminate\\Database\\Eloquent\\Builder $query): \\Illuminate\\Database\\Eloquent\\Builder =>
+                        $query->whereIn('subscription_id', $this->exportableSubscriptionIds())
+                    ),
+            ]);
     }
 }
