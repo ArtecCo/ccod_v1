@@ -37,6 +37,10 @@
         <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="overview" :key="'dashboard-table-overview-'.$filter" />
     @elseif ($activeTab === 'cost')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="cost" :key="'dashboard-stats-cost-'.$filter" />
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <livewire:filament.pages.widgets.consolidated-cost-history-chart :scope-filter="$filter" :key="'dashboard-cost-history-chart-'.$filter" />
+            <livewire:filament.pages.widgets.consolidated-cost-history-table :scope-filter="$filter" :key="'dashboard-cost-history-table-'.$filter" />
+        </div>
         <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="cost" :key="'dashboard-table-cost-'.$filter" />
     @elseif ($activeTab === 'alerts')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="alerts" :key="'dashboard-stats-alerts-'.$filter" />
