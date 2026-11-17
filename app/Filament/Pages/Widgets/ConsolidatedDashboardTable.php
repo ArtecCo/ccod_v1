@@ -27,7 +27,7 @@ class ConsolidatedDashboardTable extends BaseWidget
 
     protected static bool $isLazy = true;
 
-    protected int | array | null $columnSpan = 'full';
+    protected int | string | array | null $columnSpan = 'full';
 
     protected function getTableQuery(): Builder
     {
@@ -126,11 +126,4 @@ class ConsolidatedDashboardTable extends BaseWidget
         };
     }
 
-    public function table(Table $table): Table
-    {
-        return parent::table($table)
-            ->defaultPaginationPageOption(10)
-            ->paginated([10, 25, 50])
-            ->striped();
-    }
 }
