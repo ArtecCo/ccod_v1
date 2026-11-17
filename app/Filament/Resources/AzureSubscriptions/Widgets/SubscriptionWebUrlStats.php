@@ -6,7 +6,7 @@ namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 
 use App\Models\AzureSubscription;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
-use Filament\Widgets\StatsOverviewWidget\\Stat;
+use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class SubscriptionWebUrlStats extends BaseWidget
 {
