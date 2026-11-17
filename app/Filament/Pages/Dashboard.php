@@ -3,10 +3,14 @@
 namespace App\Filament\Pages;
 
 use App\Livewire\Dashboard\ConsolidatedDashboard;
+use App\Models\AzureSubscription;
 use App\Models\User;
+use App\Services\AccessAuthorizationService;
 use Filament\Actions\Action;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
@@ -23,8 +27,34 @@ class Dashboard extends BaseDashboard
     public function content(Schema $schema): Schema
     {
         return $schema->components([
-            Livewire::make(ConsolidatedDashboard::class)->columnSpanFull(),
+            Tabs::make('Dashboard Navigation')->tabs([
+                Tab::make('Overview')->schema([
+                    Livewire::make(ConsolidatedDashboard::class, ['activeTab' => 'overview'])->lazy()->columnSpanFull(),
+                ])->columns(1),
+                $this->dashboardTab('Cost', 'cost.view', 'cost'),
+                $this->dashboardTab('Alerts', 'alerts.view', 'alerts'),
+                $this->dashboardTab('Security', 'security.view', 'security'),
+                $this->dashboardTab('Resources', 'resources.view', 'resources'),
+            ])->persistTabInQueryString()->contained(false)
+                ->extraAttributes(['class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none'])
+                ->columnSpanFull(),
         ]);
+    }
+
+    protected function dashboardTab(string $label, string $permission, string $key): Tab
+    {
+        return Tab::make($label)
+            ->visible(function () use ($permission): bool {
+                $user = auth()->guard('web')->user();
+                if (! $user instanceof User) return false;
+
+                $authorization = app(AccessAuthorizationService::class);
+                return $authorization->accessibleSubscriptionQuery($user)->get()
+                    ->contains(fn (AzureSubscription $subscription): bool => $authorization->hasPermission($user, $permission, $subscription));
+            })
+            ->schema([
+                Livewire::make(ConsolidatedDashboard::class, ['activeTab' => $key])->lazy()->columnSpanFull(),
+            ])->columns(1);
     }
 
     public function getWidgets(): array
