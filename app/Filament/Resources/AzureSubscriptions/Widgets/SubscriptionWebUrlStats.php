@@ -30,8 +30,8 @@ class SubscriptionWebUrlStats extends BaseWidget
             'role' => 'button',
             'tabindex' => '0',
             'class' => 'cursor-pointer',
-            'x-on:click' => "\\$dispatch('filter-subscription-web-urls', { filter: '{$filter}' })",
-            'x-on:keydown.enter' => "\\$dispatch('filter-subscription-web-urls', { filter: '{$filter}' })",
+            'x-on:click' => '$dispatch(\'filter-subscription-web-urls\', { filter: \'{$filter}\' })',
+            'x-on:keydown.enter' => '$dispatch(\'filter-subscription-web-urls\', { filter: \'{$filter}\' })',
         ];
 
         return [
