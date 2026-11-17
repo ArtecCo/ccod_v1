@@ -14,7 +14,7 @@ use Filament\Widgets\StatsOverviewWidget\Stat;
 
 class ConsolidatedDashboardStats extends BaseWidget
 {
-    public string $filter = 'all';
+    #[Reactive]\n    public string $filter = 'all';
 
     protected static bool $isLazy = true;
 
