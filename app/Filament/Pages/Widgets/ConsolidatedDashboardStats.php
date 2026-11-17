@@ -5,7 +5,9 @@ declare(strict_types=1);
 namespace App\Filament\Pages\Widgets;
 
 use App\Models\AzureAlert;
+use App\Models\AzureBudget;
 use App\Models\AzureSecurityAssessment;
+use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
 use App\Models\AzureSubscriptionCost;
 use App\Models\BillingResource;
@@ -24,10 +26,8 @@ class ConsolidatedDashboardStats extends BaseWidget
     public string $activeTab = 'overview';
 
     protected static bool $isLazy = true;
-
     protected ?string $pollingInterval = null;
-
-    protected int | array | null $columns = 4;
+    protected int | array | null $columns = 5;
 
     protected function getStats(): array
     {
@@ -45,100 +45,99 @@ class ConsolidatedDashboardStats extends BaseWidget
             abort(403);
         }
 
-        $models = $subscriptions->with('projects')->get();
-        $projectCount = $models->flatMap(fn (AzureSubscription $subscription) => $subscription->projects)->unique('id')->count();
-
-        $permittedIds = function (string $permission) use ($models, $authorization, $user): array {
-            return $models
-                ->filter(fn (AzureSubscription $subscription): bool => $authorization->hasPermission($user, $permission, $subscription))
-                ->pluck('subscription_id')->values()->all();
-        };
+        $models = $subscriptions->get();
+        $idsFor = fn (string $permission): array => $models
+            ->filter(fn (AzureSubscription $subscription): bool => $authorization->hasPermission($user, $permission, $subscription))
+            ->pluck('subscription_id')->values()->all();
 
         if ($this->activeTab === 'cost') {
-            $ids = $permittedIds('cost.view');
-            $totals = AzureSubscriptionCost::query()
-                ->whereIn('subscription_id', $ids)
-                ->where('granularity', 'monthly')
-                ->whereDate('period_start', '>=', now()->startOfMonth()->toDateString())
-                ->whereDate('period_start', '<=', now()->toDateString())
-                ->selectRaw('currency, SUM(amount) AS total')
-                ->groupBy('currency')->get();
+            $ids = $idsFor('cost.view');
+            $latestPeriod = AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)
+                ->where('granularity', 'monthly')->max('period_start');
+            $current = $latestPeriod !== null
+                ? (float) AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)->where('granularity', 'monthly')->whereDate('period_start', $latestPeriod)->sum('amount')
+                : (float) AzureSubscription::query()->whereIn('subscription_id', $ids)->sum('mtd_spend_eur');
+            $previousPeriod = $latestPeriod !== null
+                ? AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)->where('granularity', 'monthly')->whereDate('period_start', '<', $latestPeriod)->max('period_start')
+                : null;
+            $previous = $previousPeriod !== null
+                ? (float) AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)->where('granularity', 'monthly')->whereDate('period_start', $previousPeriod)->sum('amount')
+                : null;
+            $difference = $previous !== null ? $current - $previous : null;
+            $differencePercent = $previous !== null && $previous != 0.0 ? ($difference / abs($previous)) * 100 : null;
 
-            if ($totals->isEmpty() && $ids !== []) {
-                return [
-                    Stat::make('Month-to-date Cost', 'EUR ' . number_format((float) AzureSubscription::query()->whereIn('subscription_id', $ids)->sum('mtd_spend_eur'), 2))
-                        ->icon('heroicon-o-banknotes')->color('primary'),
-                    Stat::make('Subscriptions with Cost Access', (string) count($ids))
-                        ->icon('heroicon-o-cloud')->color('gray'),
-                ];
-            }
+            $budget = (float) AzureBudget::query()->whereIn('subscription_id', $ids)->sum('amount');
+            $forecast = (float) AzureSubscription::query()->whereIn('subscription_id', $ids)
+                ->with('costForecast')->get()
+                ->sum(fn (AzureSubscription $subscription): float =>
+                    (float) ($subscription->costs()->where('granularity', 'monthly')->orderByDesc('period_start')->value('amount') ?? 0)
+                    + (float) ($subscription->costForecast?->forecast_amount ?? 0)
+                );
 
-            return $totals->map(fn ($row): Stat => Stat::make(
-                'Month-to-date Cost · ' . strtoupper((string) ($row->currency ?: 'EUR')),
-                number_format((float) $row->total, 2),
-            )->icon('heroicon-o-banknotes')->color('primary'))->all();
-        }
-
-        if ($this->activeTab === 'alerts') {
-            $ids = $permittedIds('alerts.view');
-            $counts = AzureAlert::query()->whereIn('subscription_id', $ids)
-                ->selectRaw('severity, COUNT(*) AS aggregate')->groupBy('severity')->pluck('aggregate', 'severity');
-
+            $trendColor = $difference === null ? 'gray' : ($difference > 0 ? 'danger' : ($difference < 0 ? 'success' : 'primary'));
             return [
-                Stat::make('Sev 0', (string) ($counts['Sev0'] ?? 0))->icon('heroicon-o-exclamation-triangle')->color('danger'),
-                Stat::make('Sev 1', (string) ($counts['Sev1'] ?? 0))->icon('heroicon-o-exclamation-triangle')->color('danger'),
-                Stat::make('Sev 2', (string) ($counts['Sev2'] ?? 0))->icon('heroicon-o-exclamation-circle')->color('warning'),
-                Stat::make('Sev 3', (string) ($counts['Sev3'] ?? 0))->icon('heroicon-o-exclamation-circle')->color('warning'),
-                Stat::make('Sev 4', (string) ($counts['Sev4'] ?? 0))->icon('heroicon-o-information-circle')->color('gray'),
-                Stat::make('Total Alerts', (string) $counts->sum())->icon('heroicon-o-bell-alert')->color('primary'),
+                Stat::make('MTD Cost', 'EUR ' . number_format($current, 2))->icon('heroicon-o-banknotes')->color($trendColor),
+                Stat::make('Budget', 'EUR ' . number_format($budget, 2))->icon('heroicon-o-wallet')->color('primary'),
+                Stat::make('Forecast', 'EUR ' . number_format($forecast, 2))->icon('heroicon-o-chart-bar')->color('primary'),
+                Stat::make('MoM Difference', $difference === null ? '—' : (($difference > 0 ? '+' : ($difference < 0 ? '-' : '')) . 'EUR ' . number_format(abs($difference), 2)))
+                    ->description($differencePercent === null ? 'Previous month unavailable' : (($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month'))
+                    ->descriptionColor($trendColor)->color($trendColor)->icon('heroicon-o-arrow-trending-up'),
+                Stat::make('Subscriptions', (string) count($ids))->icon('heroicon-o-cloud')->color('gray'),
             ];
         }
 
         if ($this->activeTab === 'security') {
-            $ids = $permittedIds('security.view');
-            $stats = AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
-                ->selectRaw('COUNT(*) AS total,
-                    SUM(CASE WHEN state = ? THEN 1 ELSE 0 END) AS unhealthy,
-                    SUM(CASE WHEN state = ? AND severity = ? THEN 1 ELSE 0 END) AS high',
-                    ['Unhealthy', 'Unhealthy', 'High'])->first();
+            $ids = $idsFor('security.view');
+            $latestScores = AzureSecurityScore::query()->whereIn('subscription_id', $ids)
+                ->whereIn('id', function ($query) use ($ids): void {
+                    $query->selectRaw('MAX(id)')->from('azure_security_scores')
+                        ->whereIn('subscription_id', $ids)->groupBy('subscription_id');
+                })->get(['subscription_id', 'percentage_score']);
+            $average = $latestScores->isNotEmpty()
+                ? $latestScores->avg(fn ($score): float => (float) $score->percentage_score * 100)
+                : null;
+            $high = AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
+                ->where('state', 'Unhealthy')->where('severity', 'High')->count();
+            $low = $latestScores->filter(fn ($score): bool => (float) $score->percentage_score * 100 < 80)->count();
 
             return [
-                Stat::make('Assessments', number_format((int) ($stats?->total ?? 0)))->icon('heroicon-o-shield-check')->color('primary'),
-                Stat::make('Unhealthy', number_format((int) ($stats?->unhealthy ?? 0)))->icon('heroicon-o-exclamation-triangle')->color(((int) ($stats?->unhealthy ?? 0)) > 0 ? 'danger' : 'success'),
-                Stat::make('High Severity', number_format((int) ($stats?->high ?? 0)))->icon('heroicon-o-shield-exclamation')->color(((int) ($stats?->high ?? 0)) > 0 ? 'danger' : 'success'),
-                Stat::make('Subscriptions in Scope', (string) count($ids))->icon('heroicon-o-cloud')->color('gray'),
+                Stat::make('Average Security Score', $average === null ? '—' : number_format($average, 2) . '%')
+                    ->icon('heroicon-o-shield-check')->color($average !== null && $average < 80 ? 'danger' : 'success'),
+                Stat::make('Subscriptions Below 80%', (string) $low)->icon('heroicon-o-exclamation-triangle')->color($low > 0 ? 'danger' : 'success'),
+                Stat::make('High Severity Recommendations', (string) $high)->icon('heroicon-o-shield-exclamation')->color($high > 0 ? 'danger' : 'success'),
+                Stat::make('Subscriptions with Score', (string) $latestScores->count())->icon('heroicon-o-cloud')->color('gray'),
+            ];
+        }
+
+        if ($this->activeTab === 'alerts') {
+            $ids = $idsFor('alerts.view');
+            $counts = AzureAlert::query()->whereIn('subscription_id', $ids)
+                ->selectRaw('COUNT(*) AS total, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev0, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev1, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev2, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev3, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev4',
+                    ['Sev0', 'Sev1', 'Sev2', 'Sev3', 'Sev4'])->first();
+            return [
+                Stat::make('Sev 0', (string) ($counts?->sev0 ?? 0))->icon('heroicon-o-exclamation-triangle')->color('danger'),
+                Stat::make('Sev 1', (string) ($counts?->sev1 ?? 0))->icon('heroicon-o-exclamation-triangle')->color('danger'),
+                Stat::make('Sev 2', (string) ($counts?->sev2 ?? 0))->icon('heroicon-o-exclamation-circle')->color('warning'),
+                Stat::make('Sev 3', (string) ($counts?->sev3 ?? 0))->icon('heroicon-o-exclamation-circle')->color('warning'),
+                Stat::make('Sev 4', (string) ($counts?->sev4 ?? 0))->icon('heroicon-o-information-circle')->color('gray'),
             ];
         }
 
         if ($this->activeTab === 'resources') {
-            $ids = $permittedIds('resources.view');
+            $ids = $idsFor('resources.view');
             $count = BillingResource::query()->whereIn('subscription_id', $ids)->count();
-            $types = BillingResource::query()->whereIn('subscription_id', $ids)
-                ->selectRaw('resource_type, COUNT(*) AS aggregate')
-                ->groupBy('resource_type')->orderByDesc('aggregate')->limit(3)->get();
-
-            return [
-                Stat::make('Total Resources', number_format($count))->icon('heroicon-o-cube')->color('primary'),
-                ...$types->map(fn ($row): Stat => Stat::make(
-                    (string) ($row->resource_type ?: 'Unclassified'),
-                    number_format((int) $row->aggregate),
-                )->icon('heroicon-o-cube')->color('gray'))->all(),
-            ];
+            return [Stat::make('Total Resources', number_format($count))->icon('heroicon-o-cube')->color('primary')];
         }
 
         $subscriptionIds = $models->pluck('subscription_id')->all();
-        $alertIds = $permittedIds('alerts.view');
-        $resourceIds = $permittedIds('resources.view');
+        $alertIds = $idsFor('alerts.view');
+        $resourceIds = $idsFor('resources.view');
 
         return [
-            Stat::make('Accessible Subscriptions', number_format(count($subscriptionIds)))
-                ->description('Within your access scope')->icon('heroicon-o-cloud')->color('primary'),
-            Stat::make('Projects in Scope', number_format($projectCount))
-                ->description('Matching selected filter')->icon('heroicon-o-rectangle-stack')->color('info'),
-            Stat::make('Active Alerts', number_format(AzureAlert::query()->whereIn('subscription_id', $alertIds)->count()))
-                ->description('Only subscriptions with alert access')->icon('heroicon-o-bell-alert')->color('warning'),
-            Stat::make('Resources', number_format(BillingResource::query()->whereIn('subscription_id', $resourceIds)->count()))
-                ->description('Only subscriptions with resource access')->icon('heroicon-o-cube')->color('gray'),
+            Stat::make('Accessible Subscriptions', number_format(count($subscriptionIds)))->description('Within your access scope')->icon('heroicon-o-cloud')->color('primary'),
+            Stat::make('Projects in Scope', number_format($models->flatMap(fn ($subscription) => $subscription->projects)->unique('id')->count()))->description('Matching selected filter')->icon('heroicon-o-rectangle-stack')->color('info'),
+            Stat::make('Active Alerts', number_format(AzureAlert::query()->whereIn('subscription_id', $alertIds)->count()))->description('Only subscriptions with alert access')->icon('heroicon-o-bell-alert')->color('warning'),
+            Stat::make('Resources', number_format(BillingResource::query()->whereIn('subscription_id', $resourceIds)->count()))->description('Only subscriptions with resource access')->icon('heroicon-o-cube')->color('gray'),
         ];
     }
 }
