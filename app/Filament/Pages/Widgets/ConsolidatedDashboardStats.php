@@ -35,7 +35,7 @@ class ConsolidatedDashboardStats extends BaseWidget
             'cost' => 5,
             'security' => 4,
             'resources' => 1,
-            default => 7,
+            default => 3,
         };
     }
 
