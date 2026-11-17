@@ -1,13 +1,13 @@
 <?php
 
-namespace App\\Filament\\Pages;
+namespace App\Filament\Pages;
 
-use App\\Livewire\\Dashboard\\ConsolidatedDashboard;
-use App\\Models\\User;
-use Filament\\Actions\\Action;
-use Filament\\Pages\\Dashboard as BaseDashboard;
-use Filament\\Schemas\\Components\\Livewire;
-use Filament\\Schemas\\Schema;
+use App\Livewire\Dashboard\ConsolidatedDashboard;
+use App\Models\User;
+use Filament\Actions\Action;
+use Filament\Pages\Dashboard as BaseDashboard;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
 {
