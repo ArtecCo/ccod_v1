@@ -30,6 +30,19 @@ class ConsolidatedDashboardTable extends BaseWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    protected function getTableHeading(): ?string
+    {
+        return match ($this->activeTab) {
+            'overview' => 'Subscriptions',
+            'cost' => 'Monthly Cost History',
+            'alerts' => 'Alerts',
+            'security', 'security_high' => 'High Severity Recommendations',
+            'security_scores' => 'Subscriptions with Security Score Below 80%',
+            'resources' => 'Resources',
+            default => 'Dashboard Data',
+        };
+    }
+
     protected function getTableQuery(): Builder
     {
         $user = auth()->guard('web')->user();
@@ -38,9 +51,9 @@ class ConsolidatedDashboardTable extends BaseWidget
         $authorization = app(AccessAuthorizationService::class);
         $subscriptions = $authorization->accessibleSubscriptionQuery($user);
 
-        if (preg_match('/^project:(\d+)$/', $this->filter, $matches) === 1) {
+        if (preg_match('/^project:(\\d+)$/', $this->filter, $matches) === 1) {
             $subscriptions->whereHas('projects', fn (Builder $query): Builder => $query->whereKey((int) $matches[1]));
-        } elseif (preg_match('/^business_unit:(\d+)$/', $this->filter, $matches) === 1) {
+        } elseif (preg_match('/^business_unit:(\\d+)$/', $this->filter, $matches) === 1) {
             $subscriptions->whereHas('projects', fn (Builder $query): Builder => $query->where('business_unit_id', (int) $matches[1]));
         } elseif ($this->filter !== 'all') {
             abort(403);
@@ -71,7 +84,7 @@ class ConsolidatedDashboardTable extends BaseWidget
                 ->where('granularity', 'monthly')->with('subscription')->orderByDesc('period_start'),
             'alerts' => AzureAlert::query()->whereIn('subscription_id', $ids)
                 ->with('subscription')->orderByDesc('fire_time'),
-            'security' => AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
+            'security', 'security_high' => AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')
                 ->with('subscription')->orderByDesc('synced_at'),
             'security_scores' => AzureSecurityScore::query()->whereIn('subscription_id', $ids)
@@ -141,5 +154,4 @@ class ConsolidatedDashboardTable extends BaseWidget
             ],
         };
     }
-
 }
