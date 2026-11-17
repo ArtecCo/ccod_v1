@@ -33,14 +33,14 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ->pluck('subscription_id')
             ->all();
 
-        $urls = SubscriptionWebUrl::query()
-            ->whereIn('subscription_id', $subscriptionIds)
-            ->where('is_active', true);
+        $allUrls = SubscriptionWebUrl::query()
+            ->whereIn('subscription_id', $subscriptionIds);
+        $activeUrls = (clone $allUrls)->where('is_active', true);
 
-        $total = (clone $urls)->count();
-        $live = (clone $urls)->where('is_live', true)->count();
-        $down = (clone $urls)->where('is_live', false)->count();
-        $sslExpiring = (clone $urls)
+        $total = (clone $allUrls)->count();
+        $live = (clone $activeUrls)->where('is_live', true)->count();
+        $down = (clone $activeUrls)->where('is_live', false)->count();
+        $sslExpiring = (clone $activeUrls)
             ->whereNotNull('ssl_expires_at')
             ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])
             ->count();
