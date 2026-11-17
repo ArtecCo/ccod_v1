@@ -42,7 +42,7 @@ class AdminPanelProvider extends PanelProvider
 {
     public function panel(Panel $panel): Panel
     {
-        return $panel->default()->id('admin')->path('')->login()->topbar(false)
+        return $panel->default()->id('admin')->path('')->login()->spa()->topbar(false)
             ->brandName(fn (): string => FilamentStyling::brandName())
             ->brandLogo(fn (): ?string => FilamentStyling::logoLight())
             ->darkModeBrandLogo(fn (): ?string => FilamentStyling::logoDark())
