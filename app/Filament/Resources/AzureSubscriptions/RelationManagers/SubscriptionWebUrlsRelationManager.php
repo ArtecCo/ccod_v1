@@ -17,6 +17,8 @@ use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Gate;
@@ -72,6 +74,29 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                 return $query;
             })
             ->striped(false)
+            ->filters([
+                TernaryFilter::make('is_active')
+                    ->label('Active')
+                    ->trueLabel('Active')
+                    ->falseLabel('Inactive'),
+                TernaryFilter::make('is_live')
+                    ->label('Live Status')
+                    ->trueLabel('Live')
+                    ->falseLabel('Down'),
+                TernaryFilter::make('use_proxy')
+                    ->label('Proxy')
+                    ->trueLabel('Proxy Enabled')
+                    ->falseLabel('Direct Connection'),
+                TernaryFilter::make('ssl_status')
+                    ->label('SSL Valid')
+                    ->trueLabel('Valid')
+                    ->falseLabel('Invalid'),
+                Filter::make('ssl_expiring')
+                    ->label('SSL Expiring in 15 Days')
+                    ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query
+                        ->whereNotNull('ssl_expires_at')
+                        ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])),
+            ])
             ->columns([
                 TextColumn::make('url')->label('URL')->searchable()->sortable()->copyable()->copyMessage('URL copied')->wrap()->weight('medium'),
                 IconColumn::make('is_active')->label('Active')->boolean(),
