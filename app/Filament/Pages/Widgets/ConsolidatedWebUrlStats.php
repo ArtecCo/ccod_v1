@@ -45,10 +45,10 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])
             ->count();
 
-        $card = fn (string $filter): array => [
+        $card = fn (string $filter, string $colorClass): array => [
             'role' => 'button',
             'tabindex' => '0',
-            'class' => 'cursor-pointer',
+            'class' => 'cursor-pointer ' . $colorClass,
             'x-on:click' => "\$dispatch('filter-web-urls', { filter: '{$filter}' })",
             'x-on:keydown.enter' => "\$dispatch('filter-web-urls', { filter: '{$filter}' })",
         ];
@@ -57,23 +57,19 @@ class ConsolidatedWebUrlStats extends BaseWidget
             Stat::make('Total URLs', number_format($total))
                 ->icon('heroicon-o-globe-alt')
                 ->color('primary')
-                ->extraAttributes(['class' => 'ring-1 ring-primary-200/60 dark:ring-primary-800/30'])
-                ->extraAttributes($card('all')),
+                ->extraAttributes($card('all', 'bg-primary-50/60 dark:bg-primary-950/20 ring-1 ring-primary-200/60 dark:ring-primary-800/30')),
             Stat::make('Total Live', number_format($live))
                 ->icon('heroicon-o-check-circle')
                 ->color('success')
-                ->extraAttributes(['class' => 'bg-success-50/60 dark:bg-success-950/20 ring-1 ring-success-200/60 dark:ring-success-800/30'])
-                ->extraAttributes($card('live')),
+                ->extraAttributes($card('live', 'bg-success-50/60 dark:bg-success-950/20 ring-1 ring-success-200/60 dark:ring-success-800/30')),
             Stat::make('Total Down', number_format($down))
                 ->icon('heroicon-o-x-circle')
                 ->color('danger')
-                ->extraAttributes(['class' => 'bg-danger-50/60 dark:bg-danger-950/20 ring-1 ring-danger-200/60 dark:ring-danger-800/30'])
-                ->extraAttributes($card('down')),
+                ->extraAttributes($card('down', 'bg-danger-50/60 dark:bg-danger-950/20 ring-1 ring-danger-200/60 dark:ring-danger-800/30')),
             Stat::make('SSL Expiring in 15 Days', number_format($sslExpiring))
                 ->icon('heroicon-o-shield-exclamation')
                 ->color('warning')
-                ->extraAttributes(['class' => 'bg-warning-50/60 dark:bg-warning-950/20 ring-1 ring-warning-200/60 dark:ring-warning-800/30'])
-                ->extraAttributes($card('ssl_expiring')),
+                ->extraAttributes($card('ssl_expiring', 'bg-warning-50/60 dark:bg-warning-950/20 ring-1 ring-warning-200/60 dark:ring-warning-800/30')),
         ];
     }
 }
