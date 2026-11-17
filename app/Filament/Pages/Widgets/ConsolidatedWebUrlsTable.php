@@ -137,7 +137,7 @@ class ConsolidatedWebUrlsTable extends TableWidget
                 TextColumn::make('url')
                     ->label('URL')
                     ->searchable()
-                    ->sortable()
+                    
                     ->copyable()
                     ->copyMessage('URL copied')
                     ->wrap(),
@@ -147,16 +147,15 @@ class ConsolidatedWebUrlsTable extends TableWidget
                 TextColumn::make('http_status')->label('HTTP')->placeholder('—'),
                 TextColumn::make('response_time_ms')
                     ->label('Response')
-                    ->formatStateUsing(fn ($state): string => $state === null ? '—' : $state . ' ms')
-                    ,
+                    ->formatStateUsing(fn ($state): string => $state === null ? '—' : $state . ' ms'),
                 IconColumn::make('ssl_status')->label('SSL')->boolean()->placeholder('N/A'),
                 TextColumn::make('ssl_provider')->label('SSL Provider')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ssl_subject')->label('SSL Subject')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ssl_issuer')->label('SSL Issuer')->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('ssl_valid_from')->label('SSL Valid From')->dateTime()->placeholder('—')->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('ssl_expires_at')->label('SSL Expires')->dateTime()->placeholder('—')->sortable(),
-                TextColumn::make('ssl_days_remaining')->label('SSL Days')->placeholder('—')->sortable(),
-                TextColumn::make('last_checked_at')->label('Last Checked')->dateTime()->placeholder('Never')->sortable(),
+                TextColumn::make('ssl_expires_at')->label('SSL Expires')->dateTime()->placeholder('—'),
+                TextColumn::make('ssl_days_remaining')->label('SSL Days')->placeholder('—'),
+                TextColumn::make('last_checked_at')->label('Last Checked')->dateTime()->placeholder('Never'),
             ])
             ->groups([
                 Group::make('subscription.display_name')
@@ -171,7 +170,7 @@ class ConsolidatedWebUrlsTable extends TableWidget
             ->toolbarActions([
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport())
-                    ->queryUsing(fn (\\Illuminate\\Database\\Eloquent\\Builder $query): \\Illuminate\\Database\\Eloquent\\Builder =>
+                    ->queryUsing(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder =>
                         $query->whereIn('subscription_id', $this->exportableSubscriptionIds())
                     ),
             ]);
