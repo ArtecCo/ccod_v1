@@ -10,7 +10,7 @@ use App\Models\AzureSubscription;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Widgets\ChartWidget;
-use Livewire\Attributes\Reactive;
+use Livewire\Attributes\Url;
 
 class ConsolidatedSeverityChart extends ChartWidget
 {
