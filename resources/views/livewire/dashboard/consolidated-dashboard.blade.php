@@ -44,10 +44,17 @@
         <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="cost" :key="'dashboard-table-cost-'.$filter" />
     @elseif ($activeTab === 'alerts')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="alerts" :key="'dashboard-stats-alerts-'.$filter" />
+        <livewire:filament.pages.widgets.consolidated-severity-chart :filter="$filter" active-tab="alerts" :key="'dashboard-alert-chart-'.$filter" />
         <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="alerts" :key="'dashboard-table-alerts-'.$filter" />
     @elseif ($activeTab === 'security')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="security" :key="'dashboard-stats-security-'.$filter" />
-        <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security" :key="'dashboard-table-security-'.$filter" />
+        <livewire:filament.pages.widgets.consolidated-severity-chart :filter="$filter" active-tab="security" :key="'dashboard-security-chart-'.$filter" />
+        <x-filament::section heading="Subscriptions with Security Score Below 80%">
+            <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security_scores" :key="'dashboard-table-security-scores-'.$filter" />
+        </x-filament::section>
+        <x-filament::section heading="High Severity Recommendations">
+            <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security_high" :key="'dashboard-table-security-high-'.$filter" />
+        </x-filament::section>
 
     @elseif ($activeTab === 'resources')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="resources" :key="'dashboard-stats-resources-'.$filter" />
