@@ -26,23 +26,32 @@ class SubscriptionWebUrlStats extends BaseWidget
         $sslExpiring = (clone $active)->whereNotNull('ssl_expires_at')
             ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])->count();
 
-        $card = fn (string $filter, string $colorClass): array => [
+        $card = fn (string $filter, string $background, string $border): array => [
             'role' => 'button',
             'tabindex' => '0',
-            'class' => 'cursor-pointer ' . $colorClass,
+            'class' => 'cursor-pointer',
+            'style' => "background-color: {$background} !important; border: 1px solid {$border} !important;",
             'x-on:click' => "\$dispatch('filter-subscription-web-urls', { filter: '{$filter}' })",
             'x-on:keydown.enter' => "\$dispatch('filter-subscription-web-urls', { filter: '{$filter}' })",
         ];
 
         return [
-            Stat::make('Total URLs', number_format($total))->icon('heroicon-o-globe-alt')->color('primary')
-                ->extraAttributes($card('all', 'bg-primary-50/60 dark:bg-primary-950/20 ring-1 ring-primary-200/60 dark:ring-primary-800/30')),
-            Stat::make('Total Live', number_format($live))->icon('heroicon-o-check-circle')->color('success')
-                ->extraAttributes($card('live', 'bg-success-50/60 dark:bg-success-950/20 ring-1 ring-success-200/60 dark:ring-success-800/30')),
-            Stat::make('Total Down', number_format($down))->icon('heroicon-o-x-circle')->color('danger')
-                ->extraAttributes($card('down', 'bg-danger-50/60 dark:bg-danger-950/20 ring-1 ring-danger-200/60 dark:ring-danger-800/30')),
-            Stat::make('SSL Expiring in 15 Days', number_format($sslExpiring))->icon('heroicon-o-shield-exclamation')->color('warning')
-                ->extraAttributes($card('ssl_expiring', 'bg-warning-50/60 dark:bg-warning-950/20 ring-1 ring-warning-200/60 dark:ring-warning-800/30')),
+            Stat::make('Total URLs', number_format($total))
+                ->icon('heroicon-o-globe-alt')
+                ->color('primary')
+                ->extraAttributes($card('all', 'rgba(59, 130, 246, 0.10)', 'rgba(59, 130, 246, 0.35)')),
+            Stat::make('Total Live', number_format($live))
+                ->icon('heroicon-o-check-circle')
+                ->color('success')
+                ->extraAttributes($card('live', 'rgba(34, 197, 94, 0.10)', 'rgba(34, 197, 94, 0.35)')),
+            Stat::make('Total Down', number_format($down))
+                ->icon('heroicon-o-x-circle')
+                ->color('danger')
+                ->extraAttributes($card('down', 'rgba(239, 68, 68, 0.10)', 'rgba(239, 68, 68, 0.35)')),
+            Stat::make('SSL Expiring in 15 Days', number_format($sslExpiring))
+                ->icon('heroicon-o-shield-exclamation')
+                ->color('warning')
+                ->extraAttributes($card('ssl_expiring', 'rgba(245, 158, 11, 0.12)', 'rgba(245, 158, 11, 0.40)')),
         ];
     }
 }
