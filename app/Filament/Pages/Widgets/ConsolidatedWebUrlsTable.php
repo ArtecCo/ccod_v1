@@ -12,6 +12,7 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget;
+use Livewire\Attributes\On;
 
 class ConsolidatedWebUrlsTable extends TableWidget
 {
@@ -19,9 +20,19 @@ class ConsolidatedWebUrlsTable extends TableWidget
 
     protected int | string | array $columnSpan = 'full';
 
+    public string $urlFilter = 'all';
+
+    #[On('filter-web-urls')]
+    public function filterWebUrls(?string $filter = 'all'): void
+    {
+        $filter = in_array($filter, ['all', 'live', 'down', 'ssl_expiring'], true) ? $filter : 'all';
+        $this->urlFilter = $this->urlFilter === $filter && $filter !== 'all' ? 'all' : $filter;
+        $this->resetTable();
+    }
+
     protected function getTableHeading(): ?string
     {
-        return match (request()->query('url_filter', 'all')) {
+        return match ($this->urlFilter) {
             'live' => 'Live Web URLs',
             'down' => 'Down Web URLs',
             'ssl_expiring' => 'Web URLs with SSL Expiring in 15 Days',
@@ -47,7 +58,7 @@ class ConsolidatedWebUrlsTable extends TableWidget
             ->with('subscription:subscription_id,display_name')
             ->whereIn('subscription_id', $subscriptionIds);
 
-        $filter = request()->query('url_filter', 'all');
+        $filter = $this->urlFilter;
 
         if ($filter === 'live') {
             $query->where('is_active', true)->where('is_live', true);
