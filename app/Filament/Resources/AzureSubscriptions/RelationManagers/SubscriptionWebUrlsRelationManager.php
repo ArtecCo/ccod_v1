@@ -34,6 +34,16 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
         return Gate::forUser(auth()->user())->authorize('create', [SubscriptionWebUrl::class, $this->getOwnerRecord()]);
     }
 
+    public string $urlFilter = 'all';
+
+    #[On('filter-subscription-web-urls')]
+    public function filterWebUrls(?string $filter = 'all'): void
+    {
+        $filter = in_array($filter, ['all', 'live', 'down', 'ssl_expiring'], true) ? $filter : 'all';
+        $this->urlFilter = $this->urlFilter === $filter && $filter !== 'all' ? 'all' : $filter;
+        $this->resetTable();
+    }
+
     #[On('web-url-added')]
     public function refreshWebUrlsTable(): void { $this->resetTable(); }
 
@@ -50,6 +60,17 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->modifyQueryUsing(function ($query) {
+                if ($this->urlFilter === 'live') {
+                    $query->where('is_active', true)->where('is_live', true);
+                } elseif ($this->urlFilter === 'down') {
+                    $query->where('is_active', true)->where('is_live', false);
+                } elseif ($this->urlFilter === 'ssl_expiring') {
+                    $query->where('is_active', true)->whereNotNull('ssl_expires_at')
+                        ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)]);
+                }
+                return $query;
+            })
             ->striped(false)
             ->columns([
                 TextColumn::make('url')->label('URL')->searchable()->sortable()->copyable()->copyMessage('URL copied')->wrap()->weight('medium'),
