@@ -103,8 +103,10 @@ class ConsolidatedDashboardStats extends BaseWidget
             $budgetRows = AzureBudget::query()
                 ->whereIn('subscription_id', $ids)
                 ->get(['amount', 'currency']);
-            $budgetCurrencies = $budgetRows->pluck('currency')->filter()->unique();
-            $budgetCurrency = $budgetCurrencies->count() === 1 ? (string) $budgetCurrencies->first() : null;
+            $budgetCurrencies = $budgetRows->pluck('currency')->unique();
+            $budgetCurrency = $budgetCurrencies->count() === 1 && $budgetCurrencies->first() !== null
+                ? (string) $budgetCurrencies->first()
+                : null;
             $budget = $budgetCurrency !== null
                 ? (float) $budgetRows->sum(fn (AzureBudget $row): float => (float) $row->amount)
                 : null;
@@ -112,8 +114,10 @@ class ConsolidatedDashboardStats extends BaseWidget
             $forecastRows = AzureCostForecast::query()
                 ->whereIn('subscription_id', $ids)
                 ->get(['forecast_amount', 'currency']);
-            $forecastCurrencies = $forecastRows->pluck('currency')->filter()->unique();
-            $forecastCurrency = $forecastCurrencies->count() === 1 ? (string) $forecastCurrencies->first() : null;
+            $forecastCurrencies = $forecastRows->pluck('currency')->unique();
+            $forecastCurrency = $forecastCurrencies->count() === 1 && $forecastCurrencies->first() !== null
+                ? (string) $forecastCurrencies->first()
+                : null;
             $forecast = $forecastCurrency !== null && $current !== null && $currency === $forecastCurrency
                 ? $current + (float) $forecastRows->sum(fn ($row): float => (float) $row->forecast_amount)
                 : null;
