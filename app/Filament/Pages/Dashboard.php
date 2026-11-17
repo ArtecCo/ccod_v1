@@ -2,9 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Livewire\Dashboard\ConsolidatedDashboard;
 use App\Filament\Pages\Widgets\ConsolidatedDashboardStats;
-use App\Filament\Pages\Widgets\ConsolidatedSeverityChart;
 use App\Filament\Pages\Widgets\ConsolidatedDashboardTable;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryChart;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryTable;
@@ -34,27 +32,24 @@ class Dashboard extends BaseDashboard
         return $schema->components([
             Tabs::make('Dashboard Navigation')->tabs([
                 Tab::make('Overview')->schema([
-                    Livewire::make(ConsolidatedDashboard::class)->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'overview'])->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'overview'])->lazy()->columnSpanFull(),
                 ])->columns(1),
-                $this->dashboardTab('Cost', 'cost.view', 'cost', [
+                $this->makeDashboardTab('Cost', 'cost.view', [
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'cost'])->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedCostHistoryChart::class)->lazy()->columnSpan(1),
                     Livewire::make(ConsolidatedCostHistoryTable::class)->lazy()->columnSpan(1),
                 ], 2),
-                $this->dashboardTab('Alerts', 'alerts.view', 'alerts', [
+                $this->makeDashboardTab('Alerts', 'alerts.view', [
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
-                    Livewire::make(ConsolidatedSeverityChart::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
                 ], 1),
-                $this->dashboardTab('Security', 'security.view', 'security', [
+                $this->makeDashboardTab('Security', 'security.view', [
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'security'])->lazy()->columnSpanFull(),
-                    Livewire::make(ConsolidatedSeverityChart::class, ['activeTab' => 'security'])->lazy()->columnSpan(1),
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'security_scores'])->lazy()->columnSpan(1),
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'security_high'])->lazy()->columnSpanFull(),
                 ], 2),
-                $this->dashboardTab('Resources', 'resources.view', 'resources', [
+                $this->makeDashboardTab('Resources', 'resources.view', [
                     Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'resources'])->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'resources'])->lazy()->columnSpanFull(),
                 ], 1),
@@ -64,20 +59,21 @@ class Dashboard extends BaseDashboard
         ]);
     }
 
-    protected function dashboardTab(string $label, string $permission, string $key, array $components, int $columns): Tab
+    protected function makeDashboardTab(string $label, string $permission, array $components, int $columns): Tab
     {
         return Tab::make($label)
             ->visible(function () use ($permission): bool {
                 $user = auth()->guard('web')->user();
-                if (! $user instanceof User) return false;
+                if (! $user instanceof User) {
+                    return false;
+                }
 
                 $authorization = app(AccessAuthorizationService::class);
+
                 return $authorization->accessibleSubscriptionQuery($user)->get()
                     ->contains(fn (AzureSubscription $subscription): bool => $authorization->hasPermission($user, $permission, $subscription));
             })
-            ->schema(array_merge([
-                Livewire::make(ConsolidatedDashboard::class)->lazy()->columnSpanFull(),
-            ], $components))
+            ->schema($components)
             ->columns($columns);
     }
 
