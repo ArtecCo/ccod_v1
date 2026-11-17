@@ -7,6 +7,7 @@ namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 use App\Models\AzureSubscription;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\HtmlString;
 
 class SubscriptionWebUrlStats extends BaseWidget
 {
@@ -26,32 +27,27 @@ class SubscriptionWebUrlStats extends BaseWidget
         $sslExpiring = (clone $active)->whereNotNull('ssl_expires_at')
             ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])->count();
 
-        $card = fn (string $filter, string $background, string $border): array => [
+        $card = fn (string $filter): array => [
             'role' => 'button',
             'tabindex' => '0',
             'class' => 'cursor-pointer',
-            'style' => "background-color: {$background} !important; border: 1px solid {$border} !important;",
             'x-on:click' => "\$dispatch('filter-subscription-web-urls', { filter: '{$filter}' })",
             'x-on:keydown.enter' => "\$dispatch('filter-subscription-web-urls', { filter: '{$filter}' })",
         ];
 
         return [
-            Stat::make('Total URLs', number_format($total))
+            Stat::make('Total URLs', new HtmlString('<span style="color: #2563eb;">' . e(number_format($total)) . '</span>'))
                 ->icon('heroicon-o-globe-alt')
-                ->color('primary')
-                ->extraAttributes($card('all', 'rgba(59, 130, 246, 0.10)', 'rgba(59, 130, 246, 0.35)')),
-            Stat::make('Total Live', number_format($live))
+                ->extraAttributes($card('all')),
+            Stat::make('Total Live', new HtmlString('<span style="color: #16a34a;">' . e(number_format($live)) . '</span>'))
                 ->icon('heroicon-o-check-circle')
-                ->color('success')
-                ->extraAttributes($card('live', 'rgba(34, 197, 94, 0.10)', 'rgba(34, 197, 94, 0.35)')),
-            Stat::make('Total Down', number_format($down))
+                ->extraAttributes($card('live')),
+            Stat::make('Total Down', new HtmlString('<span style="color: #dc2626;">' . e(number_format($down)) . '</span>'))
                 ->icon('heroicon-o-x-circle')
-                ->color('danger')
-                ->extraAttributes($card('down', 'rgba(239, 68, 68, 0.10)', 'rgba(239, 68, 68, 0.35)')),
-            Stat::make('SSL Expiring in 15 Days', number_format($sslExpiring))
+                ->extraAttributes($card('down')),
+            Stat::make('SSL Expiring in 15 Days', new HtmlString('<span style="color: #d97706;">' . e(number_format($sslExpiring)) . '</span>'))
                 ->icon('heroicon-o-shield-exclamation')
-                ->color('warning')
-                ->extraAttributes($card('ssl_expiring', 'rgba(245, 158, 11, 0.12)', 'rgba(245, 158, 11, 0.40)')),
+                ->extraAttributes($card('ssl_expiring')),
         ];
     }
 }
