@@ -8,6 +8,8 @@ use App\Services\AccessAuthorizationService;
 use Filament\Actions\Action;
 use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Livewire;
+use App\Livewire\Dashboard\ConsolidatedDashboard;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Infolists\Components\TextEntry;
@@ -101,6 +103,7 @@ class Dashboard extends BaseDashboard
                 ->all();
 
         return $schema->components([
+            Livewire::make(ConsolidatedDashboard::class)->columnSpanFull(),
             TextEntry::make('dashboard_avatar')
                 ->hiddenLabel()
                 ->html()
