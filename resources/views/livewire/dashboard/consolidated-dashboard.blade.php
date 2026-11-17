@@ -1,11 +1,8 @@
 <div class="space-y-6">
-    <x-filament::section>
-        <x-slot name="heading">Azure estate dashboard</x-slot>
-        <x-slot name="description">Monitor the subscriptions and resources available to your account.</x-slot>
-
+    <x-filament::section heading="Dashboard Filter" compact>
         <div class="max-w-md">
             <label for="dashboard-scope-filter" class="fi-fo-field-wrp-label inline-flex items-center gap-x-3 text-sm font-medium leading-6 text-gray-950 dark:text-white">
-                Dashboard scope
+                Scope
             </label>
             <div class="mt-2">
                 <x-filament::input.wrapper>
@@ -37,7 +34,6 @@
 
     @if ($activeTab === 'overview')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="overview" :key="'dashboard-stats-overview-'.$filter" />
-
         <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="overview" :key="'dashboard-table-overview-'.$filter" />
     @elseif ($activeTab === 'cost')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="cost" :key="'dashboard-stats-cost-'.$filter" />
@@ -49,13 +45,8 @@
     @elseif ($activeTab === 'security')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="security" :key="'dashboard-stats-security-'.$filter" />
         <livewire:filament.pages.widgets.consolidated-severity-chart :filter="$filter" active-tab="security" :key="'dashboard-security-chart-'.$filter" />
-        <x-filament::section heading="Subscriptions with Security Score Below 80%">
-            <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security_scores" :key="'dashboard-table-security-scores-'.$filter" />
-        </x-filament::section>
-        <x-filament::section heading="High Severity Recommendations">
-            <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security_high" :key="'dashboard-table-security-high-'.$filter" />
-        </x-filament::section>
-
+        <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security_scores" :key="'dashboard-table-security-scores-'.$filter" />
+        <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="security_high" :key="'dashboard-table-security-high-'.$filter" />
     @elseif ($activeTab === 'resources')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="resources" :key="'dashboard-stats-resources-'.$filter" />
         <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="resources" :key="'dashboard-table-resources-'.$filter" />
