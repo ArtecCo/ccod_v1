@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AzureCostForecast;
+use App\Models\AzureCostForecastSnapshot;
 use App\Models\AzureSubscription;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Client\PendingRequest;
@@ -12,6 +13,8 @@ use RuntimeException;
 class AzureCostForecastSyncService
 {
     private const API_VERSION = '2025-03-01';
+    private const RETENTION_MONTHS = 12;
+
     private ?string $accessToken = null;
 
     public function __construct(private readonly AzureCostManagementThrottle $throttle) {}
@@ -61,8 +64,7 @@ class AzureCostForecastSyncService
             ->values()
             ->all();
 
-        $amount = 0.0;
-        $hasAmount = false;
+        $dailyForecasts = [];
         $currency = null;
 
         foreach (($properties['rows'] ?? []) as $values) {
@@ -75,28 +77,71 @@ class AzureCostForecastSyncService
                 $row[$column] = $values[$index] ?? null;
             }
 
-            $value = $row['PreTaxCost'] ?? $row['Cost'] ?? $row['CostUSD'] ?? $row['PreTaxCostUSD'] ?? null;
-            if (is_numeric($value)) {
-                $amount += (float) $value;
-                $hasAmount = true;
+            // Keep forecast predictions only; never archive actual-cost rows as forecasts.
+            if (($row['CostStatus'] ?? null) !== 'Forecast') {
+                continue;
             }
+
+            $value = $row['PreTaxCost'] ?? $row['Cost'] ?? $row['CostUSD'] ?? $row['PreTaxCostUSD'] ?? null;
+            $usageDate = $row['UsageDate'] ?? null;
+
+            if (! is_numeric($value) || ! is_numeric($usageDate)) {
+                continue;
+            }
+
+            $date = CarbonImmutable::createFromFormat('!Ymd', (string) (int) $usageDate);
+            if ($date === false) {
+                continue;
+            }
+
+            $period = $date->startOfMonth()->toDateString();
+            $dailyForecasts[$period] = ($dailyForecasts[$period] ?? 0.0) + (float) $value;
 
             $rowCurrency = $row['Currency'] ?? null;
             if (is_string($rowCurrency) && $rowCurrency !== '') {
-                $currency ??= $rowCurrency;
+                if ($currency !== null && $currency !== $rowCurrency) {
+                    throw new RuntimeException('Azure returned multiple currencies for one subscription forecast.');
+                }
+                $currency = $rowCurrency;
             }
         }
 
-        if (! $hasAmount) {
+        if ($dailyForecasts === []) {
             return false;
         }
 
+        $capturedOn = $now->toDateString();
+        $totalForecast = array_sum($dailyForecasts);
+
+        foreach ($dailyForecasts as $period => $amount) {
+            AzureCostForecastSnapshot::query()->updateOrCreate(
+                [
+                    'subscription_id' => $subscription->subscription_id,
+                    'forecast_period' => $period,
+                    'captured_on' => $capturedOn,
+                ],
+                [
+                    'forecast_amount' => $amount,
+                    'currency' => $currency,
+                    'captured_at' => $now,
+                    'synced_at' => $now,
+                ],
+            );
+        }
+
+        // Retain a rolling 12 months of daily forecast snapshots.
+        AzureCostForecastSnapshot::query()
+            ->where('subscription_id', $subscription->subscription_id)
+            ->where('captured_on', '<', $now->subMonths(self::RETENTION_MONTHS)->toDateString())
+            ->delete();
+
+        // Preserve the existing latest-forecast record for current dashboard consumers.
         AzureCostForecast::query()->updateOrCreate(
             ['subscription_id' => $subscription->subscription_id],
             [
-                'forecast_amount' => $amount,
-                'currency' => $currency ?: 'EUR',
-                'fetched_at' => now(),
+                'forecast_amount' => $totalForecast,
+                'currency' => $currency,
+                'fetched_at' => $now,
             ],
         );
 
