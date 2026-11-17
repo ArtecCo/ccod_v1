@@ -5,11 +5,12 @@ namespace App\Filament\Pages;
 use App\Filament\Pages\Widgets\ConsolidatedDashboardStats;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryChart;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryTable;
+use App\Filament\Pages\Widgets\ConsolidatedWebUrlStats;
+use App\Filament\Pages\Widgets\ConsolidatedWebUrlsTable;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureAlertsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureSecurityAssessmentsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\BillingResourcesRelationManager;
-use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUrlsRelationManager;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionAlertSeverityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryChart;
@@ -131,8 +132,8 @@ class Dashboard extends BaseDashboard
                 ])->columns(2),
                 $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [
-                    Livewire::make(SubscriptionModuleSyncStat::class, ['record' => $this->record, 'module' => 'web_urls', 'label' => 'Last Sync'])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
+                    Livewire::make(ConsolidatedWebUrlStats::class)->lazy()->columnSpanFull(),
+                    Livewire::make(ConsolidatedWebUrlsTable::class)->lazy()->columnSpanFull(),
                 ])->columns(1),
                 $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [
                     Livewire::make(SubscriptionModuleSyncStat::class, ['record' => $this->record, 'module' => 'resources', 'label' => 'Last Sync'])->lazy()->columnSpanFull(),
@@ -170,7 +171,7 @@ class Dashboard extends BaseDashboard
 
         // Consolidated cost access is granted when the user can view costs
         // for at least one subscription in their authorized subscription scope.
-        if (in_array($permission, ['cost.view', 'cost.breakdown.view'], true)) {
+        if (in_array($permission, ['cost.view', 'cost.breakdown.view', 'urls.view'], true)) {
             return $authorization->accessibleSubscriptionQuery($user)->get()
                 ->contains(fn (AzureSubscription $subscription): bool =>
                     $authorization->hasPermission($user, $permission, $subscription)
