@@ -49,7 +49,9 @@
     </div>
 
     @if ($activeTab === 'overview')
-        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" :key="'dashboard-stats-'.$filter" />\n\n        <x-filament::section heading="Subscriptions in scope">
+        <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" :key="'dashboard-stats-'.$filter" />
+
+        <x-filament::section heading="Subscriptions in scope">
             @forelse ($subscriptions as $subscription)
                 <div class="flex flex-col gap-2 border-t border-gray-200 py-3 first:border-t-0 dark:border-white/10 sm:flex-row sm:items-center sm:justify-between">
                     <div class="min-w-0">
