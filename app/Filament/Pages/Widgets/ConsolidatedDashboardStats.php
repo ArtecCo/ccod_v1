@@ -66,21 +66,25 @@ class ConsolidatedDashboardStats extends BaseWidget
             $currentMonth = now()->startOfMonth();
             $historyStart = $currentMonth->copy()->subMonths(11);
 
-            // One bounded read for the current month and the preceding 11 months.
+            // Aggregate the authorized subscriptions in SQL, bounded to 12 months.
             $costRows = AzureSubscriptionCost::query()
                 ->whereIn('subscription_id', $ids)
                 ->where('granularity', 'monthly')
                 ->whereBetween('period_start', [$historyStart->toDateString(), $currentMonth->toDateString()])
+                ->selectRaw('period_start, currency, SUM(amount) AS total')
+                ->groupBy('period_start', 'currency')
                 ->orderBy('period_start')
-                ->get(['period_start', 'amount', 'currency']);
+                ->get();
 
-            // Amounts in different currencies must never be added together.
-            $costCurrencies = $costRows->pluck('currency')->filter()->unique()->values();
-            $currency = $costCurrencies->count() === 1 ? (string) $costCurrencies->first() : null;
+            // Amounts in different currencies (including unknown currencies) are never added.
+            $costCurrencies = $costRows->pluck('currency')->unique()->values();
+            $currency = $costCurrencies->count() === 1 && $costCurrencies->first() !== null
+                ? (string) $costCurrencies->first()
+                : null;
 
             $monthlyTotals = $currency !== null
-                ? $costRows->groupBy(fn (AzureSubscriptionCost $row): string => $row->period_start->format('Y-m'))
-                    ->map(fn ($rows): float => (float) $rows->sum(fn (AzureSubscriptionCost $row): float => (float) $row->amount))
+                ? $costRows->groupBy(fn ($row): string => $row->period_start->format('Y-m'))
+                    ->map(fn ($rows): float => (float) $rows->first()->total)
                 : collect();
 
             $currentKey = $currentMonth->format('Y-m');
