@@ -25,7 +25,7 @@ class ConsolidatedSeverityChart extends ChartWidget
     protected ?string $maxHeight = '320px';
     protected static bool $isLazy = true;
 
-    protected function getHeading(): ?string
+    public function getHeading(): ?string
     {
         return $this->activeTab === 'security'
             ? 'Recommendations by Severity'
