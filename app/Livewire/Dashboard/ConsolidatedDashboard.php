@@ -2,11 +2,7 @@
 
 namespace App\Livewire\Dashboard;
 
-use App\Models\AzureAlert;
-use App\Models\AzureSecurityAssessment;
 use App\Models\AzureSubscription;
-use App\Models\AzureSubscriptionCost;
-use App\Models\BillingResource;
 use App\Models\BusinessUnit;
 use App\Models\Project;
 use App\Models\User;
@@ -57,64 +53,19 @@ class ConsolidatedDashboard extends Component
             $this->activeTab = 'overview';
         }
 
-        $overviewSubscriptions = $this->scopedSubscriptionQuery($user)->with('projects.businessUnit')->get();
-        $costIds = $this->permittedSubscriptionIds($user, 'cost.view');
-        $alertIds = $this->permittedSubscriptionIds($user, 'alerts.view');
-        $securityIds = $this->permittedSubscriptionIds($user, 'security.view');
-        $resourceIds = $this->permittedSubscriptionIds($user, 'resources.view');
-
-        $alertCounts = AzureAlert::query()->whereIn('subscription_id', $alertIds)
-            ->selectRaw('severity, COUNT(*) AS aggregate')->groupBy('severity')->pluck('aggregate', 'severity');
-
-        $recentAlerts = AzureAlert::query()->whereIn('subscription_id', $alertIds)
-            ->with('subscription:subscription_id,display_name')->orderByDesc('fire_time')->limit(8)->get();
-
-        $securityStats = AzureSecurityAssessment::query()->whereIn('subscription_id', $securityIds)
-            ->selectRaw('COUNT(*) AS total,
-                SUM(CASE WHEN state = ? THEN 1 ELSE 0 END) AS unhealthy,
-                SUM(CASE WHEN state = ? AND severity = ? THEN 1 ELSE 0 END) AS high',
-                ['Unhealthy', 'Unhealthy', 'High'])->first();
-
-        $resourceCount = BillingResource::query()->whereIn('subscription_id', $resourceIds)->count();
-        $resourcesByType = BillingResource::query()->whereIn('subscription_id', $resourceIds)
-            ->selectRaw('resource_type, COUNT(*) AS aggregate')->groupBy('resource_type')
-            ->orderByDesc('aggregate')->limit(8)->get();
-
-        $currentCosts = AzureSubscriptionCost::query()->whereIn('subscription_id', $costIds)
-            ->where('granularity', 'monthly')
-            ->whereDate('period_start', '>=', now()->startOfMonth()->toDateString())
-            ->whereDate('period_start', '<=', now()->toDateString())
-            ->selectRaw('currency, SUM(amount) AS total')->groupBy('currency')->get();
-
-        $costTotals = $currentCosts->map(fn ($row): array => [
-            'currency' => strtoupper((string) ($row->currency ?: 'EUR')),
-            'amount' => (float) $row->total,
-        ])->values();
-
-        if ($costTotals->isEmpty() && $costIds->isNotEmpty()) {
-            $costTotals = collect([[
-                'currency' => 'EUR',
-                'amount' => (float) AzureSubscription::query()->whereIn('subscription_id', $costIds)->sum('mtd_spend_eur'),
-            ]]);
-        }
-
-        $costSubscriptions = AzureSubscription::query()->whereIn('subscription_id', $costIds)
-            ->orderBy('display_name')->get(['subscription_id', 'display_name', 'mtd_spend_eur']);
+        $overviewSubscriptions = $this->scopedSubscriptionQuery($user)
+            ->with('projects.businessUnit')
+            ->get();
 
         return view('livewire.dashboard.consolidated-dashboard', [
             'filterOptions' => $options,
             'visibleTabs' => $visibleTabs,
             'subscriptions' => $overviewSubscriptions,
             'subscriptionCount' => $overviewSubscriptions->count(),
-            'projectCount' => $overviewSubscriptions->flatMap(fn ($subscription) => $subscription->projects)->unique('id')->count(),
-            'alertCounts' => $alertCounts,
-            'alertTotal' => (int) $alertCounts->sum(),
-            'securityStats' => $securityStats,
-            'resourceCount' => $resourceCount,
-            'costTotals' => $costTotals,
-            'costSubscriptions' => $costSubscriptions,
-            'recentAlerts' => $recentAlerts,
-            'resourcesByType' => $resourcesByType,
+            'projectCount' => $overviewSubscriptions
+                ->flatMap(fn ($subscription) => $subscription->projects)
+                ->unique('id')
+                ->count(),
         ]);
     }
 
