@@ -1,4 +1,4 @@
-<div class="space-y-4">
+<div class="space-y-6">
     <x-filament::section heading="Dashboard Filter" compact class="!shadow-none">
         <div class="max-w-md">
             <label for="dashboard-scope-filter" class="fi-fo-field-wrp-label inline-flex items-center gap-x-3 text-sm font-medium leading-6 text-gray-950 dark:text-white">
