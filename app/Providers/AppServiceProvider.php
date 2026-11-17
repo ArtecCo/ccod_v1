@@ -30,6 +30,7 @@ use Illuminate\Support\ServiceProvider;
 use Livewire\Livewire;
 use App\Filament\Pages\Widgets\ConsolidatedDashboardStats;
 use App\Filament\Pages\Widgets\ConsolidatedDashboardTable;
+use App\Filament\Pages\Widgets\ConsolidatedSeverityChart;
 use Spatie\Activitylog\Models\Activity;
 use TomaszBoloz\LaravelUpdater\Events\PackagesUpdateFailed;
 use TomaszBoloz\LaravelUpdater\Events\PackagesUpdated;
@@ -101,6 +102,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Livewire::component('filament.pages.widgets.consolidated-dashboard-stats', ConsolidatedDashboardStats::class);
         Livewire::component('filament.pages.widgets.consolidated-dashboard-table', ConsolidatedDashboardTable::class);
+        Livewire::component('filament.pages.widgets.consolidated-severity-chart', ConsolidatedSeverityChart::class);
 
         Gate::policy(Documentation::class, DocumentationPolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
