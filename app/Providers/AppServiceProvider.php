@@ -102,7 +102,7 @@ class AppServiceProvider extends ServiceProvider
     {
         Livewire::component('filament.pages.widgets.consolidated-dashboard-stats', ConsolidatedDashboardStats::class);
         Livewire::component('filament.pages.widgets.consolidated-dashboard-table', ConsolidatedDashboardTable::class);
-        Livewire::component('filament.pages.widgets.consolidated-severity-chart', ConsolidatedSeverityChart::class);
+        Livewire::component('filament.pages.widgets.consolidated-severity-chart', ConsolidatedSeverityChart::class);\n        Livewire::component('filament.pages.widgets.consolidated-cost-history-chart', ConsolidatedCostHistoryChart::class);\n        Livewire::component('filament.pages.widgets.consolidated-cost-history-table', ConsolidatedCostHistoryTable::class);
 
         Gate::policy(Documentation::class, DocumentationPolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
