@@ -66,6 +66,7 @@ class ConsolidatedDashboard extends Component
 
         $currentCosts = AzureSubscriptionCost::query()
             ->whereIn('subscription_id', $subscriptionIds)
+            ->where('granularity', 'monthly')
             ->whereDate('period_start', '>=', now()->startOfMonth()->toDateString())
             ->whereDate('period_start', '<=', now()->toDateString())
             ->selectRaw('currency, SUM(amount) AS total')
