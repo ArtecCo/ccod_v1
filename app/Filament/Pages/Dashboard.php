@@ -1,11 +1,11 @@
 <?php
 
-namespace App\\Filament\\Pages;
+namespace App\Filament\Pages;
 
-use App\\Filament\\Resources\\AzureSubscriptions\\AzureSubscriptionResource;
-use App\\Models\\User;
-use App\\Services\\AccessAuthorizationService;
-use Filament\\Pages\\Dashboard as BaseDashboard;
+use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
+use App\Models\User;
+use App\Services\AccessAuthorizationService;
+use Filament\Pages\Dashboard as BaseDashboard;
 
 class Dashboard extends BaseDashboard
 {
