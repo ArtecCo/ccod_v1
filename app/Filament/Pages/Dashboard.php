@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Filament\Pages\Widgets\ConsolidatedDashboardStats;
+use App\Filament\Pages\Widgets\ConsolidatedDashboardTable;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryChart;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryTable;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlStats;
@@ -121,8 +122,7 @@ class Dashboard extends BaseDashboard
                     Livewire::make(ConsolidatedCostHistoryTable::class)->lazy()->columnSpan(1),
                 ])))->columns(2),
                 $this->makeTab('Alerts', 'alerts.view')->schema(fn (): array => [
-                    Livewire::make(SubscriptionAlertSeverityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(AzureAlertsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
+                    Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
                 ])->columns(1),
                 $this->makeTab('Security', 'security.view')->schema(fn (): array => [
                     Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
