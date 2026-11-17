@@ -41,7 +41,6 @@
             <livewire:filament.pages.widgets.consolidated-cost-history-chart :scope-filter="$filter" :key="'dashboard-cost-history-chart-'.$filter" />
             <livewire:filament.pages.widgets.consolidated-cost-history-table :scope-filter="$filter" :key="'dashboard-cost-history-table-'.$filter" />
         </div>
-        <livewire:filament.pages.widgets.consolidated-dashboard-table :filter="$filter" active-tab="cost" :key="'dashboard-table-cost-'.$filter" />
     @elseif ($activeTab === 'alerts')
         <livewire:filament.pages.widgets.consolidated-dashboard-stats :filter="$filter" active-tab="alerts" :key="'dashboard-stats-alerts-'.$filter" />
         <livewire:filament.pages.widgets.consolidated-severity-chart :filter="$filter" active-tab="alerts" :key="'dashboard-alert-chart-'.$filter" />
