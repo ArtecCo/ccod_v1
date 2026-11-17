@@ -27,6 +27,8 @@ use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\HtmlString;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
+use App\Filament\Pages\Widgets\ConsolidatedDashboardStats;
 use Spatie\Activitylog\Models\Activity;
 use TomaszBoloz\LaravelUpdater\Events\PackagesUpdateFailed;
 use TomaszBoloz\LaravelUpdater\Events\PackagesUpdated;
@@ -96,6 +98,8 @@ class AppServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
+        Livewire::component('filament.pages.widgets.consolidated-dashboard-stats', ConsolidatedDashboardStats::class);
+
         Gate::policy(Documentation::class, DocumentationPolicy::class);
         Gate::policy(Activity::class, ActivityPolicy::class);
         Gate::policy(SubscriptionWebUrl::class, SubscriptionWebUrlPolicy::class);
