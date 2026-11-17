@@ -31,20 +31,7 @@
         </div>
     </x-filament::section>
 
-    <x-filament::tabs label="Dashboard sections">
-        @foreach (['overview' => 'Overview', 'cost' => 'Cost', 'alerts' => 'Alerts', 'security' => 'Security', 'resources' => 'Resources'] as $key => $label)
-            @if ($visibleTabs->contains($key))
-                <x-filament::tabs.item
-                    :active="$activeTab === $key"
-                    wire:click="setTab('{{ $key }}')"
-                >
-                    {{ $label }}
-                </x-filament::tabs.item>
-            @endif
-        @endforeach
-    </x-filament::tabs>
-
-    <div wire:loading.flex wire:target="filter,setTab" class="text-sm text-gray-500 dark:text-gray-400">
+    <div wire:loading.flex wire:target="filter" class="text-sm text-gray-500 dark:text-gray-400">
         Updating dashboard…
     </div>
 
