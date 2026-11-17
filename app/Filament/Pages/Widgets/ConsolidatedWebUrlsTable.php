@@ -21,7 +21,12 @@ class ConsolidatedWebUrlsTable extends TableWidget
 
     protected function getTableHeading(): ?string
     {
-        return 'All Accessible Web URLs';
+        return match (request()->query('url_filter', 'all')) {
+            'live' => 'Live Web URLs',
+            'down' => 'Down Web URLs',
+            'ssl_expiring' => 'Web URLs with SSL Expiring in 15 Days',
+            default => 'All Accessible Web URLs',
+        };
     }
 
     protected function getTableQuery(): \Illuminate\Database\Eloquent\Builder
@@ -38,9 +43,25 @@ class ConsolidatedWebUrlsTable extends TableWidget
             ->pluck('subscription_id')
             ->all();
 
-        return SubscriptionWebUrl::query()
+        $query = SubscriptionWebUrl::query()
             ->with('subscription:subscription_id,display_name')
             ->whereIn('subscription_id', $subscriptionIds);
+
+        $filter = request()->query('url_filter', 'all');
+
+        if ($filter === 'live') {
+            $query->where('is_active', true)->where('is_live', true);
+        } elseif ($filter === 'down') {
+            $query->where('is_active', true)->where('is_live', false);
+        } elseif ($filter === 'ssl_expiring') {
+            $query->where('is_active', true)
+                ->whereNotNull('ssl_expires_at')
+                ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)]);
+        } elseif ($filter !== 'all') {
+            abort(400, 'Invalid web URL filter.');
+        }
+
+        return $query;
     }
 
     public function table(Table $table): Table
