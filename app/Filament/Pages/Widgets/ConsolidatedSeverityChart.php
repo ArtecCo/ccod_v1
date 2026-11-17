@@ -22,7 +22,7 @@ class ConsolidatedSeverityChart extends ChartWidget
 
     protected ?string $heading = null;
     protected ?string $pollingInterval = null;
-    protected ?string $maxHeight = '320px';
+    protected ?string $maxHeight = '300px';
     protected static bool $isLazy = true;
 
     public function getHeading(): ?string
