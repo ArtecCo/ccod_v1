@@ -8,6 +8,7 @@ use App\Models\AzureAlert;
 use App\Models\AzureSecurityAssessment;
 use App\Models\AzureSubscription;
 use App\Models\AzureSubscriptionCost;
+use App\Models\AzureSecurityScore;
 use App\Models\BillingResource;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
@@ -49,7 +50,7 @@ class ConsolidatedDashboardTable extends BaseWidget
         $permission = match ($this->activeTab) {
             'cost' => 'cost.view',
             'alerts' => 'alerts.view',
-            'security' => 'security.view',
+            'security', 'security_scores', 'security_high' => 'security.view',
             'resources' => 'resources.view',
             default => null,
         };
@@ -71,7 +72,14 @@ class ConsolidatedDashboardTable extends BaseWidget
             'alerts' => AzureAlert::query()->whereIn('subscription_id', $ids)
                 ->with('subscription')->orderByDesc('fire_time'),
             'security' => AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
+                ->where('state', 'Unhealthy')->where('severity', 'High')
                 ->with('subscription')->orderByDesc('synced_at'),
+            'security_scores' => AzureSecurityScore::query()->whereIn('subscription_id', $ids)
+                ->whereIn('id', function ($query) use ($ids): void {
+                    $query->selectRaw('MAX(id)')->from('azure_security_scores')
+                        ->whereIn('subscription_id', $ids)->groupBy('subscription_id');
+                })->whereRaw('(percentage_score * 100) < 80')->with('subscription')
+                ->orderBy('percentage_score'),
             'resources' => BillingResource::query()->whereIn('subscription_id', $ids)
                 ->with('subscription')->orderBy('name'),
             default => AzureSubscription::query()->whereIn('subscription_id', $models->pluck('subscription_id')),
@@ -100,13 +108,21 @@ class ConsolidatedDashboardTable extends BaseWidget
                 TextColumn::make('affected_resource')->label('Affected resource')->searchable()->wrap(),
                 TextColumn::make('fire_time')->label('Fired')->dateTime()->sortable(),
             ],
-            'security' => [
+            'security', 'security_high' => [
                 TextColumn::make('recommendation_name')->label('Recommendation')->searchable()->wrap(),
                 TextColumn::make('state')->badge()->color(fn (?string $state): string => $state === 'Unhealthy' ? 'danger' : 'success'),
                 TextColumn::make('severity')->badge(),
                 TextColumn::make('subscription.display_name')->label('Subscription')->searchable(),
                 TextColumn::make('resource_id')->label('Resource')->searchable()->toggleable(),
                 TextColumn::make('synced_at')->label('Last synced')->dateTime()->sortable(),
+            ],
+            'security_scores' => [
+                TextColumn::make('subscription.display_name')->label('Subscription')->searchable(),
+                TextColumn::make('initiative_name')->label('Initiative')->searchable()->placeholder('Overall score'),
+                TextColumn::make('percentage_score')->label('Security Score')
+                    ->formatStateUsing(fn ($state): string => number_format((float) $state * 100, 2) . '%')
+                    ->badge()->color('danger')->sortable(),
+                TextColumn::make('captured_at')->label('Captured')->dateTime()->sortable(),
             ],
             'resources' => [
                 TextColumn::make('name')->label('Resource')->searchable()->wrap(),
