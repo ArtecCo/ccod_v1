@@ -16,11 +16,11 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
 use Illuminate\Database\Eloquent\Builder;
-use Livewire\Attributes\Reactive;
+use Livewire\Attributes\Url;
 
 class ConsolidatedDashboardTable extends BaseWidget
 {
-    #[Reactive]
+    #[Url(as: 'scope', history: true)]
     public string $filter = 'all';
 
     #[Reactive]
