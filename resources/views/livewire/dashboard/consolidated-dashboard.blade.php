@@ -28,7 +28,7 @@
 
     <div class="flex flex-wrap gap-2 border-b border-gray-200 pb-2 dark:border-gray-700" role="tablist" aria-label="Dashboard sections">
         @foreach (['overview' => 'Overview', 'cost' => 'Cost', 'alerts' => 'Alerts', 'security' => 'Security', 'resources' => 'Resources'] as $key => $label)
-            <button type="button" wire:click="setTab('{{ $key }}'" role="tab" aria-selected="{{ $activeTab === $key ? 'true' : 'false' }}"
+            <button type="button" wire:click="setTab('{{ $key }}')" role="tab" aria-selected="{{ $activeTab === $key ? 'true' : 'false' }}"
                 class="rounded-lg px-3 py-2 text-sm font-medium transition {{ $activeTab === $key ? 'bg-primary-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800' }}">
                 {{ $label }}
             </button>
