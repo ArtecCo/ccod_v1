@@ -29,6 +29,16 @@ class ConsolidatedDashboardStats extends BaseWidget
     protected ?string $pollingInterval = null;
     protected int | array | null $columns = 7;
 
+    protected function getColumns(): int | array | null
+    {
+        return match ($this->activeTab) {
+            'cost' => 5,
+            'security' => 4,
+            'resources' => 1,
+            default => 7,
+        };
+    }
+
     protected function getStats(): array
     {
         $user = auth()->guard('web')->user();
