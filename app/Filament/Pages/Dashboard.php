@@ -112,7 +112,7 @@ class Dashboard extends BaseDashboard
                     Livewire::make(SubscriptionStatsOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                 ])->columns(1),
                 $this->makeTab('Cost', 'cost.view')->schema(fn (): array => array_values(array_filter([
-                    Livewire::make(SubscriptionCostSummary::class, ['record' => $this->record])->lazy()->columnSpanFull(),
+                    Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'cost'])->lazy()->columnSpanFull(),
                     Livewire::make(SubscriptionCostHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(SubscriptionCostHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(SubscriptionBudgetDetails::class, ['record' => $this->record])->lazy()->columnSpanFull(),
