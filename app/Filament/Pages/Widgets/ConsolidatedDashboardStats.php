@@ -6,6 +6,7 @@ namespace App\Filament\Pages\Widgets;
 
 use App\Models\AzureAlert;
 use App\Models\AzureBudget;
+use App\Models\AzureCostForecast;
 use App\Models\AzureSecurityAssessment;
 use App\Models\AzureSecurityScore;
 use App\Models\AzureSubscription;
@@ -108,7 +109,7 @@ class ConsolidatedDashboardStats extends BaseWidget
                 ? (float) $budgetRows->sum(fn (AzureBudget $row): float => (float) $row->amount)
                 : null;
 
-            $forecastRows = \\App\\Models\\AzureCostForecast::query()
+            $forecastRows = AzureCostForecast::query()
                 ->whereIn('subscription_id', $ids)
                 ->get(['forecast_amount', 'currency']);
             $forecastCurrencies = $forecastRows->pluck('currency')->filter()->unique();
