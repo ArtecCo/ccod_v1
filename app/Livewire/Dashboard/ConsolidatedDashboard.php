@@ -13,9 +13,11 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Illuminate\Database\Eloquent\Builder;
 use Livewire\Component;
+use Livewire\Attributes\Url;
 
 class ConsolidatedDashboard extends Component
 {
+    #[Url(as: 'scope', history: true)]
     public string $filter = 'all';
     public string $activeTab = 'overview';
 
