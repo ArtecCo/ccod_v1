@@ -36,6 +36,7 @@ class ConsolidatedDashboardStats extends BaseWidget
         return match ($this->activeTab) {
             'cost' => 5,
             'security' => 4,
+            'alerts' => 2,
             'resources' => 1,
             default => 3,
         };
@@ -197,15 +198,15 @@ class ConsolidatedDashboardStats extends BaseWidget
         if ($this->activeTab === 'alerts') {
             $ids = $idsFor('alerts.view');
             $counts = AzureAlert::query()->whereIn('subscription_id', $ids)
-                ->selectRaw('COUNT(*) AS total, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev0, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev1, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev2, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev3, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev4',
-                    ['Sev0', 'Sev1', 'Sev2', 'Sev3', 'Sev4'])->first();
+                ->whereIn('severity', ['Sev0', 'Sev1'])
+                ->selectRaw('SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev0, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev1',
+                    ['Sev0', 'Sev1'])->first();
+
             return [
-                Stat::make('Sev 0', (string) ($counts?->sev0 ?? 0))->icon('heroicon-o-exclamation-triangle')->color('gray'),
-                Stat::make('Sev 1', (string) ($counts?->sev1 ?? 0))->icon('heroicon-o-exclamation-triangle')->color('danger'),
-                Stat::make('Sev 2', (string) ($counts?->sev2 ?? 0))->icon('heroicon-o-exclamation-circle')->color('warning'),
-                Stat::make('Sev 3', (string) ($counts?->sev3 ?? 0))->icon('heroicon-o-exclamation-circle')->color('warning'),
-                Stat::make('Sev 4', (string) ($counts?->sev4 ?? 0))->icon('heroicon-o-information-circle')->color('gray'),
-                Stat::make('Total Alerts', (string) ($counts?->total ?? 0))->icon('heroicon-o-bell-alert')->color('primary'),
+                Stat::make('Sev 0 Alerts', number_format((int) ($counts?->sev0 ?? 0)))
+                    ->icon('heroicon-o-exclamation-triangle')->color('danger'),
+                Stat::make('Sev 1 Alerts', number_format((int) ($counts?->sev1 ?? 0)))
+                    ->icon('heroicon-o-exclamation-triangle')->color('warning'),
             ];
         }
 
