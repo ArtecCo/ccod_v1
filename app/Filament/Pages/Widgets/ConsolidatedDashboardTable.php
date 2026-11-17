@@ -83,6 +83,7 @@ class ConsolidatedDashboardTable extends BaseWidget
             'cost' => AzureSubscriptionCost::query()->whereIn('subscription_id', $ids)
                 ->where('granularity', 'monthly')->with('subscription')->orderByDesc('period_start'),
             'alerts' => AzureAlert::query()->whereIn('subscription_id', $ids)
+                ->whereIn('severity', ['Sev0', 'Sev1'])
                 ->with('subscription')->orderByDesc('fire_time'),
             'security', 'security_high' => AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')
