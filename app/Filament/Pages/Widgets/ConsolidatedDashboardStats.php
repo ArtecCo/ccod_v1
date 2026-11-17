@@ -15,11 +15,11 @@ use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
-use Livewire\Attributes\Reactive;
+use Livewire\Attributes\Url;
 
 class ConsolidatedDashboardStats extends BaseWidget
 {
-    #[Reactive]
+    #[Url(as: 'scope', history: true)]
     public string $filter = 'all';
 
     #[Reactive]
