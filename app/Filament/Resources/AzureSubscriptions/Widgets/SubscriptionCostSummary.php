@@ -84,7 +84,8 @@ class SubscriptionCostSummary extends BaseWidget
         $endDate = $budgets->max('end_date');
         $moduleSync = app(\App\Services\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'costs');
         $costSyncedAt = $moduleSync?->last_successful_at !== null ? Carbon::parse($moduleSync->last_successful_at) : $current?->synced_at;
-        [$costDataAge, $costDataAgeColor] = DataAge::for($costSyncedAt, $moduleSync?->status);
+        $costPartialAt = $moduleSync?->last_partial_at !== null ? Carbon::parse($moduleSync->last_partial_at) : null;
+        [$costDataAge, $costDataAgeColor] = DataAge::for($costSyncedAt, $moduleSync?->status, $costPartialAt);
         $budgetExpiry = $endDate !== null
             ? 'Until ' . Carbon::parse($endDate)->format('M Y')
             : 'Expiry unavailable';
