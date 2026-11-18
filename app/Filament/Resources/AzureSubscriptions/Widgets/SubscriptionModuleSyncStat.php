@@ -28,10 +28,7 @@ class SubscriptionModuleSyncStat extends BaseWidget
         $label = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? '—';
         [$description, $color] = DataAge::for($lastSynced);
 
-        if (($sync?->status ?? null) === 'failed') {
-            $description = 'Last sync failed' . ($sync?->error_message ? ': ' . $sync->error_message : '');
-            $color = 'danger';
-        } elseif (($sync?->status ?? null) === 'running') {
+        if (($sync?->status ?? null) === 'running') {
             $description = 'Sync in progress' . ($lastSynced !== null ? ' · ' . (string) $description : '');
             $color = 'warning';
         }
