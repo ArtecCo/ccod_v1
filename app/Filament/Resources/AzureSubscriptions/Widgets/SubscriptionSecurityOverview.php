@@ -36,6 +36,7 @@ class SubscriptionSecurityOverview extends BaseWidget
         $high = (int) ($assessmentStats?->high_count ?? 0);
         $moduleSync = app(\App\Services\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'security');
         $lastSynced = $moduleSync?->last_successful_at ?? $assessmentStats?->last_synced;
+        $partialAt = $moduleSync?->last_partial_at !== null ? Carbon::parse($moduleSync->last_partial_at) : null;
 
         // Fetch the latest initiative's score history in one round trip.
         // MySQL's null-safe equality preserves the case where the latest
@@ -82,7 +83,7 @@ class SubscriptionSecurityOverview extends BaseWidget
         $lastSyncedLabel = $lastSynced !== null
             ? Carbon::parse($lastSynced)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
-        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null, $moduleSync?->status);
+        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null, $moduleSync?->status, $partialAt);
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
             ->icon('heroicon-o-shield-check')
