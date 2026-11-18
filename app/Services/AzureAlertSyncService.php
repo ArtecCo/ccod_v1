@@ -120,7 +120,7 @@ KQL,
                 $stats['discovered']++;
                 $seen[] = $alert['alertId'];
                 $stats[$this->syncOne($alert, $subscriptionId)]++;
-                $this->syncDetails($alert, $subscriptionId);
+                $this->syncDetails($alert);
             }
 
             $next = $page['$skipToken'] ?? null;
@@ -141,7 +141,7 @@ KQL,
         return $stats;
     }
 
-    private function syncDetails(array $alert, string $subscriptionId): void
+    private function syncDetails(array $alert): void
     {
         $alertId = (string) ($alert['alertId'] ?? '');
         if ($alertId === '') {
@@ -157,7 +157,6 @@ KQL,
         AzureAlertDetail::query()->updateOrCreate(
             ['alert_id' => $record->id],
             [
-                'subscription_id' => $subscriptionId,
                 'raw_properties' => $properties ?: null,
                 'fetched_at' => now(),
             ],
