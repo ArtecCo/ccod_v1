@@ -34,11 +34,11 @@ class SubscriptionsPageSyncStat extends BaseWidget
             ->map(fn ($timestamp) => Carbon::parse($timestamp))
             ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)->first();
 
-        $syncStatus = $syncs->contains(fn ($sync): bool => $sync->status === 'partial')
-            ? 'partial'
-            : ($syncs->contains(fn ($sync): bool => $sync->status === 'failed') ? 'failed' : null);
+        $latestOutcome = $syncs->sortByDesc(fn ($sync) => Carbon::parse($sync->last_started_at ?? $sync->updated_at)->timestamp)->first();
+        $syncStatus = $latestOutcome?->status;
+        $partialAt = $latestOutcome?->last_partial_at !== null ? Carbon::parse($latestOutcome->last_partial_at) : null;
 
-        [$dataAge, $ageColor] = DataAge::for($lastSuccessfulAt, $syncStatus);
+        [$dataAge, $ageColor] = DataAge::for($lastSuccessfulAt, $syncStatus, $partialAt);
 
         return [
             Stat::make('Last Subscription Sync', $lastAttemptAt?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? 'Never')
