@@ -104,7 +104,8 @@ class ConsolidatedDashboardTable extends BaseWidget
 
     protected function table(Table $table): Table
     {
-        return parent::table($table)\n            ->recordAction('viewAlert')\n            ->recordActions([
+        return parent::table($table)
+            ->recordAction('viewAlert')\n            ->recordActions([
             $this->alertDetailAction('viewAlert', 'View'),
         ]);
     }
