@@ -14,7 +14,7 @@ class ProjectInfolist
         return $schema->components([
             Section::make('Project Information')
                 ->schema([
-                    TextEntry::make('name')->label('Project Name'),
+                    TextEntry::make('name')->label('Project Name')->weight('bold'),
                     TextEntry::make('businessUnit.name')->label('Business Unit')->placeholder('—'),
                     TextEntry::make('description')->label('Description')->placeholder('No description provided.')->columnSpanFull(),
                 ])
@@ -26,7 +26,10 @@ class ProjectInfolist
                 ->schema([
                     RepeatableEntry::make('userGroups')
                         ->schema([
-                            TextEntry::make('name')->label('Group Name'),
+                            TextEntry::make('name')
+                                ->label('Group')
+                                ->badge()
+                                ->color('gray'),
                         ])
                         ->columns(1)
                         ->grid(3)
@@ -40,16 +43,24 @@ class ProjectInfolist
                 ->schema([
                     RepeatableEntry::make('subscriptionAssignments')
                         ->schema([
-                            TextEntry::make('subscription.display_name')->label('Subscription'),
-                            TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
+                            TextEntry::make('subscription.display_name')
+                                ->label('Subscription')
+                                ->weight('bold')
+                                ->columnSpanFull(),
+                            TextEntry::make('subscription_id')
+                                ->label('Subscription ID')
+                                ->copyable()
+                                ->columnSpanFull(),
                             TextEntry::make('tags')
                                 ->label('Tags')
                                 ->formatStateUsing(fn ($state): string => strtoupper(implode(', ', (array) $state)))
                                 ->badge()
-                                ->placeholder('—'),
+                                ->placeholder('No tags')
+                                ->columnSpanFull(),
                         ])
-                        ->columns(3)
+                        ->columns(1)
                         ->grid(2)
+                        ->placeholder('No subscriptions assigned.')
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
