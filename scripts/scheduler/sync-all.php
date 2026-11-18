@@ -229,9 +229,9 @@ foreach ($modules as $module) {
         // Treat a module as partial when its process failed but the output
         // confirms that at least one operation/data item completed successfully.
         $successfulOutput = match ($module['name']) {
-            'Costs' => preg_match('/(?:Cost:\\s+.+?sync complete:|Budgets:\\s+\\d+ synchronized\\.|Resource costs:\\s+\\d+ resources updated\\.|Forecast:\\s+synchronized\\.)/i', $stdout) === 1,
-            'Subscriptions' => preg_match('/(?:Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
-            'Resources' => preg_match('/(?:Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
+            // Cost runner prints a confirmation line for each completed component.
+            'Costs' => str_contains($stdout, 'sync complete:') || str_contains($stdout, 'synchronized.') || str_contains($stdout, 'resources updated.'),
+            'Subscriptions', 'Resources' => preg_match('/(?:Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
             'Security' => preg_match('/(?:Discovered:\\s*[1-9]\\d*|Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*)/i', $stdout) === 1,
             'Alerts' => preg_match('/(?:Active alerts discovered:\\s*[1-9]\\d*|Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
             default => false,
