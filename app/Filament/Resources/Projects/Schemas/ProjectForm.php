@@ -49,10 +49,19 @@ class ProjectForm
                         ->schema([
                             Select::make('subscription_id')
                                 ->label('Azure Subscription')
-                                ->options(fn (): array => AzureSubscription::query()
-                                    ->orderBy('display_name')
-                                    ->pluck('display_name', 'subscription_id')
-                                    ->all())
+                                ->options(function ($livewire): array {
+                                    $projectId = $livewire->record?->getKey();
+                                    $assignedIds = \\App\\Models\\ProjectSubscription::query()
+                                        ->when($projectId, fn ($query) => $query->where('project_id', '!=', $projectId))
+                                        ->pluck('subscription_id')
+                                        ->all();
+
+                                    return AzureSubscription::query()
+                                        ->whereNotIn('subscription_id', $assignedIds)
+                                        ->orderBy('display_name')
+                                        ->pluck('display_name', 'subscription_id')
+                                        ->all();
+                                })
                                 ->searchable()
                                 ->preload()
                                 ->required(),
