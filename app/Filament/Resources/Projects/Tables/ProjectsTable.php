@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\Projects\Tables;
+namespace App\\Filament\\Resources\\Projects\\Tables;
 
-use App\Filament\Resources\Projects\ProjectResource;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
+use App\\Filament\\Resources\\Projects\\ProjectResource;
+use Filament\\Tables\\Columns\\TextColumn;
+use Filament\\Tables\\Table;
 
 class ProjectsTable
 {
@@ -14,7 +14,10 @@ class ProjectsTable
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('businessUnit.name')->label('Business Unit')->searchable()->sortable(),
-                TextColumn::make('subscriptions_count')->counts('subscriptions')->label('Subscriptions')->sortable(),
+                TextColumn::make('subscription_assignments_count')
+                    ->counts('subscriptionAssignments')
+                    ->label('Subscriptions')
+                    ->sortable(),
                 TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->recordUrl(fn ($record): ?string => ProjectResource::canView($record)
