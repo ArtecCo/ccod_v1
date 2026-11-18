@@ -166,14 +166,14 @@ class ConsolidatedDashboardTable extends BaseWidget
             ->visible(fn (AzureAlert $record): bool => $this->canViewAlert($record));
     }
 
-    private function alertConditionData(AzureAlert $record): array
+    private function alertConditionContainerData(AzureAlert $record): array
     {
         $raw = $record->details?->raw_properties ?? [];
         foreach ([
-            'context.context.condition.allOf.0',
-            'context.condition.allOf.0',
-            'alertContext.context.condition.allOf.0',
-            'alertContext.condition.allOf.0',
+            'context.context.condition',
+            'context.condition',
+            'alertContext.context.condition',
+            'alertContext.condition',
         ] as $path) {
             $condition = data_get($raw, $path);
             if (is_array($condition) && $condition !== []) {
@@ -182,6 +182,17 @@ class ConsolidatedDashboardTable extends BaseWidget
         }
 
         return [];
+    }
+
+    private function alertConditionData(AzureAlert $record): array
+    {
+        $condition = $this->alertConditionContainerData($record);
+        $allOf = data_get($condition, 'allOf.0');
+        if (is_array($allOf) && $allOf !== []) {
+            return $allOf;
+        }
+
+        return $condition;
     }
 
     private function alertContextData(AzureAlert $record): array
@@ -196,16 +207,26 @@ class ConsolidatedDashboardTable extends BaseWidget
 
     private function alertEvaluationStart(AzureAlert $record): mixed
     {
-        $condition = $this->alertConditionData($record);
+        $condition = $this->alertConditionContainerData($record);
         $context = $this->alertContextData($record);
-        return data_get($condition, 'windowStartTime') ?? data_get($condition, 'evaluationStartTime') ?? data_get($context, 'windowStartTime');
+        return data_get($condition, 'windowStartTime')
+            ?? data_get($condition, 'evaluationStartTime')
+            ?? data_get($condition, 'window.startTime')
+            ?? data_get($context, 'windowStartTime')
+            ?? data_get($context, 'evaluationStartTime')
+            ?? data_get($context, 'condition.windowStartTime');
     }
 
     private function alertEvaluationEnd(AzureAlert $record): mixed
     {
-        $condition = $this->alertConditionData($record);
+        $condition = $this->alertConditionContainerData($record);
         $context = $this->alertContextData($record);
-        return data_get($condition, 'windowEndTime') ?? data_get($condition, 'evaluationEndTime') ?? data_get($context, 'windowEndTime');
+        return data_get($condition, 'windowEndTime')
+            ?? data_get($condition, 'evaluationEndTime')
+            ?? data_get($condition, 'window.endTime')
+            ?? data_get($context, 'windowEndTime')
+            ?? data_get($context, 'evaluationEndTime')
+            ?? data_get($context, 'condition.windowEndTime');
     }
 
     private function alertAggregation(AzureAlert $record): mixed
