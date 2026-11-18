@@ -12,8 +12,12 @@ class DataAge
     public static function for(?CarbonInterface $syncedAt, ?string $syncStatus = null): array
     {
         if ($syncedAt === null) {
+            $label = $syncStatus === 'partial'
+                ? 'Partially synced · Sync time unavailable'
+                : 'Sync time unavailable — data freshness unknown';
+
             return [
-                new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Sync time unavailable — data freshness unknown</span>'),
+                new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">' . e($label) . '</span>'),
                 'danger',
             ];
         }
