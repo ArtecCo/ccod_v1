@@ -21,25 +21,25 @@ class ProjectInfolist
                 ->columns(2)
                 ->columnSpanFull(),
 
-            Section::make('Access Groups')
+            Section::make('User Groups')
                 ->schema([
                     RepeatableEntry::make('userGroups')
                         ->schema([
                             TextEntry::make('name')
-                                ->badge()
-                                ->color('gray')
                                 ->hiddenLabel(),
                         ])
                         ->columns(1)
                         ->grid(3)
-                        ->placeholder('No access groups assigned.')
+                        ->hiddenLabel()
+                        ->placeholder('No user groups assigned.')
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
 
-            Section::make('Subscriptions')
+            Section::make('Subscriptions Assignments')
                 ->schema([
                     RepeatableEntry::make('subscriptionAssignments')
+                        ->hiddenLabel()
                         ->schema([
                             TextEntry::make('subscription.display_name')->label('Subscription'),
                             TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
