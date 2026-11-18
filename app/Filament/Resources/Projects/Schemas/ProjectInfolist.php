@@ -1,11 +1,11 @@
 <?php
 
-namespace App\Filament\Resources\Projects\Schemas;
+namespace App\\Filament\\Resources\\Projects\\Schemas;
 
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Components\Section;
-use Filament\Schemas\Schema;
+use Filament\\Infolists\\Components\\RepeatableEntry;
+use Filament\\Infolists\\Components\\TextEntry;
+use Filament\\Schemas\\Components\\Section;
+use Filament\\Schemas\\Schema;
 
 class ProjectInfolist
 {
@@ -21,17 +21,18 @@ class ProjectInfolist
                 ->columns(2)
                 ->columnSpanFull(),
 
-            Section::make('User Groups')
+            Section::make('Access Groups')
                 ->schema([
                     RepeatableEntry::make('userGroups')
                         ->schema([
                             TextEntry::make('name')
                                 ->badge()
-                                ->color('gray'),
+                                ->color('gray')
+                                ->hiddenLabel(),
                         ])
                         ->columns(1)
                         ->grid(3)
-                        ->placeholder('No user groups assigned.')
+                        ->placeholder('No access groups assigned.')
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
