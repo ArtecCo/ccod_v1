@@ -154,17 +154,10 @@ KQL,
         }
 
         $properties = is_array($alert['alertProperties'] ?? null) ? $alert['alertProperties'] : [];
-        $essentials = is_array($properties['essentials'] ?? null) ? $properties['essentials'] : [];
-        $context = is_array($properties['context'] ?? null)
-            ? $properties['context']
-            : (is_array($properties['alertContext'] ?? null) ? $properties['alertContext'] : null);
-
         AzureAlertDetail::query()->updateOrCreate(
             ['alert_id' => $record->id],
             [
                 'subscription_id' => $subscriptionId,
-                'essentials' => $essentials ?: null,
-                'alert_context' => $context,
                 'raw_properties' => $properties ?: null,
                 'fetched_at' => now(),
             ],
