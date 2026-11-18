@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace App\\Support;
+namespace App\Support;
 
-use Carbon\\CarbonInterface;
-use Illuminate\\Support\\HtmlString;
+use Carbon\CarbonInterface;
+use Illuminate\Support\HtmlString;
 
 class DataAge
 {
