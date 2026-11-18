@@ -117,11 +117,12 @@ class SubscriptionStatsOverview extends BaseWidget
         $lastSynced = $moduleSync?->last_successful_at !== null
             ? Carbon::parse($moduleSync->last_successful_at)
             : ($this->record->last_synced !== null ? Carbon::parse($this->record->last_synced) : null);
+        $partialAt = $moduleSync?->last_partial_at !== null ? Carbon::parse($moduleSync->last_partial_at) : null;
         $lastSyncedLabel = $lastSynced !== null
             ? $lastSynced->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
 
-        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced, $moduleSync?->status);
+        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced, $moduleSync?->status, $partialAt);
 
         return [
             Stat::make('Last Sync', $lastSyncedLabel)
