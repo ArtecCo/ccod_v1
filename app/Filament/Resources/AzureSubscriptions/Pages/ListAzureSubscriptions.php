@@ -16,4 +16,9 @@ class ListAzureSubscriptions extends ListRecords
             SubscriptionsPageSyncStat::class,
         ];
     }
+
+    protected function getHeaderWidgetsColumns(): int | array
+    {
+        return 1;
+    }
 }
