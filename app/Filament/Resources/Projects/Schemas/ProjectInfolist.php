@@ -22,12 +22,10 @@ class ProjectInfolist
                 ->columnSpanFull(),
 
             Section::make('User Groups')
-                ->description('Groups assigned access to this project.')
                 ->schema([
                     RepeatableEntry::make('userGroups')
                         ->schema([
                             TextEntry::make('name')
-                                ->label('Group')
                                 ->badge()
                                 ->color('gray'),
                         ])
@@ -39,28 +37,19 @@ class ProjectInfolist
                 ->columnSpanFull(),
 
             Section::make('Subscriptions')
-                ->description('Azure subscriptions assigned to this project.')
                 ->schema([
                     RepeatableEntry::make('subscriptionAssignments')
                         ->schema([
-                            TextEntry::make('subscription.display_name')
-                                ->label('Subscription')
-                                ->weight('bold')
-                                ->columnSpanFull(),
-                            TextEntry::make('subscription_id')
-                                ->label('Subscription ID')
-                                ->copyable()
-                                ->columnSpanFull(),
+                            TextEntry::make('subscription.display_name')->label('Subscription'),
+                            TextEntry::make('subscription_id')->label('Subscription ID')->copyable(),
                             TextEntry::make('tags')
                                 ->label('Tags')
                                 ->formatStateUsing(fn ($state): string => strtoupper(implode(', ', (array) $state)))
                                 ->badge()
-                                ->placeholder('No tags')
-                                ->columnSpanFull(),
+                                ->placeholder('—'),
                         ])
-                        ->columns(1)
+                        ->columns(3)
                         ->grid(2)
-                        ->placeholder('No subscriptions assigned.')
                         ->columnSpanFull(),
                 ])
                 ->columnSpanFull(),
@@ -71,8 +60,7 @@ class ProjectInfolist
                     TextEntry::make('updated_at')->label('Last Updated')->dateTime(),
                 ])
                 ->columns(2)
-                ->columnSpanFull()
-                ->collapsed(),
+                ->columnSpanFull(),
         ]);
     }
 }
