@@ -71,7 +71,8 @@ class ConsolidatedWebUrlStats extends BaseWidget
         $syncStatus = $latestOutcome?->status;
         $partialAt = $latestOutcome?->last_partial_at !== null ? Carbon::parse($latestOutcome->last_partial_at) : null;
 
-        [$dataAge, $ageColor] = DataAge::for($lastSuccessfulAt, $syncStatus, $partialAt);
+        // Freshness for URL monitoring is based on the latest check timestamp, not the last successful data-sync timestamp.
+        [$dataAge, $ageColor] = DataAge::for($lastAttemptAt, null);
 
         $card = fn (string $filter): array => [
             'role' => 'button',
