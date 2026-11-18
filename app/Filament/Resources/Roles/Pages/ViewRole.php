@@ -32,6 +32,8 @@ class ViewRole extends ViewRecord
         $permissionSections = [];
 
         foreach (collect($managed)->groupBy('category', preserveKeys: true) as $category => $definitions) {
+            // TEMPORARILY HIDDEN: Tickets permissions container in the role view.
+            if ($category === 'Tickets') continue;
             $entries = [];
             foreach ($definitions as $slug => $definition) {
                 $granted = $isSuperAdmin || $this->record->permissions()->where('permissions.slug', $slug)->exists();
