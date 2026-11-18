@@ -43,12 +43,19 @@ try {
     $processed = 0;
     $live = 0;
     $down = 0;
+    $checkErrors = 0;
     $concurrency = max(1, min(25, (int) (getenv('CCOD_URL_CHECK_CONCURRENCY') ?: 10)));
 
     fwrite(STDOUT, sprintf("Checking %d active web URLs (concurrency: %d)...\n", $total, $concurrency));
 
-    $query->with('subscription.projects:id,name')->orderBy('id')->chunkById(50, function ($urls) use ($monitor, &$projects, &$unassigned, &$processed, &$live, &$down, $total, $concurrency): void {
-        $monitor->checkMany($urls, $concurrency);
+    $query->with('subscription.projects:id,name')->orderBy('id')->chunkById(50, function ($urls) use ($monitor, &$projects, &$unassigned, &$processed, &$live, &$down, &$checkErrors, $total, $concurrency): void {
+        try {
+            $monitor->checkMany($urls, $concurrency);
+        } catch (Throwable $exception) {
+            $checkErrors++;
+            fwrite(STDERR, 'URL check batch error: ' . $exception->getMessage() . PHP_EOL);
+            return;
+        }
 
         foreach ($urls as $url) {
             $projectNames = $url->subscription?->projects?->pluck('name')->filter()->values()->all() ?? [];
@@ -106,6 +113,11 @@ try {
     }
 
     fwrite(STDOUT, PHP_EOL . sprintf("Total active links checked: %d\n", $processed));
+    fwrite(STDOUT, sprintf("CHECK_SUCCESS: %d\n", $processed));
+    fwrite(STDOUT, sprintf("CHECK_ERRORS: %d\n", $checkErrors));
+    if ($checkErrors > 0) {
+        exit($processed > 0 ? 2 : 1);
+    }
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Web URL check failed: ' . $exception->getMessage() . PHP_EOL);
     exit(1);
