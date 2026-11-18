@@ -3,81 +3,69 @@
     $properties = $detail?->raw_properties ?? [];
     $essentials = $detail?->essentials ?? ($properties['essentials'] ?? []);
     $context = $detail?->alert_context ?? ($properties['context'] ?? ($properties['alertContext'] ?? []));
-    $targetIds = $essentials['alertTargetIDs'] ?? ($essentials['targetResource'] ?? null);
-    $queryText = data_get($context, 'condition.allOf.0.searchQuery')
-        ?? data_get($context, 'condition.allOf.0.query')
-        ?? data_get($context, 'searchQuery')
-        ?? data_get($context, 'query');
+    $condition = data_get($context, 'condition.allOf.0', []);
+    $evaluationStart = data_get($condition, 'windowStartTime') ?? data_get($condition, 'evaluationStartTime') ?? data_get($context, 'windowStartTime');
+    $evaluationEnd = data_get($condition, 'windowEndTime') ?? data_get($condition, 'evaluationEndTime') ?? data_get($context, 'windowEndTime');
+    $aggregation = data_get($condition, 'timeAggregation') ?? data_get($condition, 'aggregation');
+    $rule = data_get($condition, 'metricName') ?? data_get($condition, 'alertRule') ?? data_get($context, 'alertRule');
+    $actual = data_get($condition, 'metricValue') ?? data_get($condition, 'value') ?? data_get($condition, 'searchResult');
+    $threshold = data_get($condition, 'threshold');
+    $deviation = is_numeric($actual) && is_numeric($threshold) ? (float) $actual - (float) $threshold : null;
+    $formatTime = fn ($value) => $value ? \Illuminate\Support\Carbon::parse($value)->format('d M Y, h:i A') : '—';
+    $formatValue = fn ($value) => is_numeric($value) ? number_format((float) $value, 2) : (is_scalar($value) ? (string) $value : '—');
+    $cards = [
+        'Alert ID' => $record->azure_alert_id ?? '—',
+        'Alert condition' => $record->alert_condition ?? '—',
+        'User response' => $record->user_response ?? '—',
+        'Fired time' => $formatTime($record->fire_time),
+        'Evaluation start' => $formatTime($evaluationStart),
+        'Evaluation end' => $formatTime($evaluationEnd),
+        'Time aggregation' => $aggregation ?? '—',
+        'Alert rule' => $rule ?? '—',
+        'Value' => $formatValue($actual),
+        'Threshold' => $formatValue($threshold),
+        'Deviation' => $deviation !== null ? number_format($deviation, 2) : '—',
+    ];
 @endphp
 
 <div class="space-y-5">
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-        @foreach([
-            'Severity' => $record->severity,
-            'Fired time' => $record->fire_time?->format('d M Y, h:i A') ?? '—',
-            'Status / condition' => $record->alert_condition ?? '—',
-            'Alert state / response' => $record->user_response ?? '—',
-            'Monitor service' => $record->monitor_service ?? '—',
-            'Signal type' => $record->signal_type ?? '—',
-            'Subscription' => $record->subscription?->display_name ?? $record->subscription_id,
-            'Resource group' => $record->target_resource_group ?? '—',
-            'Target resource type' => $record->target_resource_type ?? '—',
-            'Affected resource' => $record->affected_resource ?? '—',
-            'Suppression status' => $record->suppression_status ?? '—',
-            'Last modified' => $record->last_modified_time?->format('d M Y, h:i A') ?? '—',
-        ] as $label => $value)
-            <div class="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
-                <div class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $label }}</div>
-                <div class="mt-1 break-words text-sm font-medium text-gray-900 dark:text-gray-100">{{ $value }}</div>
+    <header class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-700 dark:bg-gray-900">
+        <div class="flex flex-wrap items-center justify-between gap-3">
+            <div class="min-w-0">
+                <p class="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">Alert title</p>
+                <h2 class="mt-1 break-words text-lg font-semibold text-gray-900 dark:text-gray-100">{{ $record->name ?: 'Unnamed alert' }}</h2>
+            </div>
+            <span class="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-sm font-semibold text-red-700 dark:bg-red-900/40 dark:text-red-300">{{ $record->severity ?? 'Severity unavailable' }}</span>
+        </div>
+    </header>
+
+    <section class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach($cards as $label => $value)
+            <div class="min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800">
+                <p class="text-xs font-medium text-gray-500 dark:text-gray-400">{{ $label }}</p>
+                <p class="mt-1 break-words text-sm font-semibold text-gray-900 dark:text-gray-100">{{ $value }}</p>
             </div>
         @endforeach
-    </div>
+    </section>
 
-    @if(is_array($essentials) && count($essentials))
-        <section class="space-y-2">
-            <h3 class="text-sm font-semibold">Alert essentials</h3>
-            <div class="overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-700">
-                <table class="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
-                    @foreach($essentials as $key => $value)
-                        <tr>
-                            <th class="w-1/3 px-3 py-2 text-left font-medium text-gray-600 dark:text-gray-300">{{ str($key)->headline() }}</th>
-                            <td class="px-3 py-2 break-words">{{ is_array($value) ? json_encode($value, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : ($value ?? '—') }}</td>
-                        </tr>
-                    @endforeach
-                </table>
-            </div>
-        </section>
-    @endif
-
-    @if($targetIds)
-        <section class="space-y-2">
-            <h3 class="text-sm font-semibold">Target resource IDs</h3>
-            <pre class="max-h-48 overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-900">{{ is_array($targetIds) ? json_encode($targetIds, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : $targetIds }}</pre>
-        </section>
-    @endif
-
-    @if($queryText)
-        <section class="space-y-2">
-            <h3 class="text-sm font-semibold">Query</h3>
-            <pre class="max-h-72 overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-900">{{ $queryText }}</pre>
-        </section>
-    @endif
-
-    @if(is_array($context) && count($context))
-        <section class="space-y-2">
-            <h3 class="text-sm font-semibold">Alert context</h3>
-            <pre class="max-h-80 overflow-auto rounded-xl border border-gray-200 bg-gray-50 p-3 text-xs dark:border-gray-700 dark:bg-gray-900">{{ json_encode($context, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
-        </section>
-    @endif
-
-    @if(is_array($properties) && count($properties))
-        <details class="rounded-xl border border-gray-200 dark:border-gray-700">
-            <summary class="cursor-pointer px-3 py-2 text-sm font-semibold">Raw Azure alert payload</summary>
-            <pre class="max-h-96 overflow-auto border-t border-gray-200 p-3 text-xs dark:border-gray-700">{{ json_encode($properties, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) }}</pre>
-        </details>
-    @else
-        <div class="rounded-lg border border-dashed border-gray-300 p-3 text-sm text-gray-500 dark:border-gray-700">
-            Detailed Azure payload has not been collected yet. Run the alert synchronization to populate it.
-        </div>
-    @endif
+    <section class="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+        <h3 class="mb-3 text-sm font-semibold text-gray-900 dark:text-gray-100">Basic alert details</h3>
+        <dl class="grid grid-cols-1 gap-x-5 gap-y-3 sm:grid-cols-2">
+            @foreach([
+                'Monitor service' => $record->monitor_service,
+                'Signal type' => $record->signal_type,
+                'Subscription' => $record->subscription?->display_name ?? $record->subscription_id,
+                'Affected resource' => $record->affected_resource,
+                'Resource group' => $record->target_resource_group,
+                'Target resource type' => $record->target_resource_type,
+                'Suppression status' => $record->suppression_status,
+                'Last modified' => $formatTime($record->last_modified_time),
+            ] as $label => $value)
+                <div class="min-w-0">
+                    <dt class="text-xs text-gray-500 dark:text-gray-400">{{ $label }}</dt>
+                    <dd class="mt-1 break-words text-sm text-gray-900 dark:text-gray-100">{{ $value ?: '—' }}</dd>
+                </div>
+            @endforeach
+        </dl>
+    </section>
 </div>
