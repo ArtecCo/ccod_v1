@@ -43,9 +43,6 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
         $lastSyncedDate = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y');
         [$ageDescription, $ageColor] = DataAge::for($lastSynced);
 
-        if (($sync?->status ?? null) === 'failed' || $lastSynced === null) {
-            [$ageDescription, $ageColor] = DataAge::for(null);
-        }
 
         if ($lastSyncedDate !== null) {
             $ageDescription = $ageDescription instanceof HtmlString
