@@ -8,6 +8,9 @@ use App\Models\AzureSubscription;
 use App\Models\SubscriptionWebUrl;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
+use App\Support\DataAge;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use Illuminate\Support\HtmlString;
@@ -50,8 +53,15 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ->whereIn('subscription_id', $subscriptionIds)
             ->get();
 
-        $lastCheckedAt = $webUrlSyncs
+        $lastSuccessfulAt = $webUrlSyncs
             ->pluck('last_successful_at')
+            ->filter()
+            ->map(fn ($timestamp) => Carbon::parse($timestamp))
+            ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)
+            ->first();
+
+        $lastAttemptAt = $webUrlSyncs
+            ->pluck('last_started_at')
             ->filter()
             ->map(fn ($timestamp) => Carbon::parse($timestamp))
             ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)
@@ -61,7 +71,7 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ? 'partial'
             : ($webUrlSyncs->contains(fn ($sync): bool => $sync->status === 'failed') ? 'failed' : null);
 
-        [$dataAge, $ageColor] = DataAge::for($lastCheckedAt, $syncStatus);
+        [$dataAge, $ageColor] = DataAge::for($lastSuccessfulAt, $syncStatus);
 
         $card = fn (string $filter): array => [
             'role' => 'button',
@@ -84,7 +94,7 @@ class ConsolidatedWebUrlStats extends BaseWidget
             Stat::make('SSL Expiring in 15 Days', new HtmlString('<span style="color: #d97706;">' . e(number_format($sslExpiring)) . '</span>'))
                 ->icon('heroicon-o-shield-exclamation')
                 ->extraAttributes($card('ssl_expiring')),
-            Stat::make('Last URL Check', $lastCheckedAt?->format('d M Y, H:i') ?? 'Never')
+            Stat::make('Last URL Check', $lastAttemptAt?->format('d M Y, H:i') ?? 'Never')
                 ->icon('heroicon-o-clock')
                 ->description($dataAge)
                 ->color($ageColor),
