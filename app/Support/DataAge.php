@@ -9,8 +9,12 @@ use Illuminate\Support\HtmlString;
 
 class DataAge
 {
-    public static function for(?CarbonInterface $syncedAt, ?string $syncStatus = null): array
+    public static function for(?CarbonInterface $syncedAt, ?string $syncStatus = null, ?CarbonInterface $partialAt = null): array
     {
+        if ($syncStatus === 'partial' && $partialAt !== null) {
+            $syncedAt = $partialAt;
+        }
+
         if ($syncedAt === null) {
             $label = $syncStatus === 'partial'
                 ? 'Partially synced · Sync time unavailable'
