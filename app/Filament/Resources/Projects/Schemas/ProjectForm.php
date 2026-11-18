@@ -3,6 +3,9 @@
 namespace App\Filament\Resources\Projects\Schemas;
 
 use App\Models\AzureSubscription;
+use App\Models\Developer;
+use App\Models\User;
+use App\Services\AccessAuthorizationService;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TagsInput;
@@ -15,7 +18,7 @@ class ProjectForm
 {
     public static function configure(Schema $schema): Schema
     {
-        return $schema->components([
+        $components = [
             Section::make('Project')
                 ->description('Define the project and the Business Unit it belongs to.')
                 ->columnSpanFull()
@@ -68,6 +71,28 @@ class ProjectForm
                             ? AzureSubscription::query()->where('subscription_id', $state['subscription_id'])->value('display_name')
                             : 'Subscription'),
                 ]),
-        ]);
+        ];
+
+        $developer = auth()->guard('developers')->user();
+        $user = auth()->guard('web')->user();
+        $canEditUserGroups = ($developer instanceof Developer && $developer->is_active)
+            || ($user instanceof User && $user->is_active && app(AccessAuthorizationService::class)->hasPermission($user, 'users.edit'));
+
+        if ($canEditUserGroups) {
+            $components[] = Section::make('User Groups')
+                ->description('Assign user groups to this project. Group members will receive access according to the group role.')
+                ->columnSpanFull()
+                ->schema([
+                    Select::make('userGroups')
+                        ->relationship('userGroups', 'name')
+                        ->label('Assigned User Groups')
+                        ->multiple()
+                        ->searchable()
+                        ->preload()
+                        ->helperText('Select groups that should be assigned to this project.'),
+                ]);
+        }
+
+        return $schema->components($components);
     }
 }
