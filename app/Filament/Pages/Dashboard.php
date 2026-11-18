@@ -10,18 +10,15 @@ use App\Filament\Pages\Widgets\ConsolidatedWebUrlStats;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlsTable;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureSecurityAssessmentsRelationManager;
-use App\Filament\Resources\AzureSubscriptions\RelationManagers\BillingResourcesRelationManager;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryChart;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryTable;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionModuleSyncStat;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
-use App\Livewire\Filament\Subscriptions\SubscriptionMetricsDashboard;
 use App\Models\AzureSubscription;
 use App\Models\Developer;
 use App\Models\User;
@@ -62,11 +59,8 @@ class Dashboard extends BaseDashboard
             'Security' => 'security.view',
             'Tickets' => 'tickets.view',
             'Web URLs' => 'urls.view',
-            'Resources' => 'resources.view',
             'Overview' => null,
             'Cost' => 'cost.view',
-            'Metrics' => 'resources.metrics.view',
-            'metrics' => 'resources.metrics.view',
         ];
         $permission = $requestedTab !== null ? ($tabPermissions[$requestedTab] ?? null) : null;
 
@@ -133,13 +127,6 @@ class Dashboard extends BaseDashboard
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [
                     Livewire::make(ConsolidatedWebUrlStats::class)->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedWebUrlsTable::class)->lazy()->columnSpanFull(),
-                ])->columns(1),
-                $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [
-                    Livewire::make(SubscriptionModuleSyncStat::class, ['record' => $this->record, 'module' => 'resources', 'label' => 'Last Sync'])->lazy()->columnSpanFull(),
-                    Livewire::make(BillingResourcesRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
-                ])->columns(1),
-                $this->makeTab('Metrics', 'resources.metrics.view')->schema(fn (): array => [
-                    Livewire::make(SubscriptionMetricsDashboard::class, ['record' => $this->record])->lazy()->columnSpanFull(),
                 ])->columns(1),
             ])->persistTabInQueryString()->contained(false)->extraAttributes(['class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none'])->columnSpanFull(),
         ]);
