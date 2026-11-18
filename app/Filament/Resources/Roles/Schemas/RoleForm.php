@@ -38,6 +38,9 @@ class RoleForm
         $viewDependencies = RolePermissionService::viewPermissionForActions();
 
         foreach ($managed->groupBy('category') as $category => $definitions) {
+            // TEMPORARILY DISABLED: Tickets permissions container in Roles & Permissions.
+            // Uncomment the following line to restore the Tickets section.
+            if ($category === 'Tickets') continue;
             $categoryDefinitions = $managed->filter(fn (array $definition): bool => $definition['category'] === $category);
             $categorySlugs = $categoryDefinitions->keys()->values()->all();
             $options = $categoryDefinitions->mapWithKeys(fn (array $definition, string $slug): array => [$slug => $definition['name']])->all();
