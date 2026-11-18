@@ -41,7 +41,7 @@ class UserGroupInfolist
                             TextEntry::make('name')->hiddenLabel(),
                         ])
                         ->columns(1)
-                        ->grid(2)
+                        ->grid(3)
                         ->hiddenLabel()
                         ->placeholder('No projects assigned.')
                         ->columnSpanFull(),
