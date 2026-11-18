@@ -234,6 +234,7 @@ foreach ($modules as $module) {
             'Subscriptions', 'Resources' => preg_match('/(?:Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
             'Security' => preg_match('/(?:Discovered:\\s*[1-9]\\d*|Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*)/i', $stdout) === 1,
             'Alerts' => preg_match('/(?:Active alerts discovered:\\s*[1-9]\\d*|Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
+            'Web URLs' => preg_match('/CHECK_ERRORS:\\s*[1-9]\\d*/i', $stdout) === 1 && preg_match('/CHECK_SUCCESS:\\s*[1-9]\\d*/i', $stdout) === 1,
             default => false,
         };
         $partial = $successfulOutput;
