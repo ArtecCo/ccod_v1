@@ -40,7 +40,6 @@ class ViewAzureSubscription extends ViewRecord
         $tabPermissions = [
             'Alerts' => 'alerts.view',
             'Security' => 'security.view',
-            'Tickets' => 'tickets.view',
             'Web URLs' => 'urls.view',
             'Resources' => 'resources.view',
             'Overview' => null,
@@ -83,7 +82,8 @@ class ViewAzureSubscription extends ViewRecord
                     Livewire::make(SubscriptionSecurityScoreHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
                 ])->columns(2),
-                $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
+                // TEMPORARILY HIDDEN: Tickets tab. Restore by uncommenting this line.
+                // $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [Livewire::make(SubscriptionWebUrlStats::class, ['record' => $this->record])->lazy()->columnSpanFull(), Livewire::make(SubscriptionWebUrlsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull()])->columns(1),
                 $this->makeTab('Resources', 'resources.view')->schema(fn (): array => [$this->getRelationManagersContentComponent()->columnSpanFull()])->columns(1),
                 $this->makeTab('Metrics', 'resources.metrics.view')->schema(fn (): array => [Livewire::make(SubscriptionMetricsDashboard::class, ['record' => $this->record])->lazy()->columnSpanFull()])->columns(1),
