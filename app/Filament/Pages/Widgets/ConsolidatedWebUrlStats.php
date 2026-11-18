@@ -67,11 +67,11 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)
             ->first();
 
-        $syncStatus = $webUrlSyncs->contains(fn ($sync): bool => $sync->status === 'partial')
-            ? 'partial'
-            : ($webUrlSyncs->contains(fn ($sync): bool => $sync->status === 'failed') ? 'failed' : null);
+        $latestOutcome = $webUrlSyncs->sortByDesc(fn ($sync) => Carbon::parse($sync->last_started_at ?? $sync->updated_at)->timestamp)->first();
+        $syncStatus = $latestOutcome?->status;
+        $partialAt = $latestOutcome?->last_partial_at !== null ? Carbon::parse($latestOutcome->last_partial_at) : null;
 
-        [$dataAge, $ageColor] = DataAge::for($lastSuccessfulAt, $syncStatus);
+        [$dataAge, $ageColor] = DataAge::for($lastSuccessfulAt, $syncStatus, $partialAt);
 
         $card = fn (string $filter): array => [
             'role' => 'button',
