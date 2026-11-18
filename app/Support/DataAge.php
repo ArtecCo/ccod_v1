@@ -39,9 +39,11 @@ class DataAge
 
         $stale = $seconds > 8 * 60 * 60 || in_array($syncStatus, ['partial', 'failed'], true);
 
+        $staleLabel = $syncStatus === 'partial' ? 'Partially synced' : 'Stale data';
+
         return [
             $stale
-                ? new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Stale data · ' . e('Data is ' . $age . ' old') . '</span>')
+                ? new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">' . e($staleLabel . ' · Data is ' . $age . ' old') . '</span>')
                 : 'Data age: ' . $age,
             $stale ? 'danger' : 'gray',
         ];
