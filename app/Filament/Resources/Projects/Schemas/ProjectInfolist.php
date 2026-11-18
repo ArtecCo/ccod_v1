@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\Projects\Schemas;
+namespace App\\Filament\\Resources\\Projects\\Schemas;
 
-use Filament\Infolists\Components\RepeatableEntry;
-use Filament\Infolists\Components\TextEntry;
-use Filament\Schemas\Schema;
+use Filament\\Infolists\\Components\\RepeatableEntry;
+use Filament\\Infolists\\Components\\TextEntry;
+use Filament\\Schemas\\Schema;
 
 class ProjectInfolist
 {
@@ -14,9 +14,11 @@ class ProjectInfolist
             TextEntry::make('name'),
             TextEntry::make('businessUnit.name')->label('Business Unit'),
             TextEntry::make('description')->placeholder('—')->columnSpanFull(),
-            RepeatableEntry::make('userGroups')->label('User Groups')->schema([
-                TextEntry::make('name')->label('Group'),
-            ])->columns(2)->columnSpanFull(),
+            TextEntry::make('userGroups')
+                ->label('User Groups')
+                ->state(fn ($record): string => $record->userGroups()->orderBy('name')->pluck('name')->implode(', '))
+                ->placeholder('—')
+                ->columnSpanFull(),
             RepeatableEntry::make('subscriptionAssignments')->label('Subscriptions')->schema([
                 TextEntry::make('tags')
                     ->label('Tags')
