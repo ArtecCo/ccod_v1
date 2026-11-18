@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace App\Services;
+namespace App\\Services;
 
-use Illuminate\Support\Facades\DB;
+use Illuminate\\Support\\Facades\\DB;
 
 class SubscriptionModuleSyncTracker
 {
@@ -27,7 +27,17 @@ class SubscriptionModuleSyncTracker
         DB::table('subscription_module_syncs')
             ->where('module', $module)
             ->whereIn('subscription_id', $subscriptionIds)
-            ->update(['status' => 'success', 'last_successful_at' => $now, 'error_message' => null, 'updated_at' => $now]);
+            ->update(['status' => 'success', 'last_successful_at' => $now, 'last_failed_at' => null, 'last_partial_at' => null, 'error_message' => null, 'updated_at' => $now]);
+    }
+
+    public function partial(string $module, array $subscriptionIds, string $message): void
+    {
+        $now = now();
+
+        DB::table('subscription_module_syncs')
+            ->where('module', $module)
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->update(['status' => 'partial', 'last_partial_at' => $now, 'error_message' => mb_substr($message, 0, 4000), 'updated_at' => $now]);
     }
 
     public function fail(string $module, array $subscriptionIds, string $message): void
