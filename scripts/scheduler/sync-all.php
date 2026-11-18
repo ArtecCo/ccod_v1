@@ -224,11 +224,34 @@ foreach ($modules as $module) {
     $endedAt = microtime(true);
     $ended = date('Y-m-d H:i:s P');
     $duration = $endedAt - $startedAt;
-    $status = $exitCode === 0 ? 'SUCCESS' : 'FAILED';
+    $partial = false;
+    if ($exitCode !== 0 && ! $timedOut) {
+        if ($module['name'] === 'Costs') {
+            // A cost run can successfully sync some components (cost, budgets,
+            // resource costs, forecast) while another component fails.
+            $successfulSteps = preg_match_all('/(?:sync complete:|synchronized\\.|resources updated\\.)/i', $stdout);
+            $partial = $successfulSteps > 0;
+        } elseif ($module['name'] === 'Subscriptions') {
+            // Subscription sync reports per-item counts; failed entries mixed
+            // with successful create/update/unchanged entries mean partial.
+            $failedCount = preg_match('/Failed:\\s*(\\d+)/i', $stdout, $failedMatch) ? (int) $failedMatch[1] : 0;
+            $successfulCount = 0;
+            foreach (['Created', 'Updated', 'Unchanged'] as $countLabel) {
+                if (preg_match('/' . $countLabel . ':\\s*(\\d+)/i', $stdout, $countMatch)) {
+                    $successfulCount += (int) $countMatch[1];
+                }
+            }
+            $partial = $failedCount > 0 && $successfulCount > 0;
+        }
+    }
+
+    $status = $exitCode === 0 ? 'SUCCESS' : ($partial ? 'PARTIAL' : 'FAILED');
 
     if ($moduleKey !== null) {
         if ($exitCode === 0) {
             $syncTracker->succeed($moduleKey, $trackedSubscriptionIds);
+        } elseif ($partial) {
+            $syncTracker->partial($moduleKey, $trackedSubscriptionIds, trim($stderr) !== '' ? trim($stderr) : "{$module['name']} sync partially completed.");
         } else {
             $syncTracker->fail($moduleKey, $trackedSubscriptionIds, trim($stderr) !== '' ? trim($stderr) : "{$module['name']} sync exited with code {$exitCode}.");
         }
