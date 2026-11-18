@@ -57,7 +57,6 @@ class Dashboard extends BaseDashboard
         $tabPermissions = [
             'Alerts' => 'alerts.view',
             'Security' => 'security.view',
-            'Tickets' => 'tickets.view',
             'Web URLs' => 'urls.view',
             'Overview' => null,
             'Cost' => 'cost.view',
@@ -123,7 +122,8 @@ class Dashboard extends BaseDashboard
                     Livewire::make(SubscriptionSecurityScoreHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
                     Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
                 ])->columns(2),
-                $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
+                // TEMPORARILY HIDDEN: Tickets tab. Restore by uncommenting this line.
+                // $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [
                     Livewire::make(ConsolidatedWebUrlStats::class)->lazy()->columnSpanFull(),
                     Livewire::make(ConsolidatedWebUrlsTable::class)->lazy()->columnSpanFull(),
