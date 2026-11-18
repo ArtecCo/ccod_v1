@@ -130,7 +130,7 @@ class ConsolidatedDashboardTable extends BaseWidget
             ->modalWidth('7xl')
             ->modalSubmitAction(false)
             ->modalCancelActionLabel('Close')
-            ->infolist([
+            ->schema([
                 Section::make('Alert evaluation')
                     ->icon('heroicon-o-magnifying-glass')
                     ->columns(3)
