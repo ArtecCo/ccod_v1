@@ -14,6 +14,7 @@ class ProjectsTable
             ->columns([
                 TextColumn::make('name')->searchable()->sortable(),
                 TextColumn::make('businessUnit.name')->label('Business Unit')->searchable()->sortable(),
+                TextColumn::make('subscriptionAssignments_count')->counts('subscriptionAssignments')->label('Subscriptions')->sortable(),
                 TextColumn::make('created_at')->dateTime()->sortable(),
             ])
             ->recordUrl(fn ($record): ?string => ProjectResource::canView($record)
