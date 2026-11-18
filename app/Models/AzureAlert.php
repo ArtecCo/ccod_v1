@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class AzureAlert extends Model
 {
@@ -30,6 +31,11 @@ class AzureAlert extends Model
         'fire_time' => 'datetime',
         'last_modified_time' => 'datetime',
     ];
+
+    public function details(): HasOne
+    {
+        return $this->hasOne(AzureAlertDetail::class, 'alert_id');
+    }
 
     public function subscription(): BelongsTo
     {

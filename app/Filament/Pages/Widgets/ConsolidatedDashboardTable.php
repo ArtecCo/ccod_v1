@@ -12,6 +12,7 @@ use App\Models\AzureSecurityScore;
 use App\Models\BillingResource;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
+use Filament\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
 use Filament\Widgets\TableWidget as BaseWidget;
@@ -85,7 +86,7 @@ class ConsolidatedDashboardTable extends BaseWidget
                 ->where('granularity', 'monthly')->with('subscription')->orderByDesc('period_start'),
             'alerts' => AzureAlert::query()->whereIn('subscription_id', $ids)
                 ->whereIn('severity', ['Sev0', 'Sev1'])
-                ->with('subscription')->orderByDesc('fire_time'),
+                ->with(['subscription', 'details'])->orderByDesc('fire_time'),
             'security', 'security_high' => AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')
                 ->with('subscription')->orderByDesc('synced_at'),
@@ -101,6 +102,39 @@ class ConsolidatedDashboardTable extends BaseWidget
         };
     }
 
+    protected function table(Table $table): Table
+    {
+        return parent::table($table)->recordActions([
+            $this->alertDetailAction('viewAlert', 'View'),
+        ]);
+    }
+
+    private function alertDetailAction(string $name, string $label): Action
+    {
+        return Action::make($name)
+            ->label($label)
+            ->icon('heroicon-o-eye')
+            ->color('gray')
+            ->modalHeading(fn (AzureAlert $record): string => $record->name ?: 'Alert details')
+            ->modalWidth('7xl')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close')
+            ->modalContent(fn (AzureAlert $record) => view('filament.pages.widgets.alert-details-modal', [
+                'record' => $record,
+                'detail' => $record->details,
+            ]))
+            ->visible(fn (AzureAlert $record): bool => $this->canViewAlert($record));
+    }
+
+    private function canViewAlert(AzureAlert $record): bool
+    {
+        $user = auth()->guard('web')->user();
+
+        return $user instanceof User
+            && $record->subscription !== null
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'alerts.view', $record->subscription);
+    }
+
     protected function getTableColumns(): array
     {
         return match ($this->activeTab) {
@@ -113,7 +147,8 @@ class ConsolidatedDashboardTable extends BaseWidget
                 TextColumn::make('synced_at')->label('Last synced')->dateTime()->sortable(),
             ],
             'alerts' => [
-                TextColumn::make('name')->label('Alert')->searchable()->wrap(),
+                TextColumn::make('name')->label('Alert')->searchable()->wrap()
+                    ->action(fn (AzureAlert $record): Action => $this->alertDetailAction('openAlertFromName', 'View alert')),
                 TextColumn::make('severity')->badge()->color(fn (?string $state): string => match ($state) {
                     'Sev0', 'Sev1' => 'danger',
                     'Sev2', 'Sev3' => 'warning',

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\AzureAlert;
+use App\Models\AzureAlertDetail;
 use App\Models\AzureSubscription;
 use Illuminate\Support\Carbon;
 use RuntimeException;
@@ -75,6 +76,7 @@ alertsmanagementresources
 | where todatetime(properties.essentials.startDateTime) > ago(24h)
 | project
     alertId = id,
+    alertProperties = properties,
     alertName = name,
     severity = tostring(properties.essentials.severity),
     affectedResource = tostring(properties.essentials.targetResourceName),
@@ -118,6 +120,7 @@ KQL,
                 $stats['discovered']++;
                 $seen[] = $alert['alertId'];
                 $stats[$this->syncOne($alert, $subscriptionId)]++;
+                $this->syncDetails($alert, $subscriptionId);
             }
 
             $next = $page['$skipToken'] ?? null;
@@ -136,6 +139,36 @@ KQL,
         }
 
         return $stats;
+    }
+
+    private function syncDetails(array $alert, string $subscriptionId): void
+    {
+        $alertId = (string) ($alert['alertId'] ?? '');
+        if ($alertId === '') {
+            return;
+        }
+
+        $record = AzureAlert::query()->where('azure_alert_id', $alertId)->first();
+        if ($record === null) {
+            return;
+        }
+
+        $properties = is_array($alert['alertProperties'] ?? null) ? $alert['alertProperties'] : [];
+        $essentials = is_array($properties['essentials'] ?? null) ? $properties['essentials'] : [];
+        $context = is_array($properties['context'] ?? null)
+            ? $properties['context']
+            : (is_array($properties['alertContext'] ?? null) ? $properties['alertContext'] : null);
+
+        AzureAlertDetail::query()->updateOrCreate(
+            ['alert_id' => $record->id],
+            [
+                'subscription_id' => $subscriptionId,
+                'essentials' => $essentials ?: null,
+                'alert_context' => $context,
+                'raw_properties' => $properties ?: null,
+                'fetched_at' => now(),
+            ],
+        );
     }
 
     private function syncOne(array $alert, string $subscriptionId): string
