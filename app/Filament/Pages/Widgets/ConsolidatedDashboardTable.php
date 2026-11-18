@@ -102,7 +102,7 @@ class ConsolidatedDashboardTable extends BaseWidget
         };
     }
 
-    protected function table(Table $table): Table
+    public function table(Table $table): Table
     {
         $table = parent::table($table);
 
