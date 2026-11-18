@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Projects\Schemas;
 
 use App\Models\AzureSubscription;
 use App\Models\Developer;
+use App\Models\ProjectSubscription;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Forms\Components\Repeater;
@@ -51,7 +52,7 @@ class ProjectForm
                                 ->label('Azure Subscription')
                                 ->options(function ($livewire): array {
                                     $projectId = $livewire->record?->getKey();
-                                    $assignedIds = \\App\\Models\\ProjectSubscription::query()
+                                    $assignedIds = ProjectSubscription::query()
                                         ->when($projectId, fn ($query) => $query->where('project_id', '!=', $projectId))
                                         ->pluck('subscription_id')
                                         ->all();
