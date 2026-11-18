@@ -8,6 +8,7 @@ use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
+use App\Models\AzureAlert;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Resources\RelationManagers\RelationManager;
