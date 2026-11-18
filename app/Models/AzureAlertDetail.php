@@ -12,15 +12,11 @@ class AzureAlertDetail extends Model
     protected $fillable = [
         'alert_id',
         'subscription_id',
-        'essentials',
-        'alert_context',
         'raw_properties',
         'fetched_at',
     ];
 
     protected $casts = [
-        'essentials' => 'array',
-        'alert_context' => 'array',
         'raw_properties' => 'array',
         'fetched_at' => 'datetime',
     ];
