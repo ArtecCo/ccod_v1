@@ -14,7 +14,7 @@ class ProjectInfolist
         return $schema->components([
             Section::make('Project Information')
                 ->schema([
-                    TextEntry::make('name')->label('Project Name')->weight('bold'),
+                    TextEntry::make('name')->label('Project Name'),
                     TextEntry::make('businessUnit.name')->label('Business Unit')->placeholder('—'),
                     TextEntry::make('description')->label('Description')->placeholder('No description provided.')->columnSpanFull(),
                 ])
