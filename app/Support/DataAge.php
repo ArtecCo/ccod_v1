@@ -13,7 +13,7 @@ class DataAge
     {
         if ($syncedAt === null) {
             return [
-                new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Stale data</span>'),
+                new HtmlString('<span style="display:inline-flex;align-items:center;padding:3px 9px;border-radius:9999px;background:#fee2e2;color:#b91c1c;font-size:12px;font-weight:600;">Sync time unavailable — data freshness unknown</span>'),
                 'danger',
             ];
         }
