@@ -28,11 +28,6 @@ class SubscriptionModuleSyncStat extends BaseWidget
         $label = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? '—';
         [$description, $color] = DataAge::for($lastSynced);
 
-        if (($sync?->status ?? null) === 'running') {
-            $description = 'Sync in progress' . ($lastSynced !== null ? ' · ' . (string) $description : '');
-            $color = 'warning';
-        }
-
         return [
             Stat::make($this->label, $label)
                 ->icon('heroicon-o-arrow-path')
