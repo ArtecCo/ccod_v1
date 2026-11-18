@@ -4,7 +4,7 @@ namespace App\Filament\Resources\Projects\Schemas;
 
 use App\Models\AzureSubscription;
 use App\Models\Developer;
-use App\Models\ProjectSubscription;
+use App\Models\ProjectSubscription; // Imported explicitly to avoid malformed fully-qualified references.
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Forms\Components\Repeater;
