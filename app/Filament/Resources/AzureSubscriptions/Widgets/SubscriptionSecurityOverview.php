@@ -83,12 +83,8 @@ class SubscriptionSecurityOverview extends BaseWidget
             ? Carbon::parse($lastSynced)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
         [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null);
-        if (($moduleSync?->status ?? null) === 'failed') {
-            $syncAgeDescription = 'Last sync failed' . ($moduleSync?->error_message ? ': ' . $moduleSync->error_message : '');
-            $syncAgeColor = 'danger';
-        } elseif (($moduleSync?->status ?? null) === 'running') {
-            $syncAgeDescription = 'Sync in progress';
-            $syncAgeColor = 'warning';
+        if (($moduleSync?->status ?? null) === 'failed' || $lastSynced === null) {
+            [$syncAgeDescription, $syncAgeColor] = DataAge::for(null);
         }
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
