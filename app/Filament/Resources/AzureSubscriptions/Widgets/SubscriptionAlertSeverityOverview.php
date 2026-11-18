@@ -43,12 +43,8 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
         $lastSyncedDate = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y');
         [$ageDescription, $ageColor] = DataAge::for($lastSynced);
 
-        if (($sync?->status ?? null) === 'failed') {
-            $ageDescription = 'Last sync failed' . ($sync?->error_message ? ': ' . $sync->error_message : '');
-            $ageColor = 'danger';
-        } elseif (($sync?->status ?? null) === 'running') {
-            $ageDescription = 'Sync in progress' . ($lastSynced !== null ? ' · ' . (string) $ageDescription : '');
-            $ageColor = 'warning';
+        if (($sync?->status ?? null) === 'failed' || $lastSynced === null) {
+            [$ageDescription, $ageColor] = DataAge::for(null);
         }
 
         if ($lastSyncedDate !== null) {
