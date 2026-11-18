@@ -11,7 +11,6 @@ class AzureAlertDetail extends Model
 
     protected $fillable = [
         'alert_id',
-        'subscription_id',
         'raw_properties',
         'fetched_at',
     ];
