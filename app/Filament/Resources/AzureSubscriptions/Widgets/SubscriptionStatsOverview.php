@@ -121,7 +121,7 @@ class SubscriptionStatsOverview extends BaseWidget
             ? $lastSynced->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
 
-        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced);
+        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced, $moduleSync?->status);
 
         return [
             Stat::make('Last Sync', $lastSyncedLabel)
