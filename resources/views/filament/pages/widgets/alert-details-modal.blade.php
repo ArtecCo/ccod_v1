@@ -12,60 +12,66 @@
     $formatTime = fn ($value) => $value ? \Illuminate\Support\Carbon::parse($value)->format('d M Y, h:i A') : '—';
     $formatValue = fn ($value) => is_numeric($value) ? number_format((float) $value, 2) : (is_scalar($value) ? (string) $value : '—');
     $mainFields = [
-        ['🆔','Alert ID',$record->azure_alert_id ?? '—'],
-        ['⚡','Alert condition',$record->alert_condition ?? '—'],
-        ['👤','User response',$record->user_response ?? '—'],
-        ['🕒','Fired time',$formatTime($record->fire_time)],
-        ['⏱️','Evaluation start',$formatTime($evaluationStart)],
-        ['⏱️','Evaluation end',$formatTime($evaluationEnd)],
-        ['📊','Time aggregation',$aggregation ?? '—'],
-        ['📏','Alert rule',$rule ?? '—'],
-        ['📈','Value',$formatValue($actual)],
-        ['🎯','Threshold',$formatValue($threshold)],
-        ['↕️','Deviation',$deviation !== null ? number_format($deviation, 2) : '—'],
+        ['heroicon-o-identification','Alert ID',$record->azure_alert_id ?? '—'],
+        ['heroicon-o-bolt','Alert condition',$record->alert_condition ?? '—'],
+        ['heroicon-o-user','User response',$record->user_response ?? '—'],
+        ['heroicon-o-clock','Fired time',$formatTime($record->fire_time)],
+        ['heroicon-o-clock','Evaluation start',$formatTime($evaluationStart)],
+        ['heroicon-o-clock','Evaluation end',$formatTime($evaluationEnd)],
+        ['heroicon-o-chart-bar','Time aggregation',$aggregation ?? '—'],
+        ['heroicon-o-adjustments-horizontal','Alert rule',$rule ?? '—'],
+        ['heroicon-o-chart-line','Value',$formatValue($actual)],
+        ['heroicon-o-scale','Threshold',$formatValue($threshold)],
+        ['heroicon-o-arrows-up-down','Deviation',$deviation !== null ? number_format($deviation, 2) : '—'],
     ];
     $basicFields = [
-        ['🛠️','Monitor service',$record->monitor_service],
-        ['📡','Signal type',$record->signal_type],
-        ['☁️','Subscription',$record->subscription?->display_name ?? $record->subscription_id],
-        ['💻','Affected resource',$record->affected_resource],
-        ['📁','Resource group',$record->target_resource_group],
-        ['🧩','Target resource type',$record->target_resource_type],
-        ['🔕','Suppression status',$record->suppression_status],
-        ['📝','Last modified',$formatTime($record->last_modified_time)],
+        ['heroicon-o-cog-6-tooth','Monitor service',$record->monitor_service],
+        ['heroicon-o-signal','Signal type',$record->signal_type],
+        ['heroicon-o-cloud','Subscription',$record->subscription?->display_name ?? $record->subscription_id],
+        ['heroicon-o-computer-desktop','Affected resource',$record->affected_resource],
+        ['heroicon-o-folder','Resource group',$record->target_resource_group],
+        ['heroicon-o-cube','Target resource type',$record->target_resource_type],
+        ['heroicon-o-bell-slash','Suppression status',$record->suppression_status],
+        ['heroicon-o-pencil-square','Last modified',$formatTime($record->last_modified_time)],
     ];
 @endphp
 
-<div style="font-family:inherit; color:#111827; display:flex; flex-direction:column; gap:18px;">
-    <div style="border:1px solid #d1d5db; border-radius:12px; padding:16px; background:#f8fafc;">
-        <div style="font-size:12px; font-weight:700; letter-spacing:.08em; color:#64748b; text-transform:uppercase; margin-bottom:6px;">Alert</div>
-        <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-            <div style="font-size:19px; line-height:1.4; font-weight:700; overflow-wrap:anywhere;">{{ $record->name ?: 'Unnamed alert' }}</div>
-            <span style="background:#fee2e2; color:#991b1b; border-radius:999px; padding:5px 11px; font-size:12px; font-weight:700; white-space:nowrap;">{{ $record->severity ?? 'Severity unavailable' }}</span>
+<div class="space-y-6">
+    <x-filament::section>
+        <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="space-y-1">
+                <x-filament::badge color="gray">Alert</x-filament::badge>
+                <h2 class="text-xl font-semibold tracking-tight">{{ $record->name ?: 'Unnamed alert' }}</h2>
+            </div>
+            <x-filament::badge :color="match ($record->severity) { 'Sev0', 'Sev1' => 'danger', 'Sev2', 'Sev3' => 'warning', default => 'gray' }">{{ $record->severity ?? 'Severity unavailable' }}</x-filament::badge>
         </div>
-    </div>
+    </x-filament::section>
 
-    <section>
-        <h3 style="font-size:15px; font-weight:700; margin:0 0 10px;">🔎 Alert evaluation</h3>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px;">
+    <x-filament::section heading="Alert evaluation" icon="heroicon-o-magnifying-glass">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             @foreach($mainFields as [$icon,$label,$value])
-                <div style="border:1px solid #e5e7eb; border-radius:9px; padding:12px; background:#ffffff; min-width:0;">
-                    <div style="font-size:12px; color:#6b7280; font-weight:600; margin-bottom:6px;">{{ $icon }} {{ $label }}</div>
-                    <div style="font-size:14px; color:#111827; font-weight:650; overflow-wrap:anywhere;">{{ $value ?: '—' }}</div>
+                <div class="flex items-start gap-3">
+                    <x-filament::icon :icon="$icon" class="mt-0.5 h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <div class="min-w-0 space-y-1">
+                        <div class="text-sm font-semibold">{{ $label }}</div>
+                        <div class="text-sm break-words text-gray-700 dark:text-gray-300">{{ $value ?: '—' }}</div>
+                    </div>
                 </div>
             @endforeach
         </div>
-    </section>
+    </x-filament::section>
 
-    <section>
-        <h3 style="font-size:15px; font-weight:700; margin:0 0 10px;">📋 Basic alert details</h3>
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:10px;">
+    <x-filament::section heading="Basic alert details" icon="heroicon-o-information-circle">
+        <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             @foreach($basicFields as [$icon,$label,$value])
-                <div style="border:1px solid #e5e7eb; border-radius:9px; padding:12px; background:#f9fafb; min-width:0;">
-                    <div style="font-size:12px; color:#6b7280; font-weight:600; margin-bottom:6px;">{{ $icon }} {{ $label }}</div>
-                    <div style="font-size:14px; color:#111827; font-weight:600; overflow-wrap:anywhere;">{{ $value ?: '—' }}</div>
+                <div class="flex items-start gap-3">
+                    <x-filament::icon :icon="$icon" class="mt-0.5 h-5 w-5 text-gray-500 dark:text-gray-400" />
+                    <div class="min-w-0 space-y-1">
+                        <div class="text-sm font-semibold">{{ $label }}</div>
+                        <div class="text-sm break-words text-gray-700 dark:text-gray-300">{{ $value ?: '—' }}</div>
+                    </div>
                 </div>
             @endforeach
         </div>
-    </section>
+    </x-filament::section>
 </div>
