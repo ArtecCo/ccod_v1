@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
+use Filament\Actions\Action;
 use Filament\Actions\ViewAction;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Components\Section;
@@ -36,7 +37,7 @@ class AzureAlertsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->select(['id', 'name', 'severity', 'affected_resource', 'target_resource_type', 'alert_condition', 'monitor_service', 'signal_type', 'fire_time', 'last_modified_time', 'subscription_id', 'target_resource_group', 'suppression_status'])->with(['details', 'subscription']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->select(['id', 'azure_alert_id', 'name', 'severity', 'affected_resource', 'target_resource_type', 'alert_condition', 'user_response', 'monitor_service', 'signal_type', 'fire_time', 'last_modified_time', 'subscription_id', 'target_resource_group', 'suppression_status'])->with(['details', 'subscription']))
             ->columns([
                 TextColumn::make('name')->label('Alert Name')->searchable()->sortable()->weight('medium')
                     ->action(fn ($record): Action => $this->alertDetailAction('viewAlertFromName', 'View alert')),
