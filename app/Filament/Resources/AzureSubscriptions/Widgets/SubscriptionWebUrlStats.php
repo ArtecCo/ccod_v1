@@ -7,6 +7,8 @@ namespace App\Filament\Resources\AzureSubscriptions\Widgets;
 use App\Models\AzureSubscription;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use App\Support\DataAge;
+use Carbon\Carbon;
 use Illuminate\Support\HtmlString;
 
 class SubscriptionWebUrlStats extends BaseWidget
@@ -15,7 +17,7 @@ class SubscriptionWebUrlStats extends BaseWidget
 
     protected ?string $pollingInterval = null;
 
-    protected int | array | null $columns = 4;
+    protected int | array | null $columns = 5;
 
     protected function getStats(): array
     {
@@ -26,6 +28,10 @@ class SubscriptionWebUrlStats extends BaseWidget
         $down = (clone $active)->where('is_live', false)->count();
         $sslExpiring = (clone $active)->whereNotNull('ssl_expires_at')
             ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])->count();
+
+        $lastCheckedAt = (clone $urls)->max('last_checked_at');
+        $lastCheckedAt = $lastCheckedAt !== null ? Carbon::parse($lastCheckedAt) : null;
+        [$dataAge, $ageColor] = DataAge::for($lastCheckedAt);
 
         $card = fn (string $filter): array => [
             'role' => 'button',
@@ -48,6 +54,10 @@ class SubscriptionWebUrlStats extends BaseWidget
             Stat::make('SSL Expiring in 15 Days', new HtmlString('<span style="color: #d97706;">' . e(number_format($sslExpiring)) . '</span>'))
                 ->icon('heroicon-o-shield-exclamation')
                 ->extraAttributes($card('ssl_expiring')),
+            Stat::make('Last URL Check', $lastCheckedAt?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? 'Never')
+                ->icon('heroicon-o-clock')
+                ->description($dataAge)
+                ->color($ageColor),
         ];
     }
 }
