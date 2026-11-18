@@ -25,8 +25,9 @@ class SubscriptionModuleSyncStat extends BaseWidget
     {
         $sync = app(SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, $this->module);
         $lastSynced = $sync?->last_successful_at !== null ? Carbon::parse($sync->last_successful_at) : null;
+        $partialAt = $sync?->last_partial_at !== null ? Carbon::parse($sync->last_partial_at) : null;
         $label = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? '—';
-        [$description, $color] = DataAge::for($lastSynced, $sync?->status);
+        [$description, $color] = DataAge::for($lastSynced, $sync?->status, $partialAt);
         return [
             Stat::make($this->label, $label)
                 ->icon('heroicon-o-arrow-path')
