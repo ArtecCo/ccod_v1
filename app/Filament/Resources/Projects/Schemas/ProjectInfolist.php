@@ -14,6 +14,9 @@ class ProjectInfolist
             TextEntry::make('name'),
             TextEntry::make('businessUnit.name')->label('Business Unit'),
             TextEntry::make('description')->placeholder('—')->columnSpanFull(),
+            RepeatableEntry::make('userGroups')->label('User Groups')->schema([
+                TextEntry::make('name')->label('Group'),
+            ])->columns(2)->columnSpanFull(),
             RepeatableEntry::make('subscriptionAssignments')->label('Subscriptions')->schema([
                 TextEntry::make('tags')
                     ->label('Tags')
