@@ -79,7 +79,7 @@ class AzureAlertsRelationManager extends RelationManager
             ->modalHeading(fn (AzureAlert $record): string => $record->name ?: 'Alert details')
             ->modalWidth('7xl')
             ->modalSubmitAction(false)
-            ->modalCancelActionLabel('Close')
+            ->modalCancelAction(false)
             ->schema([
                 Section::make('Alert evaluation')
                     ->icon('heroicon-o-magnifying-glass')
@@ -119,14 +119,29 @@ class AzureAlertsRelationManager extends RelationManager
     private function alertConditionData(AzureAlert $record): array
     {
         $raw = $record->details?->raw_properties ?? [];
-        $context = $raw['context'] ?? $raw['alertContext'] ?? [];
-        return data_get($context, 'condition.allOf.0', []);
+        foreach ([
+            'context.context.condition.allOf.0',
+            'context.condition.allOf.0',
+            'alertContext.context.condition.allOf.0',
+            'alertContext.condition.allOf.0',
+        ] as $path) {
+            $condition = data_get($raw, $path);
+            if (is_array($condition) && $condition !== []) {
+                return $condition;
+            }
+        }
+
+        return [];
     }
 
     private function alertContextData(AzureAlert $record): array
     {
         $raw = $record->details?->raw_properties ?? [];
-        return $raw['context'] ?? $raw['alertContext'] ?? [];
+        return data_get($raw, 'context.context')
+            ?? data_get($raw, 'context')
+            ?? data_get($raw, 'alertContext.context')
+            ?? data_get($raw, 'alertContext')
+            ?? [];
     }
 
     private function alertEvaluationStart(AzureAlert $record): mixed
