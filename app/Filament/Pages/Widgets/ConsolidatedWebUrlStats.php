@@ -18,7 +18,7 @@ class ConsolidatedWebUrlStats extends BaseWidget
 
     protected ?string $pollingInterval = null;
 
-    protected int | array | null $columns = 4;
+    protected int | array | null $columns = 5;
 
     protected function getStats(): array
     {
@@ -45,6 +45,23 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ->whereNotNull('ssl_expires_at')
             ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])
             ->count();
+        $webUrlSyncs = DB::table('subscription_module_syncs')
+            ->where('module', 'web_urls')
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->get();
+
+        $lastCheckedAt = $webUrlSyncs
+            ->pluck('last_successful_at')
+            ->filter()
+            ->map(fn ($timestamp) => Carbon::parse($timestamp))
+            ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)
+            ->first();
+
+        $syncStatus = $webUrlSyncs->contains(fn ($sync): bool => $sync->status === 'partial')
+            ? 'partial'
+            : ($webUrlSyncs->contains(fn ($sync): bool => $sync->status === 'failed') ? 'failed' : null);
+
+        [$dataAge, $ageColor] = DataAge::for($lastCheckedAt, $syncStatus);
 
         $card = fn (string $filter): array => [
             'role' => 'button',
@@ -67,6 +84,10 @@ class ConsolidatedWebUrlStats extends BaseWidget
             Stat::make('SSL Expiring in 15 Days', new HtmlString('<span style="color: #d97706;">' . e(number_format($sslExpiring)) . '</span>'))
                 ->icon('heroicon-o-shield-exclamation')
                 ->extraAttributes($card('ssl_expiring')),
+            Stat::make('Last URL Check', $lastCheckedAt?->format('d M Y, H:i') ?? 'Never')
+                ->icon('heroicon-o-clock')
+                ->description($dataAge)
+                ->color($ageColor),
         ];
     }
 }
