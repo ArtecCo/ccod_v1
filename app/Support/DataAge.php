@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-namespace App\Support;
+namespace App\\Support;
 
-use Carbon\CarbonInterface;
-use Illuminate\Support\HtmlString;
+use Carbon\\CarbonInterface;
+use Illuminate\\Support\\HtmlString;
 
 class DataAge
 {
-    public static function for(?CarbonInterface $syncedAt): array
+    public static function for(?CarbonInterface $syncedAt, ?string $syncStatus = null): array
     {
         if ($syncedAt === null) {
             return [
@@ -37,7 +37,7 @@ class DataAge
             $age = $minutes > 0 ? $minutes . ' min' : 'less than a minute';
         }
 
-        $stale = $seconds > 8 * 60 * 60;
+        $stale = $seconds > 8 * 60 * 60 || in_array($syncStatus, ['partial', 'failed'], true);
 
         return [
             $stale
