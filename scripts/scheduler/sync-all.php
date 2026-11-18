@@ -226,25 +226,18 @@ foreach ($modules as $module) {
     $duration = $endedAt - $startedAt;
     $partial = false;
     if ($exitCode !== 0 && ! $timedOut) {
-        if ($module['name'] === 'Costs') {
-            // A cost run can successfully sync some components (cost, budgets,
-            // resource costs, forecast) while another component fails.
-            $successfulSteps = preg_match_all('/(?:sync complete:|synchronized\\.|resources updated\\.)/i', $stdout);
-            $partial = $successfulSteps > 0;
-        } elseif ($module['name'] === 'Subscriptions') {
-            // Subscription sync reports per-item counts; failed entries mixed
-            // with successful create/update/unchanged entries mean partial.
-            $failedCount = preg_match('/Failed:\\s*(\\d+)/i', $stdout, $failedMatch) ? (int) $failedMatch[1] : 0;
-            $successfulCount = 0;
-            foreach (['Created', 'Updated', 'Unchanged'] as $countLabel) {
-                if (preg_match('/' . $countLabel . ':\\s*(\\d+)/i', $stdout, $countMatch)) {
-                    $successfulCount += (int) $countMatch[1];
-                }
-            }
-            $partial = $failedCount > 0 && $successfulCount > 0;
-        }
+        // Treat a module as partial when its process failed but the output
+        // confirms that at least one operation/data item completed successfully.
+        $successfulOutput = match ($module['name']) {
+            'Costs' => preg_match('/(?:Cost:\\s+.+?sync complete:|Budgets:\\s+\\d+ synchronized\\.|Resource costs:\\s+\\d+ resources updated\\.|Forecast:\\s+synchronized\\.)/i', $stdout) === 1,
+            'Subscriptions' => preg_match('/(?:Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
+            'Resources' => preg_match('/(?:Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
+            'Security' => preg_match('/(?:Discovered:\\s*[1-9]\\d*|Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*)/i', $stdout) === 1,
+            'Alerts' => preg_match('/(?:Active alerts discovered:\\s*[1-9]\\d*|Created:\\s*[1-9]\\d*|Updated:\\s*[1-9]\\d*|Unchanged:\\s*[1-9]\\d*)/i', $stdout) === 1,
+            default => false,
+        };
+        $partial = $successfulOutput;
     }
-
     $status = $exitCode === 0 ? 'SUCCESS' : ($partial ? 'PARTIAL' : 'FAILED');
 
     if ($moduleKey !== null) {
