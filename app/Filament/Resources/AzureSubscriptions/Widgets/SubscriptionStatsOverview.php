@@ -122,9 +122,6 @@ class SubscriptionStatsOverview extends BaseWidget
             : '—';
 
         [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced);
-        if (($moduleSync?->status ?? null) === 'failed' || $lastSynced === null) {
-            [$syncAgeDescription, $syncAgeColor] = DataAge::for(null);
-        }
 
         return [
             Stat::make('Last Sync', $lastSyncedLabel)
