@@ -1,7 +1,6 @@
 @php
     $detail = $detail ?? null;
     $properties = $detail?->raw_properties ?? [];
-    $essentials = $detail?->essentials ?? ($properties['essentials'] ?? []);
     $context = $detail?->alert_context ?? ($properties['context'] ?? ($properties['alertContext'] ?? []));
     $condition = data_get($context, 'condition.allOf.0', []);
     $evaluationStart = data_get($condition, 'windowStartTime') ?? data_get($condition, 'evaluationStartTime') ?? data_get($context, 'windowStartTime');
