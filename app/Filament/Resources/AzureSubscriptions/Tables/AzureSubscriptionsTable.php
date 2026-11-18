@@ -1,13 +1,13 @@
 <?php
 
-namespace App\Filament\Resources\AzureSubscriptions\Tables;
+namespace App\\Filament\\Resources\\AzureSubscriptions\\Tables;
 
-use App\Support\PillColorRegistry;
-use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
-use Filament\Actions\EditAction;
-use Filament\Actions\ViewAction;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Table;
+use App\\Support\\PillColorRegistry;
+use Asignua\\FilamentXlsxExport\\Actions\\XlsxExportAction;
+use Filament\\Actions\\EditAction;
+use Filament\\Actions\\ViewAction;
+use Filament\\Tables\\Columns\\TextColumn;
+use Filament\\Tables\\Table;
 
 class AzureSubscriptionsTable
 {
@@ -17,7 +17,7 @@ class AzureSubscriptionsTable
             ->columns([
                 TextColumn::make('display_name')->label('Subscription')->searchable()->sortable(),
                 TextColumn::make('subscription_id')->label('Subscription ID')->searchable()->copyable()->copyMessage('Subscription ID copied')->copyMessageDuration(1500),
-                TextColumn::make('projects.name')->label('Project')->searchable()->sortable(),
+                TextColumn::make('projects.name')->label('Project')->searchable()->sortable()->placeholder('—'),
                 TextColumn::make('health_status')->label('Health')->badge()->color(fn (string $state): string => PillColorRegistry::color($state))->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('security_score')->label('Security Score')->numeric(decimalPlaces: 2)->sortable()->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('mtd_spend_eur')->label('MTD Spend')->money('EUR')->sortable()->toggleable(isToggledHiddenByDefault: true),
