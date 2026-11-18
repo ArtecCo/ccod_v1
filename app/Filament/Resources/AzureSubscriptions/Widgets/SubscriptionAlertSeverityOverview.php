@@ -41,7 +41,7 @@ class SubscriptionAlertSeverityOverview extends BaseWidget
         $lastSynced = $sync?->last_successful_at !== null ? Carbon::parse($sync->last_successful_at) : null;
         $lastSyncedLabel = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('H:i') ?? '—';
         $lastSyncedDate = $lastSynced?->copy()->setTimezone(config('app.timezone'))->format('d M Y');
-        [$ageDescription, $ageColor] = DataAge::for($lastSynced);
+        [$ageDescription, $ageColor] = DataAge::for($lastSynced, $sync?->status);
 
 
         if ($lastSyncedDate !== null) {
