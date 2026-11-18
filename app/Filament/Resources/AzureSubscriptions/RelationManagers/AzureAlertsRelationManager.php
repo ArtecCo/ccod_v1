@@ -4,6 +4,7 @@ namespace App\Filament\Resources\AzureSubscriptions\RelationManagers;
 
 
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
+use Filament\Actions\Action;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
 use Filament\Resources\RelationManagers\RelationManager;
@@ -33,9 +34,10 @@ class AzureAlertsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
-            ->modifyQueryUsing(fn (Builder $query): Builder => $query->select(['id', 'name', 'severity', 'affected_resource', 'target_resource_type', 'alert_condition', 'monitor_service', 'signal_type', 'fire_time', 'last_modified_time', 'subscription_id', 'target_resource_group', 'suppression_status']))
+            ->modifyQueryUsing(fn (Builder $query): Builder => $query->select(['id', 'name', 'severity', 'affected_resource', 'target_resource_type', 'alert_condition', 'monitor_service', 'signal_type', 'fire_time', 'last_modified_time', 'subscription_id', 'target_resource_group', 'suppression_status'])->with(['details', 'subscription']))
             ->columns([
-                TextColumn::make('name')->label('Alert Name')->searchable()->sortable()->weight('medium'),
+                TextColumn::make('name')->label('Alert Name')->searchable()->sortable()->weight('medium')
+                    ->action(fn ($record): Action => $this->alertDetailAction('viewAlertFromName', 'View alert')),
                 TextColumn::make('severity')->label('Severity')->badge()->color(fn (string $state): string => match ($state) {'Sev0', 'Sev1' => 'danger', 'Sev2', 'Sev3' => 'warning', 'Sev4' => 'gray', default => 'gray'})->sortable(),
                 TextColumn::make('affected_resource')->label('Affected Resource')->searchable()->limit(45),
                 TextColumn::make('target_resource_type')->label('Target Resource Type')->searchable()->toggleable(isToggledHiddenByDefault: true),
@@ -56,11 +58,37 @@ class AzureAlertsRelationManager extends RelationManager
             ->groups([Group::make('severity')->label('Severity'), Group::make('signal_type')->label('Signal Type')])
             ->defaultSort('last_modified_time', 'desc')
             ->striped(false)
-            ->recordActions([])
+            ->recordAction('viewAlert')
+            ->recordActions([$this->alertDetailAction('viewAlert', 'View')])
             ->toolbarActions([
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
             ]);
+    }
+
+    private function alertDetailAction(string $name, string $label): Action
+    {
+        return Action::make($name)
+            ->label($label)
+            ->icon('heroicon-o-eye')
+            ->color('gray')
+            ->modalHeading(fn ($record): string => $record->name ?: 'Alert details')
+            ->modalWidth('7xl')
+            ->modalSubmitAction(false)
+            ->modalCancelActionLabel('Close')
+            ->modalContent(fn ($record) => view('filament.pages.widgets.alert-details-modal', [
+                'record' => $record,
+                'detail' => $record->details,
+            ]))
+            ->visible(fn ($record): bool => $this->canViewAlert($record));
+    }
+
+    private function canViewAlert($record): bool
+    {
+        $user = auth()->guard('web')->user();
+
+        return $user instanceof User
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'alerts.view', $this->getOwnerRecord());
     }
 
     /**
