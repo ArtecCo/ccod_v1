@@ -60,19 +60,14 @@ class ConsolidatedWebUrlStats extends BaseWidget
             ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)
             ->first();
 
-        $lastAttemptAt = $webUrlSyncs
-            ->pluck('last_started_at')
-            ->filter()
-            ->map(fn ($timestamp) => Carbon::parse($timestamp))
-            ->sortByDesc(fn (Carbon $timestamp) => $timestamp->timestamp)
-            ->first();
+        // The consolidated URL freshness card uses actual URL check timestamps,
+        // not the sync tracker timestamps (which can lag behind individual checks).
+        $lastCheckedAt = (clone $allUrls)
+            ->whereNotNull('last_checked_at')
+            ->max('last_checked_at');
+        $lastCheckedAt = $lastCheckedAt !== null ? Carbon::parse($lastCheckedAt) : null;
 
-        $latestOutcome = $webUrlSyncs->sortByDesc(fn ($sync) => Carbon::parse($sync->last_started_at ?? $sync->updated_at)->timestamp)->first();
-        $syncStatus = $latestOutcome?->status;
-        $partialAt = $latestOutcome?->last_partial_at !== null ? Carbon::parse($latestOutcome->last_partial_at) : null;
-
-        // Freshness for URL monitoring is based on the latest check timestamp, not the last successful data-sync timestamp.
-        [$dataAge, $ageColor] = DataAge::for($lastAttemptAt, null);
+        [$dataAge, $ageColor] = DataAge::for($lastCheckedAt);
 
         $card = fn (string $filter): array => [
             'role' => 'button',
@@ -95,7 +90,7 @@ class ConsolidatedWebUrlStats extends BaseWidget
             Stat::make('SSL Expiring in 15 Days', new HtmlString('<span style="color: #d97706;">' . e(number_format($sslExpiring)) . '</span>'))
                 ->icon('heroicon-o-shield-exclamation')
                 ->extraAttributes($card('ssl_expiring')),
-            Stat::make('Last URL Check', $lastAttemptAt?->format('d M Y, H:i') ?? 'Never')
+            Stat::make('Last URL Check', $lastCheckedAt?->copy()->setTimezone(config('app.timezone'))->format('d M Y, H:i') ?? 'Never')
                 ->icon('heroicon-o-clock')
                 ->description($dataAge)
                 ->color($ageColor),
