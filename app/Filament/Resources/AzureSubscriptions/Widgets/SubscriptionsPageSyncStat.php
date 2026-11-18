@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class SubscriptionsPageSyncStat extends BaseWidget
 {
-    protected static bool $isLazy = true;
+    protected static bool $isLazy = false;
     protected ?string $pollingInterval = null;
     protected int | array | null $columns = 1;
 
