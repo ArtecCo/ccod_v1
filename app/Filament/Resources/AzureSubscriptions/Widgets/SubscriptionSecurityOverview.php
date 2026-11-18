@@ -82,7 +82,7 @@ class SubscriptionSecurityOverview extends BaseWidget
         $lastSyncedLabel = $lastSynced !== null
             ? Carbon::parse($lastSynced)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
             : '—';
-        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null);
+        [$syncAgeDescription, $syncAgeColor] = DataAge::for($lastSynced !== null ? Carbon::parse($lastSynced) : null, $moduleSync?->status);
 
         $securityScore = Stat::make('Security Score', $scorePercentage !== null ? $scorePercentage . '%' : '—')
             ->icon('heroicon-o-shield-check')
