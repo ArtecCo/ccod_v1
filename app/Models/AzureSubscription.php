@@ -44,9 +44,18 @@ class AzureSubscription extends Model
             'occurred_at' => now()->toIso8601String(),
         ];
 
-        DB::afterCommit(static function () use ($event, $context): void {
+        $subscription = $this;
+
+        DB::afterCommit(static function () use ($event, $context, $subscription): void {
             try {
                 app(NotificationRuleService::class)->trigger($event, $context);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+
+            try {
+                app(\\App\\Services\\MandatoryNotificationService::class)
+                    ->globalSubscriptionChanged($subscription, $event === NotificationEvent::AzureSubscriptionConnected);
             } catch (Throwable $exception) {
                 report($exception);
             }
