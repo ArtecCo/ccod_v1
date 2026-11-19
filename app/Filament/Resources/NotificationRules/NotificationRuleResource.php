@@ -61,12 +61,12 @@ class NotificationRuleResource extends Resource
             Section::make('Event and delivery')->schema([
                 Select::make('event_key')
                     ->label('Event')
-                    ->options(\\App\\Support\\NotificationEventCatalog::groupedOptions())
+                    ->options(\App\Support\NotificationEventCatalog::groupedOptions())
                     ->searchable()
                     ->live()
                     ->columnSpan(2)
                     ->afterStateUpdated(function ($state, $set): void {
-                        foreach (\\App\\Support\\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
+                        foreach (\App\Support\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
                             $set($field, $value);
                         }
                     })
