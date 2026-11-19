@@ -65,7 +65,7 @@ class NotificationRuleResource extends Resource
                     ->searchable()
                     ->live()
                     ->afterStateUpdated(function ($state, $set): void {
-                        foreach (\\App\\Support\\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
+                        foreach (\App\Support\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
                             $set($field, $value);
                         }
                     })
