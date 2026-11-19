@@ -22,6 +22,11 @@ class SyncAzureAlerts extends Command
             $stats = $sync->sync($this->option('subscription'));
         } catch (\Throwable $exception) {
             $this->error('Alert synchronization failed: '.$exception->getMessage());
+            try {
+                app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
+            } catch (\\Throwable $notificationException) {
+                report($notificationException);
+            }
 
             return self::FAILURE;
         }
