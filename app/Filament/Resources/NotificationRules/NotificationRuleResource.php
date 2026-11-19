@@ -57,14 +57,30 @@ class NotificationRuleResource extends Resource
     {
         return $schema->components([
             Section::make('Event')->schema([
-                Select::make('event_key')->label('Event')->options(NotificationEvent::options())->required()->unique(ignoreRecord: true),
+                Select::make('event_key')->label('Event')->options(\App\Support\NotificationEventCatalog::groupedOptions())->searchable()->required(),
+                Select::make('channel')->label('Delivery channel')->options(['in_app' => 'In-app notification', 'webhook' => 'Webhook'])->default('in_app')->required()->live(),
                 Toggle::make('enabled')->label('Enable notification')->default(false),
             ])->columns(2),
             Section::make('Recipients')->schema([
-                Select::make('recipient_type')->label('Audience')->options(['all' => 'All active users', 'teams' => 'Selected teams', 'users' => 'Selected users'])->default('all')->live()->required(),
+                Select::make('recipient_type')->label('Audience')->options(['all' => 'All active users', 'user_groups' => 'Selected user groups', 'teams' => 'Legacy teams', 'users' => 'Selected users'])->default('all')->live()->required()->visible(fn ($get): bool => $get('channel') === 'in_app'),
                 Select::make('recipient_ids')->label(fn ($get): string => $get('recipient_type') === 'teams' ? 'Teams' : 'Users')->multiple()->searchable()->options(function ($get): array {
-                    return $get('recipient_type') === 'teams' ? Team::query()->orderBy('name')->pluck('name', 'id')->all() : User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all();
-                })->visible(fn ($get): bool => in_array($get('recipient_type'), ['teams', 'users'], true))->required(fn ($get): bool => in_array($get('recipient_type'), ['teams', 'users'], true)),
+                    return match ($get('recipient_type')) {
+                        'user_groups' => UserGroup::query()->orderBy('name')->pluck('name', 'id')->all(),
+                        'teams' => Team::query()->orderBy('name')->pluck('name', 'id')->all(),
+                        default => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
+                    };
+                })->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true))
+                    ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true)),
+                Select::make('webhook_id')->label('Webhook destination')->options(fn (): array => TeamsWebhook::query()->orderBy('name')->pluck('name', 'id')->all())->searchable()->required(fn ($get): bool => $get('channel') === 'webhook')->visible(fn ($get): bool => $get('channel') === 'webhook'),
+            ])->columns(2),
+            Section::make('Conditions')->description('Conditions are evaluated against the event context before delivery.')->schema([
+                Select::make('condition_mode')->label('Condition matching')->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])->default('all')->required(),
+                Repeater::make('conditions')->schema([
+                    Select::make('field')->options(fn ($get): array => \App\Support\NotificationEventCatalog::fieldOptions($get('../../event_key')))->searchable()->required(),
+                    Select::make('operator')->options(fn ($get): array => \App\Support\NotificationEventCatalog::operatorsForField($get('../../event_key'), $get('field')))->default('equals')->required(),
+                    TextInput::make('value_text')->label('Expected value')->maxLength(500),
+                ])->columns(3)->defaultItems(0)->collapsible(),
+            ]),
             ])->columns(2),
             Section::make('Notification content')->description('Use {context.key} placeholders when the triggering event supplies matching context.')->schema([
                 TextInput::make('title')->label('Title')->maxLength(150),
@@ -84,7 +100,8 @@ class NotificationRuleResource extends Resource
             ->columns([
                 TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (NotificationEvent|string $state): string => $state instanceof NotificationEvent ? $state->label() : (NotificationEvent::tryFrom($state)?->label() ?? $state))->searchable()->toggleable(),
                 IconColumn::make('enabled')->label('Enabled')->boolean()->toggleable(),
-                TextColumn::make('recipient_type')->label('Audience')->badge()->formatStateUsing(fn (string $state): string => match ($state) {'all' => 'All users', 'teams' => 'Teams', 'users' => 'Selected users', default => $state})->toggleable(),
+                TextColumn::make('channel')->label('Channel')->badge()->formatStateUsing(fn (string $state): string => $state === 'webhook' ? 'Webhook' : 'In-app')->toggleable(),
+                TextColumn::make('recipient_type')->label('Audience')->badge()->formatStateUsing(fn (string $state): string => match ($state) {'all' => 'All users', 'user_groups' => 'User groups', 'teams' => 'Legacy teams', 'users' => 'Selected users', default => $state})->toggleable(),
                 TextColumn::make('severity')->badge()->toggleable(),
                 TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
