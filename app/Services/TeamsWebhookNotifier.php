@@ -2,19 +2,23 @@
 
 namespace App\Services;
 
+use App\Models\NotificationRule;
 use App\Models\TeamsWebhook;
-use App\Models\TeamsWebhookTemplate;
 use App\Support\NotificationEventCatalog;
-use App\Support\NotificationEventSamples;
+use App\Support\WebhookMessageFormatter;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class TeamsWebhookNotifier
 {
+    public function __construct(
+        private readonly WebhookMessageFormatter $formatter,
+    ) {}
+
     /**
-     * Deliver one configured notification rule to its selected destination.
+     * Deliver a rule using the message format defined in application code.
      */
-    public function deliverRule(TeamsWebhook $webhook, string $eventKey, array $context = [], ?TeamsWebhookTemplate $templateOverride = null): bool
+    public function deliverRule(TeamsWebhook $webhook, string $eventKey, array $context = []): bool
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
@@ -26,41 +30,37 @@ class TeamsWebhookNotifier
             return false;
         }
 
-        return $this->deliver($webhook, $context, $templateOverride);
+        return $this->deliver($webhook, $eventKey, $context);
     }
 
-    public function sendRuleTest(\App\Models\NotificationRule $rule): bool
+    public function sendRuleTest(NotificationRule $rule): bool
     {
-        $rule->loadMissing(['webhook', 'template']);
+        $rule->loadMissing('webhook');
         $webhook = $rule->webhook;
 
-        if (! $webhook || ! $webhook->enabled || ! $rule->template) {
+        if (! $webhook || ! $webhook->enabled) {
             return false;
         }
 
-        $eventKey = $rule->getRawOriginal('event_key') ?: (string) $rule->event_key;
-        $context = NotificationEventSamples::sampleContext($eventKey);
+        $eventKey = (string) ($rule->getRawOriginal('event_key') ?: $rule->event_key);
+        $context = NotificationEventCatalog::sampleContext($eventKey);
         $context['is_test'] = true;
 
-        return $this->deliver($webhook, $context, $rule->template);
+        return $this->deliverRule($webhook, $eventKey, $context);
     }
 
-    private function deliver(TeamsWebhook $webhook, array $context, ?TeamsWebhookTemplate $templateOverride = null): bool
+    private function deliver(TeamsWebhook $webhook, string $eventKey, array $context): bool
     {
         try {
             $url = $webhook->webhook_url;
             $host = strtolower((string) parse_url($url, PHP_URL_HOST));
 
             if (parse_url($url, PHP_URL_SCHEME) !== 'https' || $host === '' || filter_var($host, FILTER_VALIDATE_IP)) {
-                throw new \RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
+                throw new RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
             }
 
-            $template = $templateOverride;
-            $titleTemplate = $template?->title_template ?: 'CCOD notification';
-            $messageTemplate = $template?->message_template ?: '';
-            $title = $this->render($titleTemplate, $context);
-            $message = $this->render($messageTemplate, $context);
-            $payload = $this->payload($webhook, $title, $message, $context);
+            $message = $this->formatter->format($eventKey, $context);
+            $payload = $this->payload($webhook, $message['title'], $message['message'], $eventKey, $context);
 
             $response = Http::acceptJson()
                 ->asJson()
@@ -69,7 +69,7 @@ class TeamsWebhookNotifier
                 ->post($url, $payload);
 
             if (! $response->successful()) {
-                throw new \RuntimeException('Webhook endpoint returned HTTP '.$response->status().'.');
+                throw new RuntimeException('Webhook endpoint returned HTTP '.$response->status().'.');
             }
 
             $webhook->forceFill([
@@ -92,11 +92,11 @@ class TeamsWebhookNotifier
         }
     }
 
-    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context): array
+    private function payload(TeamsWebhook $webhook, string $title, string $message, string $eventKey, array $context): array
     {
         if ($webhook->destination_type === 'generic') {
             return [
-                'event_key' => $context['event_key'] ?? null,
+                'event_key' => $eventKey,
                 'title' => $title,
                 'message' => $message,
                 'context' => $context,
@@ -120,30 +120,4 @@ class TeamsWebhookNotifier
             ]],
         ];
     }
-
-    private function render(string $template, array $context): string
-    {
-        $normalizedContext = [];
-        foreach ($context as $key => $value) {
-            $normalizedKey = strtolower((string) $key);
-            $normalizedContext[$normalizedKey] = $value;
-            $normalizedContext[str_replace(['_', '-', '.'], '', $normalizedKey)] = $value;
-        }
-
-        return preg_replace_callback('/\{\s*([a-zA-Z0-9_.-]+)\s*\}/i', function (array $matches) use ($context, $normalizedContext): string {
-            $key = strtolower(trim($matches[1]));
-            $value = data_get($context, $matches[1]);
-
-            if ($value === null) {
-                $value = $normalizedContext[$key] ?? $normalizedContext[str_replace(['_', '-', '.'], '', $key)] ?? null;
-            }
-
-            if (is_array($value) || is_object($value)) {
-                $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            }
-
-            return $value === null ? 'Not available' : (string) $value;
-        }, $template) ?? $template;
-    }
-
 }
