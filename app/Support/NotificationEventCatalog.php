@@ -141,7 +141,59 @@ class NotificationEventCatalog
 
     public static function all(): array
     {
-        return self::EVENTS;
+        $events = self::EVENTS;
+
+        // Keep legacy NotificationEvent enum entries visible while the catalogue
+        // is progressively expanded with event-specific schemas.
+        foreach (NotificationEvent::cases() as $event) {
+            $events[$event->value] ??= [
+                'label' => $event->label(),
+                'category' => self::categoryFor($event->value),
+                'description' => 'Existing CCOD notification event. Its producer and context schema are being documented.',
+                'scope' => self::scopeFor($event->value),
+                'fields' => [],
+                'sample' => [],
+                'status' => 'existing',
+            ];
+        }
+
+        foreach ($events as $key => &$event) {
+            $event['status'] ??= 'existing';
+            $event['mandatory_in_app'] ??= in_array($key, [
+                'azure_subscription_connected',
+                'azure_subscription_disconnected',
+                'azure_sync_failed',
+            ], true);
+            $event['mandatory_audience'] ??= match ($key) {
+                'azure_subscription_connected', 'azure_subscription_disconnected' => 'super_admins',
+                'azure_sync_failed' => 'all_active_users',
+                default => null,
+            };
+        }
+        unset($event);
+
+        return $events;
+    }
+
+    private static function categoryFor(string $eventKey): string
+    {
+        return match (true) {
+            str_starts_with($eventKey, 'azure_'), str_starts_with($eventKey, 'sync.') => 'Azure',
+            str_starts_with($eventKey, 'user_') => 'User management',
+            str_starts_with($eventKey, 'subscription_') => 'Subscriptions',
+            str_starts_with($eventKey, 'servicenow_') => 'ServiceNow',
+            str_starts_with($eventKey, 'maintenance_') => 'Maintenance',
+            default => 'Other',
+        };
+    }
+
+    private static function scopeFor(string $eventKey): array
+    {
+        return match (true) {
+            str_contains($eventKey, 'subscription') => ['global', 'subscription'],
+            str_starts_with($eventKey, 'user_') => ['user', 'group'],
+            default => ['global'],
+        };
     }
 
     public static function options(): array
