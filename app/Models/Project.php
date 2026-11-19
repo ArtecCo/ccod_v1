@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Models\UserGroup;
 use App\Services\MandatoryNotificationService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
@@ -37,7 +38,7 @@ class Project extends Model
             DB::afterCommit(static function () use ($groupIds, $project): void {
                 $service = app(MandatoryNotificationService::class);
 
-                foreach (\\App\\Models\\UserGroup::query()->whereKey($groupIds)->get() as $group) {
+                foreach (UserGroup::query()->whereKey($groupIds)->get() as $group) {
                     $service->groupProjectChanged($group, $project, false);
                 }
             });
