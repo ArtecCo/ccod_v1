@@ -14,7 +14,6 @@ class NotificationRule extends Model
         'conditions',
         'condition_mode',
         'webhook_id',
-        'template_id',
         'enabled',
         'recipient_type',
         'recipient_ids',
@@ -42,20 +41,6 @@ class NotificationRule extends Model
                     ]);
                 }
 
-                if (! $rule->template_id) {
-                    throw ValidationException::withMessages([
-                        'template_id' => 'Select a message template for this webhook rule.',
-                    ]);
-                }
-
-                $template = TeamsWebhookTemplate::query()->find($rule->template_id);
-                $eventKey = $rule->getAttributes()['event_key'] ?? null;
-
-                if ($template && $eventKey && $template->event_key !== $eventKey) {
-                    throw ValidationException::withMessages([
-                        'template_id' => 'The selected template is configured for a different event. Choose a template for this event.',
-                    ]);
-                }
             }
 
             if (
@@ -83,11 +68,6 @@ class NotificationRule extends Model
     public function webhook(): BelongsTo
     {
         return $this->belongsTo(TeamsWebhook::class, 'webhook_id');
-    }
-
-    public function template(): BelongsTo
-    {
-        return $this->belongsTo(TeamsWebhookTemplate::class, 'template_id');
     }
 
     public function creator(): BelongsTo
