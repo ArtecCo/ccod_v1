@@ -64,6 +64,11 @@ class NotificationRuleResource extends Resource
                     ->options(\App\Support\NotificationEventCatalog::groupedOptions())
                     ->searchable()
                     ->live()
+                    ->afterStateUpdated(function ($state, $set): void {
+                        foreach (\\App\\Support\\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
+                            $set($field, $value);
+                        }
+                    })
                     ->required()
                     ->helperText('Existing events have connected producers. Needs integration events are retained for compatibility but will not fire until their producer is connected.'),
                 Select::make('channel')
