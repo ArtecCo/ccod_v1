@@ -205,7 +205,7 @@ class NotificationRuleResource extends Resource
                     })->toggleable(),
                 TextColumn::make('webhook.name')->label('Destination')->placeholder('—')->toggleable(),
                 TextColumn::make('template.name')->label('Template')->placeholder('—')->toggleable(),
-                TextColumn::make('severity')->badge()->toggleable(),
+                TextColumn::make('severity')->badge()->formatStateUsing(fn (?string $state, NotificationRule $record): string => $record->channel === 'webhook' ? '—' : (string) $state)->toggleable(),
                 TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
             ->filters([SelectFilter::make('enabled')->options(['1' => 'Enabled', '0' => 'Disabled'])])
