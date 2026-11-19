@@ -145,30 +145,62 @@ class NotificationEventCatalog
     {
         $events = self::EVENTS;
 
-        // Keep legacy NotificationEvent enum entries visible while the catalogue
-        // is progressively expanded with event-specific schemas.
+        // Keep every legacy enum key visible. These older rule events have no
+        // verified active producer yet; retain them for compatibility and mark
+        // them clearly rather than implying that they currently fire.
         foreach (NotificationEvent::cases() as $event) {
             $events[$event->value] ??= [
                 'label' => $event->label(),
                 'category' => self::categoryFor($event->value),
-                'description' => 'Existing CCOD notification event. Its producer and context schema are being documented.',
+                'description' => 'Legacy event retained for compatibility. Connect a producer before enabling a rule.',
                 'scope' => self::scopeFor($event->value),
                 'fields' => [],
                 'sample' => [],
+                'status' => 'needs_integration',
+            ];
+        }
+
+        $mandatory = [
+            'user_group.member_added' => ['User added to user group', 'User management', ['user', 'group'], 'added_user'],
+            'user_group.role_changed' => ['User group role changed', 'User management', ['group'], 'group_members'],
+            'access_request.submitted' => ['Access request submitted', 'Access management', ['user_group'], 'approvers'],
+            'access_request.accepted' => ['Access request accepted', 'Access management', ['user'], 'requester'],
+            'access_request.rejected' => ['Access request rejected', 'Access management', ['user'], 'requester'],
+            'project.group_added' => ['Project added to user group', 'Projects', ['project', 'group'], 'group_members'],
+            'project.group_removed' => ['Project removed from user group', 'Projects', ['project', 'group'], 'group_members'],
+            'project.subscription_assigned' => ['Subscription assigned to project', 'Projects', ['project', 'subscription'], 'project_users'],
+            'project.subscription_removed' => ['Subscription removed from project', 'Projects', ['project', 'subscription'], 'project_users'],
+            'azure.subscription_global_added' => ['Global Azure subscription added', 'Azure', ['global', 'subscription'], 'super_admins'],
+            'azure.subscription_global_removed' => ['Global Azure subscription removed', 'Azure', ['global', 'subscription'], 'super_admins'],
+            'azure.sync_failed' => ['Azure synchronization failed', 'Azure', ['global'], 'all_active_users'],
+        ];
+
+        foreach ($mandatory as $key => [$label, $category, $scope, $audience]) {
+            $events[$key] = [
+                'label' => $label,
+                'category' => $category,
+                'description' => 'Mandatory in-app event. Its default notification is always delivered independently of configurable rules.',
+                'scope' => $scope,
+                'fields' => [
+                    'event_key' => ['label' => 'Event key', 'type' => 'string'],
+                    'event_label' => ['label' => 'Event name', 'type' => 'string'],
+                    'occurred_at' => ['label' => 'Occurred at', 'type' => 'datetime'],
+                ],
+                'sample' => ['occurred_at' => '2026-11-19T09:00:00+00:00'],
                 'status' => 'existing',
+                'mandatory_in_app' => true,
+                'mandatory_audience' => $audience,
             ];
         }
 
         foreach ($events as $key => &$event) {
-            $event['status'] ??= 'existing';
+            $event['status'] ??= 'needs_integration';
             $event['mandatory_in_app'] ??= in_array($key, [
                 'azure_subscription_connected',
                 'azure_subscription_disconnected',
-                'azure_sync_failed',
             ], true);
             $event['mandatory_audience'] ??= match ($key) {
                 'azure_subscription_connected', 'azure_subscription_disconnected' => 'super_admins',
-                'azure_sync_failed' => 'all_active_users',
                 default => null,
             };
         }
