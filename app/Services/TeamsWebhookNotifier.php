@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\TeamsWebhook;
 use App\Models\TeamsWebhookTemplate;
 use App\Support\NotificationEventCatalog;
-use App\Support\TeamsWebhookEvents;
+use App\Support\NotificationEventSamples;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
@@ -39,7 +39,7 @@ class TeamsWebhookNotifier
         }
 
         $eventKey = $rule->getRawOriginal('event_key') ?: (string) $rule->event_key;
-        $context = TeamsWebhookEvents::sampleContext($eventKey);
+        $context = NotificationEventSamples::sampleContext($eventKey);
         $context['is_test'] = true;
 
         return $this->deliver($webhook, $context, $rule->template);
