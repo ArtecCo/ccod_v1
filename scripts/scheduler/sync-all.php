@@ -664,24 +664,24 @@ $notificationContext = array_merge([
 ], $moduleStatuses);
 
 try {
-    $app->make(\App\\Services\\NotificationRuleService::class)->trigger(
-        \App\\Enums\\NotificationEvent::SyncCompleted,
+    $app->make(\App\Services\NotificationRuleService::class)->trigger(
+        \App\Enums\NotificationEvent::SyncCompleted,
         $notificationContext,
     );
-} catch (\\Throwable $exception) {
+} catch (\Throwable $exception) {
     fwrite(STDERR, 'Teams sync completion notification failed: '.$exception->getMessage().PHP_EOL);
 }
 
 if ($anyFailure) {
     try {
-        $app->make(\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed([
+        $app->make(\App\Services\MandatoryNotificationService::class)->synchronizationFailed([
             'run_id' => $runId,
             'failed_at' => $completedAt,
             'error_summary' => $notificationContext['error_summary'] ?: 'One or more Azure synchronization modules failed or partially completed.',
             'failed_modules' => $notificationContext['failed_modules'],
             'occurred_at' => $completedAt,
         ]);
-    } catch (\\Throwable $exception) {
+    } catch (\Throwable $exception) {
         fwrite(STDERR, 'Mandatory sync failure notification failed: '.$exception->getMessage().PHP_EOL);
     }
 }
