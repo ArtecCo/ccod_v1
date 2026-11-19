@@ -3,11 +3,19 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
     public function up(): void
     {
+        // Disable obsolete team-audience rules rather than broadening their recipients.
+        DB::table('notification_rules')->where('recipient_type', 'teams')->update([
+            'enabled' => false,
+            'recipient_type' => 'all',
+            'recipient_ids' => null,
+        ]);
+
         Schema::table('teams_webhooks', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('template_id');
             $table->dropIndex(['category']);
