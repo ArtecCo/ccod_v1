@@ -61,16 +61,17 @@ class NotificationRuleResource extends Resource
             Section::make('Event and delivery')->schema([
                 Select::make('event_key')
                     ->label('Event')
-                    ->options(\App\Support\NotificationEventCatalog::groupedOptions())
+                    ->options(\\App\\Support\\NotificationEventCatalog::groupedOptions())
                     ->searchable()
                     ->live()
+                    ->columnSpan(2)
                     ->afterStateUpdated(function ($state, $set): void {
-                        foreach (\App\Support\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
+                        foreach (\\App\\Support\\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
                             $set($field, $value);
                         }
                     })
                     ->required()
-                    ->helperText('Existing events have connected producers. Needs integration events are retained for compatibility but will not fire until their producer is connected.'),
+                    ->helperText('Choose the event that will trigger this rule.'),
                 Select::make('channel')
                     ->label('Delivery channel')
                     ->options(['in_app' => 'In-app notification', 'webhook' => 'Webhook'])
@@ -78,7 +79,7 @@ class NotificationRuleResource extends Resource
                     ->required()
                     ->live(),
                 Toggle::make('enabled')->label('Enable rule')->default(false),
-            ])->columns(3),
+            ])->columns(4)->columnSpanFull(),
 
             Section::make('Recipients')->schema([
                 Select::make('recipient_type')
