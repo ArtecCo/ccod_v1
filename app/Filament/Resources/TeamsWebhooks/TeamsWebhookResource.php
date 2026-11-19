@@ -36,7 +36,7 @@ class TeamsWebhookResource extends Resource
     {
         return $schema->components([
             Section::make('Webhook destination')
-                ->description('Register the endpoint here. Choose its event, conditions and message template only when creating a Notification Rule.')
+                ->description('Register the endpoint here. Notification Rules exclusively control event selection, conditions and message templates.')
                 ->schema([
                     TextInput::make('name')->required()->maxLength(120),
                     Textarea::make('description')->label('Description')->rows(2)->maxLength(1000),
@@ -48,15 +48,6 @@ class TeamsWebhookResource extends Resource
                         ])
                         ->required()
                         ->live(),
-                    Select::make('message_format')
-                        ->label('Teams message format')
-                        ->options([
-                            'adaptive_card' => 'Adaptive Card (recommended)',
-                            'message_card' => 'MessageCard (legacy)',
-                        ])
-                        ->default('adaptive_card')
-                        ->required()
-                        ->visible(fn (Get $get): bool => $get('destination_type') !== 'generic'),
                     TextInput::make('webhook_url')
                         ->label('Webhook URL')
                         ->url()
