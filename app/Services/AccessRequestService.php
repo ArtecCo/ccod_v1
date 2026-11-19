@@ -64,6 +64,8 @@ class AccessRequestService
             'reason' => $reason,
             'duration' => $duration,
             'requested_until' => $requestedUntil,
+            'original_duration' => $duration,
+            'original_requested_until' => $requestedUntil,
             'status' => AccessRequestStatus::Pending,
         ]);
 
@@ -101,6 +103,9 @@ class AccessRequestService
         }
 
         $duration ??= $request->duration;
+        $requestedUntil = $duration === AccessRequestDuration::TimeBound
+            ? ($requestedUntil ?? $request->requested_until)
+            : null;
 
         if ($duration === AccessRequestDuration::TimeBound && ($requestedUntil === null || $requestedUntil <= now())) {
             throw ValidationException::withMessages([
@@ -108,11 +113,10 @@ class AccessRequestService
             ]);
         }
 
-        if ($duration === AccessRequestDuration::Permanent) {
-            $requestedUntil = null;
-        }
-
         DB::transaction(function () use ($group, $request, $duration, $requestedUntil, $actor, $reason): void {
+            $originalDuration = $request->original_duration ?? $request->duration;
+            $originalUntil = $request->original_requested_until ?? $request->requested_until;
+
             $group->users()->syncWithoutDetaching([
                 $request->user_id => [
                     'starts_at' => now(),
@@ -121,9 +125,11 @@ class AccessRequestService
             ]);
 
             $request->forceFill([
-                'status' => AccessRequestStatus::Approved,
+                'original_duration' => $originalDuration,
+                'original_requested_until' => $originalUntil,
                 'duration' => $duration,
                 'requested_until' => $requestedUntil,
+                'status' => AccessRequestStatus::Approved,
                 'decided_by_type' => $actor instanceof User ? User::class : get_class($actor),
                 'decided_by_id' => $actor->getKey(),
                 'decided_at' => now(),
@@ -148,6 +154,8 @@ class AccessRequestService
         }
 
         $request->forceFill([
+            'original_duration' => $request->original_duration ?? $request->duration,
+            'original_requested_until' => $request->original_requested_until ?? $request->requested_until,
             'status' => AccessRequestStatus::Rejected,
             'decided_by_type' => $actor instanceof User ? User::class : get_class($actor),
             'decided_by_id' => $actor->getKey(),
