@@ -34,7 +34,7 @@ class NotificationRule extends Model
             if (
                 ($rule->channel ?? 'in_app') === 'in_app'
                 && $rule->enabled
-                && (\App\Support\NotificationEventCatalog::event((string) $rule->event_key)['mandatory_in_app'] ?? false)
+                && (\App\Support\NotificationEventCatalog::event((string) ($rule->getAttributes()['event_key'] ?? ''))['mandatory_in_app'] ?? false)
             ) {
                 throw ValidationException::withMessages([
                     'event_key' => 'This event already has a mandatory in-app notification. Configure a webhook rule instead.',
