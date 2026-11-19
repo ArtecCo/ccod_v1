@@ -83,7 +83,7 @@ class TeamsWebhookNotifier
         // destination's retained legacy subscription configuration.
         $webhook->loadMissing('template');
 
-        return $this->deliver($webhook, $context);
+        return $this->deliver($webhook, $context, $templateOverride);
     }
 
     public function sendTest(TeamsWebhook $webhook): bool
