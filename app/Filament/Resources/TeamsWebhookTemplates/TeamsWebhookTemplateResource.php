@@ -3,14 +3,10 @@
 namespace App\Filament\Resources\TeamsWebhookTemplates;
 
 use App\Models\TeamsWebhookTemplate;
-use App\Models\TeamsWebhookCategory;
-use App\Support\TeamsWebhookEvents;
 use App\Support\NotificationEventCatalog;
-use Illuminate\Support\Str;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\Toggle;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Resources\Resource;
@@ -20,7 +16,6 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 
 class TeamsWebhookTemplateResource extends Resource
@@ -44,25 +39,6 @@ class TeamsWebhookTemplateResource extends Resource
         return $schema->components([
             Section::make('Template')->schema([
                 TextInput::make('name')->required()->maxLength(120),
-                Select::make('category')
-                    ->options(function (): array {
-                        $options = TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all();
-
-                        foreach (NotificationEventCatalog::all() as $event) {
-                            $category = (string) ($event['category'] ?? 'Other');
-                            $slug = Str::slug($category, '_');
-                            $options[$slug] ??= $category;
-                        }
-
-                        return $options;
-                    })
-                    ->searchable()
-                    ->required()
-                    ->live()
-                    ->afterStateUpdated(function ($state, Set $set): void {
-                        $set('event_key', TeamsWebhookEvents::defaultsForCategory($state)[0] ?? null);
-                        $set('placeholder_to_insert', null);
-                    }),
                 Select::make('event_key')
                     ->label('Event schema for this template')
                     ->options(NotificationEventCatalog::groupedOptions())
@@ -96,13 +72,10 @@ class TeamsWebhookTemplateResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return $table->defaultSort('category')->columns([
+        return $table->defaultSort('name')->columns([
             TextColumn::make('name')->searchable()->sortable(),
-            TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (?string $state): string => $state ? (TeamsWebhookEvents::options()[$state] ?? $state) : 'Not assigned')->wrap(),
-            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? Str::headline($state)),
+            TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (?string $state): string => $state ? (NotificationEventCatalog::event($state)['label'] ?? $state) : 'Not assigned')->wrap(),
             TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
-        ])->filters([
-            SelectFilter::make('category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all()),
         ])->recordActions([
             EditAction::make(),
             DeleteAction::make(),
