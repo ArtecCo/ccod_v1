@@ -3,7 +3,6 @@
 namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
-use App\Models\ProjectSubscription;
 use App\Models\UserGroup;
 use App\Services\MandatoryNotificationService;
 use Filament\Resources\Pages\EditRecord;
