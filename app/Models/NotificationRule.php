@@ -10,6 +10,10 @@ class NotificationRule extends Model
 {
     protected $fillable = [
         'event_key',
+        'channel',
+        'conditions',
+        'condition_mode',
+        'webhook_id',
         'enabled',
         'recipient_type',
         'recipient_ids',
@@ -28,8 +32,14 @@ class NotificationRule extends Model
         return [
             'enabled' => 'boolean',
             'recipient_ids' => 'array',
+            'conditions' => 'array',
             'event_key' => NotificationEvent::class,
         ];
+    }
+
+    public function webhook(): BelongsTo
+    {
+        return $this->belongsTo(TeamsWebhook::class, 'webhook_id');
     }
 
     public function creator(): BelongsTo
