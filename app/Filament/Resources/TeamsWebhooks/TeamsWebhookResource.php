@@ -75,8 +75,8 @@ class TeamsWebhookResource extends Resource
                         ->dehydrateStateUsing(fn ($state) => trim((string) $state))
                         ->helperText('Stored encrypted. HTTPS endpoints only.'),
                     Toggle::make('enabled')->default(true)->label('Enabled'),
-                    \Filament\Forms\Components\Hidden::make('category')->default('server_start'),
-                    \Filament\Forms\Components\Hidden::make('message_template')->default(''),
+                    \Filament\Forms\Components\Hidden::make('category')->default('server_start')->dehydrated(false),
+                    \Filament\Forms\Components\Hidden::make('message_template')->default('')->dehydrated(false),
                 ])->columns(2),
         ]);
     }
