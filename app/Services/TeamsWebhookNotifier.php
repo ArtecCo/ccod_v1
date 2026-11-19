@@ -12,8 +12,7 @@ use Throwable;
 class TeamsWebhookNotifier
 {
     /**
-     * Deliver one configured rule to a selected destination without changing
-     * that destination's legacy event subscriptions.
+     * Deliver one configured notification rule to its selected destination.
      */
     public function deliverRule(TeamsWebhook $webhook, string $eventKey, array $context = [], ?TeamsWebhookTemplate $templateOverride = null): bool
     {
@@ -26,10 +25,6 @@ class TeamsWebhookNotifier
         if (! $webhook->enabled) {
             return false;
         }
-
-        // New rule conditions belong to NotificationRuleService, not to the
-        // destination's retained legacy subscription configuration.
-        $webhook->loadMissing('template');
 
         return $this->deliver($webhook, $context, $templateOverride);
     }
@@ -119,37 +114,20 @@ class TeamsWebhookNotifier
             ];
         }
 
-        $status = strtoupper((string) ($context['overall_status'] ?? ''));
-        $body = array_values(array_filter([
-            $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
-            $isSyncCompletion && in_array($status, ['SUCCESS', 'FAILED'], true) ? [
-                'type' => 'Container',
-                'style' => $status === 'SUCCESS' ? 'good' : 'attention',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
-                    'weight' => 'Bolder',
-                    'wrap' => true,
-                    'spacing' => 'None',
-                ]],
-                'spacing' => 'Small',
-            ] : null,
-            $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
-        ]));
-
-        $card = [
-            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-            'type' => 'AdaptiveCard',
-            'version' => '1.2',
-            'body' => $body,
-        ];
-
         return [
             'type' => 'message',
             'attachments' => [[
                 'contentType' => 'application/vnd.microsoft.card.adaptive',
                 'contentUrl' => null,
-                'content' => $card,
+                'content' => [
+                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    'type' => 'AdaptiveCard',
+                    'version' => '1.2',
+                    'body' => array_values(array_filter([
+                        $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
+                        $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
+                    ])),
+                ],
             ]],
         ];
     }
@@ -179,5 +157,4 @@ class TeamsWebhookNotifier
         }, $template) ?? $template;
     }
 
-}
 }
