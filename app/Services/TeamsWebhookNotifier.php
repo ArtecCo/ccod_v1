@@ -230,6 +230,15 @@ class TeamsWebhookNotifier
 
     private function payload(TeamsWebhook $webhook, string $title, string $message, array $context): array
     {
+        if ($webhook->destination_type === 'generic') {
+            return [
+                'event_key' => $context['event_key'] ?? null,
+                'title' => $title,
+                'message' => $message,
+                'context' => $context,
+            ];
+        }
+
         if ($webhook->destination_type === 'channel' && $webhook->message_format === 'message_card') {
             return [
                 '@type' => 'MessageCard',
