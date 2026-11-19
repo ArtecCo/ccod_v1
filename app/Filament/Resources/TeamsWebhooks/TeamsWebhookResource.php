@@ -44,108 +44,39 @@ class TeamsWebhookResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema->components([
-            Section::make('Webhook destination')->schema([
-                TextInput::make('name')->required()->maxLength(120),
-                Textarea::make('description')->label('Description')->rows(2)->maxLength(1000),
-                Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat', 'generic' => 'Generic HTTPS JSON endpoint'])->required()->live(),
-                Select::make('message_format')
-                    ->label('Message format')
-                    ->options(['adaptive_card' => 'Adaptive Card (recommended)', 'message_card' => 'MessageCard (legacy)'])
-                    ->default('adaptive_card')
-                    ->required()
-                    ->visible(fn (Get $get): bool => $get('destination_type') !== 'generic'),
-                TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
-                Toggle::make('enabled')->default(true)->label('Enabled'),
-            ])->columns(2),
-
-            Section::make('Legacy event subscriptions')
-                ->description('Choose one or more events that should send a notification to this destination. New event types can be added centrally without changing each webhook.')
+            Section::make('Webhook destination')
+                ->description('Register the endpoint here. Choose its event, conditions and message template only when creating a Notification Rule.')
                 ->schema([
-                    Select::make('event_keys')
-                        ->label('Trigger events')
-                        ->multiple()
-                        ->options(NotificationEventCatalog::groupedOptions())
-                        ->searchable()
-                        ->preload()
-                        ->required()
-                        ->default(fn (Get $get): array => TeamsWebhookEvents::defaultsForCategory($get('category')))
-                        ->live()
-                        ->afterStateUpdated(fn (Set $set) => $set('conditions', []))
-                        ->helperText('A destination can subscribe to multiple events. Condition fields are derived from the selected event schemas.'),
-                    Select::make('condition_mode')
-                        ->label('Condition matching')
-                        ->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])
-                        ->default('all')
-                        ->required(),
-                    Repeater::make('conditions')
-                        ->label('Optional event conditions')
-                        ->schema([
-                            Select::make('field')
-                                ->label('Event field')
-                                ->options(fn (Get $get): array => NotificationEventCatalog::fieldOptions($get('../../event_keys')))
-                                ->searchable()
-                                ->live()
-                                ->afterStateUpdated(function (Set $set): void { $set('operator', 'equals'); $set('value', null); $set('value_text', null); })
-                                ->required()
-                                ->helperText('Only fields supplied by the selected events are listed.'),
-                            Select::make('operator')
-                                ->label('Operator')
-                                ->options(fn (Get $get): array => NotificationEventCatalog::operatorsForField($get('../../event_keys'), $get('field')))
-                                ->default('equals')
-                                ->required()
-                                ->live(),
-                            Select::make('value')
-                                ->label('Expected value')
-                                ->options(fn (Get $get): array => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')))
-                                ->searchable()
-                                ->multiple(fn (Get $get): bool => $get('operator') === 'in')
-                                ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true) && NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) !== [])
-                                ->visible(fn (Get $get): bool => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) !== [] && ! in_array($get('operator'), ['exists', 'not_exists'], true)),
-                            TextInput::make('value_text')
-                                ->label('Expected value')
-                                ->maxLength(500)
-                                ->required(fn (Get $get): bool => ! in_array($get('operator'), ['exists', 'not_exists'], true) && NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) === [])
-                                ->visible(fn (Get $get): bool => NotificationEventCatalog::valuesForField($get('../../event_keys'), $get('field')) === [] && ! in_array($get('operator'), ['exists', 'not_exists'], true)),
+                    TextInput::make('name')->required()->maxLength(120),
+                    Textarea::make('description')->label('Description')->rows(2)->maxLength(1000),
+                    Select::make('destination_type')
+                        ->options([
+                            'channel' => 'Microsoft Teams channel',
+                            'chat' => 'Microsoft Teams chat',
+                            'generic' => 'Generic HTTPS JSON endpoint',
                         ])
-                        ->columns(3)
-                        ->addActionLabel('Add condition')
-                        ->reorderable()
-                        ->defaultItems(0)
-                        ->collapsible()
-                        ->helperText('Choose from the fields exposed by the selected events. Enum fields offer valid values; numeric fields offer comparison operators. Leave empty to receive every selected event.'),
-                ]),
-
-            Section::make('Message category and template')
-                ->description('Categories organise templates. Event subscriptions decide when this destination receives a message.')
-                ->schema([
-                    Select::make('category')
-                        ->label('Template category')
-                        ->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())
-                        ->default('server_start')
                         ->required()
-                        ->live()
-                        ->afterStateUpdated(function ($state, Set $set): void {
-                            $template = TeamsWebhookTemplate::query()
-                                ->where('category', $state)
-                                ->where('is_default', true)
-                                ->first()
-                                ?? TeamsWebhookTemplate::query()->where('category', $state)->orderBy('id')->first();
-
-                            $set('template_id', $template?->id);
-                            $set('event_keys', TeamsWebhookEvents::defaultsForCategory($state));
-                        }),
-                    Select::make('template_id')
-                        ->label('Message template')
-                        ->options(fn (Get $get): array => TeamsWebhookTemplate::query()
-                            ->where('category', $get('category') ?: 'server_start')
-                            ->orderByDesc('is_default')->orderBy('name')
-                            ->get()->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
-                                $template->id => $template->name.($template->is_default ? ' (Default)' : ''),
-                            ])->all())
-                        ->searchable()
+                        ->live(),
+                    Select::make('message_format')
+                        ->label('Teams message format')
+                        ->options([
+                            'adaptive_card' => 'Adaptive Card (recommended)',
+                            'message_card' => 'MessageCard (legacy)',
+                        ])
+                        ->default('adaptive_card')
                         ->required()
-                        ->live()
-                        ->helperText('Template edits are shared by all destinations linked to it.'),
+                        ->visible(fn (Get $get): bool => $get('destination_type') !== 'generic'),
+                    TextInput::make('webhook_url')
+                        ->label('Webhook URL')
+                        ->url()
+                        ->required()
+                        ->password()
+                        ->revealable()
+                        ->dehydrateStateUsing(fn ($state) => trim((string) $state))
+                        ->helperText('Stored encrypted. HTTPS endpoints only.'),
+                    Toggle::make('enabled')->default(true)->label('Enabled'),
+                    \Filament\Forms\Components\Hidden::make('category')->default('server_start'),
+                    \Filament\Forms\Components\Hidden::make('message_template')->default(''),
                 ])->columns(2),
         ]);
     }
