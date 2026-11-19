@@ -36,6 +36,29 @@ class NotificationRule extends Model
                 $rule->recipient_type ??= 'all';
             }
 
+            if (($rule->channel ?? 'in_app') === 'webhook') {
+                if (! $rule->webhook_id) {
+                    throw ValidationException::withMessages([
+                        'webhook_id' => 'Select a registered webhook destination.',
+                    ]);
+                }
+
+                if (! $rule->template_id) {
+                    throw ValidationException::withMessages([
+                        'template_id' => 'Select a message template for this webhook rule.',
+                    ]);
+                }
+
+                $template = TeamsWebhookTemplate::query()->find($rule->template_id);
+                $eventKey = $rule->getAttributes()['event_key'] ?? null;
+
+                if ($template && $eventKey && $template->event_key !== $eventKey) {
+                    throw ValidationException::withMessages([
+                        'template_id' => 'The selected template is configured for a different event. Choose a template for this event.',
+                    ]);
+                }
+            }
+
             if (
                 ($rule->channel ?? 'in_app') === 'in_app'
                 && $rule->enabled
