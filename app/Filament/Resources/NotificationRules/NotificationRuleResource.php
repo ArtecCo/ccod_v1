@@ -193,6 +193,7 @@ class NotificationRuleResource extends Resource
                         TextInput::make('action_url')->label('Action URL')->maxLength(2048),
                     ]),
             ]);
+    }
 
     public static function table(Table $table): Table
     {
