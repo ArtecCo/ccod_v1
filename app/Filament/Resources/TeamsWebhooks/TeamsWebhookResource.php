@@ -27,9 +27,9 @@ use Filament\Tables\Table;
 class TeamsWebhookResource extends Resource
 {
     protected static ?string $model = TeamsWebhook::class;
-    protected static ?string $navigationLabel = 'Teams Webhooks';
-    protected static ?string $modelLabel = 'Teams Webhook';
-    protected static ?string $pluralModelLabel = 'Teams Webhooks';
+    protected static ?string $navigationLabel = 'Webhook Destinations';
+    protected static ?string $modelLabel = 'Webhook Destination';
+    protected static ?string $pluralModelLabel = 'Webhook Destinations';
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-chat-bubble-left-right';
     protected static string|\UnitEnum|null $navigationGroup = 'Notifications';
     protected static ?int $navigationSort = 30;
@@ -51,12 +51,12 @@ class TeamsWebhookResource extends Resource
                     ->options(['adaptive_card' => 'Adaptive Card (recommended)', 'message_card' => 'MessageCard (legacy)'])
                     ->default('adaptive_card')
                     ->required()
-                    ->required(),
+                    ->visible(fn (Get $get): bool => $get('destination_type') !== 'generic'),
                 TextInput::make('webhook_url')->label('Webhook URL')->url()->required()->password()->revealable()->dehydrateStateUsing(fn ($state) => trim((string) $state))->helperText('Stored encrypted.'),
                 Toggle::make('enabled')->default(true)->label('Enabled'),
             ])->columns(2),
 
-            Section::make('Event subscriptions')
+            Section::make('Legacy event subscriptions')
                 ->description('Choose one or more events that should send a notification to this destination. New event types can be added centrally without changing each webhook.')
                 ->schema([
                     Select::make('event_keys')
