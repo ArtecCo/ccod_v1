@@ -66,10 +66,19 @@ class TeamsWebhookNotifier
             'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
         ]);
 
-        if (! $webhook->enabled || ! $this->matchesConditions($webhook, $context)) {
+        if (! $webhook->enabled) {
             return false;
         }
 
+        // If the legacy subscription already delivered this same event to this
+        // destination, do not send a second copy through the new rule route.
+        $legacyKeys = NotificationEventCatalog::normalizeKeys($webhook->event_keys);
+        if (in_array($eventKey, $legacyKeys, true) && $this->matchesConditions($webhook, $context)) {
+            return false;
+        }
+
+        // New rule conditions belong to NotificationRuleService, not to the
+        // destination's retained legacy subscription configuration.
         $webhook->loadMissing('template');
 
         return $this->deliver($webhook, $context);
