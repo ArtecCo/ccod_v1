@@ -216,7 +216,7 @@ class TeamsWebhookNotifier
             $template = $templateOverride ?? $webhook->template;
             $titleTemplate = $template?->title_template ?: $webhook->title_template ?: $this->defaultTitle($webhook->category);
             $messageTemplate = $template?->message_template ?: $webhook->message_template;
-            if (($context['event_key'] ?? null) === 'sync.completed') {
+            if (! $templateOverride && $webhook->destination_type !== 'generic' && ($context['event_key'] ?? null) === 'sync.completed') {
                 $messageTemplate = implode("\n", array_filter(
                     explode("\n", $messageTemplate),
                     static fn (string $line): bool => ! str_contains($line, '{overall_status}'),
@@ -224,7 +224,7 @@ class TeamsWebhookNotifier
             }
             $title = $this->render($titleTemplate, $context);
             $message = $this->render($messageTemplate, $context);
-            $payload = $this->payload($webhook, $title, $message, $context);
+            $payload = $this->payload($webhook, $title, $message, $context, $templateOverride !== null);
 
             $response = Http::acceptJson()
                 ->asJson()
@@ -256,7 +256,7 @@ class TeamsWebhookNotifier
         }
     }
 
-    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context): array
+    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context, bool $useRuleTemplate = false): array
     {
         if ($webhook->destination_type === 'generic') {
             return [
@@ -279,7 +279,7 @@ class TeamsWebhookNotifier
         }
 
         $isSyncCompletion = ($context['event_key'] ?? null) === 'sync.completed';
-        if ($isSyncCompletion) {
+        if ($isSyncCompletion && ! $useRuleTemplate) {
             return $this->syncCompletionPayload($title, $context);
         }
 
