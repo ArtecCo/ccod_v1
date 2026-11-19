@@ -72,7 +72,9 @@ class TeamsWebhookResource extends Resource
             TextColumn::make('last_error')->label('Last error')->limit(60)->placeholder('—')->toggleable(),
             TextColumn::make('last_sent_at')->dateTime('Y-m-d H:i:s')->placeholder('Never'),
         ])->recordActions([
-            \Filament\Actions\EditAction::make()\n                ->modalHeading('Edit webhook destination')\n                ->modalSubmitActionLabel('Save destination'),
+            \Filament\Actions\EditAction::make()
+                ->modalHeading('Edit webhook destination')
+                ->modalSubmitActionLabel('Save destination'),
             DeleteAction::make(),
         ]);
     }
