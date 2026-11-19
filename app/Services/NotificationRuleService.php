@@ -7,7 +7,6 @@ use App\Models\NotificationRule;
 use App\Models\User;
 use App\Models\UserGroup;
 use App\Support\NotificationEventCatalog;
-use Illuminate\Support\Collection;
 use Throwable;
 
 class NotificationRuleService
@@ -67,7 +66,7 @@ class NotificationRuleService
             }
 
             $title = $this->renderTemplate($rule->title ?: $eventLabel, $context);
-            $message = $this->renderTemplate($rule->message ?: $event->label(), $context);
+            $message = $this->renderTemplate($rule->message ?: $eventLabel, $context);
             $actionUrl = $rule->action_url ? $this->renderTemplate($rule->action_url, $context) : null;
             $actionLabel = $rule->action_label ? $this->renderTemplate($rule->action_label, $context) : null;
 
@@ -75,8 +74,7 @@ class NotificationRuleService
                 'all' => [],
                 'users' => $this->activeUserIds($rule->recipient_ids ?? []),
                 'user_groups' => $this->activeUserIdsForGroups($rule->recipient_ids ?? []),
-                // Preserve legacy team-based rules and recipient selections.
-                                default => [],
+                default => [],
             };
 
             $allUsers = $rule->recipient_type === 'all';
