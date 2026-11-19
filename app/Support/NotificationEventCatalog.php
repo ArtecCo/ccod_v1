@@ -2,287 +2,166 @@
 
 namespace App\Support;
 
-use App\Enums\NotificationEvent;
-
 class NotificationEventCatalog
 {
-    private const COMMON_FIELDS = [
-        'event_key' => ['label' => 'Event key', 'type' => 'string', 'description' => 'Stable identifier for the event.'],
-        'event_label' => ['label' => 'Event name', 'type' => 'string', 'description' => 'Human-readable event name.'],
-        'is_test' => ['label' => 'Test notification', 'type' => 'boolean', 'values' => ['true' => 'Yes', 'false' => 'No'], 'description' => 'Whether this is a test delivery.'],
-        'test_timestamp' => ['label' => 'Test timestamp', 'type' => 'datetime'],
+    /**
+     * The complete configurable event catalogue.
+     *
+     * Each event owns its own context fields. The condition builder only exposes
+     * fields from the selected event, so unrelated event data cannot be used.
+     */
+    private const EVENTS = [
+        // Users (9)
+        'user.created' => ['label' => 'User created', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'user_status', 'role_name', 'occurred_at']],
+        'user.activated' => ['label' => 'User activated', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'occurred_at']],
+        'user.deactivated' => ['label' => 'User deactivated', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'occurred_at']],
+        'user.deleted' => ['label' => 'User deleted', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'occurred_at']],
+        'user.logged_in' => ['label' => 'User logged in', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'ip_address', 'occurred_at']],
+        'user.group_added' => ['label' => 'User added to group', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'group_id', 'group_name', 'occurred_at']],
+        'user.group_removed' => ['label' => 'User removed from group', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'group_id', 'group_name', 'occurred_at']],
+        'user.role_changed' => ['label' => 'User role changed', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'old_role', 'new_role', 'occurred_at']],
+        'user.invitation_sent' => ['label' => 'User invitation sent', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'invitation_expires_at', 'occurred_at']],
+
+        // Subscriptions (5)
+        'subscription.added' => ['label' => 'Subscription added', 'category' => 'Subscriptions', 'fields' => ['subscription_id', 'subscription_name', 'tenant_id', 'subscription_state', 'authorization_source', 'occurred_at']],
+        'subscription.removed' => ['label' => 'Subscription removed', 'category' => 'Subscriptions', 'fields' => ['subscription_id', 'subscription_name', 'tenant_id', 'subscription_state', 'authorization_source', 'occurred_at']],
+        'subscription.project_assigned' => ['label' => 'Subscription assigned to project', 'category' => 'Subscriptions', 'fields' => ['subscription_id', 'subscription_name', 'project_id', 'project_name', 'occurred_at']],
+        'subscription.project_removed' => ['label' => 'Subscription removed from project', 'category' => 'Subscriptions', 'fields' => ['subscription_id', 'subscription_name', 'project_id', 'project_name', 'occurred_at']],
+        'subscription.credentials_expired' => ['label' => 'Subscription credentials expired', 'category' => 'Subscriptions', 'fields' => ['subscription_id', 'subscription_name', 'credential_type', 'expires_at', 'occurred_at']],
+
+        // Projects (4)
+        'project.created' => ['label' => 'Project created', 'category' => 'Projects', 'fields' => ['project_id', 'project_name', 'description', 'occurred_at']],
+        'project.deleted' => ['label' => 'Project deleted', 'category' => 'Projects', 'fields' => ['project_id', 'project_name', 'occurred_at']],
+        'project.group_added' => ['label' => 'Project added to user group', 'category' => 'Projects', 'fields' => ['project_id', 'project_name', 'group_id', 'group_name', 'occurred_at']],
+        'project.group_removed' => ['label' => 'Project removed from user group', 'category' => 'Projects', 'fields' => ['project_id', 'project_name', 'group_id', 'group_name', 'occurred_at']],
+
+        // Business units (2)
+        'business_unit.created' => ['label' => 'Business unit created', 'category' => 'Business Units', 'fields' => ['business_unit_id', 'business_unit_name', 'occurred_at']],
+        'business_unit.deleted' => ['label' => 'Business unit deleted', 'category' => 'Business Units', 'fields' => ['business_unit_id', 'business_unit_name', 'occurred_at']],
+
+        // User groups (3)
+        'user_group.created' => ['label' => 'User group created', 'category' => 'User Groups', 'fields' => ['group_id', 'group_name', 'role_name', 'occurred_at']],
+        'user_group.deleted' => ['label' => 'User group deleted', 'category' => 'User Groups', 'fields' => ['group_id', 'group_name', 'occurred_at']],
+        'user_group.role_changed' => ['label' => 'User group role changed', 'category' => 'User Groups', 'fields' => ['group_id', 'group_name', 'old_role', 'new_role', 'occurred_at']],
+
+        // Azure (12)
+        'sync.started' => ['label' => 'Azure synchronization started', 'category' => 'Azure', 'fields' => ['run_id', 'sync_started_at']],
+        'azure.sync.failed' => ['label' => 'Azure synchronization failed', 'category' => 'Azure', 'fields' => ['run_id', 'failed_at', 'error_summary', 'failed_modules', 'occurred_at']],
+        'sync.completed' => ['label' => 'Azure synchronization completed', 'category' => 'Azure', 'fields' => [
+            'run_id', 'overall_status', 'sync_started_at', 'completed_at', 'duration', 'duration_seconds',
+            'subscriptions_status', 'resources_status', 'costs_status', 'security_status', 'alerts_status',
+            'web_urls_status', 'failed_modules', 'successful_modules', 'error_summary', 'report_url',
+        ]],
+        'azure.resource.discovered' => ['label' => 'Azure resource discovered', 'category' => 'Azure', 'fields' => ['resource_id', 'resource_name', 'resource_type', 'resource_group', 'subscription_id', 'subscription_name', 'location', 'occurred_at']],
+        'azure.resource.deleted' => ['label' => 'Azure resource deleted', 'category' => 'Azure', 'fields' => ['resource_id', 'resource_name', 'resource_type', 'resource_group', 'subscription_id', 'subscription_name', 'location', 'occurred_at']],
+        'azure.alert.detected' => ['label' => 'Azure alert detected', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'azure.recommendation.detected' => ['label' => 'Defender recommendation detected', 'category' => 'Azure', 'fields' => ['recommendation_id', 'recommendation_name', 'category', 'severity', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'azure.recommendation.removed' => ['label' => 'Defender recommendation resolved or removed', 'category' => 'Azure', 'fields' => ['recommendation_id', 'recommendation_name', 'category', 'severity', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'azure.critical_alert.detected' => ['label' => 'Critical Azure alert detected', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'azure.security_score.decreased' => ['label' => 'Azure security score decreased', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'occurred_at']],
+        'azure.security_score.improved' => ['label' => 'Azure security score improved', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'occurred_at']],
+        'azure.budget.threshold_reached' => ['label' => 'Azure budget threshold reached', 'category' => 'Azure', 'fields' => ['budget_id', 'budget_name', 'subscription_id', 'subscription_name', 'actual_cost', 'budget_amount', 'threshold_percent', 'currency', 'occurred_at']],
+
+        // Web URLs (7)
+        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'occurred_at']],
+        'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
+        'web_url.deactivated' => ['label' => 'Website monitoring deactivated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'web_url.activated' => ['label' => 'Website monitoring activated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'web_url.ssl.expired' => ['label' => 'Website SSL certificate expired', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'certificate_expires_at', 'days_since_expiry', 'occurred_at']],
+        'web_url.ssl.renewed' => ['label' => 'Website SSL certificate renewed', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'previous_expires_at', 'certificate_expires_at', 'occurred_at']],
+        'web_url.recovered' => ['label' => 'Website recovered', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
     ];
 
-    private const EVENTS = [
-        'server.started' => [
-            'label' => 'Server started',
-            'status' => 'existing',
-            'category' => 'Server',
-            'description' => 'Raised by the Windows server startup task after it inspects IIS, PHP FastCGI, MySQL and the Laravel queue.',
-            'scope' => ['global'],
-            'fields' => [
-                'server_boot_time' => ['label' => 'Server boot time', 'type' => 'datetime'],
-                'iis_status' => ['label' => 'IIS status', 'type' => 'enum', 'values' => ['RUNNING' => 'Running', 'NOT RUNNING' => 'Not running']],
-                'iis_started_at' => ['label' => 'IIS start time', 'type' => 'datetime'],
-                'php_status' => ['label' => 'PHP FastCGI status', 'type' => 'enum', 'values' => ['RUNNING' => 'Running', 'NOT DETECTED' => 'Not detected']],
-                'php_started_at' => ['label' => 'PHP FastCGI start time', 'type' => 'datetime'],
-                'mysql_status' => ['label' => 'MySQL status', 'type' => 'enum', 'values' => ['RUNNING' => 'Running', 'STOPPED' => 'Stopped', 'NOT DETECTED' => 'Not detected']],
-                'mysql_started_at' => ['label' => 'MySQL start time', 'type' => 'datetime'],
-                'queue_status' => ['label' => 'Laravel queue status', 'type' => 'enum', 'values' => ['RUNNING' => 'Running', 'NOT RUNNING' => 'Not running']],
-                'queue_started_at' => ['label' => 'Laravel queue start time', 'type' => 'datetime'],
-            ],
-            'sample' => [
-                'server_boot_time' => '2026-11-12 08:00:00',
-                'iis_status' => 'RUNNING',
-                'iis_started_at' => '2026-11-12 08:01:00',
-                'php_status' => 'RUNNING',
-                'php_started_at' => '2026-11-12 08:02:00',
-                'mysql_status' => 'RUNNING',
-                'mysql_started_at' => '2026-11-12 08:00:30',
-                'queue_status' => 'RUNNING',
-                'queue_started_at' => '2026-11-12 08:03:00',
-            ],
-        ],
-        'sync.started' => [
-            'label' => 'Azure synchronization started',
-            'status' => 'existing',
-            'category' => 'Azure',
-            'description' => 'Raised when the unified Azure scheduler begins a synchronization run.',
-            'scope' => ['global'],
-            'fields' => [
-                'run_id' => ['label' => 'Sync run ID', 'type' => 'string'],
-                'sync_started_at' => ['label' => 'Sync start time', 'type' => 'datetime'],
-            ],
-            'sample' => [
-                'run_id' => '20261112-090000',
-                'sync_started_at' => '2026-11-12 09:00:00',
-            ],
-        ],
-        'sync.completed' => [
-            'label' => 'Azure synchronization completed',
-            'status' => 'existing',
-            'category' => 'Azure',
-            'description' => 'Raised once the unified scheduler has finished all six synchronization modules.',
-            'scope' => ['global', 'subscription'],
-            'fields' => [
-                'run_id' => ['label' => 'Sync run ID', 'type' => 'string'],
-                'overall_status' => ['label' => 'Overall status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'sync_started_at' => ['label' => 'Sync start time', 'type' => 'datetime'],
-                'completed_at' => ['label' => 'Sync completion time', 'type' => 'datetime'],
-                'duration' => ['label' => 'Formatted duration', 'type' => 'string'],
-                'duration_seconds' => ['label' => 'Duration (seconds)', 'type' => 'number'],
-                'subscriptions_status' => ['label' => 'Subscriptions module status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'resources_status' => ['label' => 'Resources module status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'costs_status' => ['label' => 'Costs module status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'security_status' => ['label' => 'Security module status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'alerts_status' => ['label' => 'Alerts module status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'web_urls_status' => ['label' => 'Web URLs module status', 'type' => 'enum', 'values' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed']],
-                'failed_modules' => ['label' => 'Failed modules', 'type' => 'array'],
-                'successful_modules' => ['label' => 'Successful modules', 'type' => 'array'],
-                'error_summary' => ['label' => 'Error summary', 'type' => 'string'],
-                'report_url' => ['label' => 'Sync report URL', 'type' => 'url'],
-            ],
-            'sample' => [
-                'overall_status' => 'FAILED',
-                'sync_started_at' => '2026-11-19 11:26:37 +05:30',
-                'completed_at' => '2026-11-19 11:29:49 +05:30',
-                'duration' => '3m 12.147s',
-                'duration_seconds' => 192.147,
-                'subscriptions_status' => 'SUCCESS',
-                'resources_status' => 'SUCCESS',
-                'costs_status' => 'SUCCESS',
-                'security_status' => 'SUCCESS',
-                'alerts_status' => 'SUCCESS',
-                'web_urls_status' => 'FAILED',
-                'failed_modules' => ['Web URLs'],
-                'successful_modules' => ['Subscriptions', 'Resources', 'Costs', 'Security', 'Alerts'],
-                'error_summary' => 'Web URLs synchronization failed.',
-            ],
-        ],
-        'azure_subscription_connected' => [
-            'label' => 'Azure subscription added',
-            'status' => 'existing',
-            'category' => 'Azure',
-            'description' => 'Raised after a subscription is newly added to CCOD, including discovery during Azure subscription synchronization.',
-            'scope' => ['global', 'subscription'],
-            'fields' => [
-                'subscription_id' => ['label' => 'Subscription ID', 'type' => 'string'],
-                'subscription_name' => ['label' => 'Subscription name', 'type' => 'string'],
-                'subscription_state' => ['label' => 'Subscription state', 'type' => 'string'],
-                'tenant_id' => ['label' => 'Tenant ID', 'type' => 'string'],
-                'authorization_source' => ['label' => 'Authorization source', 'type' => 'string'],
-                'occurred_at' => ['label' => 'Added at', 'type' => 'datetime'],
-            ],
-            'sample' => [
-                'subscription_id' => '00000000-0000-0000-0000-000000000001',
-                'subscription_name' => 'Production',
-                'subscription_state' => 'Enabled',
-                'tenant_id' => '00000000-0000-0000-0000-000000000002',
-                'authorization_source' => 'RoleBased',
-                'occurred_at' => '2026-11-13T08:00:00+00:00',
-            ],
-        ],
-        'azure_subscription_disconnected' => [
-            'label' => 'Azure subscription removed',
-            'status' => 'existing',
-            'category' => 'Azure',
-            'description' => 'Raised after a subscription record is successfully removed from CCOD.',
-            'scope' => ['global', 'subscription'],
-            'fields' => [
-                'subscription_id' => ['label' => 'Subscription ID', 'type' => 'string'],
-                'subscription_name' => ['label' => 'Subscription name', 'type' => 'string'],
-                'subscription_state' => ['label' => 'Subscription state', 'type' => 'string'],
-                'tenant_id' => ['label' => 'Tenant ID', 'type' => 'string'],
-                'authorization_source' => ['label' => 'Authorization source', 'type' => 'string'],
-                'occurred_at' => ['label' => 'Removed at', 'type' => 'datetime'],
-            ],
-            'sample' => [
-                'subscription_id' => '00000000-0000-0000-0000-000000000001',
-                'subscription_name' => 'Production',
-                'subscription_state' => 'Enabled',
-                'tenant_id' => '00000000-0000-0000-0000-000000000002',
-                'authorization_source' => 'RoleBased',
-                'occurred_at' => '2026-11-13T08:00:00+00:00',
-            ],
-        ],
+    /**
+     * Existing hardcoded in-app notifications remain independent of user rules.
+     * They are intentionally not added to the configurable 42-event dropdown.
+     */
+    private const MANDATORY_EVENTS = [
+        'access_request.submitted' => ['label' => 'Access request submitted', 'category' => 'Access Requests', 'mandatory_in_app' => true, 'mandatory_audience' => 'approvers', 'fields' => ['request_id', 'user_id', 'user_name', 'user_group_id', 'user_group_name', 'occurred_at']],
+        'access_request.accepted' => ['label' => 'Access request accepted', 'category' => 'Access Requests', 'mandatory_in_app' => true, 'mandatory_audience' => 'requester', 'fields' => ['request_id', 'user_id', 'user_group_id', 'user_group_name', 'occurred_at']],
+        'access_request.rejected' => ['label' => 'Access request rejected', 'category' => 'Access Requests', 'mandatory_in_app' => true, 'mandatory_audience' => 'requester', 'fields' => ['request_id', 'user_id', 'user_group_id', 'user_group_name', 'occurred_at']],
+    ];
+
+    private const FIELD_LABELS = [
+        'user_id' => 'User ID', 'user_name' => 'User name', 'user_email' => 'User email',
+        'user_status' => 'User status', 'role_name' => 'Role', 'old_role' => 'Previous role',
+        'new_role' => 'New role', 'ip_address' => 'IP address', 'invitation_expires_at' => 'Invitation expiry',
+        'group_id' => 'Group ID', 'group_name' => 'Group name',
+        'subscription_id' => 'Subscription ID', 'subscription_name' => 'Subscription name',
+        'tenant_id' => 'Tenant ID', 'subscription_state' => 'Subscription state',
+        'authorization_source' => 'Authorization source', 'project_id' => 'Project ID',
+        'project_name' => 'Project name', 'credential_type' => 'Credential type', 'expires_at' => 'Expiry time',
+        'description' => 'Description', 'business_unit_id' => 'Business unit ID',
+        'business_unit_name' => 'Business unit name', 'run_id' => 'Sync run ID',
+        'sync_started_at' => 'Sync start time', 'failed_at' => 'Failure time',
+        'overall_status' => 'Overall status', 'completed_at' => 'Completion time',
+        'duration' => 'Duration', 'duration_seconds' => 'Duration (seconds)',
+        'subscriptions_status' => 'Subscriptions module status', 'resources_status' => 'Resources module status',
+        'costs_status' => 'Costs module status', 'security_status' => 'Security module status',
+        'alerts_status' => 'Alerts module status', 'web_urls_status' => 'Web URLs module status',
+        'failed_modules' => 'Failed modules', 'successful_modules' => 'Successful modules',
+        'error_summary' => 'Error summary', 'report_url' => 'Sync report URL',
+        'resource_id' => 'Resource ID', 'resource_name' => 'Resource name', 'resource_type' => 'Resource type',
+        'resource_group' => 'Resource group', 'location' => 'Azure location',
+        'alert_id' => 'Alert ID', 'alert_name' => 'Alert name', 'severity' => 'Severity',
+        'status' => 'Status', 'recommendation_id' => 'Recommendation ID',
+        'recommendation_name' => 'Recommendation', 'category' => 'Category',
+        'previous_score' => 'Previous security score', 'current_score' => 'Current security score',
+        'score_delta' => 'Score change', 'budget_id' => 'Budget ID', 'budget_name' => 'Budget name',
+        'actual_cost' => 'Actual cost', 'budget_amount' => 'Budget amount',
+        'threshold_percent' => 'Threshold percentage', 'currency' => 'Currency',
+        'web_url_id' => 'Web URL ID', 'url' => 'Website URL', 'domain' => 'Domain',
+        'certificate_expires_at' => 'Certificate expiry', 'days_until_expiry' => 'Days until expiry',
+        'http_status' => 'HTTP status', 'response_time_ms' => 'Response time (ms)',
+        'checked_at' => 'Last checked at', 'days_since_expiry' => 'Days since expiry',
+        'previous_expires_at' => 'Previous certificate expiry', 'occurred_at' => 'Occurred at',
+        'request_id' => 'Request ID', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name',
+    ];
+
+    private const ENUM_VALUES = [
+        'user_status' => ['ACTIVE' => 'Active', 'INACTIVE' => 'Inactive'],
+        'subscription_state' => ['Enabled' => 'Enabled', 'Warned' => 'Warned', 'PastDue' => 'Past due', 'Disabled' => 'Disabled', 'Deleted' => 'Deleted'],
+        'authorization_source' => ['RoleBased' => 'Role based', 'Legacy' => 'Legacy'],
+        'overall_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'subscriptions_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'resources_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'costs_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'security_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'alerts_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'web_urls_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
+        'severity' => ['CRITICAL' => 'Critical', 'HIGH' => 'High', 'MEDIUM' => 'Medium', 'LOW' => 'Low', 'INFO' => 'Informational'],
+        'status' => ['ACTIVE' => 'Active', 'RESOLVED' => 'Resolved', 'DISMISSED' => 'Dismissed'],
     ];
 
     public static function all(): array
     {
         $events = self::EVENTS;
 
-        // Keep every legacy enum key visible. These older rule events have no
-        // verified active producer yet; retain them for compatibility and mark
-        // them clearly rather than implying that they currently fire.
-        $supersededLegacyEvents = [
-            'azure_subscription_connected',
-            'azure_subscription_disconnected',
-            'azure_sync_succeeded',
-            'azure_sync_failed',
-            'user_added_to_team',
-            'user_removed_from_team',
-            'subscription_assigned_to_team',
-            'subscription_removed_from_team',
-        ];
-
-        foreach (NotificationEvent::cases() as $event) {
-            if (in_array($event->value, $supersededLegacyEvents, true)) {
-                continue;
-            }
-
-            $events[$event->value] ??= [
-                'label' => $event->label(),
-                'category' => self::categoryFor($event->value),
-                'description' => 'Legacy event retained for compatibility. Connect a producer before enabling a rule.',
-                'scope' => self::scopeFor($event->value),
-                'fields' => [],
-                'sample' => [],
-                'status' => 'needs_integration',
-            ];
-        }
-
-        $mandatory = [
-            'user_group.member_added' => ['User added to user group', 'User management', ['user', 'group'], 'added_user'],
-            'user_group.role_changed' => ['User group role changed', 'User management', ['group'], 'group_members'],
-            'access_request.submitted' => ['Access request submitted', 'Access management', ['user_group'], 'approvers'],
-            'access_request.accepted' => ['Access request accepted', 'Access management', ['user'], 'requester'],
-            'access_request.rejected' => ['Access request rejected', 'Access management', ['user'], 'requester'],
-            'project.group_added' => ['Project added to user group', 'Projects', ['project', 'group'], 'group_members'],
-            'project.group_removed' => ['Project removed from user group', 'Projects', ['project', 'group'], 'group_members'],
-            'project.subscription_assigned' => ['Subscription assigned to project', 'Projects', ['project', 'subscription'], 'project_users'],
-            'project.subscription_removed' => ['Subscription removed from project', 'Projects', ['project', 'subscription'], 'project_users'],
-            'azure.sync_failed' => ['Azure synchronization failed', 'Azure', ['global'], 'all_active_users'],
-        ];
-
-        $mandatoryFields = [
-            'user_group.member_added' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'user_ids' => 'Added user IDs'],
-            'user_group.role_changed' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'role_name' => 'Role name'],
-            'access_request.submitted' => ['request_id' => 'Request ID', 'user_id' => 'Requester ID', 'user_name' => 'Requester name', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name'],
-            'access_request.accepted' => ['request_id' => 'Request ID', 'user_id' => 'Requester ID', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name'],
-            'access_request.rejected' => ['request_id' => 'Request ID', 'user_id' => 'Requester ID', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name'],
-            'project.group_added' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'project_id' => 'Project ID', 'project_name' => 'Project name'],
-            'project.group_removed' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'project_id' => 'Project ID', 'project_name' => 'Project name'],
-            'project.subscription_assigned' => ['project_id' => 'Project ID', 'project_name' => 'Project name', 'subscription_id' => 'Subscription ID', 'subscription_name' => 'Subscription name'],
-            'project.subscription_removed' => ['project_id' => 'Project ID', 'project_name' => 'Project name', 'subscription_id' => 'Subscription ID', 'subscription_name' => 'Subscription name'],
-            'azure.sync_failed' => ['occurred_at' => 'Occurred at'],
-        ];
-
-        $mandatorySamples = [
-            'user_group.member_added' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'user_ids' => [41]],
-            'user_group.role_changed' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'role_name' => 'Viewer'],
-            'access_request.submitted' => ['request_id' => 501, 'user_id' => 41, 'user_name' => 'Sample User', 'user_group_id' => 12, 'user_group_name' => 'Cloud Operations'],
-            'access_request.accepted' => ['request_id' => 501, 'user_id' => 41, 'user_group_id' => 12, 'user_group_name' => 'Cloud Operations'],
-            'access_request.rejected' => ['request_id' => 502, 'user_id' => 42, 'user_group_id' => 12, 'user_group_name' => 'Cloud Operations'],
-            'project.group_added' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'project_id' => 7, 'project_name' => 'Production Platform'],
-            'project.group_removed' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'project_id' => 7, 'project_name' => 'Production Platform'],
-            'project.subscription_assigned' => ['project_id' => 7, 'project_name' => 'Production Platform', 'subscription_id' => '00000000-0000-0000-0000-000000000001', 'subscription_name' => 'Production'],
-            'project.subscription_removed' => ['project_id' => 7, 'project_name' => 'Production Platform', 'subscription_id' => '00000000-0000-0000-0000-000000000001', 'subscription_name' => 'Production'],
-            'azure.sync_failed' => ['occurred_at' => '2026-11-19T09:00:00+00:00'],
-        ];
-
-        foreach ($mandatory as $key => [$label, $category, $scope, $audience]) {
-            $fields = [
-                'event_key' => ['label' => 'Event key', 'type' => 'string'],
-                'event_label' => ['label' => 'Event name', 'type' => 'string'],
-            ];
-            foreach ($mandatoryFields[$key] ?? [] as $fieldKey => $fieldLabel) {
-                $fields[$fieldKey] = ['label' => $fieldLabel, 'type' => $fieldKey === 'user_ids' ? 'array' : 'string'];
-            }
-            $fields['occurred_at'] = ['label' => 'Occurred at', 'type' => 'datetime'];
-
-            $events[$key] = [
-                'label' => $label,
-                'category' => $category,
-                'description' => 'Mandatory in-app event. Its default notification is always delivered independently of configurable rules.',
-                'scope' => $scope,
-                'fields' => $fields,
-                'sample' => array_merge($mandatorySamples[$key] ?? [], ['occurred_at' => '2026-11-19T09:00:00+00:00']),
-                'status' => 'existing',
-                'mandatory_in_app' => true,
-                'mandatory_audience' => $audience,
-            ];
+        foreach (self::MANDATORY_EVENTS as $key => $event) {
+            $events[$key] = $event;
         }
 
         foreach ($events as $key => &$event) {
-            $event['status'] ??= 'needs_integration';
-            $event['mandatory_in_app'] ??= in_array($key, [
-                'azure_subscription_connected',
-                'azure_subscription_disconnected',
-            ], true);
-            $event['mandatory_audience'] ??= match ($key) {
-                'azure_subscription_connected', 'azure_subscription_disconnected' => 'super_admins',
-                default => null,
-            };
+            $event['description'] ??= $event['label'];
+            $event['scope'] ??= ['global'];
+            $event['fields'] = self::buildFields($event['fields'] ?? []);
+            $event['sample'] ??= self::buildSample($event['fields']);
+            $event['mandatory_in_app'] ??= false;
+            $event['mandatory_audience'] ??= null;
         }
         unset($event);
 
         return $events;
     }
 
-    private static function categoryFor(string $eventKey): string
+    public static function configurable(): array
     {
-        return match (true) {
-            str_starts_with($eventKey, 'azure_'), str_starts_with($eventKey, 'sync.') => 'Azure',
-            str_starts_with($eventKey, 'user_') => 'User management',
-            str_starts_with($eventKey, 'subscription_') => 'Subscriptions',
-            str_starts_with($eventKey, 'servicenow_') => 'ServiceNow',
-            str_starts_with($eventKey, 'maintenance_') => 'Maintenance',
-            default => 'Other',
-        };
-    }
-
-    private static function scopeFor(string $eventKey): array
-    {
-        return match (true) {
-            str_contains($eventKey, 'subscription') => ['global', 'subscription'],
-            str_starts_with($eventKey, 'user_') => ['user', 'group'],
-            default => ['global'],
-        };
+        return self::all() && self::EVENTS;
     }
 
     public static function options(): array
     {
-        return collect(self::all())
+        return collect(self::EVENTS)
             ->mapWithKeys(fn (array $event, string $key): array => [$key => $event['label']])
             ->all();
     }
@@ -290,16 +169,9 @@ class NotificationEventCatalog
     public static function groupedOptions(): array
     {
         $groups = [];
-
-        foreach (self::all() as $key => $event) {
-            $statusSuffix = match ($event['status'] ?? 'existing') {
-                'needs_integration' => ' — Needs integration',
-                'future' => ' — Future event',
-                default => '',
-            };
-            $groups[$event['category'] ?? 'Other'][$key] = $event['label'] . $statusSuffix;
+        foreach (self::EVENTS as $key => $event) {
+            $groups[$event['category']][$key] = $event['label'];
         }
-
         ksort($groups);
 
         return $groups;
@@ -314,7 +186,18 @@ class NotificationEventCatalog
 
     public static function normalizeKey(string $key): string
     {
-        return $key === 'azure.sync.completed' ? 'sync.completed' : $key;
+        return match ($key) {
+            'azure.sync.completed' => 'sync.completed',
+            'azure.sync.started' => 'sync.started',
+            'azure.sync_failed', 'azure_sync_failed' => 'azure.sync.failed',
+            'azure_sync_succeeded' => 'sync.completed',
+            'azure_subscription_connected' => 'subscription.added',
+            'azure_subscription_disconnected' => 'subscription.removed',
+            'user_group.member_added' => 'user.group_added',
+            'project.subscription_assigned' => 'subscription.project_assigned',
+            'project.subscription_removed' => 'subscription.project_removed',
+            default => $key,
+        };
     }
 
     public static function normalizeKeys(array|string|null $keys): array
@@ -329,8 +212,7 @@ class NotificationEventCatalog
 
     public static function fieldsForEvents(array|string|null $eventKeys): array
     {
-        $fields = self::COMMON_FIELDS;
-
+        $fields = [];
         foreach (self::normalizeKeys($eventKeys) as $eventKey) {
             foreach (self::event($eventKey)['fields'] ?? [] as $key => $definition) {
                 $fields[$key] = $definition;
@@ -349,36 +231,25 @@ class NotificationEventCatalog
 
     public static function field(array|string|null $eventKeys, ?string $fieldKey): ?array
     {
-        if (! $fieldKey) {
-            return null;
-        }
-
-        return self::fieldsForEvents($eventKeys)[$fieldKey] ?? null;
+        return $fieldKey ? (self::fieldsForEvents($eventKeys)[$fieldKey] ?? null) : null;
     }
 
     public static function operatorsForField(array|string|null $eventKeys, ?string $fieldKey): array
     {
         $field = self::field($eventKeys, $fieldKey);
-        $type = $field['type'] ?? 'string';
+        if (! $field) {
+            return [];
+        }
 
-        $operators = [
-            'equals' => 'Equals',
-            'not_equals' => 'Does not equal',
-            'exists' => 'Exists',
-            'not_exists' => 'Does not exist',
-        ];
+        $type = $field['type'];
+        $operators = ['exists' => 'Exists', 'not_exists' => 'Does not exist', 'equals' => 'Equals', 'not_equals' => 'Does not equal'];
 
-        if (in_array($type, ['string', 'enum', 'array'], true)) {
+        if (in_array($type, ['string', 'enum', 'array', 'url'], true)) {
             $operators += ['contains' => 'Contains', 'not_contains' => 'Does not contain', 'in' => 'Is one of'];
         }
 
         if (in_array($type, ['number', 'datetime'], true)) {
-            $operators += [
-                'greater_than' => 'Greater than',
-                'greater_or_equal' => 'Greater than or equal',
-                'less_than' => 'Less than',
-                'less_or_equal' => 'Less than or equal',
-            ];
+            $operators += ['greater_than' => 'Greater than', 'greater_or_equal' => 'Greater than or equal', 'less_than' => 'Less than', 'less_or_equal' => 'Less than or equal'];
         }
 
         return $operators;
@@ -386,9 +257,7 @@ class NotificationEventCatalog
 
     public static function valuesForField(array|string|null $eventKeys, ?string $fieldKey): array
     {
-        $field = self::field($eventKeys, $fieldKey);
-
-        return in_array($field['type'] ?? null, ['enum', 'boolean'], true) ? ($field['values'] ?? []) : [];
+        return self::field($eventKeys, $fieldKey)['values'] ?? [];
     }
 
     public static function placeholderOptions(array|string|null $eventKeys): array
@@ -408,6 +277,12 @@ class NotificationEventCatalog
                 'severity' => 'info',
                 'action_label' => 'View Sync Report',
                 'action_url' => '{report_url}',
+            ],
+            'azure.sync.failed' => [
+                'title' => 'Azure sync failed',
+                'message' => '{error_summary}',
+                'type' => 'alert',
+                'severity' => 'critical',
             ],
             default => [],
         };
@@ -434,4 +309,59 @@ class NotificationEventCatalog
         return $context;
     }
 
+    private static function buildFields(array $keys): array
+    {
+        $fields = [];
+        foreach ($keys as $key) {
+            $type = match (true) {
+                in_array($key, ['duration_seconds', 'previous_score', 'current_score', 'score_delta', 'actual_cost', 'budget_amount', 'threshold_percent', 'days_until_expiry', 'days_since_expiry', 'http_status', 'response_time_ms'], true) => 'number',
+                in_array($key, ['occurred_at', 'sync_started_at', 'failed_at', 'completed_at', 'expires_at', 'invitation_expires_at', 'certificate_expires_at', 'previous_expires_at', 'checked_at'], true) => 'datetime',
+                in_array($key, ['failed_modules', 'successful_modules'], true) => 'array',
+                $key === 'report_url' || $key === 'url' => 'url',
+                array_key_exists($key, self::ENUM_VALUES) => 'enum',
+                default => 'string',
+            };
+            $fields[$key] = [
+                'label' => self::FIELD_LABELS[$key] ?? str($key)->replace('_', ' ')->title()->toString(),
+                'type' => $type,
+            ];
+            if ($type === 'enum') {
+                $fields[$key]['values'] = self::ENUM_VALUES[$key];
+            }
+        }
+
+        return $fields;
+    }
+
+    private static function buildSample(array $fields): array
+    {
+        $sample = [];
+        foreach ($fields as $key => $field) {
+            $sample[$key] = match ($field['type']) {
+                'number' => 1,
+                'datetime' => now()->toIso8601String(),
+                'array' => [],
+                'enum' => array_key_first($field['values'] ?? []) ?? 'ACTIVE',
+                'url' => 'https://example.com',
+                default => 'Sample '.($field['label'] ?? $key),
+            };
+        }
+
+        if (isset($sample['overall_status'])) {
+            $sample['overall_status'] = 'FAILED';
+            foreach (['subscriptions_status', 'resources_status', 'costs_status', 'security_status', 'alerts_status', 'web_urls_status'] as $field) {
+                if (isset($sample[$field])) {
+                    $sample[$field] = 'SUCCESS';
+                }
+            }
+            $sample['web_urls_status'] = 'FAILED';
+            $sample['failed_modules'] = ['Web URLs'];
+            $sample['successful_modules'] = ['Subscriptions', 'Resources', 'Costs', 'Security', 'Alerts'];
+            $sample['error_summary'] = 'Web URLs synchronization failed.';
+            $sample['duration'] = '3m 12.147s';
+            $sample['duration_seconds'] = 192.147;
+        }
+
+        return $sample;
+    }
 }
