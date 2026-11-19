@@ -45,7 +45,7 @@ class TeamsWebhookResource extends Resource
         return $schema->components([
             Section::make('Webhook destination')->schema([
                 TextInput::make('name')->required()->maxLength(120),
-                Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat'])->required()->live(),
+                Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat', 'generic' => 'Generic HTTPS JSON endpoint'])->required()->live(),
                 Select::make('message_format')
                     ->label('Message format')
                     ->options(['adaptive_card' => 'Adaptive Card (recommended)', 'message_card' => 'MessageCard (legacy)'])
@@ -154,7 +154,7 @@ class TeamsWebhookResource extends Resource
             TextColumn::make('name')->searchable()->sortable(),
             TextColumn::make('event_keys')->label('Subscribed events')->formatStateUsing(fn ($state): string => collect($state ?? [])->map(fn ($key) => TeamsWebhookEvents::options()[NotificationEventCatalog::normalizeKey($key)] ?? $key)->implode(', '))->wrap(),
             TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
-            TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => $state === 'channel' ? 'Channel' : 'Chat'),
+            TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => match ($state) { 'channel' => 'Teams channel', 'chat' => 'Teams chat', 'generic' => 'Generic HTTPS', default => $state }),
             IconColumn::make('enabled')->boolean(),
             TextColumn::make('last_delivery_status')->badge()->placeholder('Not sent'),
             TextColumn::make('last_error')->label('Last error')->limit(60)->placeholder('—')->toggleable(),
