@@ -4,7 +4,6 @@ namespace App\Filament\Resources\NotificationRules;
 
 use App\Enums\NotificationEvent;
 use App\Models\NotificationRule;
-use App\Models\Team;
 use App\Models\TeamsWebhook;
 use App\Models\TeamsWebhookTemplate;
 use App\Models\User;
