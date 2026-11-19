@@ -34,7 +34,7 @@ class NotificationRuleService
         $rules = NotificationRule::query()
             ->where('event_key', $eventKey)
             ->where('enabled', true)
-            ->with(['webhook.template', 'template'])
+            ->with(['webhook', 'template'])
             ->orderBy('id')
             ->get();
 
