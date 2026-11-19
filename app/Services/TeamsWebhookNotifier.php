@@ -56,7 +56,7 @@ class TeamsWebhookNotifier
             $host = strtolower((string) parse_url($url, PHP_URL_HOST));
 
             if (parse_url($url, PHP_URL_SCHEME) !== 'https' || $host === '' || filter_var($host, FILTER_VALIDATE_IP)) {
-                throw new \\RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
+                throw new \RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
             }
 
             $message = $this->formatter->format($eventKey, $context);
