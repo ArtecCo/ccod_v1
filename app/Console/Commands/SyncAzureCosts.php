@@ -7,6 +7,7 @@ use App\Services\AzureBudgetSyncService;
 use App\Services\AzureCostForecastSyncService;
 use App\Services\AzureCostSyncService;
 use App\Services\AzureResourceCostSyncService;
+use App\Services\MandatoryNotificationService;
 use Illuminate\Console\Command;
 
 class SyncAzureCosts extends Command
@@ -82,8 +83,8 @@ class SyncAzureCosts extends Command
 
         if ($failed) {
             try {
-                app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
-            } catch (\\Throwable $exception) {
+                app(MandatoryNotificationService::class)->synchronizationFailed();
+            } catch (\Throwable $exception) {
                 report($exception);
             }
 
