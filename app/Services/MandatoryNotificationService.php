@@ -45,6 +45,8 @@ class MandatoryNotificationService
             sprintf('%s has requested access to user group "%s".', $request->user?->name ?? 'A user', $request->userGroup?->name ?? $request->target_name),
             $approvers->pluck('id')->all(),
             'access',
+            route('filament.admin.resources.access-requests.view', ['record' => $request->getKey()]),
+            'View request',
         );
     }
 
@@ -59,6 +61,8 @@ class MandatoryNotificationService
                 : sprintf('Your request to access user group "%s" was rejected.', $request->userGroup?->name ?? $request->target_name),
             [(int) $request->user_id],
             'access',
+            route('filament.admin.resources.access-requests.view', ['record' => $request->getKey()]),
+            'View request',
         );
     }
 
@@ -79,10 +83,11 @@ class MandatoryNotificationService
 
     public function projectSubscriptionChanged(Project $project, string $subscriptionId, bool $assigned): void
     {
-        $subscriptionName = $project->subscriptionAssignments()
-            ->where('subscription_id', $subscriptionId)
-            ->with('subscription')
-            ->first()?->subscription?->display_name ?? $subscriptionId;
+        // Resolve the name from the subscription record itself. On removal,
+        // the project assignment row has already been deleted by this point.
+        $subscriptionName = AzureSubscription::query()
+            ->whereKey($subscriptionId)
+            ->value('display_name') ?: $subscriptionId;
 
         $this->send(
             $assigned ? 'A subscription was assigned to your project' : 'A subscription was removed from your project',
@@ -166,7 +171,14 @@ class MandatoryNotificationService
             ->all();
     }
 
-    private function send(string $title, string $message, array $userIds, string $type): void
+    private function send(
+        string $title,
+        string $message,
+        array $userIds,
+        string $type,
+        ?string $actionUrl = null,
+        ?string $actionLabel = null,
+    ): void
     {
         $userIds = collect($userIds)->filter()->unique()->values()->all();
 
@@ -179,6 +191,8 @@ class MandatoryNotificationService
             message: $message,
             type: $type,
             severity: 'info',
+            actionUrl: $actionUrl,
+            actionLabel: $actionLabel,
             userIds: $userIds,
         );
     }
