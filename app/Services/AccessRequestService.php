@@ -9,6 +9,7 @@ use App\Models\AccessRequest;
 use App\Models\Developer;
 use App\Models\User;
 use App\Models\UserGroup;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AccessRequestService
