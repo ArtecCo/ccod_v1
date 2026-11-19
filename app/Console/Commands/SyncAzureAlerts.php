@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Console\Commands;
 
 use App\Services\AzureAlertSyncService;
+use App\Services\MandatoryNotificationService;
 use Illuminate\Console\Command;
 
 class SyncAzureAlerts extends Command
@@ -23,8 +24,8 @@ class SyncAzureAlerts extends Command
         } catch (\Throwable $exception) {
             $this->error('Alert synchronization failed: '.$exception->getMessage());
             try {
-                app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
-            } catch (\\Throwable $notificationException) {
+                app(MandatoryNotificationService::class)->synchronizationFailed();
+            } catch (\Throwable $notificationException) {
                 report($notificationException);
             }
 
