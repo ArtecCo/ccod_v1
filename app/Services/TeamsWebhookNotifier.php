@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\TeamsWebhook;
+use App\Models\TeamsWebhookTemplate;
 use App\Support\TeamsWebhookEvents;
 use App\Support\NotificationEventCatalog;
 use Illuminate\Support\Facades\Http;
