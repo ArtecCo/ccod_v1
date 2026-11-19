@@ -72,13 +72,13 @@ class TeamsWebhookResource extends Resource
             TextColumn::make('last_error')->label('Last error')->limit(60)->placeholder('—')->toggleable(),
             TextColumn::make('last_sent_at')->dateTime('Y-m-d H:i:s')->placeholder('Never'),
         ])->recordActions([
-            \Filament\Actions\EditAction::make(),
+            \Filament\Actions\EditAction::make()\n                ->modalHeading('Edit webhook destination')\n                ->modalSubmitActionLabel('Save destination'),
             DeleteAction::make(),
         ]);
     }
 
     public static function getPages(): array
     {
-        return ['index' => Pages\ListTeamsWebhooks::route('/'), 'create' => Pages\CreateTeamsWebhook::route('/create'), 'edit' => Pages\EditTeamsWebhook::route('/{record}/edit')];
+        return ['index' => Pages\ListTeamsWebhooks::route('/')];
     }
 }
