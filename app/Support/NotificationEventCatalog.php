@@ -192,7 +192,7 @@ class NotificationEventCatalog
                 'event_label' => ['label' => 'Event name', 'type' => 'string'],
             ];
             foreach ($mandatoryFields[$key] ?? [] as $fieldKey => $fieldLabel) {
-                $fields[$fieldKey] = ['label' => $fieldLabel, 'type' => is_array($fieldLabel) ? 'array' : 'string'];
+                $fields[$fieldKey] = ['label' => $fieldLabel, 'type' => $fieldKey === 'user_ids' ? 'array' : 'string'];
             }
             $fields['occurred_at'] = ['label' => 'Occurred at', 'type' => 'datetime'];
 
