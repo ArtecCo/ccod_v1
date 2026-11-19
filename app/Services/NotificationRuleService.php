@@ -161,10 +161,24 @@ class NotificationRuleService
                 'not_contains' => is_array($actual)
                     ? ! in_array($expected, $actual, true)
                     : ($left !== null && $right !== null && ! str_contains($left, $right)),
-                'in' => $actual !== null && in_array($left, array_map(
-                    static fn ($value): string => mb_strtolower(trim((string) $value)),
-                    (array) $expected,
-                ), true),
+                'in' => $actual !== null && (function () use ($actual, $left, $expected): bool {
+                    $expectedValues = is_array($expected) ? $expected : explode(',', (string) $expected);
+                    $expectedValues = array_map(
+                        static fn ($value): string => mb_strtolower(trim((string) $value)),
+                        $expectedValues,
+                    );
+
+                    if (is_array($actual)) {
+                        $actualValues = array_map(
+                            static fn ($value): string => mb_strtolower(trim((string) $value)),
+                            $actual,
+                        );
+
+                        return count(array_intersect($actualValues, $expectedValues)) > 0;
+                    }
+
+                    return in_array($left, $expectedValues, true);
+                })(),
                 'greater_than', 'greater_or_equal', 'less_than', 'less_or_equal' => $this->compare($actual, $expected, $operator),
                 default => false,
             };
