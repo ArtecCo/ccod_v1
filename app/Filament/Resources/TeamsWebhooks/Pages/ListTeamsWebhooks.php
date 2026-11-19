@@ -1,10 +1,10 @@
 <?php
 
-namespace App\\Filament\\Resources\\TeamsWebhooks\\Pages;
+namespace App\Filament\Resources\TeamsWebhooks\Pages;
 
-use App\\Filament\\Resources\\TeamsWebhooks\\TeamsWebhookResource;
-use Filament\\Actions\\CreateAction;
-use Filament\\Resources\\Pages\\ListRecords;
+use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
+use Filament\Actions\CreateAction;
+use Filament\Resources\Pages\ListRecords;
 
 class ListTeamsWebhooks extends ListRecords
 {
