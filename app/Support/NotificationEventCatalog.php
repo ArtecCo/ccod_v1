@@ -141,13 +141,26 @@ class NotificationEventCatalog
             $events[$key] = $event;
         }
 
+        // Preserve the hardcoded in-app notifications for events that already
+        // have mandatory delivery. Configurable webhook rules remain available.
+        $mandatoryInApp = [
+            'subscription.added' => 'super_admins',
+            'subscription.removed' => 'super_admins',
+            'user_group.role_changed' => 'group_members',
+            'project.group_added' => 'group_members',
+            'project.group_removed' => 'group_members',
+            'subscription.project_assigned' => 'project_users',
+            'subscription.project_removed' => 'project_users',
+            'azure.sync.failed' => 'all_active_users',
+        ];
+
         foreach ($events as $key => &$event) {
             $event['description'] ??= $event['label'];
             $event['scope'] ??= ['global'];
             $event['fields'] = self::buildFields($event['fields'] ?? []);
             $event['sample'] ??= self::buildSample($event['fields']);
-            $event['mandatory_in_app'] ??= false;
-            $event['mandatory_audience'] ??= null;
+            $event['mandatory_in_app'] = isset($mandatoryInApp[$key]) || ($event['mandatory_in_app'] ?? false);
+            $event['mandatory_audience'] ??= $mandatoryInApp[$key] ?? null;
         }
         unset($event);
 
