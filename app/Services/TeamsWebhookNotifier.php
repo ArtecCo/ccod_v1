@@ -233,7 +233,7 @@ class TeamsWebhookNotifier
                 ->post($url, $payload);
 
             if (! $response->successful()) {
-                throw new \RuntimeException('Teams returned HTTP '.$response->status().'.');
+                throw new \RuntimeException('Webhook endpoint returned HTTP '.$response->status().'.');
             }
 
             $webhook->forceFill([
