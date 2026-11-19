@@ -10,11 +10,6 @@ use App\Filament\Pages\Widgets\ConsolidatedWebUrlStats;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlsTable;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureSecurityAssessmentsRelationManager;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionBudgetDetails;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryChart;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostHistoryTable;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionCostSummary;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionResourceCostBreakdown;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
@@ -37,6 +32,8 @@ class Dashboard extends BaseDashboard
 {
     protected ?AzureSubscription $record = null;
 
+    protected bool $hasProjectAccess = false;
+
     public function mount(): void
     {
         $user = auth()->guard('web')->user();
@@ -46,12 +43,15 @@ class Dashboard extends BaseDashboard
             session()->put('auth_session_started_at', now()->timestamp);
         }
 
-        // Temporary single-subscription mode: use the first accessible subscription.
-        $this->record = app(AccessAuthorizationService::class)
-            ->accessibleSubscriptionQuery($user)
-            ->first();
+        $authorization = app(AccessAuthorizationService::class);
+        $this->hasProjectAccess = $authorization->hasAnyResourceAccess($user);
 
-        abort_unless($this->record !== null, 404);
+        // Users without an accessible subscription still reach the dashboard.
+        $this->record = $authorization->accessibleSubscriptionQuery($user)->first();
+
+        if ($this->record === null) {
+            return;
+        }
 
         $requestedTab = request()->query('tab');
         $tabPermissions = [
@@ -70,6 +70,25 @@ class Dashboard extends BaseDashboard
 
     public function content(Schema $schema): Schema
     {
+        if ($this->record === null) {
+            $hasProjects = $this->hasProjectAccess;
+
+            return $schema->components([
+                Section::make($hasProjects ? 'No subscriptions assigned yet' : 'No projects assigned yet')
+                    ->description(
+                        $hasProjects
+                            ? 'Your projects do not currently have any Azure subscriptions assigned. Please contact your administrator for access.'
+                            : 'Your user group is not currently assigned to any projects. Please contact your administrator to get access.'
+                    )
+                    ->icon('heroicon-o-folder-open')
+                    ->iconColor('gray')
+                    ->extraAttributes([
+                        'class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none !px-0 !py-12 text-center [&_.fi-section-header]:justify-center [&_.fi-section-header]:text-center [&_.fi-section-content]:text-center [&_.fi-section-header-heading]:text-xl [&_.fi-section-header-description]:max-w-2xl [&_.fi-section-header-description]:mx-auto',
+                    ])
+                    ->columnSpanFull(),
+            ]);
+        }
+
         return $schema->components([
             Tabs::make('Subscription Navigation')->tabs([
                 $this->makeTab('Overview', null)->schema(fn (): array => [
@@ -169,6 +188,10 @@ class Dashboard extends BaseDashboard
 
     protected function getHeaderActions(): array
     {
+        if ($this->record === null) {
+            return [];
+        }
+
         return [
             EditAction::make()->visible(fn (): bool => AzureSubscriptionResource::canEdit($this->record)),
         ];

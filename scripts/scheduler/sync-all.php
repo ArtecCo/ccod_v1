@@ -53,7 +53,7 @@ $reportJsonPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.json";
 $latestReportJsonPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.json';
 
 try {
-    $app->make(\App\Services\TeamsWebhookNotifier::class)->dispatch('sync.started', [
+    $app->make(\App\Services\NotificationRuleService::class)->trigger(\App\Enums\NotificationEvent::SyncStarted, [
         'run_id' => $runId,
         'sync_started_at' => $syncStartedAt,
     ]);
@@ -634,37 +634,56 @@ if (file_put_contents($reportPath, $html) === false || file_put_contents($latest
 fwrite(STDOUT, "Report: {$reportPath}" . PHP_EOL);
 fwrite(STDOUT, "Latest: {$latestReportPath}" . PHP_EOL);
 
-try {
-    $moduleStatuses = [];
-    foreach ($rows as $row) {
-        $key = match ($row['name']) {
-            'Subscriptions' => 'subscriptions_status',
-            'Resources' => 'resources_status',
-            'Costs' => 'costs_status',
-            'Security' => 'security_status',
-            'Alerts' => 'alerts_status',
-            'Web URLs' => 'web_urls_status',
-            default => null,
-        };
-        if ($key !== null) {
-            $moduleStatuses[$key] = $row['status'];
-        }
+$moduleStatuses = [];
+foreach ($rows as $row) {
+    $key = match ($row['name']) {
+        'Subscriptions' => 'subscriptions_status',
+        'Resources' => 'resources_status',
+        'Costs' => 'costs_status',
+        'Security' => 'security_status',
+        'Alerts' => 'alerts_status',
+        'Web URLs' => 'web_urls_status',
+        default => null,
+    };
+    if ($key !== null) {
+        $moduleStatuses[$key] = $row['status'];
     }
+}
 
-    $app->make(\App\Services\TeamsWebhookNotifier::class)->sendSyncStatus(array_merge([
-        'overall_status' => $overallStatus,
-        'sync_started_at' => $syncStartedAt,
-        'completed_at' => $completedAt,
-        'duration' => $formatDuration($totalDuration),
-        'duration_seconds' => round($totalDuration, 3),
-        'run_id' => $runId,
-        'report_url' => rtrim((string) config('app.url'), '/') . '/sync-report/latest',
-        'failed_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))),
-        'successful_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] === 'SUCCESS'))),
-        'error_summary' => implode(' | ', array_values(array_filter(array_map(static fn (array $row): string => trim($row['stderr']), array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))))),
-    ], $moduleStatuses));
+$notificationContext = array_merge([
+    'overall_status' => $overallStatus,
+    'sync_started_at' => $syncStartedAt,
+    'completed_at' => $completedAt,
+    'duration' => $formatDuration($totalDuration),
+    'duration_seconds' => round($totalDuration, 3),
+    'run_id' => $runId,
+    'report_url' => rtrim((string) config('app.url'), '/') . '/sync-report/latest',
+    'failed_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))),
+    'successful_modules' => array_values(array_map(static fn (array $row): string => $row['name'], array_filter($rows, static fn (array $row): bool => $row['status'] === 'SUCCESS'))),
+    'error_summary' => implode(' | ', array_values(array_filter(array_map(static fn (array $row): string => trim($row['stderr']), array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'))))),
+], $moduleStatuses);
+
+try {
+    $app->make(\App\Services\NotificationRuleService::class)->trigger(
+        \App\Enums\NotificationEvent::SyncCompleted,
+        $notificationContext,
+    );
 } catch (\Throwable $exception) {
-    fwrite(STDERR, 'Teams sync notification failed: '.$exception->getMessage().PHP_EOL);
+    fwrite(STDERR, 'Teams sync completion notification failed: '.$exception->getMessage().PHP_EOL);
+}
+
+if ($anyFailure) {
+    try {
+        $app->make(\App\Services\MandatoryNotificationService::class)->synchronizationFailed([
+            'run_id' => $runId,
+            'failed_at' => $completedAt,
+            'error_summary' => $notificationContext['error_summary'] ?: 'One or more Azure synchronization modules failed or partially completed.',
+            'failed_modules' => $notificationContext['failed_modules'],
+            'occurred_at' => $completedAt,
+        ]);
+    } catch (\Throwable $exception) {
+        fwrite(STDERR, 'Mandatory sync failure notification failed: '.$exception->getMessage().PHP_EOL);
+    }
 }
 
 exit($anyFailure ? 1 : 0);

@@ -18,6 +18,22 @@ enum NotificationEvent: string
     case MaintenanceScheduled = 'maintenance_scheduled';
     case MaintenanceCompleted = 'maintenance_completed';
 
+    // Current mandatory-event catalogue. These keys coexist with the legacy
+    // enum values above so existing integrations remain backward compatible.
+    case UserGroupMemberAdded = 'user_group.member_added';
+    case UserGroupRoleChanged = 'user_group.role_changed';
+    case AccessRequestSubmitted = 'access_request.submitted';
+    case AccessRequestAccepted = 'access_request.accepted';
+    case AccessRequestRejected = 'access_request.rejected';
+    case ProjectAddedToGroup = 'project.group_added';
+    case ProjectRemovedFromGroup = 'project.group_removed';
+    case ProjectSubscriptionAssigned = 'project.subscription_assigned';
+    case ProjectSubscriptionRemoved = 'project.subscription_removed';
+    case SynchronizationFailed = 'azure.sync_failed';
+    case ServerStarted = 'server.started';
+    case SyncStarted = 'sync.started';
+    case SyncCompleted = 'sync.completed';
+
     public function label(): string
     {
         return match ($this) {
@@ -34,6 +50,19 @@ enum NotificationEvent: string
             self::SubscriptionRemovedFromTeam => 'Subscription removed from team',
             self::MaintenanceScheduled => 'Maintenance scheduled',
             self::MaintenanceCompleted => 'Maintenance completed',
+            self::UserGroupMemberAdded => 'User added to user group',
+            self::UserGroupRoleChanged => 'User group role changed',
+            self::AccessRequestSubmitted => 'Access request submitted',
+            self::AccessRequestAccepted => 'Access request accepted',
+            self::AccessRequestRejected => 'Access request rejected',
+            self::ProjectAddedToGroup => 'Project added to user group',
+            self::ProjectRemovedFromGroup => 'Project removed from user group',
+            self::ProjectSubscriptionAssigned => 'Subscription assigned to project',
+            self::ProjectSubscriptionRemoved => 'Subscription removed from project',
+            self::SynchronizationFailed => 'Azure synchronization failed',
+            self::ServerStarted => 'Server started',
+            self::SyncStarted => 'Azure synchronization started',
+            self::SyncCompleted => 'Azure synchronization completed',
         };
     }
 

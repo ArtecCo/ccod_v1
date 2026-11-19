@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationEvent;
+use App\Services\MandatoryNotificationService;
 use App\Services\NotificationRuleService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -44,9 +45,18 @@ class AzureSubscription extends Model
             'occurred_at' => now()->toIso8601String(),
         ];
 
-        DB::afterCommit(static function () use ($event, $context): void {
+        $subscription = $this;
+
+        DB::afterCommit(static function () use ($event, $context, $subscription): void {
             try {
                 app(NotificationRuleService::class)->trigger($event, $context);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+
+            try {
+                app(MandatoryNotificationService::class)
+                    ->globalSubscriptionChanged($subscription, $event === NotificationEvent::AzureSubscriptionConnected);
             } catch (Throwable $exception) {
                 report($exception);
             }

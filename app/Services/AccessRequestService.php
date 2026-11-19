@@ -9,11 +9,15 @@ use App\Models\AccessRequest;
 use App\Models\Developer;
 use App\Models\User;
 use App\Models\UserGroup;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class AccessRequestService
 {
-    public function __construct(private readonly AccessAuthorizationService $authorization) {}
+    public function __construct(
+        private readonly AccessAuthorizationService $authorization,
+        private readonly MandatoryNotificationService $mandatoryNotifications,
+    ) {}
 
     public function createForUserGroup(
         User $user,
@@ -51,7 +55,7 @@ class AccessRequestService
             ]);
         }
 
-        return AccessRequest::create([
+        $request = AccessRequest::create([
             'user_id' => $user->getKey(),
             'user_group_id' => $group->getKey(),
             'target_type' => AccessRequestTargetType::UserGroup,
@@ -60,8 +64,14 @@ class AccessRequestService
             'reason' => $reason,
             'duration' => $duration,
             'requested_until' => $requestedUntil,
+            'original_duration' => $duration,
+            'original_requested_until' => $requestedUntil,
             'status' => AccessRequestStatus::Pending,
         ]);
+
+        DB::afterCommit(fn () => $this->mandatoryNotifications->accessRequestSubmitted($request));
+
+        return $request;
     }
 
     public function approve(
@@ -93,6 +103,9 @@ class AccessRequestService
         }
 
         $duration ??= $request->duration;
+        $requestedUntil = $duration === AccessRequestDuration::TimeBound
+            ? ($requestedUntil ?? $request->requested_until)
+            : null;
 
         if ($duration === AccessRequestDuration::TimeBound && ($requestedUntil === null || $requestedUntil <= now())) {
             throw ValidationException::withMessages([
@@ -100,26 +113,34 @@ class AccessRequestService
             ]);
         }
 
-        if ($duration === AccessRequestDuration::Permanent) {
-            $requestedUntil = null;
-        }
+        DB::transaction(function () use ($group, $request, $duration, $requestedUntil, $actor, $reason): void {
+            $originalDuration = $request->original_duration ?? $request->duration;
+            $originalUntil = $request->original_requested_until ?? $request->requested_until;
 
-        $group->users()->syncWithoutDetaching([
-            $request->user_id => [
-                'starts_at' => now(),
-                'expires_at' => $duration === AccessRequestDuration::TimeBound ? $requestedUntil : null,
-            ],
-        ]);
+            $group->users()->syncWithoutDetaching([
+                $request->user_id => [
+                    'starts_at' => now(),
+                    'expires_at' => $duration === AccessRequestDuration::TimeBound ? $requestedUntil : null,
+                ],
+            ]);
 
-        $request->forceFill([
-            'status' => AccessRequestStatus::Approved,
-            'duration' => $duration,
-            'requested_until' => $requestedUntil,
-            'decided_by_type' => $actor instanceof User ? User::class : get_class($actor),
-            'decided_by_id' => $actor->getKey(),
-            'decided_at' => now(),
-            'decision_reason' => $reason,
-        ])->save();
+            $request->forceFill([
+                'original_duration' => $originalDuration,
+                'original_requested_until' => $originalUntil,
+                'duration' => $duration,
+                'requested_until' => $requestedUntil,
+                'status' => AccessRequestStatus::Approved,
+                'decided_by_type' => $actor instanceof User ? User::class : get_class($actor),
+                'decided_by_id' => $actor->getKey(),
+                'decided_at' => now(),
+                'decision_reason' => $reason,
+            ])->save();
+        });
+
+        DB::afterCommit(function () use ($request, $group): void {
+            $this->mandatoryNotifications->userAddedToGroup($group, [(int) $request->user_id]);
+            $this->mandatoryNotifications->accessRequestDecided($request, true);
+        });
     }
 
     public function reject(AccessRequest $request, User|Developer $actor, ?string $reason = null): void
@@ -133,12 +154,16 @@ class AccessRequestService
         }
 
         $request->forceFill([
+            'original_duration' => $request->original_duration ?? $request->duration,
+            'original_requested_until' => $request->original_requested_until ?? $request->requested_until,
             'status' => AccessRequestStatus::Rejected,
             'decided_by_type' => $actor instanceof User ? User::class : get_class($actor),
             'decided_by_id' => $actor->getKey(),
             'decided_at' => now(),
             'decision_reason' => $reason,
         ])->save();
+
+        DB::afterCommit(fn () => $this->mandatoryNotifications->accessRequestDecided($request, false));
     }
 
     private function authorizeDecision(AccessRequest $request, User|Developer $actor): void
