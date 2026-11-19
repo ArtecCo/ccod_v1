@@ -36,9 +36,17 @@ class TeamsWebhookNotifier
 
         $sent = 0;
 
+        $ruleDestinationIds = \App\Models\NotificationRule::query()
+            ->where('event_key', $eventKey)
+            ->where('channel', 'webhook')
+            ->where('enabled', true)
+            ->whereNotNull('webhook_id')
+            ->select('webhook_id');
+
         TeamsWebhook::query()
             ->where('enabled', true)
             ->whereJsonContains('event_keys', $eventKey)
+            ->whereNotIn('id', $ruleDestinationIds)
             ->with('template')
             ->orderBy('id')
             ->chunkById(100, function ($webhooks) use ($context, &$sent): void {
@@ -69,13 +77,6 @@ class TeamsWebhookNotifier
         ]);
 
         if (! $webhook->enabled) {
-            return false;
-        }
-
-        // If the legacy subscription already delivered this same event to this
-        // destination, do not send a second copy through the new rule route.
-        $legacyKeys = NotificationEventCatalog::normalizeKeys($webhook->event_keys);
-        if (in_array($eventKey, $legacyKeys, true) && $this->matchesConditions($webhook, $context)) {
             return false;
         }
 
