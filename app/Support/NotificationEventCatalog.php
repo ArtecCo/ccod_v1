@@ -258,7 +258,12 @@ class NotificationEventCatalog
         $groups = [];
 
         foreach (self::all() as $key => $event) {
-            $groups[$event['category'] ?? 'Other'][$key] = $event['label'];
+            $statusSuffix = match ($event['status'] ?? 'existing') {
+                'needs_integration' => ' — Needs integration',
+                'future' => ' — Future event',
+                default => '',
+            };
+            $groups[$event['category'] ?? 'Other'][$key] = $event['label'] . $statusSuffix;
         }
 
         ksort($groups);
