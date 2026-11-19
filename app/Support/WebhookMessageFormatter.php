@@ -1,6 +1,6 @@
 <?php
 
-namespace App\\Support;
+namespace App\Support;
 
 class WebhookMessageFormatter
 {
@@ -51,10 +51,10 @@ class WebhookMessageFormatter
 
         $message = $lines === []
             ? 'The event was triggered, but no additional event details were supplied.'
-            : implode("\\n", $lines);
+            : implode("\n", $lines);
 
         if (($context['is_test'] ?? false) === true) {
-            $message .= "\\n\\n_Test delivery — sample event data._";
+            $message .= "\n\n_Test delivery — sample event data._";
         }
 
         return ['title' => $title, 'message' => $message];
