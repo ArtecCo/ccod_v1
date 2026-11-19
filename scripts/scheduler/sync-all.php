@@ -53,7 +53,7 @@ $reportJsonPath = $reportDirectory . DIRECTORY_SEPARATOR . "sync-{$runId}.json";
 $latestReportJsonPath = $reportDirectory . DIRECTORY_SEPARATOR . 'latest.json';
 
 try {
-    $app->make(\App\Services\TeamsWebhookNotifier::class)->dispatch('sync.started', [
+    $app->make(\App\Services\NotificationRuleService::class)->trigger(\App\Enums\NotificationEvent::SyncStarted, [
         'run_id' => $runId,
         'sync_started_at' => $syncStartedAt,
     ]);
