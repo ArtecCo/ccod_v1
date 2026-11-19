@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\NotificationEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Validation\ValidationException;
 
 class NotificationRule extends Model
 {
@@ -26,6 +27,21 @@ class NotificationRule extends Model
         'created_by',
         'updated_by',
     ];
+
+    protected static function booted(): void
+    {
+        static::saving(function (self $rule): void {
+            if (
+                ($rule->channel ?? 'in_app') === 'in_app'
+                && $rule->enabled
+                && (\App\Support\NotificationEventCatalog::event((string) $rule->event_key)['mandatory_in_app'] ?? false)
+            ) {
+                throw ValidationException::withMessages([
+                    'event_key' => 'This event already has a mandatory in-app notification. Configure a webhook rule instead.',
+                ]);
+            }
+        });
+    }
 
     protected function casts(): array
     {
