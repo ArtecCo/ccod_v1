@@ -6,6 +6,7 @@ namespace App\Console\Commands;
 
 use App\Services\AzureSecurityScoreSyncService;
 use App\Services\AzureSecuritySyncService;
+use App\Services\MandatoryNotificationService;
 use Illuminate\Console\Command;
 
 class SyncAzureSecurity extends Command
@@ -23,11 +24,11 @@ class SyncAzureSecurity extends Command
         try {
             $scoreStats = $scores->sync($this->option('subscription'));
             $assessmentStats = $assessments->sync($this->option('subscription'));
-        } catch (\\Throwable $exception) {
+        } catch (\Throwable $exception) {
             $this->error('Azure security synchronization failed.');
             try {
-                app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
-            } catch (\\Throwable $notificationException) {
+                app(MandatoryNotificationService::class)->synchronizationFailed();
+            } catch (\Throwable $notificationException) {
                 report($notificationException);
             }
             report($exception);
