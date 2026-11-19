@@ -142,15 +142,24 @@ class NotificationRuleResource extends Resource
                                 Select::make('field')
                                     ->label('Event field')
                                     ->options(fn ($get): array => \App\Support\NotificationEventCatalog::fieldOptions($get('../../event_key')))
+                                    ->live()
                                     ->searchable()
-                                    ->required(),
+                                    ->required()
+                                    ->afterStateUpdated(fn ($set) => $set('value_text', null)),
                                 Select::make('operator')
                                     ->label('Operator')
                                     ->options(fn ($get): array => \App\Support\NotificationEventCatalog::operatorsForField($get('../../event_key'), $get('field')))
                                     ->default('equals')
                                     ->required(),
+                                Select::make('value_text')
+                                    ->label('Expected value')
+                                    ->options(fn ($get): array => \App\Support\NotificationEventCatalog::valuesForField($get('../../event_key'), $get('field')))
+                                    ->visible(fn ($get): bool => \App\Support\NotificationEventCatalog::valuesForField($get('../../event_key'), $get('field')) !== [])
+                                    ->required(fn ($get): bool => \App\Support\NotificationEventCatalog::valuesForField($get('../../event_key'), $get('field')) !== []),
                                 TextInput::make('value_text')
                                     ->label('Expected value')
+                                    ->visible(fn ($get): bool => \App\Support\NotificationEventCatalog::valuesForField($get('../../event_key'), $get('field')) === [])
+                                    ->numeric(fn ($get): bool => in_array(\App\Support\NotificationEventCatalog::field($get('../../event_key'), $get('field'))['type'] ?? null, ['number'], true))
                                     ->maxLength(500),
                             ])
                             ->columns(['default' => 1, 'lg' => 3])
