@@ -103,6 +103,10 @@ class TeamsWebhookNotifier
             ];
         }
 
+        if ($eventKey === 'sync.completed') {
+            return $this->formatter->syncCompletionCard($title, $context);
+        }
+
         return [
             'type' => 'message',
             'attachments' => [[
