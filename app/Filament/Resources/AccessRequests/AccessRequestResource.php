@@ -159,9 +159,9 @@ class AccessRequestResource extends Resource
                         ->label('Decision made by')
                         ->formatStateUsing(function ($state, AccessRequest $record): string {
                             if (! $record->decided_by_id || ! $state) return '—';
-                            $model = $state === \\App\\Models\\Developer::class
-                                ? \\App\\Models\\Developer::query()->find($record->decided_by_id)
-                                : \\App\\Models\\User::query()->find($record->decided_by_id);
+                            $model = $state === \App\Models\Developer::class
+                                ? \App\Models\Developer::query()->find($record->decided_by_id)
+                                : \App\Models\User::query()->find($record->decided_by_id);
                             return $model?->name ?? 'Unavailable';
                         }),
                     TextEntry::make('decided_at')->label('Approved at')->dateTime('Y-m-d H:i:s')->placeholder('—'),
