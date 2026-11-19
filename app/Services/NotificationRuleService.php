@@ -18,9 +18,9 @@ class NotificationRuleService
 
     public function trigger(NotificationEvent|string $event, array $context = []): int
     {
-        $eventKey = $event instanceof NotificationEvent
-            ? $event->value
-            : NotificationEventCatalog::normalizeKey($event);
+        $eventKey = NotificationEventCatalog::normalizeKey(
+            $event instanceof NotificationEvent ? $event->value : $event,
+        );
         $eventLabel = NotificationEventCatalog::event($eventKey)['label'] ?? $eventKey;
 
         $context = array_merge($context, [
