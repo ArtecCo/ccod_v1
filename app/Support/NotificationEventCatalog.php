@@ -390,6 +390,7 @@ class NotificationEventCatalog
         $context['event_key'] = $eventKey;
         $context['event_label'] = $event['label'] ?? $eventKey;
         $context['is_test'] = true;
+        $context['test_timestamp'] = now()->toIso8601String();
 
         return $context;
     }
