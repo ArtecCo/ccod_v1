@@ -4,7 +4,6 @@ namespace App\Filament\Resources\NotificationRules;
 
 use App\Models\NotificationRule;
 use App\Models\TeamsWebhook;
-use App\Models\TeamsWebhookTemplate;
 use App\Models\User;
 use App\Models\UserGroup;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
@@ -101,19 +100,6 @@ class NotificationRuleResource extends Resource
                     })
                     ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true))
                     ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true)),
-                Select::make('template_id')
-                    ->label('Message template')
-                    ->options(fn ($get): array => TeamsWebhookTemplate::query()
-                        ->where('event_key', $get('event_key'))
-                        ->orderBy('category')
-                        ->orderBy('name')
-                        ->get()
-                        ->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
-                            $template->id => $template->name . ' (' . $template->category . ')',
-                        ])->all())
-                    ->searchable()
-                    ->required(fn ($get): bool => $get('channel') === 'webhook')
-                    ->visible(fn ($get): bool => $get('channel') === 'webhook'),
                 Select::make('webhook_id')
                     ->label('Saved webhook destination')
                     ->options(fn (): array => TeamsWebhook::query()->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
@@ -198,7 +184,6 @@ class NotificationRuleResource extends Resource
                         default => 'Not set',
                     })->toggleable(),
                 TextColumn::make('webhook.name')->label('Destination')->placeholder('—')->toggleable(),
-                TextColumn::make('template.name')->label('Template')->placeholder('—')->toggleable(),
                 TextColumn::make('severity')->badge()->formatStateUsing(fn (?string $state, NotificationRule $record): string => $record->channel === 'webhook' ? '—' : (string) $state)->toggleable(),
                 TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
@@ -213,7 +198,7 @@ class NotificationRuleResource extends Resource
                         $record->load('webhook');
                         $notification = Notification::make()
                             ->title($success ? 'Rule test delivered' : 'Rule test failed')
-                            ->body($success ? 'The selected event template was rendered and accepted by the destination.' : ($record->webhook?->last_error ?: 'Check that the destination and template are enabled and configured correctly.'));
+                            ->body($success ? 'The built-in event message was accepted by the destination.' : ($record->webhook?->last_error ?: 'Check that the destination is enabled and configured correctly.'));
                         ($success ? $notification->success() : $notification->danger())->send();
                     }),
                 EditAction::make(),
