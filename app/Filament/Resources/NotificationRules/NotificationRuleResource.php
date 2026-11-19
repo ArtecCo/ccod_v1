@@ -102,7 +102,7 @@ class NotificationRuleResource extends Resource
                         default => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
                     })
                     ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true))
-                    ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true)),
+                    ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true)),
                 Select::make('template_id')
                     ->label('Message template')
                     ->options(fn ($get): array => TeamsWebhookTemplate::query()
