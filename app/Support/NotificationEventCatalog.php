@@ -169,7 +169,7 @@ class NotificationEventCatalog
 
     public static function configurable(): array
     {
-        return self::all() && self::EVENTS;
+        return self::EVENTS;
     }
 
     public static function options(): array
