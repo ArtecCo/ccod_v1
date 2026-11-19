@@ -55,7 +55,7 @@ class TeamsWebhookNotifier
                 throw new \RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
             }
 
-            $template = $templateOverride ?? $webhook->template;
+            $template = $templateOverride;
             $titleTemplate = $template?->title_template ?: 'CCOD notification';
             $messageTemplate = $template?->message_template ?: '';
             $title = $this->render($titleTemplate, $context);
