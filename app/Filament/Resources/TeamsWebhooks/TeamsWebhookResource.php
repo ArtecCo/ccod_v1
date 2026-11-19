@@ -165,7 +165,7 @@ class TeamsWebhookResource extends Resource
         ])->recordActions([
             Action::make('test')->label('Send test')->icon('heroicon-o-paper-airplane')->action(function (TeamsWebhook $record, TeamsWebhookNotifier $notifier): void {
                 $success = $notifier->sendTest($record);
-                $notification = Notification::make()->title($success ? 'Test delivered' : 'Test delivery failed')->body($success ? 'Teams accepted the test notification.' : 'Check the last delivery error.');
+                $notification = Notification::make()->title($success ? 'Test delivered' : 'Test delivery failed')->body($success ? ($record->destination_type === 'generic' ? 'The webhook endpoint accepted the test notification.' : 'Teams accepted the test notification.') : 'Check the last delivery error.');
                 ($success ? $notification->success() : $notification->danger())->send();
             }),
             \Filament\Actions\EditAction::make(),
