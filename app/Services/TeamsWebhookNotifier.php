@@ -103,17 +103,6 @@ class TeamsWebhookNotifier
             ];
         }
 
-        if ($webhook->destination_type === 'channel' && $webhook->message_format === 'message_card') {
-            return [
-                '@type' => 'MessageCard',
-                '@context' => 'https://schema.org/extensions',
-                'summary' => $title,
-                'themeColor' => '2563EB',
-                'title' => $title,
-                'text' => $message,
-            ];
-        }
-
         return [
             'type' => 'message',
             'attachments' => [[
