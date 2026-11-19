@@ -10,6 +10,7 @@ return new class extends Migration
     {
         Schema::table('teams_webhooks', function (Blueprint $table): void {
             $table->dropConstrainedForeignId('template_id');
+            $table->dropIndex(['category']);
             $table->dropColumn([
                 'category',
                 'event_keys',
@@ -21,6 +22,8 @@ return new class extends Migration
         });
 
         Schema::table('teams_webhook_templates', function (Blueprint $table): void {
+            $table->dropIndex(['category', 'is_default']);
+            $table->dropIndex(['category']);
             $table->dropColumn(['category', 'is_default']);
         });
 
