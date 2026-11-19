@@ -86,6 +86,22 @@ class TeamsWebhookNotifier
         return $this->deliver($webhook, $context, $templateOverride);
     }
 
+    public function sendRuleTest(\App\Models\NotificationRule $rule): bool
+    {
+        $rule->loadMissing(['webhook', 'template']);
+        $webhook = $rule->webhook;
+
+        if (! $webhook || ! $webhook->enabled || ! $rule->template) {
+            return false;
+        }
+
+        $eventKey = $rule->getRawOriginal('event_key') ?: (string) $rule->event_key;
+        $context = TeamsWebhookEvents::sampleContext($eventKey);
+        $context['is_test'] = true;
+
+        return $this->deliver($webhook, $context, $rule->template);
+    }
+
     public function sendTest(TeamsWebhook $webhook): bool
     {
         $eventKey = NotificationEventCatalog::normalizeKeys($webhook->event_keys)[0] ?? 'server.started';
