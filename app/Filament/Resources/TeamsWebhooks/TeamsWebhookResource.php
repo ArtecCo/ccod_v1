@@ -13,6 +13,7 @@ use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
@@ -44,7 +45,8 @@ class TeamsWebhookResource extends Resource
     {
         return $schema->components([
             Section::make('Webhook destination')->schema([
-                TextInput::make('name')->required()->maxLength(120),\n                Textarea::make('description')->label('Description')->rows(2)->maxLength(1000),
+                TextInput::make('name')->required()->maxLength(120),
+                Textarea::make('description')->label('Description')->rows(2)->maxLength(1000),
                 Select::make('destination_type')->options(['channel' => 'Teams channel', 'chat' => 'Teams chat', 'generic' => 'Generic HTTPS JSON endpoint'])->required()->live(),
                 Select::make('message_format')
                     ->label('Message format')
@@ -151,7 +153,8 @@ class TeamsWebhookResource extends Resource
     public static function table(Table $table): Table
     {
         return $table->defaultSort('id', 'desc')->columns([
-            TextColumn::make('name')->searchable()->sortable(),\n            TextColumn::make('description')->limit(70)->toggleable(),
+            TextColumn::make('name')->searchable()->sortable(),
+            TextColumn::make('description')->limit(70)->toggleable(),
             TextColumn::make('event_keys')->label('Subscribed events')->formatStateUsing(fn ($state): string => collect($state ?? [])->map(fn ($key) => TeamsWebhookEvents::options()[NotificationEventCatalog::normalizeKey($key)] ?? $key)->implode(', '))->wrap(),
             TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
             TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => match ($state) { 'channel' => 'Teams channel', 'chat' => 'Teams chat', 'generic' => 'Generic HTTPS', default => $state }),
