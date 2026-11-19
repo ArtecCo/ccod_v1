@@ -20,8 +20,19 @@ class SyncAzureSecurity extends Command
     ): int {
         $this->info('Synchronizing Azure security data...');
 
-        $scoreStats = $scores->sync($this->option('subscription'));
-        $assessmentStats = $assessments->sync($this->option('subscription'));
+        try {
+            $scoreStats = $scores->sync($this->option('subscription'));
+            $assessmentStats = $assessments->sync($this->option('subscription'));
+        } catch (\\Throwable $exception) {
+            $this->error('Azure security synchronization failed.');
+            try {
+                app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
+            } catch (\\Throwable $notificationException) {
+                report($notificationException);
+            }
+            report($exception);
+            return self::FAILURE;
+        }
 
         $this->newLine();
         $this->info('Secure score');
