@@ -15,6 +15,7 @@ class MandatoryNotificationService
 
     public function userAddedToGroup(UserGroup $group, array $userIds): void
     {
+        $this->dispatchRule(\App\Enums\NotificationEvent::UserGroupMemberAdded, ['group_id' => $group->getKey(), 'group_name' => $group->name, 'user_ids' => $userIds]);
         $this->send(
             'You were added to a user group',
             sprintf('You have been added to the user group "%s".', $group->name),
@@ -27,6 +28,7 @@ class MandatoryNotificationService
     {
         $group->load('role');
 
+        $this->dispatchRule(\App\Enums\NotificationEvent::UserGroupRoleChanged, ['group_id' => $group->getKey(), 'group_name' => $group->name, 'role_name' => $group->role?->name]);
         $this->send(
             'Your user group role changed',
             sprintf('The role for user group "%s" has been changed to %s.', $group->name, $group->role?->name ?? 'a new role'),
@@ -40,6 +42,7 @@ class MandatoryNotificationService
         $request->loadMissing(['user', 'userGroup']);
         $approvers = app(AccessAuthorizationService::class)->approvers($request);
 
+        $this->dispatchRule(\App\Enums\NotificationEvent::AccessRequestSubmitted, ['request_id' => $request->getKey(), 'user_id' => $request->user_id, 'user_name' => $request->user?->name, 'user_group_id' => $request->user_group_id, 'user_group_name' => $request->userGroup?->name]);
         $this->send(
             'Access request submitted',
             sprintf('%s has requested access to user group "%s".', $request->user?->name ?? 'A user', $request->userGroup?->name ?? $request->target_name),
@@ -54,6 +57,7 @@ class MandatoryNotificationService
     {
         $request->loadMissing('userGroup');
 
+        $this->dispatchRule($accepted ? \App\Enums\NotificationEvent::AccessRequestAccepted : \App\Enums\NotificationEvent::AccessRequestRejected, ['request_id' => $request->getKey(), 'user_id' => $request->user_id, 'user_group_id' => $request->user_group_id, 'user_group_name' => $request->userGroup?->name]);
         $this->send(
             $accepted ? 'Access request accepted' : 'Access request rejected',
             $accepted
@@ -68,6 +72,7 @@ class MandatoryNotificationService
 
     public function groupProjectChanged(UserGroup $group, Project $project, bool $added): void
     {
+        $this->dispatchRule($added ? \App\Enums\NotificationEvent::ProjectAddedToGroup : \App\Enums\NotificationEvent::ProjectRemovedFromGroup, ['group_id' => $group->getKey(), 'group_name' => $group->name, 'project_id' => $project->getKey(), 'project_name' => $project->name]);
         $this->send(
             $added ? 'A project was added to your user group' : 'A project was removed from your user group',
             sprintf('Project "%s" was %s user group "%s".', $project->name, $added ? 'added to' : 'removed from', $group->name),
@@ -89,6 +94,7 @@ class MandatoryNotificationService
             ->whereKey($subscriptionId)
             ->value('display_name') ?: $subscriptionId;
 
+        $this->dispatchRule($assigned ? \App\Enums\NotificationEvent::ProjectSubscriptionAssigned : \App\Enums\NotificationEvent::ProjectSubscriptionRemoved, ['project_id' => $project->getKey(), 'project_name' => $project->name, 'subscription_id' => $subscriptionId, 'subscription_name' => $subscriptionName]);
         $this->send(
             $assigned ? 'A subscription was assigned to your project' : 'A subscription was removed from your project',
             sprintf('Azure subscription "%s" was %s project "%s".', $subscriptionName, $assigned ? 'assigned to' : 'removed from', $project->name),
@@ -125,6 +131,7 @@ class MandatoryNotificationService
 
     public function synchronizationFailed(): void
     {
+        $this->dispatchRule(\App\Enums\NotificationEvent::SynchronizationFailed, ['occurred_at' => now()->toIso8601String()]);
         $this->notifications->send(
             title: 'Azure synchronization failed',
             message: 'An Azure synchronization operation has failed. Please review the synchronization report.',
@@ -134,6 +141,15 @@ class MandatoryNotificationService
             actionLabel: 'View Sync Report',
             allUsers: true,
         );
+    }
+
+    private function dispatchRule(\App\Enums\NotificationEvent $event, array $context): void
+    {
+        try {
+            app(NotificationRuleService::class)->trigger($event, $context);
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function activeGroupMemberIds(UserGroup $group): array
