@@ -71,6 +71,7 @@ class NotificationRuleResource extends Resource
                             ->live()
                             ->columnSpan(['lg' => 2])
                             ->afterStateUpdated(function ($state, $set): void {
+                                $set('conditions', []);
                                 foreach (\App\Support\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
                                     $set($field, $value);
                                 }
