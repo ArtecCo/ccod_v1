@@ -62,6 +62,7 @@ class NotificationRuleResource extends Resource
                     ->label('Event')
                     ->options(\App\Support\NotificationEventCatalog::groupedOptions())
                     ->searchable()
+                    ->live()
                     ->required(),
                 Select::make('channel')
                     ->label('Delivery channel')
@@ -102,9 +103,15 @@ class NotificationRuleResource extends Resource
                     ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true)),
                 Select::make('template_id')
                     ->label('Message template')
-                    ->options(fn (): array => TeamsWebhookTemplate::query()->orderBy('category')->orderByDesc('is_default')->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
-                        $template->id => $template->name . ' (' . $template->category . ')' . ($template->is_default ? ' — Default' : ''),
-                    ])->all())
+                    ->options(fn ($get): array => TeamsWebhookTemplate::query()
+                        ->where('event_key', $get('event_key'))
+                        ->orderBy('category')
+                        ->orderByDesc('is_default')
+                        ->orderBy('name')
+                        ->get()
+                        ->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
+                            $template->id => $template->name . ' (' . $template->category . ')' . ($template->is_default ? ' — Default' : ''),
+                        ])->all())
                     ->searchable()
                     ->required(fn ($get): bool => $get('channel') === 'webhook')
                     ->visible(fn ($get): bool => $get('channel') === 'webhook'),
@@ -185,13 +192,15 @@ class NotificationRuleResource extends Resource
                     ->formatStateUsing(fn (?string $state): string => $state === 'webhook' ? 'Webhook' : 'In-app')
                     ->toggleable(),
                 TextColumn::make('recipient_type')->label('Audience')->badge()
-                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                    ->formatStateUsing(fn (?string $state, NotificationRule $record): string => $record->channel === 'webhook' ? 'Webhook' : match ($state) {
                         'all' => 'All users',
                         'user_groups' => 'User groups',
                         'teams' => 'Legacy teams',
                         'users' => 'Selected users',
-                        default => 'Webhook destination',
+                        default => 'Not set',
                     })->toggleable(),
+                TextColumn::make('webhook.name')->label('Destination')->placeholder('—')->toggleable(),
+                TextColumn::make('template.name')->label('Template')->placeholder('—')->toggleable(),
                 TextColumn::make('severity')->badge()->toggleable(),
                 TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
