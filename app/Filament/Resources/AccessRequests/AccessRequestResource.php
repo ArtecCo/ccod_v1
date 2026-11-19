@@ -85,7 +85,7 @@ class AccessRequestResource extends Resource
 
         return $query->where(function (Builder $scope) use ($user, $approvableRequestIds): void {
             $scope->where('user_id', $user->getKey())
-                ->orWhereKey($approvableRequestIds);
+                ->orWhereIn($scope->getModel()->getQualifiedKeyName(), $approvableRequestIds);
         });
     }
 
