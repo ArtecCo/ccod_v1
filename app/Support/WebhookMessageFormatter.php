@@ -12,7 +12,7 @@ class WebhookMessageFormatter
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $event = NotificationEventCatalog::event($eventKey) ?? [];
         $label = (string) ($event['label'] ?? $context['event_label'] ?? $eventKey);
-        $title = 'CCOD | '.$label;
+        $title = $eventKey === 'sync.completed' ? 'CCOD Azure sync status' : 'CCOD | '.$label;
 
         if ($eventKey === 'sync.completed') {
             $status = ucfirst(strtolower((string) ($context['overall_status'] ?? 'Unknown')));
