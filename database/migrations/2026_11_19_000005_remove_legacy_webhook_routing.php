@@ -26,6 +26,7 @@ return new class extends Migration
                 'condition_mode',
                 'title_template',
                 'message_template',
+                'message_format',
             ]);
         });
 
