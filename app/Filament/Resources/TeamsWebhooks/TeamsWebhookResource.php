@@ -93,7 +93,7 @@ class TeamsWebhookResource extends Resource
         ])->recordActions([
             EditAction::make()
                 ->modalHeading('Edit webhook destination')
-                ->modalWidth('4xl')
+                ->modalWidth('2xl')
                 ->modalSubmitActionLabel('Save destination'),
             DeleteAction::make(),
         ]);
