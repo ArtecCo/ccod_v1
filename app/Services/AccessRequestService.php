@@ -131,7 +131,10 @@ class AccessRequestService
             ])->save();
         });
 
-        DB::afterCommit(fn () => $this->mandatoryNotifications->accessRequestDecided($request, true));
+        DB::afterCommit(function () use ($request, $group): void {
+            $this->mandatoryNotifications->userAddedToGroup($group, [(int) $request->user_id]);
+            $this->mandatoryNotifications->accessRequestDecided($request, true);
+        });
     }
 
     public function reject(AccessRequest $request, User|Developer $actor, ?string $reason = null): void
