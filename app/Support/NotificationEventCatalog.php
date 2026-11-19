@@ -100,7 +100,7 @@ class NotificationEventCatalog
         ],
         'azure_subscription_connected' => [
             'label' => 'Azure subscription added',
-            'status' => 'needs_integration',
+            'status' => 'existing',
             'category' => 'Azure',
             'description' => 'Raised after a subscription is newly added to CCOD, including discovery during Azure subscription synchronization.',
             'scope' => ['global', 'subscription'],
@@ -123,7 +123,7 @@ class NotificationEventCatalog
         ],
         'azure_subscription_disconnected' => [
             'label' => 'Azure subscription removed',
-            'status' => 'needs_integration',
+            'status' => 'existing',
             'category' => 'Azure',
             'description' => 'Raised after a subscription record is successfully removed from CCOD.',
             'scope' => ['global', 'subscription'],
