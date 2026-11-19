@@ -26,6 +26,8 @@ class MandatoryNotificationService
 
     public function groupRoleChanged(UserGroup $group): void
     {
+        $group->load('role');
+
         $this->send(
             'Your user group role changed',
             sprintf('The role for user group "%s" has been changed to %s.', $group->name, $group->role?->name ?? 'a new role'),
