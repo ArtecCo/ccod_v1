@@ -34,16 +34,21 @@ class TeamsWebhookResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return $schema
-            ->columns(2)
+            // The developer panel uses inline labels globally. Override that here
+            // so every field gets a predictable label-above-control layout.
+            ->inlineLabel(false)
+            ->columns(1)
             ->components([
                 TextInput::make('name')
                     ->label('Name')
                     ->required()
-                    ->maxLength(120),
+                    ->maxLength(120)
+                    ->autofocus()
+                    ->columnSpanFull(),
 
                 Textarea::make('description')
                     ->label('Description')
-                    ->rows(2)
+                    ->rows(3)
                     ->maxLength(1000)
                     ->columnSpanFull(),
 
@@ -55,7 +60,8 @@ class TeamsWebhookResource extends Resource
                         'generic' => 'Generic HTTPS JSON endpoint',
                     ])
                     ->required()
-                    ->live(),
+                    ->live()
+                    ->columnSpanFull(),
 
                 TextInput::make('webhook_url')
                     ->label('Webhook URL')
@@ -64,11 +70,12 @@ class TeamsWebhookResource extends Resource
                     ->password()
                     ->revealable()
                     ->dehydrateStateUsing(fn ($state) => trim((string) $state))
-                    ->helperText('Stored encrypted. HTTPS endpoints only.'),
+                    ->helperText('Stored encrypted. HTTPS endpoints only.')
+                    ->columnSpanFull(),
 
                 Toggle::make('enabled')
-                    ->default(true)
                     ->label('Enabled')
+                    ->default(true)
                     ->columnSpanFull(),
             ]);
     }
