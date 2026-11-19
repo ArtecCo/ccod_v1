@@ -8,7 +8,6 @@ use App\Models\Project;
 use App\Models\User;
 use App\Models\UserGroup;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Collection;
 
 class MandatoryNotificationService
 {
