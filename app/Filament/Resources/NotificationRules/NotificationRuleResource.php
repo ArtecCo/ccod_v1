@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\NotificationRules;
 
-use App\Enums\NotificationEvent;
 use App\Models\NotificationRule;
 use App\Models\TeamsWebhook;
 use App\Models\TeamsWebhookTemplate;
@@ -184,7 +183,7 @@ class NotificationRuleResource extends Resource
             ->columns([
                 TextColumn::make('event_key')
                     ->label('Event')
-                    ->formatStateUsing(fn (NotificationEvent|string $state): string => $state instanceof NotificationEvent ? $state->label() : (NotificationEvent::tryFrom($state)?->label() ?? $state))
+                    ->formatStateUsing(fn (?string $state): string => \App\Support\NotificationEventCatalog::event((string) $state)['label'] ?? (string) $state)
                     ->searchable()
                     ->toggleable(),
                 IconColumn::make('enabled')->label('Enabled')->boolean()->toggleable(),
