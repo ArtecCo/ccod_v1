@@ -6,6 +6,7 @@ use App\Models\TeamsWebhookTemplate;
 use App\Models\TeamsWebhookCategory;
 use App\Support\TeamsWebhookEvents;
 use App\Support\NotificationEventCatalog;
+use Illuminate\Support\Str;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -44,7 +45,17 @@ class TeamsWebhookTemplateResource extends Resource
             Section::make('Template')->schema([
                 TextInput::make('name')->required()->maxLength(120),
                 Select::make('category')
-                    ->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all())
+                    ->options(function (): array {
+                        $options = TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all();
+
+                        foreach (NotificationEventCatalog::all() as $event) {
+                            $category = (string) ($event['category'] ?? 'Other');
+                            $slug = Str::slug($category, '_');
+                            $options[$slug] ??= $category;
+                        }
+
+                        return $options;
+                    })
                     ->searchable()
                     ->required()
                     ->live()
@@ -89,7 +100,7 @@ class TeamsWebhookTemplateResource extends Resource
         return $table->defaultSort('category')->columns([
             TextColumn::make('name')->searchable()->sortable(),
             TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (?string $state): string => $state ? (TeamsWebhookEvents::options()[$state] ?? $state) : 'Not assigned')->wrap(),
-            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
+            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? Str::headline($state)),
             IconColumn::make('is_default')->label('Default')->boolean(),
             TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
         ])->filters([
