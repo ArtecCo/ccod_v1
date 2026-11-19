@@ -84,7 +84,6 @@ class NotificationRuleResource extends Resource
                     ->options([
                         'all' => 'All active users',
                         'user_groups' => 'Selected user groups',
-                        'teams' => 'Legacy teams',
                         'users' => 'Selected users',
                     ])
                     ->default('all')
@@ -94,17 +93,15 @@ class NotificationRuleResource extends Resource
                 Select::make('recipient_ids')
                     ->label(fn ($get): string => match ($get('recipient_type')) {
                         'user_groups' => 'User groups',
-                        'teams' => 'Teams',
                         default => 'Users',
                     })
                     ->multiple()
                     ->searchable()
                     ->options(fn ($get): array => match ($get('recipient_type')) {
                         'user_groups' => UserGroup::query()->orderBy('name')->pluck('name', 'id')->all(),
-                        'teams' => Team::query()->orderBy('name')->pluck('name', 'id')->all(),
                         default => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
                     })
-                    ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true))
+                    ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true))
                     ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true)),
                 Select::make('template_id')
                     ->label('Message template')
@@ -200,7 +197,6 @@ class NotificationRuleResource extends Resource
                     ->formatStateUsing(fn (?string $state, NotificationRule $record): string => $record->channel === 'webhook' ? 'Webhook' : match ($state) {
                         'all' => 'All users',
                         'user_groups' => 'User groups',
-                        'teams' => 'Legacy teams',
                         'users' => 'Selected users',
                         default => 'Not set',
                     })->toggleable(),
