@@ -136,12 +136,37 @@ class AccessRequestResource extends Resource
                 TextEntry::make('user.email')->label('Email'),
                 TextEntry::make('userGroup.name')->label('User Group'),
                 TextEntry::make('requested_role')->label('Role'),
-                TextEntry::make('duration')->label('Duration'),
-                TextEntry::make('requested_until')->label('Requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
+                TextEntry::make('original_duration')->label('Requested duration')->formatStateUsing(fn ($state): string => $state?->label() ?? 'Original details unavailable'),
+                TextEntry::make('original_requested_until')->label('Originally requested expiry')->dateTime('Y-m-d H:i:s')->placeholder('No expiry'),
                 TextEntry::make('created_at')->label('Submitted at')->dateTime('Y-m-d H:i:s'),
                 TextEntry::make('status')->badge(),
                 TextEntry::make('reason')->label('Request reason')->columnSpanFull(),
             ]),
+            Section::make('Approval details')
+                ->description('The access duration and expiry that were actually granted.')
+                ->columns(2)
+                ->columnSpanFull()
+                ->visible(fn (AccessRequest $record): bool => in_array($record->status, [AccessRequestStatus::Approved, AccessRequestStatus::Revoked], true))
+                ->schema([
+                    TextEntry::make('duration')
+                        ->label('Approved duration')
+                        ->formatStateUsing(fn ($state): string => $state?->label() ?? '—'),
+                    TextEntry::make('requested_until')
+                        ->label('Approved expiry')
+                        ->dateTime('Y-m-d H:i:s')
+                        ->placeholder('No expiry'),
+                    TextEntry::make('decided_by_type')
+                        ->label('Decision made by')
+                        ->formatStateUsing(function ($state, AccessRequest $record): string {
+                            if (! $record->decided_by_id || ! $state) return '—';
+                            $model = $state === \\App\\Models\\Developer::class
+                                ? \\App\\Models\\Developer::query()->find($record->decided_by_id)
+                                : \\App\\Models\\User::query()->find($record->decided_by_id);
+                            return $model?->name ?? 'Unavailable';
+                        }),
+                    TextEntry::make('decided_at')->label('Approved at')->dateTime('Y-m-d H:i:s')->placeholder('—'),
+                    TextEntry::make('decision_reason')->label('Approval comment')->columnSpanFull()->placeholder('No comment provided'),
+                ]),
         ]);
     }
 
