@@ -80,22 +80,23 @@ class NotificationEventCatalog
                 'failed_modules' => ['label' => 'Failed modules', 'type' => 'array'],
                 'successful_modules' => ['label' => 'Successful modules', 'type' => 'array'],
                 'error_summary' => ['label' => 'Error summary', 'type' => 'string'],
+                'report_url' => ['label' => 'Sync report URL', 'type' => 'url'],
             ],
             'sample' => [
-                'overall_status' => 'SUCCESS',
-                'sync_started_at' => '2026-11-12 09:00:00',
-                'completed_at' => '2026-11-12 09:02:00',
-                'duration' => '2m 0.000s',
-                'duration_seconds' => 120,
+                'overall_status' => 'FAILED',
+                'sync_started_at' => '2026-11-19 11:26:37 +05:30',
+                'completed_at' => '2026-11-19 11:29:49 +05:30',
+                'duration' => '3m 12.147s',
+                'duration_seconds' => 192.147,
                 'subscriptions_status' => 'SUCCESS',
                 'resources_status' => 'SUCCESS',
                 'costs_status' => 'SUCCESS',
                 'security_status' => 'SUCCESS',
                 'alerts_status' => 'SUCCESS',
-                'web_urls_status' => 'SUCCESS',
-                'failed_modules' => [],
-                'successful_modules' => ['Subscriptions', 'Resources', 'Costs', 'Security', 'Alerts', 'Web URLs'],
-                'error_summary' => '',
+                'web_urls_status' => 'FAILED',
+                'failed_modules' => ['Web URLs'],
+                'successful_modules' => ['Subscriptions', 'Resources', 'Costs', 'Security', 'Alerts'],
+                'error_summary' => 'Web URLs synchronization failed.',
             ],
         ],
         'azure_subscription_connected' => [
@@ -397,6 +398,21 @@ class NotificationEventCatalog
             ->all();
     }
 
+    public static function inAppDefaults(string $eventKey): array
+    {
+        return match (self::normalizeKey($eventKey)) {
+            'sync.completed' => [
+                'title' => 'Azure sync completed',
+                'message' => 'Overall status: {overall_status}',
+                'type' => 'general',
+                'severity' => 'info',
+                'action_label' => 'View Sync Report',
+                'action_url' => '{report_url}',
+            ],
+            default => [],
+        };
+    }
+
     public static function sampleContext(string $eventKey): array
     {
         $eventKey = self::normalizeKey($eventKey);
@@ -406,6 +422,14 @@ class NotificationEventCatalog
         $context['event_label'] = $event['label'] ?? $eventKey;
         $context['is_test'] = true;
         $context['test_timestamp'] = now()->toIso8601String();
+
+        if ($eventKey === 'sync.completed') {
+            $now = now();
+            $context['sync_started_at'] = $now->copy()->subMinutes(3)->subSeconds(12)->format('Y-m-d H:i:s T');
+            $context['completed_at'] = $now->format('Y-m-d H:i:s T');
+            $context['run_id'] = 'TEST-'.$now->format('Ymd-His');
+            $context['report_url'] = rtrim((string) config('app.url'), '/').'/sync-report/latest';
+        }
 
         return $context;
     }
