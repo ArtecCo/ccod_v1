@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use App\Enums\NotificationEvent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Validation\ValidationException;
@@ -77,7 +76,7 @@ class NotificationRule extends Model
             'enabled' => 'boolean',
             'recipient_ids' => 'array',
             'conditions' => 'array',
-            'event_key' => NotificationEvent::class,
+            'event_key' => 'string',
         ];
     }
 
