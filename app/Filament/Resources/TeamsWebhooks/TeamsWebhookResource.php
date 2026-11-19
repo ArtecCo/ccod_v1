@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\TeamsWebhooks;
 
 use App\Models\TeamsWebhook;
-use App\Services\TeamsWebhookNotifier;
-use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
-use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
@@ -69,8 +66,6 @@ class TeamsWebhookResource extends Resource
                         ->dehydrateStateUsing(fn ($state) => trim((string) $state))
                         ->helperText('Stored encrypted. HTTPS endpoints only.'),
                     Toggle::make('enabled')->default(true)->label('Enabled'),
-                    \Filament\Forms\Components\Hidden::make('category')->default('server_start')->dehydrated(false),
-                    \Filament\Forms\Components\Hidden::make('message_template')->default('')->dehydrated(false),
                 ])->columns(2),
         ]);
     }
@@ -86,11 +81,6 @@ class TeamsWebhookResource extends Resource
             TextColumn::make('last_error')->label('Last error')->limit(60)->placeholder('—')->toggleable(),
             TextColumn::make('last_sent_at')->dateTime('Y-m-d H:i:s')->placeholder('Never'),
         ])->recordActions([
-            Action::make('test')->label('Send test')->icon('heroicon-o-paper-airplane')->action(function (TeamsWebhook $record, TeamsWebhookNotifier $notifier): void {
-                $success = $notifier->sendTest($record);
-                $notification = Notification::make()->title($success ? 'Test delivered' : 'Test delivery failed')->body($success ? ($record->destination_type === 'generic' ? 'The webhook endpoint accepted the test notification.' : 'Teams accepted the test notification.') : 'Check the last delivery error.');
-                ($success ? $notification->success() : $notification->danger())->send();
-            }),
             \Filament\Actions\EditAction::make(),
             DeleteAction::make(),
         ]);
