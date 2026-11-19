@@ -57,116 +57,142 @@ class NotificationRuleResource extends Resource
 
     public static function form(Schema $schema): Schema
     {
-        return $schema->components([
-            Section::make('Event and delivery')->schema([
-                Select::make('event_key')
-                    ->label('Event')
-                    ->options(\App\Support\NotificationEventCatalog::groupedOptions())
-                    ->searchable()
-                    ->live()
-                    ->columnSpan(2)
-                    ->afterStateUpdated(function ($state, $set): void {
-                        foreach (\App\Support\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
-                            $set($field, $value);
-                        }
-                    })
-                    ->required()
-                    ->helperText('Choose the event that will trigger this rule.'),
-                Select::make('channel')
-                    ->label('Delivery channel')
-                    ->options(['in_app' => 'In-app notification', 'webhook' => 'Webhook'])
-                    ->default('in_app')
-                    ->required()
-                    ->live(),
-                Toggle::make('enabled')->label('Enable rule')->default(false),
-            ])->columns(4)->columnSpanFull(),
+        return $schema
+            ->inlineLabel(false)
+            ->columns(1)
+            ->components([
+                Section::make('Event and delivery')
+                    ->columns(['default' => 1, 'lg' => 4])
+                    ->schema([
+                        Select::make('event_key')
+                            ->label('Event')
+                            ->options(\App\Support\NotificationEventCatalog::groupedOptions())
+                            ->searchable()
+                            ->live()
+                            ->columnSpan(['lg' => 2])
+                            ->afterStateUpdated(function ($state, $set): void {
+                                foreach (\App\Support\NotificationEventCatalog::inAppDefaults((string) $state) as $field => $value) {
+                                    $set($field, $value);
+                                }
+                            })
+                            ->required()
+                            ->helperText('Choose the event that will trigger this rule.'),
+                        Select::make('channel')
+                            ->label('Delivery channel')
+                            ->options(['in_app' => 'In-app notification', 'webhook' => 'Webhook'])
+                            ->default('in_app')
+                            ->required()
+                            ->live(),
+                        Toggle::make('enabled')
+                            ->label('Enable rule')
+                            ->default(false),
+                    ]),
 
-            Section::make('Recipients')->schema([
-                Select::make('recipient_type')
-                    ->label('Audience')
-                    ->options([
-                        'all' => 'All active users',
-                        'user_groups' => 'Selected user groups',
-                        'users' => 'Selected users',
-                    ])
-                    ->default('all')
-                    ->live()
-                    ->required(fn ($get): bool => $get('channel') === 'in_app')
-                    ->visible(fn ($get): bool => $get('channel') === 'in_app'),
-                Select::make('recipient_ids')
-                    ->label(fn ($get): string => match ($get('recipient_type')) {
-                        'user_groups' => 'User groups',
-                        default => 'Users',
-                    })
-                    ->multiple()
-                    ->searchable()
-                    ->options(fn ($get): array => match ($get('recipient_type')) {
-                        'user_groups' => UserGroup::query()->orderBy('name')->pluck('name', 'id')->all(),
-                        default => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
-                    })
-                    ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true))
-                    ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true)),
-                Select::make('webhook_id')
-                    ->label('Saved webhook destination')
-                    ->options(fn (): array => TeamsWebhook::query()->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
-                        $webhook->id => $webhook->name . ($webhook->description ? ' — ' . $webhook->description : ''),
-                    ])->all())
-                    ->searchable()
-                    ->required(fn ($get): bool => $get('channel') === 'webhook')
-                    ->visible(fn ($get): bool => $get('channel') === 'webhook'),
-            ])->columns(2),
+                Section::make('Recipients')
+                    ->columns(['default' => 1, 'lg' => 3])
+                    ->schema([
+                        Select::make('recipient_type')
+                            ->label('Audience')
+                            ->options([
+                                'all' => 'All active users',
+                                'user_groups' => 'Selected user groups',
+                                'users' => 'Selected users',
+                            ])
+                            ->default('all')
+                            ->live()
+                            ->required(fn ($get): bool => $get('channel') === 'in_app')
+                            ->visible(fn ($get): bool => $get('channel') === 'in_app'),
+                        Select::make('recipient_ids')
+                            ->label(fn ($get): string => match ($get('recipient_type')) {
+                                'user_groups' => 'User groups',
+                                default => 'Users',
+                            })
+                            ->multiple()
+                            ->searchable()
+                            ->options(fn ($get): array => match ($get('recipient_type')) {
+                                'user_groups' => UserGroup::query()->orderBy('name')->pluck('name', 'id')->all(),
+                                default => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all(),
+                            })
+                            ->columnSpan(['lg' => 2])
+                            ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true))
+                            ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true)),
+                        Select::make('webhook_id')
+                            ->label('Saved webhook destination')
+                            ->options(fn (): array => TeamsWebhook::query()->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
+                                $webhook->id => $webhook->name . ($webhook->description ? ' — ' . $webhook->description : ''),
+                            ])->all())
+                            ->searchable()
+                            ->columnSpanFull()
+                            ->required(fn ($get): bool => $get('channel') === 'webhook')
+                            ->visible(fn ($get): bool => $get('channel') === 'webhook'),
+                    ]),
 
-            Section::make('Conditions')
-                ->description('Conditions are evaluated against the event context before delivery. Leave empty to match every occurrence.')
-                ->schema([
-                    Select::make('condition_mode')
-                        ->label('Condition matching')
-                        ->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])
-                        ->default('all')
-                        ->required(),
-                    Repeater::make('conditions')
-                        ->schema([
-                            Select::make('field')
-                                ->label('Event field')
-                                ->options(fn ($get): array => \App\Support\NotificationEventCatalog::fieldOptions($get('../../event_key')))
-                                ->searchable()
-                                ->required(),
-                            Select::make('operator')
-                                ->label('Operator')
-                                ->options(fn ($get): array => \App\Support\NotificationEventCatalog::operatorsForField($get('../../event_key'), $get('field')))
-                                ->default('equals')
-                                ->required(),
-                            TextInput::make('value_text')->label('Expected value')->maxLength(500),
-                        ])
-                        ->columns(3)
-                        ->defaultItems(0)
-                        ->collapsible(),
-                ]),
+                Section::make('Conditions')
+                    ->description('Conditions are evaluated against the event context before delivery. Leave empty to match every occurrence.')
+                    ->columns(1)
+                    ->schema([
+                        Select::make('condition_mode')
+                            ->label('Condition matching')
+                            ->options(['all' => 'All conditions must match', 'any' => 'Any condition may match'])
+                            ->default('all')
+                            ->required()
+                            ->columnSpanFull(),
+                        Repeater::make('conditions')
+                            ->schema([
+                                Select::make('field')
+                                    ->label('Event field')
+                                    ->options(fn ($get): array => \App\Support\NotificationEventCatalog::fieldOptions($get('../../event_key')))
+                                    ->searchable()
+                                    ->required(),
+                                Select::make('operator')
+                                    ->label('Operator')
+                                    ->options(fn ($get): array => \App\Support\NotificationEventCatalog::operatorsForField($get('../../event_key'), $get('field')))
+                                    ->default('equals')
+                                    ->required(),
+                                TextInput::make('value_text')
+                                    ->label('Expected value')
+                                    ->maxLength(500),
+                            ])
+                            ->columns(['default' => 1, 'lg' => 3])
+                            ->defaultItems(0)
+                            ->addActionLabel('Add condition')
+                            ->collapsible()
+                            ->columnSpanFull(),
+                    ]),
 
-            Section::make('In-app notification content')
-                ->description('Use {context.key} placeholders when the triggering event supplies matching context.')
-                ->visible(fn ($get): bool => $get('channel') === 'in_app')
-                ->schema([
-                    TextInput::make('title')->label('Title')->maxLength(150),
-                    Textarea::make('message')->label('Message')->rows(4)->maxLength(2000),
-                    Select::make('type')->options([
-                        'general' => 'General',
-                        'announcement' => 'Announcement',
-                        'maintenance' => 'Maintenance',
-                        'alert' => 'Alert',
-                        'action_required' => 'Action required',
-                    ])->default('general')->required(),
-                    Select::make('severity')->options([
-                        'info' => 'Information',
-                        'success' => 'Success',
-                        'warning' => 'Warning',
-                        'critical' => 'Critical',
-                    ])->default('info')->required(),
-                    TextInput::make('action_label')->label('Action label')->maxLength(80),
-                    TextInput::make('action_url')->label('Action URL')->maxLength(2048),
-                ])->columns(2),
-        ]);
-    }
+                Section::make('In-app notification content')
+                    ->description('Use {context.key} placeholders when the triggering event supplies matching context.')
+                    ->visible(fn ($get): bool => $get('channel') === 'in_app')
+                    ->columns(['default' => 1, 'lg' => 2])
+                    ->schema([
+                        TextInput::make('title')
+                            ->label('Notification title')
+                            ->placeholder('Enter a short, clear title')
+                            ->maxLength(150)
+                            ->columnSpanFull(),
+                        Textarea::make('message')
+                            ->label('Notification message')
+                            ->placeholder('Write the supporting details shown below the title')
+                            ->rows(4)
+                            ->maxLength(2000)
+                            ->columnSpanFull(),
+                        Select::make('type')->options([
+                            'general' => 'General',
+                            'announcement' => 'Announcement',
+                            'maintenance' => 'Maintenance',
+                            'alert' => 'Alert',
+                            'action_required' => 'Action required',
+                        ])->default('general')->required(),
+                        Select::make('severity')->options([
+                            'info' => 'Information',
+                            'success' => 'Success',
+                            'warning' => 'Warning',
+                            'critical' => 'Critical',
+                        ])->default('info')->required(),
+                        TextInput::make('action_label')->label('Action label')->maxLength(80),
+                        TextInput::make('action_url')->label('Action URL')->maxLength(2048),
+                    ]),
+            ]);
 
     public static function table(Table $table): Table
     {
