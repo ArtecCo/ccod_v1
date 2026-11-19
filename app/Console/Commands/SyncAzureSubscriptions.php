@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Services\AzureSubscriptionSyncService;
+use App\Services\MandatoryNotificationService;
 use Illuminate\Console\Command;
 
 class SyncAzureSubscriptions extends Command
@@ -38,8 +39,8 @@ class SyncAzureSubscriptions extends Command
     private function notifyFailure(): void
     {
         try {
-            app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
-        } catch (\\Throwable $exception) {
+            app(MandatoryNotificationService::class)->synchronizationFailed();
+        } catch (\Throwable $exception) {
             report($exception);
         }
     }
