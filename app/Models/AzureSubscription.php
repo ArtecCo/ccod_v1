@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\NotificationEvent;
+use App\Services\MandatoryNotificationService;
 use App\Services\NotificationRuleService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -54,7 +55,7 @@ class AzureSubscription extends Model
             }
 
             try {
-                app(\\App\\Services\\MandatoryNotificationService::class)
+                app(MandatoryNotificationService::class)
                     ->globalSubscriptionChanged($subscription, $event === NotificationEvent::AzureSubscriptionConnected);
             } catch (Throwable $exception) {
                 report($exception);
