@@ -58,7 +58,7 @@ class TeamsWebhookNotifier
      * Deliver one configured rule to a selected destination without changing
      * that destination's legacy event subscriptions.
      */
-    public function dispatchToDestination(TeamsWebhook $webhook, string $eventKey, array $context = []): bool
+    public function dispatchToDestination(TeamsWebhook $webhook, string $eventKey, array $context = [], ?TeamsWebhookTemplate $templateOverride = null): bool
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
@@ -184,7 +184,7 @@ class TeamsWebhookNotifier
         };
     }
 
-    private function deliver(TeamsWebhook $webhook, array $context): bool
+    private function deliver(TeamsWebhook $webhook, array $context, ?TeamsWebhookTemplate $templateOverride = null): bool
     {
         try {
             $url = $webhook->webhook_url;
@@ -194,7 +194,7 @@ class TeamsWebhookNotifier
                 throw new \RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
             }
 
-            $template = $webhook->template;
+            $template = $templateOverride ?? $webhook->template;
             $titleTemplate = $template?->title_template ?: $webhook->title_template ?: $this->defaultTitle($webhook->category);
             $messageTemplate = $template?->message_template ?: $webhook->message_template;
             if (($context['event_key'] ?? null) === 'sync.completed') {
