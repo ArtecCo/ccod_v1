@@ -153,7 +153,22 @@ class NotificationEventCatalog
         // Keep every legacy enum key visible. These older rule events have no
         // verified active producer yet; retain them for compatibility and mark
         // them clearly rather than implying that they currently fire.
+        $supersededLegacyEvents = [
+            'azure_subscription_connected',
+            'azure_subscription_disconnected',
+            'azure_sync_succeeded',
+            'azure_sync_failed',
+            'user_added_to_team',
+            'user_removed_from_team',
+            'subscription_assigned_to_team',
+            'subscription_removed_from_team',
+        ];
+
         foreach (NotificationEvent::cases() as $event) {
+            if (in_array($event->value, $supersededLegacyEvents, true)) {
+                continue;
+            }
+
             $events[$event->value] ??= [
                 'label' => $event->label(),
                 'category' => self::categoryFor($event->value),
