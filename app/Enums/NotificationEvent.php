@@ -30,6 +30,9 @@ enum NotificationEvent: string
     case ProjectSubscriptionAssigned = 'project.subscription_assigned';
     case ProjectSubscriptionRemoved = 'project.subscription_removed';
     case SynchronizationFailed = 'azure.sync_failed';
+    case ServerStarted = 'server.started';
+    case SyncStarted = 'sync.started';
+    case SyncCompleted = 'sync.completed';
 
     public function label(): string
     {
@@ -57,6 +60,9 @@ enum NotificationEvent: string
             self::ProjectSubscriptionAssigned => 'Subscription assigned to project',
             self::ProjectSubscriptionRemoved => 'Subscription removed from project',
             self::SynchronizationFailed => 'Azure synchronization failed',
+            self::ServerStarted => 'Server started',
+            self::SyncStarted => 'Azure synchronization started',
+            self::SyncCompleted => 'Azure synchronization completed',
         };
     }
 
