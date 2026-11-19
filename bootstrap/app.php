@@ -17,6 +17,14 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(MaintenanceModeMiddleware::class);
         $middleware->append(AuditRequestMiddleware::class);
+
+        // This application uses Filament panel login routes, not Laravel's
+        // conventional "login" route. Avoid Authenticate's missing-route error.
+        $middleware->redirectGuestsTo(
+            fn (Request $request): string => $request->is('developer/*')
+                ? '/developer/login'
+                : '/admin/login',
+        );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (\Throwable $exception, Request $request) {
