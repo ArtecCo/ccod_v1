@@ -71,13 +71,20 @@ class Dashboard extends BaseDashboard
     public function content(Schema $schema): Schema
     {
         if ($this->record === null) {
-            $message = $this->hasProjectAccess
-                ? 'No Azure subscriptions are currently assigned to your projects.'
-                : 'Your user group is not assigned with projects.';
+            $hasProjects = $this->hasProjectAccess;
 
             return $schema->components([
-                Section::make('Dashboard')
-                    ->description($message.' Please contact your administrator for access.')
+                Section::make($hasProjects ? 'No subscriptions assigned yet' : 'No projects assigned yet')
+                    ->description(
+                        $hasProjects
+                            ? 'Your projects do not currently have any Azure subscriptions assigned. Please contact your administrator for access.'
+                            : 'Your user group is not currently assigned to any projects. Please contact your administrator to get access.'
+                    )
+                    ->icon('heroicon-o-folder-open')
+                    ->iconColor('gray')
+                    ->extraAttributes([
+                        'class' => '!bg-transparent !border-0 !shadow-none !ring-0 !rounded-none !px-0 !py-12 text-center [&_.fi-section-header]:justify-center [&_.fi-section-header]:text-center [&_.fi-section-content]:text-center [&_.fi-section-header-heading]:text-xl [&_.fi-section-header-description]:max-w-2xl [&_.fi-section-header-description]:mx-auto',
+                    ])
                     ->columnSpanFull(),
             ]);
         }
