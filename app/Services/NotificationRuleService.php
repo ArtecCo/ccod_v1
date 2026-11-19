@@ -62,11 +62,11 @@ class NotificationRuleService
 
             // Hardcoded mandatory in-app defaults are independent and cannot be
             // replaced or duplicated by configurable in-app rules.
-            if (($this->eventIsMandatory($event->value))) {
+            if (($this->eventIsMandatory($eventKey))) {
                 continue;
             }
 
-            $title = $this->renderTemplate($rule->title ?: $event->label(), $context);
+            $title = $this->renderTemplate($rule->title ?: $eventLabel, $context);
             $message = $this->renderTemplate($rule->message ?: $event->label(), $context);
             $actionUrl = $rule->action_url ? $this->renderTemplate($rule->action_url, $context) : null;
             $actionLabel = $rule->action_label ? $this->renderTemplate($rule->action_label, $context) : null;
