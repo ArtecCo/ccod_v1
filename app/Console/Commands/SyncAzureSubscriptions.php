@@ -19,6 +19,7 @@ class SyncAzureSubscriptions extends Command
             $stats = $syncService->sync();
         } catch (\Throwable $exception) {
             $this->error('Synchronization failed: ' . $exception->getMessage());
+            $this->notifyFailure();
             return self::FAILURE;
         }
 
@@ -26,6 +27,20 @@ class SyncAzureSubscriptions extends Command
             $this->line(ucfirst($key) . ': ' . $stats[$key]);
         }
 
-        return $stats['failed'] > 0 ? self::FAILURE : self::SUCCESS;
+        if ($stats['failed'] > 0) {
+            $this->notifyFailure();
+            return self::FAILURE;
+        }
+
+        return self::SUCCESS;
+    }
+
+    private function notifyFailure(): void
+    {
+        try {
+            app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
+        } catch (\\Throwable $exception) {
+            report($exception);
+        }
     }
 }
