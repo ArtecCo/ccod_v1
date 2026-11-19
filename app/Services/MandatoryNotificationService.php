@@ -129,9 +129,10 @@ class MandatoryNotificationService
         );
     }
 
-    public function synchronizationFailed(): void
+    public function synchronizationFailed(array $context = []): void
     {
-        $this->dispatchRule(\App\Enums\NotificationEvent::SynchronizationFailed, ['occurred_at' => now()->toIso8601String()]);
+        $context['occurred_at'] = $context['occurred_at'] ?? now()->toIso8601String();
+        $this->dispatchRule(\App\Enums\NotificationEvent::SynchronizationFailed, $context);
         $this->notifications->send(
             title: 'Azure synchronization failed',
             message: 'An Azure synchronization operation has failed. Please review the synchronization report.',
