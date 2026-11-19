@@ -15,7 +15,7 @@ class ListTeamsWebhooks extends ListRecords
         return [
             CreateAction::make()
                 ->modalHeading('Create webhook destination')
-                ->modalWidth('4xl')
+                ->modalWidth('2xl')
                 ->modalSubmitActionLabel('Create destination')
                 ->mutateDataUsing(function (array $data): array {
                     // Retain compatibility with legacy non-null database columns.
