@@ -92,7 +92,7 @@
 
             <div x-show="!loading && notifications.length > 0">
                 <template x-for="notification in notifications" :key="notification.id">
-                    <div class="ccod-notifications__row" role="button" tabindex="0" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="openNotification(notification)" x-on:keydown.enter="openNotification(notification)">
+                    <div class="ccod-notifications__row" role="button" tabindex="0" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="markNotificationRead(notification)" x-on:keydown.enter="markNotificationRead(notification)">
                         <div class="ccod-notifications__icon" x-bind:class="notification.read_at ? '' : 'ccod-notifications__icon--' + (notification.data.severity || 'info')">
                             <span x-show="notification.data.type === 'general'"><x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" /></span>
                             <span x-show="notification.data.type === 'announcement'"><x-filament::icon icon="heroicon-o-megaphone" class="h-5 w-5" /></span>
@@ -113,7 +113,10 @@
                             <div class="ccod-notifications__meta">
                                 <span class="ccod-notifications__type" x-text="formatType(notification.data.type)"></span>
                                 <span class="ccod-notifications__severity" x-bind:class="'ccod-notifications__severity--' + (notification.data.severity === 'danger' ? 'critical' : (notification.data.severity || 'info'))" x-text="formatSeverity(notification.data.severity)"></span>
-                                <span x-show="notification.data.action_url" class="ccod-notifications__action" x-text="(notification.data.action_label || 'Open') + ' →'"></span>
+                                <button type="button" x-show="notification.data.action_url" class="ccod-notifications__action" x-on:click.stop="openNotificationAction(notification)">
+                                    <span x-text="notification.data.action_label || 'Open'"></span>
+                                    <span aria-hidden="true">→</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -184,11 +187,8 @@
                 }
             },
 
-            async openNotification(notification) {
-                if (notification.read_at) {
-                    if (notification.data.action_url) window.location.href = notification.data.action_url;
-                    return;
-                }
+            async markNotificationRead(notification) {
+                if (notification.read_at) return;
                 try {
                     const response = await fetch('{{ url('/notifications') }}/' + notification.id + '/read', {
                         method: 'POST',
@@ -201,10 +201,14 @@
                     if (!response.ok) throw new Error('Notification update failed.');
                     notification.read_at = new Date().toISOString();
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
-                    if (notification.data.action_url) window.location.href = notification.data.action_url;
                 } catch (error) {
                     console.error(error);
                 }
+            },
+
+            async openNotificationAction(notification) {
+                await this.markNotificationRead(notification);
+                if (notification.data.action_url) window.location.href = notification.data.action_url;
             },
 
             async markAllRead() {
