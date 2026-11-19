@@ -87,7 +87,6 @@ class TeamsWebhookTemplateResource extends Resource
                         $set('placeholder_to_insert', null);
                     })
                     ->helperText('Selecting a field appends its placeholder to the message below.'),
-                Toggle::make('is_default')->label('Default template for this category')->helperText('Only one template per category can be the default.'),
                 TextInput::make('title_template')->label('Title')->maxLength(200),
                 Textarea::make('message_template')->label('Message')->rows(14)->required()
                     ->helperText('Use the Insert event field selector above to add valid placeholders. Fields are defined by the selected event schema. Unknown placeholders render as Not available.'),
@@ -101,7 +100,6 @@ class TeamsWebhookTemplateResource extends Resource
             TextColumn::make('name')->searchable()->sortable(),
             TextColumn::make('event_key')->label('Event')->formatStateUsing(fn (?string $state): string => $state ? (TeamsWebhookEvents::options()[$state] ?? $state) : 'Not assigned')->wrap(),
             TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? Str::headline($state)),
-            IconColumn::make('is_default')->label('Default')->boolean(),
             TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable(),
         ])->filters([
             SelectFilter::make('category')->options(fn (): array => TeamsWebhookCategory::query()->orderBy('name')->pluck('name', 'slug')->all()),
