@@ -32,6 +32,10 @@ class NotificationRule extends Model
     protected static function booted(): void
     {
         static::saving(function (self $rule): void {
+            if (($rule->channel ?? 'in_app') === 'webhook') {
+                $rule->recipient_type ??= 'all';
+            }
+
             if (
                 ($rule->channel ?? 'in_app') === 'in_app'
                 && $rule->enabled
