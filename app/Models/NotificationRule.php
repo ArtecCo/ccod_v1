@@ -15,6 +15,7 @@ class NotificationRule extends Model
         'conditions',
         'condition_mode',
         'webhook_id',
+        'template_id',
         'enabled',
         'recipient_type',
         'recipient_ids',
@@ -56,6 +57,11 @@ class NotificationRule extends Model
     public function webhook(): BelongsTo
     {
         return $this->belongsTo(TeamsWebhook::class, 'webhook_id');
+    }
+
+    public function template(): BelongsTo
+    {
+        return $this->belongsTo(TeamsWebhookTemplate::class, 'template_id');
     }
 
     public function creator(): BelongsTo
