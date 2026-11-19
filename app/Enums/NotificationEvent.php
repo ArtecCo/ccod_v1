@@ -29,8 +29,6 @@ enum NotificationEvent: string
     case ProjectRemovedFromGroup = 'project.group_removed';
     case ProjectSubscriptionAssigned = 'project.subscription_assigned';
     case ProjectSubscriptionRemoved = 'project.subscription_removed';
-    case GlobalSubscriptionAdded = 'azure.subscription_global_added';
-    case GlobalSubscriptionRemoved = 'azure.subscription_global_removed';
     case SynchronizationFailed = 'azure.sync_failed';
 
     public function label(): string
@@ -58,8 +56,6 @@ enum NotificationEvent: string
             self::ProjectRemovedFromGroup => 'Project removed from user group',
             self::ProjectSubscriptionAssigned => 'Subscription assigned to project',
             self::ProjectSubscriptionRemoved => 'Subscription removed from project',
-            self::GlobalSubscriptionAdded => 'Global Azure subscription added',
-            self::GlobalSubscriptionRemoved => 'Global Azure subscription removed',
             self::SynchronizationFailed => 'Azure synchronization failed',
         };
     }
