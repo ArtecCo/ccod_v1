@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Enums\NotificationEvent;
+
 class NotificationEventCatalog
 {
     private const COMMON_FIELDS = [
