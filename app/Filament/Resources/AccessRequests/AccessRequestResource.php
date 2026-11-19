@@ -45,8 +45,11 @@ class AccessRequestResource extends Resource
         $user = auth()->guard('web')->user();
         if (! $user instanceof User) return false;
 
+        $authorization = app(AccessAuthorizationService::class);
+
         return $record->user_id === $user->getKey()
-            || app(AccessAuthorizationService::class)->hasPermission($user, 'users.access_requests.view');
+            || $authorization->hasPermission($user, 'users.access_requests.view')
+            || $authorization->canApprove($user, $record);
     }
 
     public static function shouldRegisterNavigation(): bool
@@ -69,8 +72,21 @@ class AccessRequestResource extends Resource
         $user = auth()->guard('web')->user();
         if (! $user instanceof User) return $query->whereKey(0);
 
-        $canViewAll = app(AccessAuthorizationService::class)->hasPermission($user, 'users.access_requests.view');
-        return $canViewAll ? $query : $query->where('user_id', $user->getKey());
+        $authorization = app(AccessAuthorizationService::class);
+        if ($authorization->hasPermission($user, 'users.access_requests.view')) {
+            return $query;
+        }
+
+        $approvableRequestIds = AccessRequest::query()
+            ->with('userGroup')
+            ->get()
+            ->filter(fn (AccessRequest $request): bool => $authorization->canApprove($user, $request))
+            ->modelKeys();
+
+        return $query->where(function (Builder $scope) use ($user, $approvableRequestIds): void {
+            $scope->where('user_id', $user->getKey())
+                ->orWhereKey($approvableRequestIds);
+        });
     }
 
     public static function form(Schema $schema): Schema
