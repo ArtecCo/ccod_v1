@@ -80,6 +80,16 @@ class SyncAzureCosts extends Command
             }
         }
 
-        return $failed ? self::FAILURE : self::SUCCESS;
+        if ($failed) {
+            try {
+                app(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed();
+            } catch (\\Throwable $exception) {
+                report($exception);
+            }
+
+            return self::FAILURE;
+        }
+
+        return self::SUCCESS;
     }
 }
