@@ -205,6 +205,21 @@ class NotificationRuleResource extends Resource
                 TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
             ->filters([SelectFilter::make('enabled')->options(['1' => 'Enabled', '0' => 'Disabled'])])
+            ->recordActions([
+                Action::make('test_webhook')
+                    ->label('Test delivery')
+                    ->icon('heroicon-o-paper-airplane')
+                    ->visible(fn (NotificationRule $record): bool => $record->channel === 'webhook')
+                    ->action(function (NotificationRule $record, TeamsWebhookNotifier $notifier): void {
+                        $success = $notifier->sendRuleTest($record);
+                        $record->load('webhook');
+                        $notification = Notification::make()
+                            ->title($success ? 'Rule test delivered' : 'Rule test failed')
+                            ->body($success ? 'The selected event template was rendered and accepted by the destination.' : ($record->webhook?->last_error ?: 'Check that the destination and template are enabled and configured correctly.'));
+                        ($success ? $notification->success() : $notification->danger())->send();
+                    }),
+                EditAction::make(),
+            ])
             ->headerActions([
                 XlsxExportAction::make()->title('Export Notification Rules')->fileName(fn (): string => 'notification-rules-'.now()->format('Y-m-d-His')),
             ]);
