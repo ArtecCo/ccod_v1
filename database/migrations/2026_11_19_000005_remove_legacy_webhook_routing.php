@@ -12,8 +12,6 @@ return new class extends Migration
         // Disable obsolete team-audience rules rather than broadening their recipients.
         DB::table('notification_rules')->where('recipient_type', 'teams')->update([
             'enabled' => false,
-            'recipient_type' => 'all',
-            'recipient_ids' => null,
         ]);
 
         Schema::table('teams_webhooks', function (Blueprint $table): void {
