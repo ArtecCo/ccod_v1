@@ -54,6 +54,27 @@ class TeamsWebhookNotifier
         return $sent;
     }
 
+    /**
+     * Deliver one configured rule to a selected destination without changing
+     * that destination's legacy event subscriptions.
+     */
+    public function dispatchToDestination(TeamsWebhook $webhook, string $eventKey, array $context = []): bool
+    {
+        $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
+        $context = array_merge($context, [
+            'event_key' => $eventKey,
+            'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
+        ]);
+
+        if (! $webhook->enabled || ! $this->matchesConditions($webhook, $context)) {
+            return false;
+        }
+
+        $webhook->loadMissing('template');
+
+        return $this->deliver($webhook, $context);
+    }
+
     public function sendTest(TeamsWebhook $webhook): bool
     {
         $eventKey = NotificationEventCatalog::normalizeKeys($webhook->event_keys)[0] ?? 'server.started';
