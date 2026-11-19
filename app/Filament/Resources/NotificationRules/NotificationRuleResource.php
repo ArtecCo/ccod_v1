@@ -99,6 +99,14 @@ class NotificationRuleResource extends Resource
                     })
                     ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true))
                     ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'teams', 'users'], true)),
+                Select::make('template_id')
+                    ->label('Message template')
+                    ->options(fn (): array => TeamsWebhookTemplate::query()->orderBy('category')->orderByDesc('is_default')->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
+                        $template->id => $template->name . ' (' . $template->category . ')' . ($template->is_default ? ' — Default' : ''),
+                    ])->all())
+                    ->searchable()
+                    ->required(fn ($get): bool => $get('channel') === 'webhook')
+                    ->visible(fn ($get): bool => $get('channel') === 'webhook'),
                 Select::make('webhook_id')
                     ->label('Saved webhook destination')
                     ->options(fn (): array => TeamsWebhook::query()->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
