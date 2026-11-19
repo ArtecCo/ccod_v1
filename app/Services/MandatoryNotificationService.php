@@ -138,7 +138,7 @@ class MandatoryNotificationService
             message: 'An Azure synchronization operation has failed. Please review the synchronization report.',
             type: 'azure',
             severity: 'warning',
-            actionUrl: route('sync-report.latest'),
+            actionUrl: rtrim((string) config('app.url'), '/') . '/sync-report/latest',
             actionLabel: 'View Sync Report',
             allUsers: true,
         );
