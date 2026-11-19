@@ -25,6 +25,12 @@ class NotificationRuleService
             report($exception);
         }
 
+        $context = array_merge($context, [
+            'event_key' => $event->value,
+            'event_label' => $event->label(),
+            'occurred_at' => $context['occurred_at'] ?? now()->toIso8601String(),
+        ]);
+
         $sent = 0;
         $rules = NotificationRule::query()
             ->where('event_key', $event->value)
