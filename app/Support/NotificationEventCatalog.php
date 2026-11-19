@@ -16,6 +16,7 @@ class NotificationEventCatalog
     private const EVENTS = [
         'server.started' => [
             'label' => 'Server started',
+            'status' => 'existing',
             'category' => 'Server',
             'description' => 'Raised by the Windows server startup task after it inspects IIS, PHP FastCGI, MySQL and the Laravel queue.',
             'scope' => ['global'],
@@ -44,6 +45,7 @@ class NotificationEventCatalog
         ],
         'sync.started' => [
             'label' => 'Azure synchronization started',
+            'status' => 'existing',
             'category' => 'Azure',
             'description' => 'Raised when the unified Azure scheduler begins a synchronization run.',
             'scope' => ['global'],
@@ -58,6 +60,7 @@ class NotificationEventCatalog
         ],
         'sync.completed' => [
             'label' => 'Azure synchronization completed',
+            'status' => 'existing',
             'category' => 'Azure',
             'description' => 'Raised once the unified scheduler has finished all six synchronization modules.',
             'scope' => ['global', 'subscription'],
@@ -97,6 +100,7 @@ class NotificationEventCatalog
         ],
         'azure_subscription_connected' => [
             'label' => 'Azure subscription added',
+            'status' => 'needs_integration',
             'category' => 'Azure',
             'description' => 'Raised after a subscription is newly added to CCOD, including discovery during Azure subscription synchronization.',
             'scope' => ['global', 'subscription'],
@@ -119,6 +123,7 @@ class NotificationEventCatalog
         ],
         'azure_subscription_disconnected' => [
             'label' => 'Azure subscription removed',
+            'status' => 'needs_integration',
             'category' => 'Azure',
             'description' => 'Raised after a subscription record is successfully removed from CCOD.',
             'scope' => ['global', 'subscription'],
