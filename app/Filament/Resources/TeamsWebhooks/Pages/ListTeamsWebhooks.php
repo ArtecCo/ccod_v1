@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Filament\Resources\TeamsWebhooks\Pages;
+namespace App\\Filament\\Resources\\TeamsWebhooks\\Pages;
 
-use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
-use Filament\Actions\CreateAction;
-use Filament\Resources\Pages\ListRecords;
+use App\\Filament\\Resources\\TeamsWebhooks\\TeamsWebhookResource;
+use Filament\\Actions\\CreateAction;
+use Filament\\Resources\\Pages\\ListRecords;
 
 class ListTeamsWebhooks extends ListRecords
 {
@@ -15,6 +15,7 @@ class ListTeamsWebhooks extends ListRecords
         return [
             CreateAction::make()
                 ->modalHeading('Create webhook destination')
+                ->modalWidth('4xl')
                 ->modalSubmitActionLabel('Create destination')
                 ->mutateDataUsing(function (array $data): array {
                     // Retain compatibility with legacy non-null database columns.
