@@ -7,10 +7,8 @@ return new class extends Migration
 {
     public function up(): void
     {
-        // Templates are user-authored configuration. Remove the seeded and
-        // previously registered templates; nullable foreign keys on rules
-        // and destinations are intentionally set to null by the database.
-        DB::table('teams_webhook_templates')->delete();
+        // Remove only seeded defaults. Preserve every user-authored template.
+        DB::table('teams_webhook_templates')->where('is_default', true)->delete();
     }
 
     public function down(): void
