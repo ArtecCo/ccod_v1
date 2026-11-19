@@ -35,7 +35,7 @@ class NotificationRuleService
         $rules = NotificationRule::query()
             ->where('event_key', $event->value)
             ->where('enabled', true)
-            ->with('webhook')
+            ->with(['webhook.template', 'template'])
             ->orderBy('id')
             ->get();
 
@@ -51,6 +51,7 @@ class NotificationRuleService
                             $rule->webhook,
                             $event->value,
                             $context,
+                            $rule->template,
                         );
                     } catch (Throwable $exception) {
                         report($exception);
