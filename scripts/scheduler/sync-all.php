@@ -664,8 +664,8 @@ $notificationContext = array_merge([
 ], $moduleStatuses);
 
 try {
-    $app->make(\\App\\Services\\NotificationRuleService::class)->trigger(
-        \\App\\Enums\\NotificationEvent::SyncCompleted,
+    $app->make(\App\\Services\\NotificationRuleService::class)->trigger(
+        \App\\Enums\\NotificationEvent::SyncCompleted,
         $notificationContext,
     );
 } catch (\\Throwable $exception) {
@@ -674,7 +674,7 @@ try {
 
 if ($anyFailure) {
     try {
-        $app->make(\\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed([
+        $app->make(\App\\Services\\MandatoryNotificationService::class)->synchronizationFailed([
             'run_id' => $runId,
             'failed_at' => $completedAt,
             'error_summary' => $notificationContext['error_summary'] ?: 'One or more Azure synchronization modules failed or partially completed.',
