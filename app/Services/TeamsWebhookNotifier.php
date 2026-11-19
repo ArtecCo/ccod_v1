@@ -13,12 +13,12 @@ class TeamsWebhookNotifier
 {
     public function sendServerStart(array $context): void
     {
-        $this->dispatch('server.started', $context);
+        app(NotificationRuleService::class)->trigger(NotificationEvent::ServerStarted, $context);
     }
 
     public function sendSyncStatus(array $context): void
     {
-        $this->dispatch('sync.completed', $context);
+        app(NotificationRuleService::class)->trigger(NotificationEvent::SyncCompleted, $context);
     }
 
     /**
