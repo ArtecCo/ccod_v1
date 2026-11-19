@@ -67,7 +67,8 @@ class NotificationRuleResource extends Resource
                     ->options(\App\Support\NotificationEventCatalog::groupedOptions())
                     ->searchable()
                     ->live()
-                    ->required(),
+                    ->required()
+                    ->helperText('Existing events have connected producers. Needs integration events are retained for compatibility but will not fire until their producer is connected.'),
                 Select::make('channel')
                     ->label('Delivery channel')
                     ->options(['in_app' => 'In-app notification', 'webhook' => 'Webhook'])
