@@ -4,76 +4,22 @@ namespace App\Services;
 
 use App\Models\TeamsWebhook;
 use App\Models\TeamsWebhookTemplate;
-use App\Enums\NotificationEvent;
-use App\Support\TeamsWebhookEvents;
 use App\Support\NotificationEventCatalog;
 use Illuminate\Support\Facades\Http;
 use Throwable;
 
 class TeamsWebhookNotifier
 {
-    public function sendServerStart(array $context): void
-    {
-        app(NotificationRuleService::class)->trigger(NotificationEvent::ServerStarted, $context);
-    }
-
-    public function sendSyncStatus(array $context): void
-    {
-        app(NotificationRuleService::class)->trigger(NotificationEvent::SyncCompleted, $context);
-    }
-
-    /**
-     * Dispatch a named CCOD event to every enabled destination subscribed to it.
-     * Producers do not know about categories, templates, URLs or message formats.
-     */
-    public function dispatch(string $eventKey, array $context = []): int
-    {
-        $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
-        $context = array_merge($context, [
-            'event_key' => $eventKey,
-            'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
-        ]);
-
-        $sent = 0;
-
-        $ruleDestinationIds = \App\Models\NotificationRule::query()
-            ->where('event_key', $eventKey)
-            ->where('channel', 'webhook')
-            ->where('enabled', true)
-            ->whereNotNull('webhook_id')
-            ->select('webhook_id');
-
-        TeamsWebhook::query()
-            ->where('enabled', true)
-            ->whereJsonContains('event_keys', $eventKey)
-            ->whereNotIn('id', $ruleDestinationIds)
-            ->with('template')
-            ->orderBy('id')
-            ->chunkById(100, function ($webhooks) use ($context, &$sent): void {
-                foreach ($webhooks as $webhook) {
-                    if (! $this->matchesConditions($webhook, $context)) {
-                        continue;
-                    }
-
-                    if ($this->deliver($webhook, $context)) {
-                        $sent++;
-                    }
-                }
-            });
-
-        return $sent;
-    }
-
     /**
      * Deliver one configured rule to a selected destination without changing
      * that destination's legacy event subscriptions.
      */
-    public function dispatchToDestination(TeamsWebhook $webhook, string $eventKey, array $context = [], ?TeamsWebhookTemplate $templateOverride = null): bool
+    public function deliverRule(TeamsWebhook $webhook, string $eventKey, array $context = [], ?TeamsWebhookTemplate $templateOverride = null): bool
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
             'event_key' => $eventKey,
-            'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
+            'event_label' => NotificationEventCatalog::event($eventKey)['label'] ?? $eventKey,
         ]);
 
         if (! $webhook->enabled) {
@@ -103,106 +49,6 @@ class TeamsWebhookNotifier
         return $this->deliver($webhook, $context, $rule->template);
     }
 
-    public function sendTest(TeamsWebhook $webhook): bool
-    {
-        $eventKey = NotificationEventCatalog::normalizeKeys($webhook->event_keys)[0] ?? 'server.started';
-        $context = TeamsWebhookEvents::sampleContext($eventKey);
-
-        return $this->deliver($webhook, $context);
-    }
-
-    private function matchesConditions(TeamsWebhook $webhook, array $context): bool
-    {
-        $conditions = $webhook->conditions ?? [];
-
-        if ($conditions === []) {
-            return true;
-        }
-
-        $results = [];
-        foreach ($conditions as $condition) {
-            $field = trim((string) ($condition['field'] ?? ''));
-            if ($field !== '' && ! array_key_exists($field, NotificationEventCatalog::fieldsForEvents([$context['event_key'] ?? '']))) {
-                $results[] = false;
-                continue;
-            }
-            $operator = $condition['operator'] ?? 'equals';
-            $expected = $condition['value'] ?? $condition['value_text'] ?? null;
-            $actual = $field !== '' ? data_get($context, $field) : null;
-            $actualString = is_bool($actual) ? ($actual ? 'true' : 'false') : (is_scalar($actual) ? mb_strtolower((string) $actual) : '');
-            $expectedString = is_scalar($expected) ? mb_strtolower((string) $expected) : '';
-
-            $results[] = match ($operator) {
-                'equals' => $actual !== null && $actualString === $expectedString,
-                'not_equals' => $actual !== null && $actualString !== $expectedString,
-                'contains' => is_array($actual)
-                    ? in_array($expected, $actual, true)
-                    : ($actual !== null && str_contains($actualString, $expectedString)),
-                'not_contains' => is_array($actual)
-                    ? ! in_array($expected, $actual, true)
-                    : ($actual !== null && ! str_contains($actualString, $expectedString)),
-                'greater_than' => $this->compareValues($actual, $expected, 'greater_than'),
-                'greater_or_equal' => $this->compareValues($actual, $expected, 'greater_or_equal'),
-                'less_than' => $this->compareValues($actual, $expected, 'less_than'),
-                'less_or_equal' => $this->compareValues($actual, $expected, 'less_or_equal'),
-                'in' => $actual !== null && (function () use ($actual, $actualString, $expected): bool {
-                    $expectedValues = is_array($expected)
-                        ? $expected
-                        : explode(',', (string) $expected);
-                    $expectedValues = array_map(
-                        static fn ($value): string => mb_strtolower(trim((string) $value)),
-                        $expectedValues,
-                    );
-
-                    if (is_array($actual)) {
-                        $actualValues = array_map(
-                            static fn ($value): string => mb_strtolower(trim((string) $value)),
-                            $actual,
-                        );
-
-                        return count(array_intersect($actualValues, $expectedValues)) > 0;
-                    }
-
-                    return in_array($actualString, $expectedValues, true);
-                })(),
-                'exists' => $actual !== null,
-                'not_exists' => $actual === null,
-                default => false,
-            };
-        }
-
-        return ($webhook->condition_mode ?? 'all') === 'any'
-            ? in_array(true, $results, true)
-            : ! in_array(false, $results, true);
-    }
-
-    private function compareValues(mixed $actual, mixed $expected, string $operator): bool
-    {
-        if ($actual === null || $expected === null) {
-            return false;
-        }
-
-        if (is_numeric($actual) && is_numeric($expected)) {
-            $left = (float) $actual;
-            $right = (float) $expected;
-        } else {
-            $left = strtotime((string) $actual);
-            $right = strtotime((string) $expected);
-
-            if ($left === false || $right === false) {
-                return false;
-            }
-        }
-
-        return match ($operator) {
-            'greater_than' => $left > $right,
-            'greater_or_equal' => $left >= $right,
-            'less_than' => $left < $right,
-            'less_or_equal' => $left <= $right,
-            default => false,
-        };
-    }
-
     private function deliver(TeamsWebhook $webhook, array $context, ?TeamsWebhookTemplate $templateOverride = null): bool
     {
         try {
@@ -214,17 +60,11 @@ class TeamsWebhookNotifier
             }
 
             $template = $templateOverride ?? $webhook->template;
-            $titleTemplate = $template?->title_template ?: $webhook->title_template ?: $this->defaultTitle($webhook->category);
-            $messageTemplate = $template?->message_template ?: $webhook->message_template;
-            if (! $templateOverride && $webhook->destination_type !== 'generic' && ($context['event_key'] ?? null) === 'sync.completed') {
-                $messageTemplate = implode("\n", array_filter(
-                    explode("\n", $messageTemplate),
-                    static fn (string $line): bool => ! str_contains($line, '{overall_status}'),
-                ));
-            }
+            $titleTemplate = $template?->title_template ?: 'CCOD notification';
+            $messageTemplate = $template?->message_template ?: '';
             $title = $this->render($titleTemplate, $context);
             $message = $this->render($messageTemplate, $context);
-            $payload = $this->payload($webhook, $title, $message, $context, $templateOverride !== null);
+            $payload = $this->payload($webhook, $title, $message, $context);
 
             $response = Http::acceptJson()
                 ->asJson()
@@ -256,7 +96,7 @@ class TeamsWebhookNotifier
         }
     }
 
-    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context, bool $useRuleTemplate = false): array
+    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context): array
     {
         if ($webhook->destination_type === 'generic') {
             return [
@@ -276,11 +116,6 @@ class TeamsWebhookNotifier
                 'title' => $title,
                 'text' => $message,
             ];
-        }
-
-        $isSyncCompletion = ($context['event_key'] ?? null) === 'sync.completed';
-        if ($isSyncCompletion && ! $useRuleTemplate) {
-            return $this->syncCompletionPayload($title, $context);
         }
 
         $status = strtoupper((string) ($context['overall_status'] ?? ''));
@@ -307,146 +142,6 @@ class TeamsWebhookNotifier
             'version' => '1.2',
             'body' => $body,
         ];
-
-        if ($isSyncCompletion) {
-            $dashboardUrl = rtrim((string) config('app.url'), '/') . '/developer';
-            $card['actions'] = [[
-                'type' => 'Action.OpenUrl',
-                'title' => 'Open CCOD Dashboard',
-                'style' => 'positive',
-                'url' => $dashboardUrl,
-            ]];
-        }
-
-        return [
-            'type' => 'message',
-            'attachments' => [[
-                'contentType' => 'application/vnd.microsoft.card.adaptive',
-                'contentUrl' => null,
-                'content' => $card,
-            ]],
-        ];
-    }
-
-    private function syncCompletionPayload(string $title, array $context): array
-    {
-        $statusDefinitions = [
-            'subscriptions_status' => 'Subscriptions',
-            'resources_status' => 'Resources',
-            'costs_status' => 'Costs',
-            'security_status' => 'Security',
-            'alerts_status' => 'Alerts',
-            'web_urls_status' => 'Web URLs',
-        ];
-
-        $overallStatus = strtoupper((string) ($context['overall_status'] ?? 'FAILED'));
-        $overallLabel = $overallStatus === 'SUCCESS' ? 'Success' : 'Failed';
-        $moduleTile = static function (string $label, string $value): array {
-            $success = strtoupper($value) === 'SUCCESS';
-
-            return [
-                'type' => 'Container',
-                'style' => $success ? 'good' : 'attention',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $label . ': ' . ($success ? 'Success' : 'Failed'),
-                    'color' => $success ? 'Good' : 'Attention',
-                    'weight' => 'Bolder',
-                    'wrap' => true,
-                ]],
-            ];
-        };
-
-        $body = [];
-
-        if ($title !== '') {
-            $body[] = [
-                'type' => 'TextBlock',
-                'text' => $title,
-                'weight' => 'Bolder',
-                'size' => 'Large',
-                'wrap' => true,
-            ];
-        }
-
-        $body[] = [
-            'type' => 'Container',
-            'style' => $overallStatus === 'SUCCESS' ? 'good' : 'attention',
-            'spacing' => 'Medium',
-            'items' => [[
-                'type' => 'TextBlock',
-                'text' => 'Overall: ' . $overallLabel,
-                'color' => $overallStatus === 'SUCCESS' ? 'Good' : 'Attention',
-                'weight' => 'Bolder',
-                'wrap' => true,
-            ]],
-        ];
-
-        $body[] = [
-            'type' => 'FactSet',
-            'spacing' => 'Medium',
-            'facts' => [
-                ['title' => 'Started', 'value' => (string) ($context['sync_started_at'] ?? 'Not available')],
-                ['title' => 'Completed', 'value' => (string) ($context['completed_at'] ?? 'Not available')],
-                ['title' => 'Duration', 'value' => (string) ($context['duration'] ?? 'Not available')],
-            ],
-        ];
-
-        $body[] = [
-            'type' => 'TextBlock',
-            'text' => 'Module status',
-            'weight' => 'Bolder',
-            'spacing' => 'Medium',
-            'wrap' => true,
-        ];
-
-        $moduleTiles = [];
-        foreach ($statusDefinitions as $key => $label) {
-            $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
-            $moduleTiles[] = $moduleTile($label, $value);
-        }
-
-        foreach (array_chunk($moduleTiles, 2) as $pair) {
-            $columns = [];
-            foreach ($pair as $tile) {
-                $columns[] = [
-                    'type' => 'Column',
-                    'width' => 'stretch',
-                    'items' => [$tile],
-                ];
-            }
-
-            $body[] = [
-                'type' => 'ColumnSet',
-                'spacing' => 'Small',
-                'columns' => $columns,
-            ];
-        }
-
-        $body[] = [
-            'type' => 'TextBlock',
-            'text' => 'Run ID: ' . (string) ($context['run_id'] ?? 'Not available'),
-            'size' => 'Small',
-            'isSubtle' => true,
-            'wrap' => true,
-            'spacing' => 'Medium',
-        ];
-
-        $card = [
-            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-            'type' => 'AdaptiveCard',
-            'version' => '1.2',
-            'body' => $body,
-            'actions' => [],
-        ];
-
-        if (filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)) {
-            $card['actions'][] = [
-                'type' => 'Action.OpenUrl',
-                'title' => 'View Sync Report',
-                'url' => $context['report_url'],
-            ];
-        }
 
         return [
             'type' => 'message',
@@ -483,8 +178,5 @@ class TeamsWebhookNotifier
         }, $template) ?? $template;
     }
 
-    private function defaultTitle(string $category): string
-    {
-        return $category === 'server_start' ? 'CCOD server startup' : 'CCOD Azure notification';
-    }
+}
 }
