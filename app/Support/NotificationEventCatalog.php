@@ -170,22 +170,38 @@ class NotificationEventCatalog
             'project.group_removed' => ['Project removed from user group', 'Projects', ['project', 'group'], 'group_members'],
             'project.subscription_assigned' => ['Subscription assigned to project', 'Projects', ['project', 'subscription'], 'project_users'],
             'project.subscription_removed' => ['Subscription removed from project', 'Projects', ['project', 'subscription'], 'project_users'],
-            'azure.subscription_global_added' => ['Global Azure subscription added', 'Azure', ['global', 'subscription'], 'super_admins'],
-            'azure.subscription_global_removed' => ['Global Azure subscription removed', 'Azure', ['global', 'subscription'], 'super_admins'],
             'azure.sync_failed' => ['Azure synchronization failed', 'Azure', ['global'], 'all_active_users'],
         ];
 
+        $mandatoryFields = [
+            'user_group.member_added' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'user_ids' => 'Added user IDs'],
+            'user_group.role_changed' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'role_name' => 'Role name'],
+            'access_request.submitted' => ['request_id' => 'Request ID', 'user_id' => 'Requester ID', 'user_name' => 'Requester name', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name'],
+            'access_request.accepted' => ['request_id' => 'Request ID', 'user_id' => 'Requester ID', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name'],
+            'access_request.rejected' => ['request_id' => 'Request ID', 'user_id' => 'Requester ID', 'user_group_id' => 'User group ID', 'user_group_name' => 'User group name'],
+            'project.group_added' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'project_id' => 'Project ID', 'project_name' => 'Project name'],
+            'project.group_removed' => ['group_id' => 'Group ID', 'group_name' => 'Group name', 'project_id' => 'Project ID', 'project_name' => 'Project name'],
+            'project.subscription_assigned' => ['project_id' => 'Project ID', 'project_name' => 'Project name', 'subscription_id' => 'Subscription ID', 'subscription_name' => 'Subscription name'],
+            'project.subscription_removed' => ['project_id' => 'Project ID', 'project_name' => 'Project name', 'subscription_id' => 'Subscription ID', 'subscription_name' => 'Subscription name'],
+            'azure.sync_failed' => ['occurred_at' => 'Occurred at'],
+        ];
+
         foreach ($mandatory as $key => [$label, $category, $scope, $audience]) {
+            $fields = [
+                'event_key' => ['label' => 'Event key', 'type' => 'string'],
+                'event_label' => ['label' => 'Event name', 'type' => 'string'],
+            ];
+            foreach ($mandatoryFields[$key] ?? [] as $fieldKey => $fieldLabel) {
+                $fields[$fieldKey] = ['label' => $fieldLabel, 'type' => is_array($fieldLabel) ? 'array' : 'string'];
+            }
+            $fields['occurred_at'] = ['label' => 'Occurred at', 'type' => 'datetime'];
+
             $events[$key] = [
                 'label' => $label,
                 'category' => $category,
                 'description' => 'Mandatory in-app event. Its default notification is always delivered independently of configurable rules.',
                 'scope' => $scope,
-                'fields' => [
-                    'event_key' => ['label' => 'Event key', 'type' => 'string'],
-                    'event_label' => ['label' => 'Event name', 'type' => 'string'],
-                    'occurred_at' => ['label' => 'Occurred at', 'type' => 'datetime'],
-                ],
+                'fields' => $fields,
                 'sample' => ['occurred_at' => '2026-11-19T09:00:00+00:00'],
                 'status' => 'existing',
                 'mandatory_in_app' => true,
