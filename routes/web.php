@@ -18,7 +18,7 @@ Route::middleware('auth:web,developers')->prefix('subscriptions/{subscription:su
     Route::get('/graphs/{graph}/data', [SubscriptionMetricsController::class, 'data'])->name('graphs.data');
 });
 
-Route::get('/sync-report/latest', function () {
+Route::middleware('auth')->get('/sync-report/latest', function () {
     $path = storage_path('logs/scheduler/reports/latest.json');
 
     abort_unless(is_file($path), 404, 'No synchronization report has been generated yet.');
