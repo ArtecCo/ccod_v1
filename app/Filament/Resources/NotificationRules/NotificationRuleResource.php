@@ -108,11 +108,10 @@ class NotificationRuleResource extends Resource
                     ->options(fn ($get): array => TeamsWebhookTemplate::query()
                         ->where('event_key', $get('event_key'))
                         ->orderBy('category')
-                        ->orderByDesc('is_default')
                         ->orderBy('name')
                         ->get()
                         ->mapWithKeys(fn (TeamsWebhookTemplate $template): array => [
-                            $template->id => $template->name . ' (' . $template->category . ')' . ($template->is_default ? ' — Default' : ''),
+                            $template->id => $template->name . ' (' . $template->category . ')',
                         ])->all())
                     ->searchable()
                     ->required(fn ($get): bool => $get('channel') === 'webhook')
