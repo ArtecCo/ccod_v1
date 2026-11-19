@@ -79,8 +79,6 @@ class TeamsWebhookResource extends Resource
         return $table->defaultSort('id', 'desc')->columns([
             TextColumn::make('name')->searchable()->sortable(),
             TextColumn::make('description')->limit(70)->toggleable(),
-            TextColumn::make('event_keys')->label('Subscribed events')->formatStateUsing(fn ($state): string => collect($state ?? [])->map(fn ($key) => TeamsWebhookEvents::options()[NotificationEventCatalog::normalizeKey($key)] ?? $key)->implode(', '))->wrap(),
-            TextColumn::make('category')->badge()->formatStateUsing(fn (string $state): string => TeamsWebhookCategory::query()->where('slug', $state)->value('name') ?? $state),
             TextColumn::make('destination_type')->badge()->formatStateUsing(fn (string $state): string => match ($state) { 'channel' => 'Teams channel', 'chat' => 'Teams chat', 'generic' => 'Generic HTTPS', default => $state }),
             IconColumn::make('enabled')->boolean(),
             TextColumn::make('last_delivery_status')->badge()->placeholder('Not sent'),
