@@ -191,6 +191,19 @@ class NotificationEventCatalog
             'azure.sync_failed' => ['occurred_at' => 'Occurred at'],
         ];
 
+        $mandatorySamples = [
+            'user_group.member_added' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'user_ids' => [41]],
+            'user_group.role_changed' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'role_name' => 'Viewer'],
+            'access_request.submitted' => ['request_id' => 501, 'user_id' => 41, 'user_name' => 'Sample User', 'user_group_id' => 12, 'user_group_name' => 'Cloud Operations'],
+            'access_request.accepted' => ['request_id' => 501, 'user_id' => 41, 'user_group_id' => 12, 'user_group_name' => 'Cloud Operations'],
+            'access_request.rejected' => ['request_id' => 502, 'user_id' => 42, 'user_group_id' => 12, 'user_group_name' => 'Cloud Operations'],
+            'project.group_added' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'project_id' => 7, 'project_name' => 'Production Platform'],
+            'project.group_removed' => ['group_id' => 12, 'group_name' => 'Cloud Operations', 'project_id' => 7, 'project_name' => 'Production Platform'],
+            'project.subscription_assigned' => ['project_id' => 7, 'project_name' => 'Production Platform', 'subscription_id' => '00000000-0000-0000-0000-000000000001', 'subscription_name' => 'Production'],
+            'project.subscription_removed' => ['project_id' => 7, 'project_name' => 'Production Platform', 'subscription_id' => '00000000-0000-0000-0000-000000000001', 'subscription_name' => 'Production'],
+            'azure.sync_failed' => ['occurred_at' => '2026-11-19T09:00:00+00:00'],
+        ];
+
         foreach ($mandatory as $key => [$label, $category, $scope, $audience]) {
             $fields = [
                 'event_key' => ['label' => 'Event key', 'type' => 'string'],
@@ -207,7 +220,7 @@ class NotificationEventCatalog
                 'description' => 'Mandatory in-app event. Its default notification is always delivered independently of configurable rules.',
                 'scope' => $scope,
                 'fields' => $fields,
-                'sample' => ['occurred_at' => '2026-11-19T09:00:00+00:00'],
+                'sample' => array_merge($mandatorySamples[$key] ?? [], ['occurred_at' => '2026-11-19T09:00:00+00:00']),
                 'status' => 'existing',
                 'mandatory_in_app' => true,
                 'mandatory_audience' => $audience,
