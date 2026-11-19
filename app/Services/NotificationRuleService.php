@@ -6,6 +6,7 @@ use App\Enums\NotificationEvent;
 use App\Models\NotificationRule;
 use App\Models\User;
 use App\Models\UserGroup;
+use App\Support\NotificationEventCatalog;
 use Illuminate\Support\Collection;
 use Throwable;
 
@@ -16,24 +17,22 @@ class NotificationRuleService
         private readonly TeamsWebhookNotifier $teamsWebhooks,
     ) {}
 
-    public function trigger(NotificationEvent $event, array $context = []): int
+    public function trigger(NotificationEvent|string $event, array $context = []): int
     {
-        // Keep legacy webhook subscriptions independent from configurable rules.
-        try {
-            $this->teamsWebhooks->dispatch($event->value, $context);
-        } catch (Throwable $exception) {
-            report($exception);
-        }
+        $eventKey = $event instanceof NotificationEvent
+            ? $event->value
+            : NotificationEventCatalog::normalizeKey($event);
+        $eventLabel = NotificationEventCatalog::event($eventKey)['label'] ?? $eventKey;
 
         $context = array_merge($context, [
-            'event_key' => $event->value,
-            'event_label' => $event->label(),
+            'event_key' => $eventKey,
+            'event_label' => $eventLabel,
             'occurred_at' => $context['occurred_at'] ?? now()->toIso8601String(),
         ]);
 
         $sent = 0;
         $rules = NotificationRule::query()
-            ->where('event_key', $event->value)
+            ->where('event_key', $eventKey)
             ->where('enabled', true)
             ->with(['webhook.template', 'template'])
             ->orderBy('id')
@@ -47,9 +46,9 @@ class NotificationRuleService
             if (($rule->channel ?? 'in_app') === 'webhook') {
                 if ($rule->webhook) {
                     try {
-                        $sent += (int) $this->teamsWebhooks->dispatchToDestination(
+                        $sent += (int) $this->teamsWebhooks->deliverRule(
                             $rule->webhook,
-                            $event->value,
+                            $eventKey,
                             $context,
                             $rule->template,
                         );
@@ -77,8 +76,7 @@ class NotificationRuleService
                 'users' => $this->activeUserIds($rule->recipient_ids ?? []),
                 'user_groups' => $this->activeUserIdsForGroups($rule->recipient_ids ?? []),
                 // Preserve legacy team-based rules and recipient selections.
-                'teams' => $this->activeTeamUserIds($rule->recipient_ids ?? []),
-                default => [],
+                                default => [],
             };
 
             $allUsers = $rule->recipient_type === 'all';
@@ -130,16 +128,6 @@ class NotificationRuleService
         });
 
         return $users->unique()->values()->all();
-    }
-
-    private function activeTeamUserIds(array $ids): array
-    {
-        return User::query()
-            ->where('is_active', true)
-            ->whereHas('teams', fn ($query) => $query->whereIn('teams.id', $ids))
-            ->pluck('id')
-            ->map(fn ($id): int => (int) $id)
-            ->all();
     }
 
     private function matchesConditions(array $conditions, string $mode, array $context): bool
