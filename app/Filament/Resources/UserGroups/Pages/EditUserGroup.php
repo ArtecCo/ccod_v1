@@ -5,6 +5,7 @@ namespace App\Filament\Resources\UserGroups\Pages;
 use App\Filament\Resources\UserGroups\UserGroupResource;
 use App\Models\Project;
 use App\Services\MandatoryNotificationService;
+use App\Services\NotificationRuleService;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
@@ -68,6 +69,15 @@ class EditUserGroup extends EditRecord
 
                     if (! UserGroupResource::canDelete($record)) {
                         return;
+                    }
+
+                    try {
+                        app(NotificationRuleService::class)->trigger('user_group.deleted', [
+                            'group_id' => (int) $record->getKey(),
+                            'group_name' => (string) $record->name,
+                        ]);
+                    } catch (\\Throwable $exception) {
+                        report($exception);
                     }
 
                     $record->users()->detach();
