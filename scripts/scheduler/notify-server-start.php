@@ -10,7 +10,8 @@ $app = require $basePath.'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $runPowerShell = static function (string $script): string {
-    $command = 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -Command '.escapeshellarg($script);
+    $encodedScript = base64_encode(iconv('UTF-8', 'UTF-16LE', $script));
+    $command = 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand '.$encodedScript;
     $output = [];
     exec($command.' 2>&1', $output);
 
