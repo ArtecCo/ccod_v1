@@ -80,6 +80,39 @@ class WebhookMessageFormatter
             'wrap' => true,
         ]];
 
+        $body[] = [
+            'type' => 'Container',
+            'style' => 'emphasis',
+            'spacing' => 'Medium',
+            'items' => [[
+                'type' => 'ColumnSet',
+                'columns' => [[
+                    'type' => 'Column',
+                    'width' => 'stretch',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => 'SERVER BOOT TIME',
+                        'weight' => 'Bolder',
+                        'size' => 'Small',
+                        'isSubtle' => true,
+                        'spacing' => 'None',
+                    ]],
+                ], [
+                    'type' => 'Column',
+                    'width' => 'auto',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => (string) ($context['server_boot_time'] ?? 'Not available'),
+                        'weight' => 'Bolder',
+                        'size' => 'Medium',
+                        'horizontalAlignment' => 'Right',
+                        'wrap' => true,
+                        'spacing' => 'None',
+                    ]],
+                ]],
+            ]],
+        ];
+
         foreach ($components as $component) {
             $status = strtoupper((string) ($context[$component['status']] ?? 'UNKNOWN'));
             $healthy = in_array($status, ['RUNNING', 'CONFIGURED'], true);
