@@ -24,11 +24,17 @@ class MandatoryNotificationService
         );
     }
 
-    public function groupRoleChanged(UserGroup $group): void
+    public function groupRoleChanged(UserGroup $group, ?string $previousRoleName = null): void
     {
         $group->load('role');
 
-        $this->dispatchRule(\App\Enums\NotificationEvent::UserGroupRoleChanged, ['group_id' => $group->getKey(), 'group_name' => $group->name, 'role_name' => $group->role?->name]);
+        $this->dispatchRule(\App\Enums\NotificationEvent::UserGroupRoleChanged, [
+            'group_id' => $group->getKey(),
+            'group_name' => $group->name,
+            'old_role' => $previousRoleName,
+            'new_role' => $group->role?->name,
+            'role_name' => $group->role?->name,
+        ]);
         $this->send(
             'Your user group role changed',
             sprintf('The role for user group "%s" has been changed to %s.', $group->name, $group->role?->name ?? 'a new role'),
