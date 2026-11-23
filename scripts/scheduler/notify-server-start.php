@@ -90,11 +90,22 @@ $result | ConvertTo-Json -Compress
 PS;
 $queue = json_decode($runPowerShell($queueScript), true) ?: ['Status' => 'NOT RUNNING', 'StartedAt' => 'Not available'];
 
+$bootTimeScript = <<<'PS'
+$bootTime = (Get-CimInstance Win32_OperatingSystem).LastBootUpTime
+if ($bootTime) {
+    [TimeZoneInfo]::ConvertTime([datetime]$bootTime, [TimeZoneInfo]::FindSystemTimeZoneById('India Standard Time')).ToString("dd-MMM-yyyy hh:mm:ss tt 'IST'")
+} else {
+    'Not available'
+}
+PS;
+$serverBootTime = $runPowerShell($bootTimeScript);
+
 $mysql = $serviceInfo('MySQL2610');
 $w3svc = $serviceInfo('W3SVC');
 $was = $serviceInfo('WAS');
 
 $context = [
+    'server_boot_time' => $serverBootTime !== '' ? $serverBootTime : 'Not available',
     'iis_status' => ($w3svc['status'] === 'Running' && $was['status'] === 'Running') ? 'RUNNING' : 'NOT RUNNING',
     'iis_started_at' => $w3svc['started_at'],
     'php_status' => $php['Status'],
