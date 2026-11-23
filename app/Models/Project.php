@@ -35,7 +35,7 @@ class Project extends Model
                     'project_name' => (string) $project->name,
                     'business_unit_id' => $project->business_unit_id ? (int) $project->business_unit_id : null,
                 ]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
             }
 
