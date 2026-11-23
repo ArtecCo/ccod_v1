@@ -91,7 +91,7 @@ class EditUserGroup extends EditRecord
                                 'group_id' => (int) $record->getKey(),
                                 'group_name' => (string) $record->name,
                             ]);
-                        } catch (\\Throwable $exception) {
+                        } catch (\Throwable $exception) {
                             report($exception);
                         }
                     }
