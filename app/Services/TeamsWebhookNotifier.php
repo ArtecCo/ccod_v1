@@ -111,8 +111,28 @@ class TeamsWebhookNotifier
             return $this->formatter->serverStartedCard($title, $context);
         }
 
+        $body = array_values(array_filter([
+            $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
+            $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
+        ]));
+
         if (in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true)) {
-            return $this->formatter->securityScoreCard($title, $context);
+            $critical = (float) ($context['current_score'] ?? 0) < 0.8;
+            array_unshift($body, [
+                'type' => 'Container',
+                'style' => $critical ? 'attention' : 'warning',
+                'bleed' => true,
+                'spacing' => 'None',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => $critical ? 'CRITICAL' : 'WARNING',
+                    'weight' => 'Bolder',
+                    'size' => 'Medium',
+                    'horizontalAlignment' => 'Center',
+                    'wrap' => false,
+                    'spacing' => 'Small',
+                ]],
+            ]);
         }
 
         return [
@@ -124,10 +144,7 @@ class TeamsWebhookNotifier
                     '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
                     'type' => 'AdaptiveCard',
                     'version' => '1.2',
-                    'body' => array_values(array_filter([
-                        $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
-                        $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
-                    ])),
+                    'body' => $body,
                 ],
             ]],
         ];
