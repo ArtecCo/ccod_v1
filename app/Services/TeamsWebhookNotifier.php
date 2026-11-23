@@ -7,6 +7,7 @@ use App\Models\TeamsWebhook;
 use App\Support\NotificationEventCatalog;
 use App\Support\WebhookMessageFormatter;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 use Throwable;
 
 class TeamsWebhookNotifier
