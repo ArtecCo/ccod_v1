@@ -111,42 +111,38 @@ class TeamsWebhookNotifier
             return $this->formatter->serverStartedCard($title, $context);
         }
 
-        $category = (string) (NotificationEventCatalog::event($eventKey)['category'] ?? 'Notification');
         $body = array_values(array_filter([
-            [
-                'type' => 'ColumnSet',
-                'spacing' => 'None',
-                'columns' => [[
-                    'type' => 'Column',
-                    'width' => 'auto',
-                    'items' => [[
-                        'type' => 'Container',
-                        'style' => 'emphasis',
-                        'items' => [[
-                            'type' => 'TextBlock',
-                            'text' => strtoupper($category),
-                            'size' => 'Small',
-                            'weight' => 'Bolder',
-                            'wrap' => false,
-                            'spacing' => 'None',
-                        ]],
-                    ]],
-                ]],
-            ],
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
             $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
         ]));
 
-        if (in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true)) {
-            $critical = (float) ($context['current_score'] ?? 0) < 0.8;
-            array_unshift($body, [
+        $severityCategory = match (true) {
+            in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true) => 'Security score',
+            in_array($eventKey, ['azure.alert.detected', 'azure.critical_alert.detected'], true) => 'Alert',
+            in_array($eventKey, ['azure.recommendation.detected', 'azure.recommendation.removed'], true) => 'Security recommendation',
+            in_array($eventKey, ['web_url.ssl.expiring', 'web_url.ssl.expired'], true) => 'SSL',
+            default => null,
+        };
+
+        if ($severityCategory !== null) {
+            if ($severityCategory === 'Security score') {
+                $critical = (float) ($context['current_score'] ?? 0) < 0.8;
+            } elseif ($severityCategory === 'SSL') {
+                $critical = $eventKey === 'web_url.ssl.expired';
+            } else {
+                $severityValue = strtoupper((string) ($context['severity'] ?? ''));
+                $critical = in_array($severityValue, ['CRITICAL', 'HIGH', 'SEV0', 'SEV1', '0', '1'], true)
+                    || $eventKey === 'azure.critical_alert.detected';
+            }
+
+            $body[] = [
                 'type' => 'Container',
                 'style' => $critical ? 'attention' : 'warning',
                 'bleed' => true,
                 'spacing' => 'None',
                 'items' => [[
                     'type' => 'TextBlock',
-                    'text' => $critical ? 'CRITICAL' : 'WARNING',
+                    'text' => ($critical ? 'CRITICAL' : 'WARNING').' - '.$severityCategory,
                     'weight' => 'Bolder',
                     'size' => 'Large',
                     'color' => $critical ? 'Attention' : 'Warning',
@@ -154,7 +150,10 @@ class TeamsWebhookNotifier
                     'wrap' => false,
                     'spacing' => 'Small',
                 ]],
-            ]);
+            ];
+            // Keep the severity banner before the existing title and message.
+            $banner = array_pop($body);
+            array_unshift($body, $banner);
         }
 
         return [
