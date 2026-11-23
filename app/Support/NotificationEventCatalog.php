@@ -11,6 +11,9 @@ class NotificationEventCatalog
      * fields from the selected event, so unrelated event data cannot be used.
      */
     private const EVENTS = [
+        // Server (1)
+        'server.started' => ['label' => 'Server started', 'category' => 'Server', 'fields' => ['server_boot_time', 'iis_status', 'iis_started_at', 'php_status', 'php_started_at', 'mysql_status', 'mysql_started_at', 'queue_status', 'queue_started_at']],
+
         // Users (9)
         'user.created' => ['label' => 'User created', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'user_status', 'role_name', 'occurred_at']],
         'user.activated' => ['label' => 'User activated', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'occurred_at']],
@@ -82,6 +85,9 @@ class NotificationEventCatalog
     ];
 
     private const FIELD_LABELS = [
+        'server_boot_time' => 'Server boot time', 'iis_status' => 'IIS status', 'iis_started_at' => 'IIS started at',
+        'php_status' => 'PHP status', 'php_started_at' => 'PHP started at', 'mysql_status' => 'MySQL status',
+        'mysql_started_at' => 'MySQL started at', 'queue_status' => 'Queue worker status', 'queue_started_at' => 'Queue worker started at',
         'user_id' => 'User ID', 'user_name' => 'User name', 'user_email' => 'User email',
         'user_status' => 'User status', 'role_name' => 'Role', 'old_role' => 'Previous role',
         'new_role' => 'New role', 'ip_address' => 'IP address', 'invitation_expires_at' => 'Invitation expiry',
@@ -327,7 +333,7 @@ class NotificationEventCatalog
         foreach ($keys as $key) {
             $type = match (true) {
                 in_array($key, ['duration_seconds', 'previous_score', 'current_score', 'score_delta', 'actual_cost', 'budget_amount', 'threshold_percent', 'days_until_expiry', 'days_since_expiry', 'http_status', 'response_time_ms'], true) => 'number',
-                in_array($key, ['occurred_at', 'sync_started_at', 'failed_at', 'completed_at', 'expires_at', 'invitation_expires_at', 'certificate_expires_at', 'previous_expires_at', 'checked_at'], true) => 'datetime',
+                in_array($key, ['occurred_at', 'sync_started_at', 'failed_at', 'completed_at', 'expires_at', 'invitation_expires_at', 'certificate_expires_at', 'previous_expires_at', 'checked_at', 'server_boot_time', 'iis_started_at', 'php_started_at', 'mysql_started_at', 'queue_started_at'], true) => 'datetime',
                 in_array($key, ['failed_modules', 'successful_modules'], true) => 'array',
                 $key === 'report_url' || $key === 'url' => 'url',
                 array_key_exists($key, self::ENUM_VALUES) => 'enum',
