@@ -139,7 +139,9 @@ class TeamsWebhookNotifier
         };
 
         if ($severityCategory !== null) {
-            if ($severityCategory === 'Security score') {
+            $improvement = $eventKey === 'azure.security_score.improved';
+
+            if ($severityCategory === 'Security score' && ! $improvement) {
                 $critical = (float) ($context['current_score'] ?? 0) < 0.8;
             } elseif ($severityCategory === 'SSL') {
                 $critical = $eventKey === 'web_url.ssl.expired';
@@ -151,15 +153,17 @@ class TeamsWebhookNotifier
 
             $body[] = [
                 'type' => 'Container',
-                'style' => $critical ? 'attention' : 'warning',
+                'style' => $improvement ? 'good' : ($critical ? 'attention' : 'warning'),
                 'bleed' => true,
                 'spacing' => 'None',
                 'items' => [[
                     'type' => 'TextBlock',
-                    'text' => ($critical ? 'CRITICAL' : 'WARNING').' - '.$severityCategory,
+                    'text' => $improvement
+                        ? 'IMPROVEMENT - Security Score'
+                        : (($critical ? 'CRITICAL' : 'WARNING').' - '.$severityCategory),
                     'weight' => 'Bolder',
                     'size' => 'Large',
-                    'color' => $critical ? 'Attention' : 'Warning',
+                    'color' => $improvement ? 'Good' : ($critical ? 'Attention' : 'Warning'),
                     'horizontalAlignment' => 'Center',
                     'wrap' => false,
                     'spacing' => 'Small',
