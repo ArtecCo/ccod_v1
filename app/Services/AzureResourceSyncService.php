@@ -123,7 +123,7 @@ KQL,
                         'location' => $staleResource->region,
                         'occurred_at' => now()->toIso8601String(),
                     ]);
-                } catch (\\Throwable $exception) {
+                } catch (\Throwable $exception) {
                     report($exception);
                 }
 
