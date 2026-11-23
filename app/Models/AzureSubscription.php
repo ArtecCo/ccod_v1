@@ -50,6 +50,10 @@ class AzureSubscription extends Model
         DB::afterCommit(static function () use ($event, $context, $subscription): void {
             try {
                 app(NotificationRuleService::class)->trigger($event, $context);
+                app(NotificationRuleService::class)->trigger(
+                    $event === NotificationEvent::AzureSubscriptionConnected ? 'subscription.added' : 'subscription.removed',
+                    $context,
+                );
             } catch (Throwable $exception) {
                 report($exception);
             }
