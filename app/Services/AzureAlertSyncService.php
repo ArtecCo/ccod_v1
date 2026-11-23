@@ -217,7 +217,7 @@ KQL,
                 $rules = app(NotificationRuleService::class);
                 $rules->trigger('azure.alert.detected', $context);
 
-                if (strtolower((string) $attributes['severity']) === 'critical') {
+                if (in_array(strtolower((string) $attributes['severity']), ['critical', 'sev0'], true)) {
                     $rules->trigger('azure.critical_alert.detected', $context);
                 }
             } catch (Throwable $exception) {
