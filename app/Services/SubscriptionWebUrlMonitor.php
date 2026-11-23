@@ -11,6 +11,12 @@ class SubscriptionWebUrlMonitor
 {
     public function check(SubscriptionWebUrl $webUrl): SubscriptionWebUrl
     {
+        $previous = [
+            'is_live' => $webUrl->is_live,
+            'ssl_expires_at' => $webUrl->ssl_expires_at?->copy(),
+            'ssl_days_remaining' => $webUrl->ssl_days_remaining,
+        ];
+
         $startedAt = microtime(true);
         $parts = parse_url($webUrl->url);
         $isHttps = strtolower($parts['scheme'] ?? '') === 'https' && ! empty($parts['host']);
@@ -24,7 +30,69 @@ class SubscriptionWebUrlMonitor
         $webUrl->last_checked_at = now();
         $webUrl->save();
 
+        $this->dispatchMonitoringEvents($webUrl->refresh(), $previous);
+
         return $webUrl->refresh();
+    }
+
+    private function dispatchMonitoringEvents(SubscriptionWebUrl $webUrl, array $previous): void
+    {
+        $subscriptionName = $webUrl->subscription?->display_name;
+        $domain = parse_url($webUrl->url, PHP_URL_HOST) ?: $webUrl->url;
+        $base = [
+            'web_url_id' => (int) $webUrl->getKey(),
+            'url' => (string) $webUrl->url,
+            'domain' => (string) $domain,
+            'subscription_id' => (string) $webUrl->subscription_id,
+            'subscription_name' => $subscriptionName,
+            'http_status' => $webUrl->http_status,
+            'response_time_ms' => $webUrl->response_time_ms,
+            'checked_at' => $webUrl->last_checked_at?->toIso8601String(),
+            'occurred_at' => now()->toIso8601String(),
+        ];
+
+        $rules = app(NotificationRuleService::class);
+
+        try {
+            if ($previous['is_live'] === true && ! $webUrl->is_live) {
+                $rules->trigger('web_url.down', $base);
+            } elseif ($previous['is_live'] === false && $webUrl->is_live) {
+                $rules->trigger('web_url.recovered', $base);
+            }
+
+            $previousExpiry = $previous['ssl_expires_at'];
+            $currentExpiry = $webUrl->ssl_expires_at;
+
+            if ($currentExpiry !== null && $previousExpiry !== null && $currentExpiry->greaterThan($previousExpiry)) {
+                $rules->trigger('web_url.ssl.renewed', [
+                    ...$base,
+                    'previous_expires_at' => $previousExpiry->toIso8601String(),
+                    'certificate_expires_at' => $currentExpiry->toIso8601String(),
+                ]);
+            }
+
+            if ($currentExpiry !== null && $currentExpiry->isPast()
+                && ($previousExpiry === null || ! $previousExpiry->isPast())) {
+                $rules->trigger('web_url.ssl.expired', [
+                    ...$base,
+                    'certificate_expires_at' => $currentExpiry->toIso8601String(),
+                    'days_since_expiry' => (int) abs(now()->diffInDays($currentExpiry, false)),
+                ]);
+            }
+
+            $previousDays = $previous['ssl_days_remaining'];
+            $currentDays = $webUrl->ssl_days_remaining;
+            if ($currentDays !== null && $currentDays >= 0 && $currentDays <= 15
+                && ($previousDays === null || $previousDays > 15)) {
+                $rules->trigger('web_url.ssl.expiring', [
+                    ...$base,
+                    'certificate_expires_at' => $currentExpiry?->toIso8601String(),
+                    'days_until_expiry' => $currentDays,
+                ]);
+            }
+        } catch (Throwable $exception) {
+            report($exception);
+        }
     }
 
     /**
