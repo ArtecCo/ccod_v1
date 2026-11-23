@@ -63,10 +63,6 @@ class EditUser extends EditRecord
             foreach (UserGroup::query()->whereKey($addedGroupIds)->get() as $group) {
                 $mandatoryService->userAddedToGroup($group, [(int) $user->getKey()]);
 
-                $ruleService->trigger('user.group_added', $userContext + [
-                    'group_id' => (int) $group->getKey(),
-                    'group_name' => (string) $group->name,
-                ]);
             }
         }
     }
