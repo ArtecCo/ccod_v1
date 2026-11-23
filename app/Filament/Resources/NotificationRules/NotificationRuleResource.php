@@ -9,6 +9,7 @@ use App\Models\UserGroup;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
 use App\Services\TeamsWebhookNotifier;
 use Filament\Actions\Action;
+use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Notifications\Notification;
 use Filament\Forms\Components\Repeater;
@@ -245,6 +246,8 @@ class NotificationRuleResource extends Resource
                         ($success ? $notification->success() : $notification->danger())->send();
                     }),
                 EditAction::make(),
+                DeleteAction::make()
+                    ->requiresConfirmation(),
             ])
             ->headerActions([
                 XlsxExportAction::make()->title('Export Notification Rules')->fileName(fn (): string => 'notification-rules-'.now()->format('Y-m-d-His')),
