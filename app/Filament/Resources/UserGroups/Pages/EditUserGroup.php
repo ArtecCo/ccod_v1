@@ -34,9 +34,14 @@ class EditUserGroup extends EditRecord
 
         $currentUserIds = $group->users()->pluck('users.id')->map(fn ($id): int => (int) $id)->all();
         $addedUserIds = array_values(array_diff($currentUserIds, $this->previousUserIds));
+        $removedUserIds = array_values(array_diff($this->previousUserIds, $currentUserIds));
 
         if ($addedUserIds !== []) {
             $service->userAddedToGroup($group, $addedUserIds);
+        }
+
+        if ($removedUserIds !== []) {
+            $service->userRemovedFromGroup($group, $removedUserIds);
         }
 
         if ($this->previousRoleId !== (int) $group->role_id) {
