@@ -23,12 +23,12 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     {
         static::deleted(function (self $user): void {
             try {
-                app(\\App\\Services\\NotificationRuleService::class)->trigger('user.deleted', [
+                app(\App\Services\NotificationRuleService::class)->trigger('user.deleted', [
                     'user_id' => (int) $user->getKey(),
                     'user_name' => (string) $user->name,
                     'user_email' => (string) $user->email,
                 ]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
             }
         });
