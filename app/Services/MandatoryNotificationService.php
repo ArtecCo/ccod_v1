@@ -15,13 +15,52 @@ class MandatoryNotificationService
 
     public function userAddedToGroup(UserGroup $group, array $userIds): void
     {
-        $this->dispatchRule(\App\Enums\NotificationEvent::UserGroupMemberAdded, ['group_id' => $group->getKey(), 'group_name' => $group->name, 'user_ids' => $userIds]);
+        $this->dispatchGroupMembershipRules(
+            \App\Enums\NotificationEvent::UserGroupMemberAdded,
+            $group,
+            $userIds,
+        );
+
         $this->send(
             'You were added to a user group',
             sprintf('You have been added to the user group "%s".', $group->name),
             $userIds,
             'access',
         );
+    }
+
+    public function userRemovedFromGroup(UserGroup $group, array $userIds): void
+    {
+        $this->dispatchGroupMembershipRules(
+            \App\Enums\NotificationEvent::UserGroupMemberRemoved,
+            $group,
+            $userIds,
+        );
+
+        $this->send(
+            'You were removed from a user group',
+            sprintf('You have been removed from the user group "%s".', $group->name),
+            $userIds,
+            'access',
+        );
+    }
+
+    private function dispatchGroupMembershipRules(
+        \App\Enums\NotificationEvent $event,
+        UserGroup $group,
+        array $userIds,
+    ): void {
+        $users = User::query()->whereKey($userIds)->get(['id', 'name', 'email']);
+
+        foreach ($users as $user) {
+            $this->dispatchRule($event, [
+                'user_id' => (int) $user->getKey(),
+                'user_name' => (string) $user->name,
+                'user_email' => (string) $user->email,
+                'group_id' => (int) $group->getKey(),
+                'group_name' => (string) $group->name,
+            ]);
+        }
     }
 
     public function groupRoleChanged(UserGroup $group, ?string $previousRoleName = null): void
