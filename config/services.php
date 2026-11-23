@@ -35,14 +35,6 @@ return [
         ],
     ],
 
-    'ccod_url_proxy' => [
-        'enabled' => (bool) env('CCOD_URL_PROXY_ENABLED', false),
-        'host' => env('CCOD_URL_PROXY_HOST'),
-        'port' => (int) env('CCOD_URL_PROXY_PORT', 8080),
-        'username' => env('CCOD_URL_PROXY_USERNAME'),
-        'password' => env('CCOD_URL_PROXY_PASSWORD'),
-    ],
-
     'azure' => [
         'tenant_id' => env('AZURE_TENANT_ID'),
         'client_id' => env('AZURE_CLIENT_ID'),
