@@ -96,7 +96,10 @@ class WebhookMessageFormatter
             $status = strtoupper((string) ($context[$component['status']] ?? 'UNKNOWN'));
             $running = in_array($status, ['RUNNING', 'CONFIGURED'], true);
             $statusLabel = $status === 'CONFIGURED' ? 'CONFIGURED' : ($running ? 'RUNNING' : $status);
-            $detailLabel = $status === 'CONFIGURED' ? 'Detection:' : 'Started:';
+            $detailText = $detailLabel = $status === 'CONFIGURED' ? 'Detection: Managed by IIS FastCGI (on demand)' : 'Started: '.(string) ($context[$component['started']] ?? 'Not available');
+            if ($component['label'] === 'PHP' && $status === 'CONFIGURED') {
+                $detailText .= "\\nIIS worker started: ".(string) ($context['iis_worker_started_at'] ?? 'Not available');
+            }
 
             $body[] = [
                 'type' => 'Container',
@@ -127,7 +130,7 @@ class WebhookMessageFormatter
                     ]],
                 ], [
                     'type' => 'TextBlock',
-                    'text' => $detailLabel.' '.(string) ($context[$component['started']] ?? 'Not available'),
+                    'text' => $detailText,
                     'spacing' => 'Small',
                     'isSubtle' => true,
                     'wrap' => true,
