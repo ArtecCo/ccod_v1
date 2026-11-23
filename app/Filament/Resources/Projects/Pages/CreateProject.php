@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Projects\Pages;
 
 use App\Filament\Resources\Projects\ProjectResource;
 use App\Services\MandatoryNotificationService;
+use App\Services\NotificationRuleService;
 use Filament\Resources\Pages\CreateRecord;
 
 class CreateProject extends CreateRecord
@@ -12,6 +13,12 @@ class CreateProject extends CreateRecord
 
     protected function afterCreate(): void
     {
+        app(NotificationRuleService::class)->trigger('project.created', [
+            'project_id' => (int) $this->record->getKey(),
+            'project_name' => (string) $this->record->name,
+            'business_unit_id' => $this->record->business_unit_id ? (int) $this->record->business_unit_id : null,
+        ]);
+
         $service = app(MandatoryNotificationService::class);
         $this->record->load('userGroups');
 
