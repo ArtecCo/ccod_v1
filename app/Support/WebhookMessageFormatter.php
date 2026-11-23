@@ -12,12 +12,12 @@ class WebhookMessageFormatter
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $event = NotificationEventCatalog::event($eventKey) ?? [];
         $label = (string) ($event['label'] ?? $context['event_label'] ?? $eventKey);
-        $title = $eventKey === 'sync.completed' ? 'CCOD Azure sync status' : 'CCOD | '.$label;
+        $title = $eventKey === 'sync.completed' ? 'Azure sync status' : $label;
 
         if ($eventKey === 'sync.completed') {
             $status = ucfirst(strtolower((string) ($context['overall_status'] ?? 'Unknown')));
             return [
-                'title' => 'CCOD Azure sync status',
+                'title' => 'Azure sync status',
                 'message' => 'Overall status: '.$status,
             ];
         }
@@ -76,6 +76,18 @@ class WebhookMessageFormatter
         ];
 
         $body = [[
+            'type' => 'Container',
+            'style' => 'emphasis',
+            'spacing' => 'None',
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => 'SERVER',
+                'size' => 'Small',
+                'weight' => 'Bolder',
+                'wrap' => false,
+                'spacing' => 'None',
+            ]],
+        ], [
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
@@ -211,6 +223,18 @@ class WebhookMessageFormatter
         };
 
         $body = [[
+            'type' => 'Container',
+            'style' => 'emphasis',
+            'spacing' => 'None',
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => 'AZURE',
+                'size' => 'Small',
+                'weight' => 'Bolder',
+                'wrap' => false,
+                'spacing' => 'None',
+            ]],
+        ], [
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
