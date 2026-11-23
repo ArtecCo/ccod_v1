@@ -114,16 +114,23 @@ class TeamsWebhookNotifier
         $category = (string) (NotificationEventCatalog::event($eventKey)['category'] ?? 'Notification');
         $body = array_values(array_filter([
             [
-                'type' => 'Container',
-                'style' => 'emphasis',
+                'type' => 'ColumnSet',
                 'spacing' => 'None',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => strtoupper($category),
-                    'size' => 'Small',
-                    'weight' => 'Bolder',
-                    'wrap' => false,
-                    'spacing' => 'None',
+                'columns' => [[
+                    'type' => 'Column',
+                    'width' => 'auto',
+                    'items' => [[
+                        'type' => 'Container',
+                        'style' => 'emphasis',
+                        'items' => [[
+                            'type' => 'TextBlock',
+                            'text' => strtoupper($category),
+                            'size' => 'Small',
+                            'weight' => 'Bolder',
+                            'wrap' => false,
+                            'spacing' => 'None',
+                        ]],
+                    ]],
                 ]],
             ],
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
