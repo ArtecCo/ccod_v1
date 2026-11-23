@@ -40,7 +40,7 @@ class EditUserGroup extends EditRecord
         }
 
         if ($this->previousRoleId !== (int) $group->role_id) {
-            $service->groupRoleChanged($group);
+            $service->groupRoleChanged($group, $this->previousRoleName);
 
             $group->load('role');
             $newRoleName = (string) ($group->role?->name ?? '');
