@@ -19,6 +19,21 @@ class User extends Authenticatable implements FilamentUser, HasAvatar
     protected $fillable = ['name','email','password','is_active'];
     protected $hidden = ['password','remember_token'];
 
+    protected static function booted(): void
+    {
+        static::deleted(function (self $user): void {
+            try {
+                app(\\App\\Services\\NotificationRuleService::class)->trigger('user.deleted', [
+                    'user_id' => (int) $user->getKey(),
+                    'user_name' => (string) $user->name,
+                    'user_email' => (string) $user->email,
+                ]);
+            } catch (\\Throwable $exception) {
+                report($exception);
+            }
+        });
+    }
+
     public function userGroups(): BelongsToMany { return $this->belongsToMany(UserGroup::class, 'user_group_user')->withPivot(['starts_at', 'expires_at'])->withTimestamps(); }
     public function accessRequests(): HasMany { return $this->hasMany(AccessRequest::class); }
     public function getFilamentAvatarUrl(): ?string { return null; }
