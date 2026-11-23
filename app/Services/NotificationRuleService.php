@@ -96,6 +96,29 @@ class NotificationRuleService
         return $sent;
     }
 
+    /**
+     * Check whether an enabled event rule matches a context without delivering it.
+     * Used by stateful event producers to detect condition transitions.
+     */
+    public function configuredRuleMatches(string $eventKey, array $context): bool
+    {
+        $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
+        $rule = NotificationRule::query()
+            ->where('event_key', $eventKey)
+            ->where('enabled', true)
+            ->first();
+
+        if ($rule === null || ($rule->conditions ?? []) === []) {
+            return false;
+        }
+
+        return $this->matchesConditions(
+            $rule->conditions,
+            $rule->condition_mode ?? 'all',
+            $context,
+        );
+    }
+
     private function eventIsMandatory(string $eventKey): bool
     {
         return (bool) (\App\Support\NotificationEventCatalog::event($eventKey)['mandatory_in_app'] ?? false);
