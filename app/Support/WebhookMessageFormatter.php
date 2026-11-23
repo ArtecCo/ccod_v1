@@ -76,16 +76,23 @@ class WebhookMessageFormatter
         ];
 
         $body = [[
-            'type' => 'Container',
-            'style' => 'emphasis',
+            'type' => 'ColumnSet',
             'spacing' => 'None',
-            'items' => [[
-                'type' => 'TextBlock',
-                'text' => 'SERVER',
-                'size' => 'Small',
-                'weight' => 'Bolder',
-                'wrap' => false,
-                'spacing' => 'None',
+            'columns' => [[
+                'type' => 'Column',
+                'width' => 'auto',
+                'items' => [[
+                    'type' => 'Container',
+                    'style' => 'emphasis',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => 'SERVER',
+                        'size' => 'Small',
+                        'weight' => 'Bolder',
+                        'wrap' => false,
+                        'spacing' => 'None',
+                    ]],
+                ]],
             ]],
         ], [
             'type' => 'TextBlock',
@@ -223,16 +230,23 @@ class WebhookMessageFormatter
         };
 
         $body = [[
-            'type' => 'Container',
-            'style' => 'emphasis',
+            'type' => 'ColumnSet',
             'spacing' => 'None',
-            'items' => [[
-                'type' => 'TextBlock',
-                'text' => 'AZURE',
-                'size' => 'Small',
-                'weight' => 'Bolder',
-                'wrap' => false,
-                'spacing' => 'None',
+            'columns' => [[
+                'type' => 'Column',
+                'width' => 'auto',
+                'items' => [[
+                    'type' => 'Container',
+                    'style' => 'emphasis',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => 'AZURE',
+                        'size' => 'Small',
+                        'weight' => 'Bolder',
+                        'wrap' => false,
+                        'spacing' => 'None',
+                    ]],
+                ]],
             ]],
         ], [
             'type' => 'TextBlock',
