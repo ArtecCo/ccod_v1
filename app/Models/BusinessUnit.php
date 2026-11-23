@@ -18,6 +18,31 @@ class BusinessUnit extends Model
         'description',
     ];
 
+    protected static function booted(): void
+    {
+        static::created(function (self $businessUnit): void {
+            try {
+                app(\\App\\Services\\NotificationRuleService::class)->trigger('business_unit.created', [
+                    'business_unit_id' => (int) $businessUnit->getKey(),
+                    'business_unit_name' => (string) $businessUnit->name,
+                ]);
+            } catch (\\Throwable $exception) {
+                report($exception);
+            }
+        });
+
+        static::deleted(function (self $businessUnit): void {
+            try {
+                app(\\App\\Services\\NotificationRuleService::class)->trigger('business_unit.deleted', [
+                    'business_unit_id' => (int) $businessUnit->getKey(),
+                    'business_unit_name' => (string) $businessUnit->name,
+                ]);
+            } catch (\\Throwable $exception) {
+                report($exception);
+            }
+        });
+    }
+
     public function subscriptions(): BelongsToMany
     {
         return $this->belongsToMany(
