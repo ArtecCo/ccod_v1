@@ -70,4 +70,4 @@ $context = [
     'queue_started_at' => $queue['StartedAt'],
 ];
 
-$app->make(App\Services\TeamsWebhookNotifier::class)->sendServerStart($context);
+$app->make(App\Services\NotificationRuleService::class)->trigger('server.started', $context);
