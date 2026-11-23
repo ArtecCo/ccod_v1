@@ -65,6 +65,19 @@ if ($hasFastCgi -and $hasPhpHandler) {
 }
 PS;
 $phpOutput = $runPowerShell($phpScript);
+$phpWorkerScript = <<<'PS'
+$process = Get-CimInstance Win32_Process -Filter "Name='w3wp.exe'" |
+    Where-Object { $_.CommandLine -match '-ap\\s+["'']?CCOD["'']?(\\s|$)' } |
+    Sort-Object CreationDate |
+    Select-Object -First 1
+if ($process -and $process.CreationDate) {
+    $process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')
+} else {
+    'Not available'
+}
+PS;
+$phpWorkerStartedAt = $runPowerShell($phpWorkerScript);
+
 $phpParts = explode('|', trim($phpOutput), 2);
 $php = [
     'Status' => trim($phpParts[0] ?? '') ?: 'NOT CONFIGURED',
@@ -88,6 +101,7 @@ $context = [
     'iis_started_at' => $w3svc['started_at'],
     'php_status' => $php['Status'],
     'php_started_at' => $php['StartedAt'],
+    'iis_worker_started_at' => $phpWorkerStartedAt !== '' ? $phpWorkerStartedAt : 'Not available',
     'mysql_status' => strtoupper($mysql['status']),
     'mysql_started_at' => $mysql['started_at'],
     'queue_status' => $queue['Status'],
