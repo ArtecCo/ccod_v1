@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use App\Services\MandatoryNotificationService;
+use App\Services\NotificationRuleService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
@@ -28,6 +29,16 @@ class Project extends Model
         });
 
         static::deleted(function (self $project): void {
+            try {
+                app(NotificationRuleService::class)->trigger('project.deleted', [
+                    'project_id' => (int) $project->getKey(),
+                    'project_name' => (string) $project->name,
+                    'business_unit_id' => $project->business_unit_id ? (int) $project->business_unit_id : null,
+                ]);
+            } catch (\\Throwable $exception) {
+                report($exception);
+            }
+
             $groupIds = $project->notificationGroupIdsBeforeDelete;
 
             if ($groupIds === []) {
