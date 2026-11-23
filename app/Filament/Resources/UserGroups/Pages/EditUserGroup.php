@@ -100,6 +100,19 @@ class EditUserGroup extends EditRecord
                         report($exception);
                     }
 
+                    foreach ($record->users()->get() as $user) {
+                        try {
+                            app(NotificationRuleService::class)->trigger('user.group_removed', [
+                                'user_id' => (int) $user->getKey(),
+                                'user_name' => (string) $user->name,
+                                'group_id' => (int) $record->getKey(),
+                                'group_name' => (string) $record->name,
+                            ]);
+                        } catch (\\Throwable $exception) {
+                            report($exception);
+                        }
+                    }
+
                     $record->users()->detach();
                     $record->projects()->detach();
                     $record->delete();
