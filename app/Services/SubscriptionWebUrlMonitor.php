@@ -82,20 +82,6 @@ class SubscriptionWebUrlMonitor
                     $options[CURLOPT_CERTINFO] = true;
                 }
 
-                try {
-                    $options = array_merge($options, $this->proxyOptions($webUrl));
-                } catch (Throwable $exception) {
-                    $webUrl->is_live = false;
-                    $webUrl->http_status = null;
-                    $webUrl->response_time_ms = (int) round((microtime(true) - $startedAt) * 1000);
-                    $webUrl->last_check_error = $exception->getMessage();
-                    $this->clearSslData($webUrl, $isHttps ? false : null);
-                    $webUrl->last_checked_at = now();
-                    $webUrl->save();
-                    curl_close($handle);
-                    continue;
-                }
-
                 curl_setopt_array($handle, $options);
                 curl_multi_add_handle($multi, $handle);
                 $handles[spl_object_id($handle)] = [
@@ -185,7 +171,6 @@ class SubscriptionWebUrlMonitor
                 $options[CURLOPT_CERTINFO] = true;
             }
 
-            $options = array_merge($options, $this->proxyOptions($webUrl));
             curl_setopt_array($curl, $options);
 
             curl_exec($curl);
@@ -220,10 +205,9 @@ class SubscriptionWebUrlMonitor
         try {
             $response = Http::timeout(10)
                 ->connectTimeout(5)
-                ->withOptions(array_filter([
+                ->withOptions([
                     'allow_redirects' => ['max' => 5, 'strict' => true, 'referer' => true],
-                    'proxy' => $this->proxyUrl($webUrl),
-                ], static fn ($value): bool => $value !== null))
+                ])
                 ->withHeaders(['User-Agent' => 'CCOD Web URL Monitor/1.0'])
                 ->get($webUrl->url);
 
@@ -240,64 +224,6 @@ class SubscriptionWebUrlMonitor
             $webUrl->last_check_error = $exception->getMessage();
             $this->clearSslData($webUrl);
         }
-    }
-
-    /**
-     * Apply proxy settings only to records explicitly opted in.
-     * Credentials are read from protected server environment variables.
-     */
-    private function proxyOptions(SubscriptionWebUrl $webUrl): array
-    {
-        if (! $webUrl->use_proxy) {
-            return [];
-        }
-
-        $proxy = config('services.ccod_url_proxy', []);
-        $host = trim((string) ($proxy['host'] ?? ''));
-        $port = (int) ($proxy['port'] ?? 0);
-
-        if (! ($proxy['enabled'] ?? false) || $host === '' || $port < 1 || $port > 65535) {
-            throw new \RuntimeException('This URL is set to use the corporate proxy, but proxy settings are incomplete or disabled. Configure CCOD_URL_PROXY_* on the application server.');
-        }
-
-        $options = [
-            CURLOPT_PROXY => $host,
-            CURLOPT_PROXYPORT => $port,
-            CURLOPT_PROXYTYPE => CURLPROXY_HTTP,
-        ];
-
-        $username = (string) ($proxy['username'] ?? '');
-        $password = (string) ($proxy['password'] ?? '');
-
-        if ($username !== '' || $password !== '') {
-            $options[CURLOPT_PROXYAUTH] = CURLAUTH_BASIC;
-            $options[CURLOPT_PROXYUSERPWD] = $username . ':' . $password;
-        }
-
-        return $options;
-    }
-
-    private function proxyUrl(SubscriptionWebUrl $webUrl): ?string
-    {
-        if (! $webUrl->use_proxy) {
-            return null;
-        }
-
-        $proxy = config('services.ccod_url_proxy', []);
-        $host = trim((string) ($proxy['host'] ?? ''));
-        $port = (int) ($proxy['port'] ?? 0);
-
-        if (! ($proxy['enabled'] ?? false) || $host === '' || $port < 1 || $port > 65535) {
-            throw new \RuntimeException('This URL is set to use the corporate proxy, but proxy settings are incomplete or disabled. Configure CCOD_URL_PROXY_* on the application server.');
-        }
-
-        $username = (string) ($proxy['username'] ?? '');
-        $password = (string) ($proxy['password'] ?? '');
-        $auth = ($username !== '' || $password !== '')
-            ? rawurlencode($username) . ':' . rawurlencode($password) . '@'
-            : '';
-
-        return 'http://' . $auth . $host . ':' . $port;
     }
 
     private function extractLeafCertificate(mixed $certificates): ?string
