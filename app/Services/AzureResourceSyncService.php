@@ -122,6 +122,26 @@ KQL,
 
         if ($existing === null) {
             BillingResource::query()->create($attributes);
+
+            try {
+                $subscriptionName = AzureSubscription::query()
+                    ->where('subscription_id', $subscriptionId)
+                    ->value('display_name');
+
+                app(NotificationRuleService::class)->trigger('azure.resource.discovered', [
+                    'resource_id' => $resourceId,
+                    'resource_name' => $attributes['name'],
+                    'resource_type' => $attributes['resource_type'],
+                    'resource_group' => $this->resourceGroupFromResourceId($resourceId),
+                    'subscription_id' => $subscriptionId,
+                    'subscription_name' => $subscriptionName,
+                    'location' => $attributes['region'],
+                    'occurred_at' => now()->toIso8601String(),
+                ]);
+            } catch (\\Throwable $exception) {
+                report($exception);
+            }
+
             return 'created';
         }
 
@@ -139,6 +159,13 @@ KQL,
         }
 
         return 'unchanged';
+    }
+
+    private function resourceGroupFromResourceId(string $resourceId): ?string
+    {
+        return preg_match('#/resourceGroups/([^/]+)#i', $resourceId, $matches) === 1
+            ? $matches[1]
+            : null;
     }
 
     private function subscriptionIdFromResourceId(mixed $resourceId): ?string
