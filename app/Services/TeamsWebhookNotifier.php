@@ -111,6 +111,10 @@ class TeamsWebhookNotifier
             return $this->formatter->serverStartedCard($title, $context);
         }
 
+        if (in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true)) {
+            return $this->formatter->securityScoreCard($title, $context);
+        }
+
         return [
             'type' => 'message',
             'attachments' => [[
