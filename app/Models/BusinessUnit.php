@@ -22,22 +22,22 @@ class BusinessUnit extends Model
     {
         static::created(function (self $businessUnit): void {
             try {
-                app(\\App\\Services\\NotificationRuleService::class)->trigger('business_unit.created', [
+                app(\App\Services\NotificationRuleService::class)->trigger('business_unit.created', [
                     'business_unit_id' => (int) $businessUnit->getKey(),
                     'business_unit_name' => (string) $businessUnit->name,
                 ]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
             }
         });
 
         static::deleted(function (self $businessUnit): void {
             try {
-                app(\\App\\Services\\NotificationRuleService::class)->trigger('business_unit.deleted', [
+                app(\App\Services\NotificationRuleService::class)->trigger('business_unit.deleted', [
                     'business_unit_id' => (int) $businessUnit->getKey(),
                     'business_unit_name' => (string) $businessUnit->name,
                 ]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
             }
         });
