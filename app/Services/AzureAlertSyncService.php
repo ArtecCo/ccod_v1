@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\AzureAlert;
 use App\Models\AzureAlertDetail;
 use App\Models\AzureSubscription;
+use App\Services\NotificationRuleService;
 use Illuminate\Support\Carbon;
 use RuntimeException;
 use Throwable;
@@ -199,6 +200,30 @@ KQL,
 
         if ($existing === null) {
             AzureAlert::query()->create($attributes);
+
+            $context = [
+                'alert_id' => $alertId,
+                'alert_name' => $attributes['name'],
+                'severity' => $attributes['severity'],
+                'status' => $attributes['alert_condition'],
+                'resource_id' => null,
+                'resource_name' => $attributes['affected_resource'],
+                'subscription_id' => $subscriptionId,
+                'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
+                'occurred_at' => now()->toIso8601String(),
+            ];
+
+            try {
+                $rules = app(NotificationRuleService::class);
+                $rules->trigger('azure.alert.detected', $context);
+
+                if (strtolower((string) $attributes['severity']) === 'critical') {
+                    $rules->trigger('azure.critical_alert.detected', $context);
+                }
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+
             return 'created';
         }
 
