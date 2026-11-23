@@ -76,35 +76,18 @@ class WebhookMessageFormatter
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
-            'size' => 'Large',
+            'size' => 'Medium',
             'wrap' => true,
-        ], [
-            'type' => 'TextBlock',
-            'text' => 'Server services and application processes at startup.',
-            'wrap' => true,
-            'spacing' => 'Small',
-        ], [
-            'type' => 'FactSet',
-            'spacing' => 'Medium',
-            'facts' => [[
-                'title' => 'Server Boot Time',
-                'value' => (string) ($context['server_boot_time'] ?? 'Not available'),
-            ]],
         ]];
 
         foreach ($components as $component) {
             $status = strtoupper((string) ($context[$component['status']] ?? 'UNKNOWN'));
-            $running = in_array($status, ['RUNNING', 'CONFIGURED'], true);
-            $statusLabel = $status === 'CONFIGURED' ? 'CONFIGURED' : ($running ? 'RUNNING' : $status);
-            $detailText = $status === 'CONFIGURED' ? 'Detection: Managed by IIS FastCGI (on demand)' : 'Started: '.(string) ($context[$component['started']] ?? 'Not available');
-            if ($component['label'] === 'PHP' && $status === 'CONFIGURED') {
-                $detailText .= "\nIIS worker started: ".(string) ($context['iis_worker_started_at'] ?? 'Not available');
-            }
+            $healthy = in_array($status, ['RUNNING', 'CONFIGURED'], true);
+            $statusLabel = $status === 'CONFIGURED' ? 'CONFIGURED' : ($healthy ? 'RUNNING' : $status);
 
             $body[] = [
                 'type' => 'Container',
-                'style' => $running ? 'good' : 'attention',
-                'spacing' => 'Medium',
+                'spacing' => 'Small',
                 'items' => [[
                     'type' => 'ColumnSet',
                     'columns' => [[
@@ -114,6 +97,7 @@ class WebhookMessageFormatter
                             'type' => 'TextBlock',
                             'text' => $component['label'],
                             'weight' => 'Bolder',
+                            'spacing' => 'None',
                             'wrap' => true,
                         ]],
                     ], [
@@ -123,16 +107,20 @@ class WebhookMessageFormatter
                             'type' => 'TextBlock',
                             'text' => $statusLabel,
                             'weight' => 'Bolder',
-                            'color' => $running ? 'Good' : 'Attention',
-                            'wrap' => true,
+                            'color' => $healthy ? 'Good' : 'Attention',
+                            'spacing' => 'None',
                             'horizontalAlignment' => 'Right',
+                            'wrap' => true,
                         ]],
                     ]],
                 ], [
                     'type' => 'TextBlock',
-                    'text' => $detailText,
-                    'spacing' => 'Small',
+                    'text' => $component['label'] === 'PHP' && $status === 'CONFIGURED'
+                        ? 'IIS FastCGI · on demand  |  Worker: '.(string) ($context['iis_worker_started_at'] ?? 'Not available')
+                        : 'Started: '.(string) ($context[$component['started']] ?? 'Not available'),
+                    'size' => 'Small',
                     'isSubtle' => true,
+                    'spacing' => 'None',
                     'wrap' => true,
                 ]],
             ];
