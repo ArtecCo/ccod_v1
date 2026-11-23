@@ -107,6 +107,10 @@ class TeamsWebhookNotifier
             return $this->formatter->syncCompletionCard($title, $context);
         }
 
+        if ($eventKey === 'server.started') {
+            return $this->formatter->serverStartedCard($title, $context);
+        }
+
         return [
             'type' => 'message',
             'attachments' => [[
