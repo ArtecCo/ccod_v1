@@ -28,7 +28,7 @@ if ($service) {
     $started = 'Not available'
     if ($service.ProcessId -gt 0) {
         $process = Get-CimInstance Win32_Process -Filter "ProcessId=$($service.ProcessId)"
-        if ($process -and $process.CreationDate) { $started = $process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss') }
+        if ($process -and $process.CreationDate) { $ist = [TimeZoneInfo]::FindSystemTimeZoneById('India Standard Time'); $started = [TimeZoneInfo]::ConvertTime([datetime]$process.CreationDate, $ist).ToString("dd-MMM-yyyy hh:mm:ss tt 'IST'") }
     }
     [pscustomobject]@{ State=$service.State; StartedAt=$started } | ConvertTo-Json -Compress
 }
@@ -71,7 +71,7 @@ $process = Get-CimInstance Win32_Process -Filter "Name='w3wp.exe'" |
     Sort-Object CreationDate |
     Select-Object -First 1
 if ($process -and $process.CreationDate) {
-    $process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')
+    [TimeZoneInfo]::ConvertTime([datetime]$process.CreationDate, [TimeZoneInfo]::FindSystemTimeZoneById('India Standard Time')).ToString("dd-MMM-yyyy hh:mm:ss tt 'IST'")
 } else {
     'Not available'
 }
@@ -86,7 +86,7 @@ $php = [
 
 $queueScript = <<<'PS'
 $process = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'php.exe' -and $_.CommandLine -match 'artisan queue:work' } | Sort-Object CreationDate | Select-Object -First 1
-$result = if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=$process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')} } else { [pscustomobject]@{Status='NOT RUNNING';StartedAt='Not available'} }
+$result = if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=[TimeZoneInfo]::ConvertTime([datetime]$process.CreationDate, [TimeZoneInfo]::FindSystemTimeZoneById('India Standard Time')).ToString("dd-MMM-yyyy hh:mm:ss tt 'IST'")} } else { [pscustomobject]@{Status='NOT RUNNING';StartedAt='Not available'} }
 $result | ConvertTo-Json -Compress
 PS;
 $queue = json_decode($runPowerShell($queueScript), true) ?: ['Status' => 'NOT RUNNING', 'StartedAt' => 'Not available'];
