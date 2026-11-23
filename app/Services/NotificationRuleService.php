@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Enums\NotificationEvent;
+use App\Jobs\DeliverTeamsWebhookNotification;
 use App\Models\NotificationRule;
 use App\Models\User;
 use App\Models\UserGroup;
@@ -45,11 +46,12 @@ class NotificationRuleService
             if (($rule->channel ?? 'in_app') === 'webhook') {
                 if ($rule->webhook) {
                     try {
-                        $sent += (int) $this->teamsWebhooks->deliverRule(
-                            $rule->webhook,
+                        DeliverTeamsWebhookNotification::dispatch(
+                            (int) $rule->webhook->getKey(),
                             $eventKey,
                             $context,
-                        );
+                        )->afterCommit();
+                        $sent++;
                     } catch (Throwable $exception) {
                         report($exception);
                     }
