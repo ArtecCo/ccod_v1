@@ -67,7 +67,7 @@ PS;
 $phpOutput = $runPowerShell($phpScript);
 $phpWorkerScript = <<<'PS'
 $process = Get-CimInstance Win32_Process -Filter "Name='w3wp.exe'" |
-    Where-Object { $_.CommandLine -match '-ap\\s+["'']?CCOD["'']?(\\s|$)' } |
+    Where-Object { $_.CommandLine -match '-ap\s+["'']?CCOD["'']?(\s|$)' } |
     Sort-Object CreationDate |
     Select-Object -First 1
 if ($process -and $process.CreationDate) {
