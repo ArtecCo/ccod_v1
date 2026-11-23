@@ -182,6 +182,7 @@ class SubscriptionWebUrlMonitor
                     'handle' => $handle,
                     'model' => $webUrl,
                     'started' => $startedAt,
+                    'previous' => $previous,
                     'host' => $parts['host'] ?? '',
                     'https' => $isHttps,
                 ];
@@ -227,7 +228,7 @@ class SubscriptionWebUrlMonitor
 
                 $webUrl->last_checked_at = now();
                 $webUrl->save();
-                $this->dispatchMonitoringEvents($webUrl->refresh(), $previous);
+                $this->dispatchMonitoringEvents($webUrl->refresh(), $entry['previous']);
 
                 curl_multi_remove_handle($multi, $handle);
                 curl_close($handle);
