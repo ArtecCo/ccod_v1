@@ -42,23 +42,6 @@ class EditUserGroup extends EditRecord
         if ($this->previousRoleId !== (int) $group->role_id) {
             $service->groupRoleChanged($group, $this->previousRoleName);
 
-            $group->load('role');
-            $newRoleName = (string) ($group->role?->name ?? '');
-
-            foreach ($group->users()->where('users.is_active', true)->get() as $user) {
-                try {
-                    app(NotificationRuleService::class)->trigger('user.role_changed', [
-                        'user_id' => (int) $user->getKey(),
-                        'user_name' => (string) $user->name,
-                        'old_role' => (string) ($this->previousRoleName ?? ''),
-                        'new_role' => $newRoleName,
-                        'group_id' => (int) $group->getKey(),
-                        'group_name' => (string) $group->name,
-                    ]);
-                } catch (\\Throwable $exception) {
-                    report($exception);
-                }
-            }
         }
 
         $currentProjectIds = $group->projects()->pluck('projects.id')->map(fn ($id): int => (int) $id)->all();
