@@ -111,7 +111,21 @@ class TeamsWebhookNotifier
             return $this->formatter->serverStartedCard($title, $context);
         }
 
+        $category = (string) (NotificationEventCatalog::event($eventKey)['category'] ?? 'Notification');
         $body = array_values(array_filter([
+            [
+                'type' => 'Container',
+                'style' => 'emphasis',
+                'spacing' => 'None',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => strtoupper($category),
+                    'size' => 'Small',
+                    'weight' => 'Bolder',
+                    'wrap' => false,
+                    'spacing' => 'None',
+                ]],
+            ],
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
             $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
         ]));
