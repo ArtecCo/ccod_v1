@@ -19,7 +19,6 @@ class NotificationEventCatalog
         'user.logged_in' => ['label' => 'User logged in', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'ip_address', 'occurred_at']],
         'user.group_added' => ['label' => 'User added to group', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'group_id', 'group_name', 'occurred_at']],
         'user.group_removed' => ['label' => 'User removed from group', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'group_id', 'group_name', 'occurred_at']],
-        'user.role_changed' => ['label' => 'User role changed', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'old_role', 'new_role', 'occurred_at']],
         'user.invitation_sent' => ['label' => 'User invitation sent', 'category' => 'Users', 'fields' => ['user_id', 'user_name', 'user_email', 'invitation_expires_at', 'occurred_at']],
 
         // Subscriptions (5)
