@@ -42,7 +42,6 @@ PS;
     ];
 };
 
-$bootTime = $runPowerShell("(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')");
 $phpScript = <<<'PS'
 $appcmd = Join-Path $env:windir 'System32\inetsrv\appcmd.exe'
 if (-not (Test-Path $appcmd)) {
@@ -96,7 +95,6 @@ $w3svc = $serviceInfo('W3SVC');
 $was = $serviceInfo('WAS');
 
 $context = [
-    'server_boot_time' => $bootTime !== '' ? $bootTime : 'Not available',
     'iis_status' => ($w3svc['status'] === 'Running' && $was['status'] === 'Running') ? 'RUNNING' : 'NOT RUNNING',
     'iis_started_at' => $w3svc['started_at'],
     'php_status' => $php['Status'],
