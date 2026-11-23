@@ -115,10 +115,6 @@ class ConsolidatedWebUrlsTable extends TableWidget
                     ->label('Live Status')
                     ->trueLabel('Live')
                     ->falseLabel('Down'),
-                TernaryFilter::make('use_proxy')
-                    ->label('Proxy')
-                    ->trueLabel('Proxy Enabled')
-                    ->falseLabel('Direct Connection'),
                 TernaryFilter::make('ssl_status')
                     ->label('SSL Valid')
                     ->trueLabel('Valid')
@@ -142,7 +138,6 @@ class ConsolidatedWebUrlsTable extends TableWidget
                     ->copyMessage('URL copied')
                     ->wrap(),
                 IconColumn::make('is_active')->label('Active')->boolean(),
-                IconColumn::make('use_proxy')->label('Proxy')->boolean()->tooltip('Uses the configured corporate HTTP proxy'),
                 IconColumn::make('is_live')->label('Live')->boolean()->placeholder('Not checked'),
                 TextColumn::make('http_status')->label('HTTP')->placeholder('—'),
                 TextColumn::make('response_time_ms')
