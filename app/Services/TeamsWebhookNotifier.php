@@ -16,9 +16,11 @@ class TeamsWebhookNotifier
     ) {}
 
     /**
-     * Deliver a rule using the message format defined in application code.
+     * Deliver a queued rule using the message format defined in application code.
+     *
+     * Exceptions are deliberately allowed to escape so Laravel can retry the job.
      */
-    public function deliverRule(TeamsWebhook $webhook, string $eventKey, array $context = []): bool
+    public function deliverQueuedRule(TeamsWebhook $webhook, string $eventKey, array $context = []): void
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
@@ -27,13 +29,17 @@ class TeamsWebhookNotifier
         ]);
 
         if (! $webhook->enabled) {
-            return false;
+            return;
         }
 
-        return $this->deliver($webhook, $eventKey, $context);
+        $this->deliver($webhook, $eventKey, $context);
     }
 
-    public function sendRuleTest(NotificationRule $rule): bool
+    /**
+     * Queue a test delivery; the Filament action reports that it was queued,
+     * not that Teams has already accepted it.
+     */
+    public function queueRuleTest(NotificationRule $rule): bool
     {
         $rule->loadMissing('webhook');
         $webhook = $rule->webhook;
@@ -46,7 +52,13 @@ class TeamsWebhookNotifier
         $context = NotificationEventCatalog::sampleContext($eventKey);
         $context['is_test'] = true;
 
-        return $this->deliverRule($webhook, $eventKey, $context);
+        \App\Jobs\DeliverTeamsWebhookNotification::dispatch(
+            (int) $webhook->getKey(),
+            $eventKey,
+            $context,
+        )->afterCommit();
+
+        return true;
     }
 
     private function deliver(TeamsWebhook $webhook, string $eventKey, array $context): bool
@@ -82,13 +94,14 @@ class TeamsWebhookNotifier
         } catch (Throwable $exception) {
             report($exception);
 
+            // Keep the latest failure visible while Laravel schedules a retry.
             $webhook->forceFill([
-                'last_delivery_status' => 'failed',
+                'last_delivery_status' => 'retrying',
                 'last_sent_at' => now(),
                 'last_error' => mb_substr($exception->getMessage(), 0, 2000),
             ])->save();
 
-            return false;
+            throw $exception;
         }
     }
 
