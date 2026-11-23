@@ -139,6 +139,19 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Event::listen(Login::class, function (Login $event): void {
+            if ($event->guard === 'web' && $event->user instanceof \\App\\Models\\User) {
+                try {
+                    app(\\App\\Services\\NotificationRuleService::class)->trigger('user.logged_in', [
+                        'user_id' => (int) $event->user->getKey(),
+                        'user_name' => (string) $event->user->name,
+                        'user_email' => (string) $event->user->email,
+                        'ip_address' => (string) request()->ip(),
+                    ]);
+                } catch (\\Throwable $exception) {
+                    report($exception);
+                }
+            }
+
             app(AuditLogger::class)->log(
                 event: 'Login',
                 description: 'Authentication succeeded.',
