@@ -160,7 +160,7 @@ KQL,
                     'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
                     'occurred_at' => now()->toIso8601String(),
                 ]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
             }
         }
@@ -268,7 +268,7 @@ KQL,
                     'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
                     'occurred_at' => now()->toIso8601String(),
                 ]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 report($exception);
             }
 
