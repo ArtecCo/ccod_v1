@@ -44,11 +44,19 @@ PS;
 
 $bootTime = $runPowerShell("(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')");
 $phpScript = <<<'PS'
-$process = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'php-cgi.exe' } | Sort-Object CreationDate | Select-Object -First 1
-$result = if ($process) { [pscustomobject]@{Status='RUNNING';StartedAt=$process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')} } else { [pscustomobject]@{Status='NOT DETECTED';StartedAt='Not available'} }
-$result | ConvertTo-Json -Compress
+$process = Get-CimInstance Win32_Process -Filter "Name='php-cgi.exe'" | Sort-Object CreationDate | Select-Object -First 1
+if ($process) {
+    'RUNNING|' + $process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')
+} else {
+    'NOT DETECTED|Not available'
+}
 PS;
-$php = json_decode($runPowerShell($phpScript), true) ?: ['Status' => 'NOT DETECTED', 'StartedAt' => 'Not available'];
+$phpOutput = $runPowerShell($phpScript);
+$phpParts = explode('|', trim($phpOutput), 2);
+$php = [
+    'Status' => trim($phpParts[0] ?? '') ?: 'NOT DETECTED',
+    'StartedAt' => trim($phpParts[1] ?? '') ?: 'Not available',
+];
 
 $queueScript = <<<'PS'
 $process = Get-CimInstance Win32_Process | Where-Object { $_.Name -ieq 'php.exe' -and $_.CommandLine -match 'artisan queue:work' } | Sort-Object CreationDate | Select-Object -First 1
