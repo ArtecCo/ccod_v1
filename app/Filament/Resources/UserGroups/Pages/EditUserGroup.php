@@ -17,12 +17,14 @@ class EditUserGroup extends EditRecord
     private array $previousUserIds = [];
     private array $previousProjectIds = [];
     private ?int $previousRoleId = null;
+    private ?string $previousRoleName = null;
 
     protected function beforeSave(): void
     {
         $this->previousUserIds = $this->record->users()->pluck('users.id')->map(fn ($id): int => (int) $id)->all();
         $this->previousProjectIds = $this->record->projects()->pluck('projects.id')->map(fn ($id): int => (int) $id)->all();
         $this->previousRoleId = (int) $this->record->role_id;
+        $this->previousRoleName = $this->record->role?->name;
     }
 
     protected function afterSave(): void
@@ -39,6 +41,24 @@ class EditUserGroup extends EditRecord
 
         if ($this->previousRoleId !== (int) $group->role_id) {
             $service->groupRoleChanged($group);
+
+            $group->load('role');
+            $newRoleName = (string) ($group->role?->name ?? '');
+
+            foreach ($group->users()->where('users.is_active', true)->get() as $user) {
+                try {
+                    app(NotificationRuleService::class)->trigger('user.role_changed', [
+                        'user_id' => (int) $user->getKey(),
+                        'user_name' => (string) $user->name,
+                        'old_role' => (string) ($this->previousRoleName ?? ''),
+                        'new_role' => $newRoleName,
+                        'group_id' => (int) $group->getKey(),
+                        'group_name' => (string) $group->name,
+                    ]);
+                } catch (\\Throwable $exception) {
+                    report($exception);
+                }
+            }
         }
 
         $currentProjectIds = $group->projects()->pluck('projects.id')->map(fn ($id): int => (int) $id)->all();
