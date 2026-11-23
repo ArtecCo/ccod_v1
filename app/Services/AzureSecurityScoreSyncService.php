@@ -120,7 +120,7 @@ class AzureSecurityScoreSyncService
                             ? 'azure.security_score.decreased'
                             : 'azure.security_score.improved';
                         app(NotificationRuleService::class)->trigger($event, $notificationContext);
-                    } catch (\\Throwable $exception) {
+                    } catch (\Throwable $exception) {
                         report($exception);
                     }
                 }
