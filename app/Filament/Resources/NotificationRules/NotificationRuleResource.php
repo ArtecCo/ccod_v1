@@ -238,12 +238,11 @@ class NotificationRuleResource extends Resource
                     ->icon('heroicon-o-paper-airplane')
                     ->visible(fn (NotificationRule $record): bool => $record->channel === 'webhook')
                     ->action(function (NotificationRule $record, TeamsWebhookNotifier $notifier): void {
-                        $success = $notifier->sendRuleTest($record);
-                        $record->load('webhook');
+                        $queued = $notifier->queueRuleTest($record);
                         $notification = Notification::make()
-                            ->title($success ? 'Rule test delivered' : 'Rule test failed')
-                            ->body($success ? 'The built-in event message was accepted by the destination.' : ($record->webhook?->last_error ?: 'Check that the destination is enabled and configured correctly.'));
-                        ($success ? $notification->success() : $notification->danger())->send();
+                            ->title($queued ? 'Rule test queued' : 'Rule test not queued')
+                            ->body($queued ? 'The test message has been added to the Laravel queue. Delivery will be handled by the queue worker.' : 'Check that the destination exists and is enabled.');
+                        ($queued ? $notification->success() : $notification->danger())->send();
                     }),
                 EditAction::make(),
                 DeleteAction::make()
