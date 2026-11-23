@@ -76,25 +76,6 @@ class WebhookMessageFormatter
         ];
 
         $body = [[
-            'type' => 'ColumnSet',
-            'spacing' => 'None',
-            'columns' => [[
-                'type' => 'Column',
-                'width' => 'auto',
-                'items' => [[
-                    'type' => 'Container',
-                    'style' => 'emphasis',
-                    'items' => [[
-                        'type' => 'TextBlock',
-                        'text' => 'SERVER',
-                        'size' => 'Small',
-                        'weight' => 'Bolder',
-                        'wrap' => false,
-                        'spacing' => 'None',
-                    ]],
-                ]],
-            ]],
-        ], [
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
@@ -230,25 +211,6 @@ class WebhookMessageFormatter
         };
 
         $body = [[
-            'type' => 'ColumnSet',
-            'spacing' => 'None',
-            'columns' => [[
-                'type' => 'Column',
-                'width' => 'auto',
-                'items' => [[
-                    'type' => 'Container',
-                    'style' => 'emphasis',
-                    'items' => [[
-                        'type' => 'TextBlock',
-                        'text' => 'AZURE',
-                        'size' => 'Small',
-                        'weight' => 'Bolder',
-                        'wrap' => false,
-                        'spacing' => 'None',
-                    ]],
-                ]],
-            ]],
-        ], [
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
