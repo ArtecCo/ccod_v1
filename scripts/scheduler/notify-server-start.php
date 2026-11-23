@@ -44,17 +44,30 @@ PS;
 
 $bootTime = $runPowerShell("(Get-CimInstance Win32_OperatingSystem).LastBootUpTime.ToString('yyyy-MM-dd HH:mm:ss')");
 $phpScript = <<<'PS'
-$process = Get-CimInstance Win32_Process -Filter "Name='php-cgi.exe'" | Sort-Object CreationDate | Select-Object -First 1
-if ($process) {
-    'RUNNING|' + $process.CreationDate.ToString('yyyy-MM-dd HH:mm:ss')
+$appcmd = Join-Path $env:windir 'System32\inetsrv\appcmd.exe'
+if (-not (Test-Path $appcmd)) {
+    'NOT CONFIGURED|IIS appcmd.exe not found'
+    exit
+}
+
+$fastCgiConfig = & $appcmd list config /section:system.webServer/fastCgi 2>$null | Out-String
+$handlerConfig = & $appcmd list config /section:system.webServer/handlers 2>$null | Out-String
+
+$hasFastCgi = $fastCgiConfig -match 'fullPath=.*php-cgi\.exe'
+$hasPhpHandler = $handlerConfig -match 'FastCgiModule' -and $handlerConfig -match '\*\.php'
+
+if ($hasFastCgi -and $hasPhpHandler) {
+    'CONFIGURED|Managed by IIS FastCGI (on demand)'
+} elseif ($hasFastCgi) {
+    'PARTIALLY CONFIGURED|FastCGI PHP executable is registered, but the PHP handler mapping was not found'
 } else {
-    'NOT DETECTED|Not available'
+    'NOT CONFIGURED|PHP FastCGI registration was not found in IIS'
 }
 PS;
 $phpOutput = $runPowerShell($phpScript);
 $phpParts = explode('|', trim($phpOutput), 2);
 $php = [
-    'Status' => trim($phpParts[0] ?? '') ?: 'NOT DETECTED',
+    'Status' => trim($phpParts[0] ?? '') ?: 'NOT CONFIGURED',
     'StartedAt' => trim($phpParts[1] ?? '') ?: 'Not available',
 ];
 
