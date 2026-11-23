@@ -10,6 +10,8 @@ $app = require $basePath.'/bootstrap/app.php';
 $app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
 
 $runPowerShell = static function (string $script): string {
+    // Suppress PowerShell's first-use module progress output so it cannot corrupt captured JSON/text.
+    $script = "$ProgressPreference = 'SilentlyContinue';\n".$script;
     $encodedScript = base64_encode(iconv('UTF-8', 'UTF-16LE', $script));
     $command = 'powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand '.$encodedScript;
     $output = [];
