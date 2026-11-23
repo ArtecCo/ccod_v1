@@ -95,7 +95,8 @@ class WebhookMessageFormatter
         foreach ($components as $component) {
             $status = strtoupper((string) ($context[$component['status']] ?? 'UNKNOWN'));
             $running = in_array($status, ['RUNNING', 'CONFIGURED'], true);
-            $statusLabel = $running ? 'RUNNING' : $status;
+            $statusLabel = $status === 'CONFIGURED' ? 'CONFIGURED' : ($running ? 'RUNNING' : $status);
+            $detailLabel = $status === 'CONFIGURED' ? 'Detection:' : 'Started:';
 
             $body[] = [
                 'type' => 'Container',
@@ -126,7 +127,7 @@ class WebhookMessageFormatter
                     ]],
                 ], [
                     'type' => 'TextBlock',
-                    'text' => 'Started: '.(string) ($context[$component['started']] ?? 'Not available'),
+                    'text' => $detailLabel.' '.(string) ($context[$component['started']] ?? 'Not available'),
                     'spacing' => 'Small',
                     'isSubtle' => true,
                     'wrap' => true,
