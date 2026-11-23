@@ -94,7 +94,7 @@ class WebhookMessageFormatter
 
         foreach ($components as $component) {
             $status = strtoupper((string) ($context[$component['status']] ?? 'UNKNOWN'));
-            $running = in_array($status, ['RUNNING'], true);
+            $running = in_array($status, ['RUNNING', 'CONFIGURED'], true);
             $statusLabel = $running ? 'RUNNING' : $status;
 
             $body[] = [
