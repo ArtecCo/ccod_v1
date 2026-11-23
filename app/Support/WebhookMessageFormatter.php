@@ -29,6 +29,9 @@ class WebhookMessageFormatter
             }
 
             $value = $context[$key];
+            if (in_array($key, ['previous_score', 'current_score', 'score_delta'], true) && is_numeric($value)) {
+                $value = number_format((float) $value * 100, 2).' %';
+            }
             if (is_array($value) || is_object($value)) {
                 $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             }
@@ -169,76 +172,6 @@ class WebhookMessageFormatter
                     'type' => 'AdaptiveCard',
                     'version' => '1.2',
                     'body' => $body,
-                ],
-            ]],
-        ];
-    }
-
-    /**
-     * Build a score-focused Adaptive Card for Azure security score changes.
-     */
-    public function securityScoreCard(string $title, array $context): array
-    {
-        $currentScore = (float) ($context['current_score'] ?? 0);
-        $previousScore = (float) ($context['previous_score'] ?? 0);
-        $scoreDelta = (float) ($context['score_delta'] ?? ($currentScore - $previousScore));
-        $critical = $currentScore < 0.8;
-        $severity = $critical ? 'Critical' : 'Warning';
-
-        $formatPercent = static fn (float $score): string => number_format($score * 100, 2).' %';
-        $formatDelta = static fn (float $delta): string => ($delta > 0 ? '+' : '').number_format($delta * 100, 2).' %';
-
-        return [
-            'type' => 'message',
-            'attachments' => [[
-                'contentType' => 'application/vnd.microsoft.card.adaptive',
-                'contentUrl' => null,
-                'content' => [
-                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-                    'type' => 'AdaptiveCard',
-                    'version' => '1.2',
-                    'body' => [[
-                        'type' => 'ColumnSet',
-                        'columns' => [[
-                            'type' => 'Column',
-                            'width' => 'stretch',
-                            'items' => [[
-                                'type' => 'TextBlock',
-                                'text' => $title,
-                                'weight' => 'Bolder',
-                                'size' => 'Medium',
-                                'wrap' => true,
-                            ]],
-                        ], [
-                            'type' => 'Column',
-                            'width' => 'auto',
-                            'verticalContentAlignment' => 'Center',
-                            'items' => [[
-                                'type' => 'Container',
-                                'style' => $critical ? 'attention' : 'warning',
-                                'items' => [[
-                                    'type' => 'TextBlock',
-                                    'text' => $severity,
-                                    'weight' => 'Bolder',
-                                    'size' => 'Small',
-                                    'wrap' => false,
-                                ]],
-                            ]],
-                        ]],
-                    ], [
-                        'type' => 'TextBlock',
-                        'text' => (string) ($context['subscription_name'] ?? $context['subscription_id'] ?? 'Azure subscription'),
-                        'wrap' => true,
-                        'spacing' => 'Small',
-                    ], [
-                        'type' => 'FactSet',
-                        'spacing' => 'Small',
-                        'facts' => [
-                            ['title' => 'Previous score', 'value' => $formatPercent($previousScore)],
-                            ['title' => 'Latest score', 'value' => $formatPercent($currentScore)],
-                            ['title' => 'Change', 'value' => $formatDelta($scoreDelta)],
-                        ],
-                    ]],
                 ],
             ]],
         ];
