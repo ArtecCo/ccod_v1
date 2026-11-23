@@ -88,17 +88,12 @@ class EditUserGroup extends EditRecord
                         report($exception);
                     }
 
-                    foreach ($record->users()->get() as $user) {
-                        try {
-                            app(NotificationRuleService::class)->trigger('user.group_removed', [
-                                'user_id' => (int) $user->getKey(),
-                                'user_name' => (string) $user->name,
-                                'group_id' => (int) $record->getKey(),
-                                'group_name' => (string) $record->name,
-                            ]);
-                        } catch (\Throwable $exception) {
-                            report($exception);
-                        }
+                    $memberIds = $record->users()->pluck('users.id')
+                        ->map(fn ($id): int => (int) $id)
+                        ->all();
+
+                    if ($memberIds !== []) {
+                        app(MandatoryNotificationService::class)->userRemovedFromGroup($record, $memberIds);
                     }
 
                     $record->users()->detach();
