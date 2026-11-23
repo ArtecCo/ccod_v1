@@ -21,6 +21,7 @@ enum NotificationEvent: string
     // Current mandatory-event catalogue. These keys coexist with the legacy
     // enum values above so existing integrations remain backward compatible.
     case UserGroupMemberAdded = 'user_group.member_added';
+    case UserGroupMemberRemoved = 'user.group_removed';
     case UserGroupRoleChanged = 'user_group.role_changed';
     case AccessRequestSubmitted = 'access_request.submitted';
     case AccessRequestAccepted = 'access_request.accepted';
@@ -51,6 +52,7 @@ enum NotificationEvent: string
             self::MaintenanceScheduled => 'Maintenance scheduled',
             self::MaintenanceCompleted => 'Maintenance completed',
             self::UserGroupMemberAdded => 'User added to user group',
+            self::UserGroupMemberRemoved => 'User removed from user group',
             self::UserGroupRoleChanged => 'User group role changed',
             self::AccessRequestSubmitted => 'Access request submitted',
             self::AccessRequestAccepted => 'Access request accepted',
