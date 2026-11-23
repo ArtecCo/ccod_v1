@@ -61,6 +61,95 @@ class WebhookMessageFormatter
     }
 
     /**
+     * Build a status-focused Adaptive Card for server startup.
+     */
+    public function serverStartedCard(string $title, array $context): array
+    {
+        $components = [
+            ['label' => 'IIS', 'status' => 'iis_status', 'started' => 'iis_started_at'],
+            ['label' => 'PHP', 'status' => 'php_status', 'started' => 'php_started_at'],
+            ['label' => 'MySQL', 'status' => 'mysql_status', 'started' => 'mysql_started_at'],
+            ['label' => 'Queue Worker', 'status' => 'queue_status', 'started' => 'queue_started_at'],
+        ];
+
+        $body = [[
+            'type' => 'TextBlock',
+            'text' => $title,
+            'weight' => 'Bolder',
+            'size' => 'Large',
+            'wrap' => true,
+        ], [
+            'type' => 'TextBlock',
+            'text' => 'Server services and application processes at startup.',
+            'wrap' => true,
+            'spacing' => 'Small',
+        ], [
+            'type' => 'FactSet',
+            'spacing' => 'Medium',
+            'facts' => [[
+                'title' => 'Server Boot Time',
+                'value' => (string) ($context['server_boot_time'] ?? 'Not available'),
+            ]],
+        ]];
+
+        foreach ($components as $component) {
+            $status = strtoupper((string) ($context[$component['status']] ?? 'UNKNOWN'));
+            $running = in_array($status, ['RUNNING'], true);
+            $statusLabel = $running ? 'RUNNING' : $status;
+
+            $body[] = [
+                'type' => 'Container',
+                'style' => $running ? 'good' : 'attention',
+                'spacing' => 'Medium',
+                'items' => [[
+                    'type' => 'ColumnSet',
+                    'columns' => [[
+                        'type' => 'Column',
+                        'width' => 'stretch',
+                        'items' => [[
+                            'type' => 'TextBlock',
+                            'text' => $component['label'],
+                            'weight' => 'Bolder',
+                            'wrap' => true,
+                        ]],
+                    ], [
+                        'type' => 'Column',
+                        'width' => 'auto',
+                        'items' => [[
+                            'type' => 'TextBlock',
+                            'text' => $statusLabel,
+                            'weight' => 'Bolder',
+                            'color' => $running ? 'Good' : 'Attention',
+                            'wrap' => true,
+                            'horizontalAlignment' => 'Right',
+                        ]],
+                    ]],
+                ], [
+                    'type' => 'TextBlock',
+                    'text' => 'Started: '.(string) ($context[$component['started']] ?? 'Not available'),
+                    'spacing' => 'Small',
+                    'isSubtle' => true,
+                    'wrap' => true,
+                ]],
+            ];
+        }
+
+        return [
+            'type' => 'message',
+            'attachments' => [[
+                'contentType' => 'application/vnd.microsoft.card.adaptive',
+                'contentUrl' => null,
+                'content' => [
+                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    'type' => 'AdaptiveCard',
+                    'version' => '1.2',
+                    'body' => $body,
+                ],
+            ]],
+        ];
+    }
+
+    /**
      * Recreates the original Azure sync completion Adaptive Card layout.
      */
     public function syncCompletionCard(string $title, array $context): array
