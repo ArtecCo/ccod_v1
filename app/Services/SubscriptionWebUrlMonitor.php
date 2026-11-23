@@ -35,6 +35,15 @@ class SubscriptionWebUrlMonitor
         return $webUrl->refresh();
     }
 
+    private function monitoringSnapshot(SubscriptionWebUrl $webUrl): array
+    {
+        return [
+            'is_live' => $webUrl->is_live,
+            'ssl_expires_at' => $webUrl->ssl_expires_at?->copy(),
+            'ssl_days_remaining' => $webUrl->ssl_days_remaining,
+        ];
+    }
+
     private function dispatchMonitoringEvents(SubscriptionWebUrl $webUrl, array $previous): void
     {
         $subscriptionName = $webUrl->subscription?->display_name;
@@ -118,6 +127,7 @@ class SubscriptionWebUrlMonitor
             $handles = [];
 
             foreach ($batch as $webUrl) {
+                $previous = $this->monitoringSnapshot($webUrl);
                 $startedAt = microtime(true);
                 $parts = parse_url($webUrl->url) ?: [];
                 $isHttps = strtolower($parts['scheme'] ?? '') === 'https';
@@ -131,6 +141,7 @@ class SubscriptionWebUrlMonitor
                     $this->clearSslData($webUrl, $isHttps ? false : null);
                     $webUrl->last_checked_at = now();
                     $webUrl->save();
+                    $this->dispatchMonitoringEvents($webUrl->refresh(), $previous);
                     continue;
                 }
 
@@ -160,6 +171,7 @@ class SubscriptionWebUrlMonitor
                     $this->clearSslData($webUrl, $isHttps ? false : null);
                     $webUrl->last_checked_at = now();
                     $webUrl->save();
+                    $this->dispatchMonitoringEvents($webUrl->refresh(), $previous);
                     curl_close($handle);
                     continue;
                 }
@@ -215,6 +227,7 @@ class SubscriptionWebUrlMonitor
 
                 $webUrl->last_checked_at = now();
                 $webUrl->save();
+                $this->dispatchMonitoringEvents($webUrl->refresh(), $previous);
 
                 curl_multi_remove_handle($multi, $handle);
                 curl_close($handle);
