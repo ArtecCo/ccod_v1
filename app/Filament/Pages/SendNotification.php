@@ -2,7 +2,7 @@
 
 namespace App\Filament\Pages;
 
-use App\Models\Team;
+use App\Models\UserGroup;
 use App\Models\User;
 use App\Services\NotificationService;
 use Filament\Forms\Components\Select;
@@ -35,7 +35,7 @@ class SendNotification extends Page implements HasForms
     {
         $this->form->fill([
             'audience' => 'all',
-            'team_ids' => [],
+            'user_group_ids' => [],
             'user_ids' => [],
             'type' => 'general',
             'severity' => 'info',
@@ -91,18 +91,18 @@ class SendNotification extends Page implements HasForms
                         Select::make('audience')
                             ->options([
                                 'all' => 'All active users',
-                                'teams' => 'Team members',
+                                'teams' => 'User groups',
                                 'users' => 'Selected users',
                             ])
                             ->default('all')
                             ->live()
                             ->required(),
-                        Select::make('team_ids')
-                            ->label('Teams')
+                        Select::make('user_group_ids')
+                            ->label('User groups')
                             ->multiple()
                             ->searchable()
                             ->dehydrated(true)
-                            ->options(fn (): array => Team::query()->orderBy('name')->pluck('name', 'id')->all())
+                            ->options(fn (): array => UserGroup::query()->orderBy('name')->pluck('name', 'id')->all())
                             ->visible(fn (Get $get): bool => $get('audience') === 'teams')
                             ->minItems(fn (Get $get): int => $get('audience') === 'teams' ? 1 : 0),
                         Select::make('user_ids')
@@ -143,7 +143,7 @@ class SendNotification extends Page implements HasForms
             actionUrl: $data['action_url'] ?? null,
             actionLabel: $data['action_label'] ?? null,
             allUsers: $audience === 'all',
-            teamIds: $audience === 'teams' ? ($data['team_ids'] ?? []) : [],
+            userGroupIds: $audience === 'teams' ? ($data['user_group_ids'] ?? []) : [],
             userIds: $selectedUserIds,
         );
 
@@ -165,7 +165,7 @@ class SendNotification extends Page implements HasForms
 
         $this->form->fill([
             'audience' => 'all',
-            'team_ids' => [],
+            'user_group_ids' => [],
             'user_ids' => [],
             'type' => 'general',
             'severity' => 'info',
