@@ -1,19 +1,18 @@
 <?php
 
-namespace App\\Filament\\Resources\\NotificationRules\\Pages;
+namespace App\Filament\Resources\NotificationRules\Pages;
 
-use App\\Filament\\Resources\\NotificationRules\\NotificationRuleResource;
-use App\\Models\\SslReminderRule;
-use App\\Models\\TeamsWebhook;
-use Filament\\Actions\\Action;
-use Filament\\Actions\\CreateAction;
-use Filament\\Forms\\Components\\Repeater;
-use Filament\\Forms\\Components\\Select;
-use Filament\\Forms\\Components\\TextInput;
-use Filament\\Notifications\\Notification;
-use Filament\\Resources\\Pages\\ListRecords;
-use Illuminate\\Support\\Arr;
-use Illuminate\\Validation\\ValidationException;
+use App\Filament\Resources\NotificationRules\NotificationRuleResource;
+use App\Models\SslReminderRule;
+use App\Models\TeamsWebhook;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ListRecords;
+use Illuminate\Validation\ValidationException;
 
 class ListNotificationRules extends ListRecords
 {
@@ -31,7 +30,7 @@ class ListNotificationRules extends ListRecords
                 ->modalSubmitActionLabel('Save SSL Reminders')
                 ->modalWidth('3xl')
                 ->fillForm(fn (): array => [
-                    'rules' => SslReminderRule::query()->orderBy('threshold_days')->get()
+                    'rules' => SslReminderRule::query()->where('enabled', true)->orderBy('threshold_days')->get()
                         ->map(fn (SslReminderRule $rule): array => [
                             'id' => $rule->id,
                             'threshold_days' => $rule->threshold_days,
