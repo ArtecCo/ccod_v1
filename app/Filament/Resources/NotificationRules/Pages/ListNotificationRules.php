@@ -8,7 +8,6 @@ use App\Models\TeamsWebhook;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -40,10 +39,6 @@ class ListNotificationRules extends ListRecords
                         ])->all(),
                 ])
                 ->schema([
-                    Placeholder::make('reminder_thresholds_heading')
-                        ->label(false)
-                        ->content('Reminder thresholds')
-                        ->columnSpanFull(),
                     Repeater::make('rules')
                         ->label(false)
                                 ->schema([
@@ -75,10 +70,6 @@ class ListNotificationRules extends ListRecords
                         ->defaultItems(0)
                         ->addActionLabel('Add threshold')
                         ->reorderable(false)
-                        ->collapsible()
-                        ->itemLabel(fn (array $state): ?string => isset($state['threshold_days'])
-                            ? 'Within '.(int) $state['threshold_days'].' days — '.ucfirst((string) ($state['severity'] ?? 'reminder'))
-                            : 'New threshold')
                         ->columnSpanFull()
                         ->compact(),
                 ])
