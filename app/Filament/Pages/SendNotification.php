@@ -132,14 +132,26 @@ class SendNotification extends Page implements HasForms
             userIds: $selectedUserIds,
         );
 
+        if ($count === 0) {
+            Notification::make()
+                ->title('No recipients found')
+                ->body('No active users matched this selection. The form has been kept so you can review the audience and try again.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
         Notification::make()
-            ->title('Notification sent')
-            ->body("Delivered to {$count} active user(s).")
+            ->title('Notification queued')
+            ->body("Queued for {$count} active user(s).")
             ->success()
             ->send();
 
         $this->form->fill([
             'audience' => 'all',
+            'team_ids' => [],
+            'user_ids' => [],
             'type' => 'general',
             'severity' => 'info',
         ]);
