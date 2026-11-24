@@ -146,8 +146,8 @@ class TeamsWebhookNotifier
         }
 
         $body = array_values(array_filter([
-            $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
-            $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
+            $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true, 'spacing' => 'Medium'] : null,
+            $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true, 'spacing' => 'Small'] : null,
         ]));
 
         $severityCategory = match (true) {
