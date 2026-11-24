@@ -134,7 +134,7 @@ class NotificationEventCatalog
         'security_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
         'alerts_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
         'web_urls_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
-        'severity' => ['CRITICAL' => 'Critical', 'HIGH' => 'High', 'MEDIUM' => 'Medium', 'LOW' => 'Low', 'INFO' => 'Informational', 'WARNING' => 'Warning', 'ATTENTION' => 'Attention'],
+        'severity' => ['CRITICAL' => 'Critical', 'HIGH' => 'High', 'MEDIUM' => 'Medium', 'LOW' => 'Low', 'INFO' => 'Informational'],
         'status' => ['ACTIVE' => 'Active', 'RESOLVED' => 'Resolved', 'DISMISSED' => 'Dismissed'],
     ];
 
@@ -162,7 +162,7 @@ class NotificationEventCatalog
         foreach ($events as $key => &$event) {
             $event['description'] ??= $event['label'];
             $event['scope'] ??= ['global'];
-            $event['fields'] = self::buildFields($event['fields'] ?? []);
+            $event['fields'] = self::buildFields($event['fields'] ?? [], $key);
             $event['sample'] ??= self::buildSample($event['fields']);
             $event['mandatory_in_app'] = isset($mandatoryInApp[$key]) || ($event['mandatory_in_app'] ?? false);
             $event['mandatory_audience'] ??= $mandatoryInApp[$key] ?? null;
@@ -327,7 +327,7 @@ class NotificationEventCatalog
         return $context;
     }
 
-    private static function buildFields(array $keys): array
+    private static function buildFields(array $keys, ?string $eventKey = null): array
     {
         $fields = [];
         foreach ($keys as $key) {
