@@ -1,9 +1,9 @@
 <?php
 
-use Illuminate\\Database\\Migrations\\Migration;
-use Illuminate\\Database\\Schema\\Blueprint;
-use Illuminate\\Support\\Facades\\DB;
-use Illuminate\\Support\\Facades\\Schema;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,7 +14,7 @@ return new class extends Migration
         }
 
         $now = now();
-        $rules = DB::table('ssl_reminder_rules')->get(['severity', 'webhook_ids']);
+        $rules = DB::table('ssl_reminder_rules')->get(['threshold_days', 'severity', 'webhook_ids']);
         $created = [];
 
         foreach ($rules as $rule) {
@@ -44,20 +44,30 @@ return new class extends Migration
                     continue;
                 }
 
-                $key = $webhookId.'|'.$severity;
+                $key = $webhookId.'|'.$severity.'|'.(int) $rule->threshold_days;
                 if (isset($created[$key])) {
                     continue;
                 }
 
-                $conditions = [['field' => 'severity', 'operator' => 'equals', 'value_text' => $severity]];
+                $conditions = [
+                    ['field' => 'severity', 'operator' => 'equals', 'value_text' => $severity],
+                    ['field' => 'ssl_reminder_threshold_days', 'operator' => 'equals', 'value_text' => (string) $rule->threshold_days],
+                ];
                 $encodedConditions = json_encode($conditions);
 
-                $alreadyConfigured = DB::table('notification_rules')
+                $existingRules = DB::table('notification_rules')
                     ->where('event_key', 'web_url.ssl.expiring')
                     ->where('channel', 'webhook')
                     ->where('webhook_id', $webhookId)
-                    ->where('conditions', $encodedConditions)
-                    ->exists();
+                    ->get(['id', 'conditions']);
+
+                $alreadyConfigured = $existingRules->contains(function ($existing) use ($conditions): bool {
+                    $existingConditions = is_array($existing->conditions)
+                        ? $existing->conditions
+                        : json_decode((string) $existing->conditions, true);
+
+                    return $existingConditions === $conditions;
+                });
 
                 if (! $alreadyConfigured) {
                     DB::table('notification_rules')->insert([
@@ -80,17 +90,13 @@ return new class extends Migration
             }
         }
 
-        Schema::table('ssl_reminder_rules', function (Blueprint $table): void {
-            $table->dropColumn('webhook_ids');
-        });
+        // Keep the legacy JSON column for rollback and old application versions.
+        // New application code no longer reads it for delivery.
     }
 
     public function down(): void
     {
-        if (Schema::hasTable('ssl_reminder_rules') && ! Schema::hasColumn('ssl_reminder_rules', 'webhook_ids')) {
-            Schema::table('ssl_reminder_rules', function (Blueprint $table): void {
-                $table->json('webhook_ids')->nullable();
-            });
-        }
+        // The migrated notification rules are retained so rollback does not
+        // remove destinations that may have been edited since this migration.
     }
 };
