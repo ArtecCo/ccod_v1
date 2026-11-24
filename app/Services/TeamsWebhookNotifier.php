@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\NotificationRule;
 use App\Models\TeamsWebhook;
+use App\Jobs\DeliverTeamsWebhookNotification;
 use App\Support\NotificationEventCatalog;
 use App\Support\WebhookMessageFormatter;
 use Illuminate\Support\Facades\Http;
@@ -55,7 +56,7 @@ class TeamsWebhookNotifier
         $context['is_test'] = true;
 
         foreach ($destinations as $webhook) {
-            \\App\\Jobs\\DeliverTeamsWebhookNotification::dispatch(
+            DeliverTeamsWebhookNotification::dispatch(
                 (int) $webhook->getKey(),
                 $eventKey,
                 $context,
