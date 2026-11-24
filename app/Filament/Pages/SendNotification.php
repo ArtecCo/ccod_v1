@@ -98,10 +98,14 @@ class SendNotification extends Page implements HasForms
                             ->label('Users')
                             ->multiple()
                             ->searchable()
+                            ->preload()
+                            ->live()
+                            ->default([])
                             ->dehydrated(true)
                             ->options(fn (): array => User::query()->where('is_active', true)->orderBy('name')->pluck('name', 'id')->all())
                             ->visible(fn (Get $get): bool => $get('audience') === 'users')
-                            ->minItems(fn (Get $get): int => $get('audience') === 'users' ? 1 : 0),
+                            ->minItems(fn (Get $get): int => $get('audience') === 'users' ? 1 : 0)
+                            ->required(fn (Get $get): bool => $get('audience') === 'users'),
                     ])
                     ->columns(2),
             ])
@@ -111,7 +115,10 @@ class SendNotification extends Page implements HasForms
     public function send(NotificationService $notifications): void
     {
         $data = $this->form->getState();
-        $audience = $data['audience'] ?? 'all';
+        $audience = $data['audience'] ?? data_get($this->data, 'audience', 'all');
+        $selectedUserIds = $audience === 'users'
+            ? ($data['user_ids'] ?? data_get($this->data, 'user_ids', []))
+            : [];
 
         $count = $notifications->send(
             title: $data['title'],
@@ -122,7 +129,7 @@ class SendNotification extends Page implements HasForms
             actionLabel: $data['action_label'] ?? null,
             allUsers: $audience === 'all',
             teamIds: $audience === 'teams' ? ($data['team_ids'] ?? []) : [],
-            userIds: $audience === 'users' ? ($data['user_ids'] ?? []) : [],
+            userIds: $selectedUserIds,
         );
 
         Notification::make()
