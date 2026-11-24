@@ -286,9 +286,10 @@ class NotificationEventCatalog
                 'web_url.ssl.expiring',
             ], true)) {
             return [
-                'ATTENTION' => 'Attention',
-                'WARNING' => 'Warning',
-                'CRITICAL' => 'Critical',
+                'REMINDER' => 'REMINDER',
+                'ATTENTION' => 'ATTENTION',
+                'WARNING' => 'WARNING',
+                'CRITICAL' => 'CRITICAL',
             ];
         }
 
@@ -368,9 +369,10 @@ class NotificationEventCatalog
                     'web_url.ssl.expiring',
                 ], true)) {
                     $fields[$key]['values'] = [
-                        'ATTENTION' => 'Attention',
-                        'WARNING' => 'Warning',
-                        'CRITICAL' => 'Critical',
+                        'REMINDER' => 'REMINDER',
+                        'ATTENTION' => 'ATTENTION',
+                        'WARNING' => 'WARNING',
+                        'CRITICAL' => 'CRITICAL',
                     ];
                 } else {
                     $fields[$key]['values'] = self::ENUM_VALUES[$key];
