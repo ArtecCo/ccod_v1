@@ -145,6 +145,7 @@ class SubscriptionWebUrlMonitor
     private function checkHttps(SubscriptionWebUrl $webUrl, array $parts, float $startedAt): void
     {
         $host = $parts['host'];
+        $port = (int) ($parts['port'] ?? 443);
 
         try {
             if (! function_exists('curl_init')) {
