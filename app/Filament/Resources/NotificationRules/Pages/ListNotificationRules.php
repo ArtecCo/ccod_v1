@@ -40,7 +40,7 @@ class ListNotificationRules extends ListRecords
                 ])
                 ->schema([
                     Repeater::make('rules')
-                        ->label('')
+                        ->hiddenLabel()
                                 ->schema([
                             TextInput::make('threshold_days')
                                 ->label('Expiring in (days)')
