@@ -34,7 +34,7 @@ class NotificationRuleService
         $rules = NotificationRule::query()
             ->where('event_key', $eventKey)
             ->where('enabled', true)
-            ->with('webhook')
+            ->with(['webhook', 'webhooks'])
             ->orderBy('id')
             ->get();
 
@@ -44,19 +44,19 @@ class NotificationRuleService
             }
 
             if (($rule->channel ?? 'in_app') === 'webhook') {
-                if ($rule->webhook) {
+                // Prefer pivot destinations, retaining the legacy FK as a fallback.
+                $destinations = $rule->webhooks->isNotEmpty() ? $rule->webhooks : collect([$rule->webhook])->filter();
+                foreach ($destinations as $webhook) {
+                    if (! $webhook->enabled) {
+                        continue;
+                    }
                     try {
-                        DeliverTeamsWebhookNotification::dispatch(
-                            (int) $rule->webhook->getKey(),
-                            $eventKey,
-                            $context,
-                        )->afterCommit();
+                        DeliverTeamsWebhookNotification::dispatch((int) $webhook->getKey(), $eventKey, $context)->afterCommit();
                         $sent++;
                     } catch (Throwable $exception) {
                         report($exception);
                     }
                 }
-
                 continue;
             }
 

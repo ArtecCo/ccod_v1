@@ -4,12 +4,15 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Validation\ValidationException;
 
 class NotificationRule extends Model
 {
     protected $fillable = [
         'event_key',
+        'rule_title',
+        'rule_description',
         'channel',
         'conditions',
         'condition_mode',
@@ -68,6 +71,11 @@ class NotificationRule extends Model
     public function webhook(): BelongsTo
     {
         return $this->belongsTo(TeamsWebhook::class, 'webhook_id');
+    }
+
+    public function webhooks(): BelongsToMany
+    {
+        return $this->belongsToMany(TeamsWebhook::class, 'notification_rule_webhook', 'notification_rule_id', 'teams_webhook_id')->withTimestamps();
     }
 
     public function creator(): BelongsTo

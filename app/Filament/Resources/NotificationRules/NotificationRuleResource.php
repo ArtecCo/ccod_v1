@@ -43,7 +43,7 @@ class NotificationRuleResource extends Resource
 
     public static function getGloballySearchableAttributes(): array
     {
-        return ['event_key', 'title', 'message', 'action_url'];
+        return ['rule_title', 'rule_description', 'event_key', 'title', 'message', 'action_url'];
     }
 
     public static function getGlobalSearchResultDetails($record): array
@@ -62,6 +62,10 @@ class NotificationRuleResource extends Resource
             ->inlineLabel(false)
             ->columns(1)
             ->components([
+                Section::make('Rule details')->columns(['default' => 1, 'lg' => 2])->schema([
+                    TextInput::make('rule_title')->label('Rule name')->placeholder('e.g. Trigger URL down alert to XYZ group')->maxLength(150)->columnSpanFull()->helperText('A label for identifying this rule. It does not change notification content.'),
+                    Textarea::make('rule_description')->label('Rule description')->placeholder('Describe what this rule is for (optional).')->rows(3)->maxLength(2000)->columnSpanFull(),
+                ]),
                 Section::make('Event and delivery')
                     ->columns(['default' => 1, 'lg' => 4])
                     ->schema([
@@ -118,15 +122,14 @@ class NotificationRuleResource extends Resource
                             ->columnSpan(['lg' => 2])
                             ->visible(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true))
                             ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true)),
-                        Select::make('webhook_id')
-                            ->label('Saved webhook destination')
-                            ->options(fn (): array => TeamsWebhook::query()->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
+                        Select::make('webhook_ids')->label('Saved webhook destinations')->multiple()
+                            ->options(fn (): array => TeamsWebhook::query()->where('enabled', true)->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
                                 $webhook->id => $webhook->name . ($webhook->description ? ' — ' . $webhook->description : ''),
                             ])->all())
-                            ->searchable()
-                            ->columnSpanFull()
+                            ->searchable()->columnSpanFull()
                             ->required(fn ($get): bool => $get('channel') === 'webhook')
-                            ->visible(fn ($get): bool => $get('channel') === 'webhook'),
+                            ->visible(fn ($get): bool => $get('channel') === 'webhook')
+                            ->helperText('The same event notification will be delivered independently to every selected destination.'),
                     ]),
 
                 Section::make('Conditions')
@@ -211,6 +214,10 @@ class NotificationRuleResource extends Resource
         return $table
             ->defaultSort('event_key')
             ->columns([
+                TextColumn::make('rule_title')->label('Rule')
+                    ->formatStateUsing(fn (?string $state, NotificationRule $record): string => filled($state) ? $state : (\\App\\Support\\NotificationEventCatalog::event((string) $record->event_key)['label'] ?? (string) $record->event_key))
+                    ->description(fn (NotificationRule $record): ?string => $record->rule_description ?: null)
+                    ->searchable()->toggleable(),
                 TextColumn::make('event_key')
                     ->label('Event')
                     ->formatStateUsing(fn (?string $state): string => \App\Support\NotificationEventCatalog::event((string) $state)['label'] ?? (string) $state)
@@ -227,7 +234,9 @@ class NotificationRuleResource extends Resource
                         'users' => 'Selected users',
                         default => 'Not set',
                     })->toggleable(),
-                TextColumn::make('webhook.name')->label('Destination')->placeholder('—')->toggleable(),
+                TextColumn::make('webhook_id')->label('Destinations')
+                    ->formatStateUsing(fn ($state, NotificationRule $record): string => $record->webhooks->pluck('name')->filter()->implode(', ') ?: ($record->webhook?->name ?? '—'))
+                    ->wrap()->toggleable(),
                 TextColumn::make('severity')->badge()->formatStateUsing(fn (?string $state, NotificationRule $record): string => $record->channel === 'webhook' ? '—' : (string) $state)->toggleable(),
                 TextColumn::make('updated_at')->label('Last updated')->dateTime('Y-m-d H:i:s')->sortable()->toggleable(),
             ])
