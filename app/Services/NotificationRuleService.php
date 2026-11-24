@@ -14,7 +14,6 @@ class NotificationRuleService
 {
     public function __construct(
         private readonly NotificationService $notifications,
-        private readonly TeamsWebhookNotifier $teamsWebhooks,
     ) {}
 
     public function trigger(NotificationEvent|string $event, array $context = []): int
