@@ -121,6 +121,10 @@ class TeamsWebhookNotifier
             return $this->formatter->syncCompletionCard($title, $context);
         }
 
+        if ($eventKey === 'azure.sync.failed') {
+            return $this->formatter->syncFailureCard($title, $context);
+        }
+
         if ($eventKey === 'server.started') {
             return $this->formatter->serverStartedCard($title, $context);
         }
