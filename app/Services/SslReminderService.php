@@ -64,9 +64,11 @@ class SslReminderService
                 'domain' => (string) (parse_url($webUrl->url, PHP_URL_HOST) ?: $webUrl->url),
                 'certificate_expires_at' => $webUrl->ssl_expires_at->toIso8601String(),
                 'days_until_expiry' => $daysRemaining,
-                'severity' => match ((string) $rule->severity) {
-                    'critical' => 'CRITICAL',
+                'severity' => match (strtolower((string) $rule->severity)) {
+                    'reminder' => 'REMINDER',
+                    'attention' => 'ATTENTION',
                     'warning' => 'WARNING',
+                    'critical' => 'CRITICAL',
                     default => 'ATTENTION',
                 },
                 'occurred_at' => now()->toIso8601String(),
