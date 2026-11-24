@@ -116,7 +116,7 @@ class NotificationEventCatalog
         'actual_cost' => 'Actual cost', 'budget_amount' => 'Budget amount',
         'threshold_percent' => 'Threshold percentage', 'currency' => 'Currency',
         'web_url_id' => 'Web URL ID', 'url' => 'Website URL', 'domain' => 'Domain',
-        'certificate_expires_at' => 'Certificate expiry', 'days_until_expiry' => 'Days until expiry', 'ssl_reminder_threshold_days' => 'Reminder threshold (days)',
+        'certificate_expires_at' => 'Certificate expiry', 'days_until_expiry' => 'Days until expiry',
         'http_status' => 'HTTP status', 'response_time_ms' => 'Response time (ms)',
         'checked_at' => 'Last checked at', 'days_since_expiry' => 'Days since expiry',
         'previous_expires_at' => 'Previous certificate expiry', 'occurred_at' => 'Occurred at',
