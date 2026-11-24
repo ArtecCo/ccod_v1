@@ -79,7 +79,7 @@ class WebhookMessageFormatter
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
-            'size' => 'Medium',
+            'size' => 'Large',
             'wrap' => true,
         ]];
 
@@ -225,7 +225,7 @@ class WebhookMessageFormatter
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
-            'size' => 'Medium',
+            'size' => 'Large',
             'wrap' => true,
             'spacing' => 'Medium',
         ]];
@@ -304,7 +304,7 @@ class WebhookMessageFormatter
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
-            'size' => 'Medium',
+            'size' => 'Large',
             'wrap' => true,
             'spacing' => 'Medium',
         ]];
