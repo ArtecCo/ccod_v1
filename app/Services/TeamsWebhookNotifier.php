@@ -133,6 +133,10 @@ class TeamsWebhookNotifier
             return app(\App\Support\SslReminderCardFormatter::class)->format($title, $context);
         }
 
+        if ($eventKey === 'web_url.ssl.renewed') {
+            return $this->formatter->webUrlSslRenewedCard($title, $context);
+        }
+
         if (in_array($eventKey, ['web_url.down', 'web_url.recovered'], true)) {
             return $this->formatter->webUrlStatusCard($eventKey, $title, $context);
         }
