@@ -56,13 +56,12 @@ class NotificationQueueTest extends TestCase
         );
     }
 
-    public function test_ssl_expiry_rule_fields_include_threshold_and_severity(): void
+    public function test_ssl_expiry_event_exposes_classified_severity_not_classification_thresholds(): void
     {
         $fields = NotificationEventCatalog::event('web_url.ssl.expiring')['fields'];
 
-        $this->assertArrayHasKey('ssl_reminder_threshold_days', $fields);
+        $this->assertArrayNotHasKey('ssl_reminder_threshold_days', $fields);
         $this->assertArrayHasKey('severity', $fields);
-        $this->assertSame('number', $fields['ssl_reminder_threshold_days']['type']);
         $this->assertSame('enum', $fields['severity']['type']);
         $this->assertArrayHasKey('ATTENTION', $fields['severity']['values']);
         $this->assertArrayHasKey('WARNING', $fields['severity']['values']);
