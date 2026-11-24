@@ -1,19 +1,19 @@
 <?php
 
-namespace App\\Filament\\Resources\\NotificationRules\\Pages;
+namespace App\Filament\Resources\NotificationRules\Pages;
 
-use App\\Filament\\Resources\\NotificationRules\\NotificationRuleResource;
-use App\\Models\\AzureSecurityScoreClassification;
-use App\\Models\\SslReminderRule;
-use Filament\\Actions\\Action;
-use Filament\\Actions\\CreateAction;
-use Filament\\Forms\\Components\\Grid;
-use Filament\\Forms\\Components\\Repeater;
-use Filament\\Forms\\Components\\Select;
-use Filament\\Forms\\Components\\TextInput;
-use Filament\\Notifications\\Notification;
-use Filament\\Resources\\Pages\\ListRecords;
-use Illuminate\\Validation\\ValidationException;
+use App\Filament\Resources\NotificationRules\NotificationRuleResource;
+use App\Models\AzureSecurityScoreClassification;
+use App\Models\SslReminderRule;
+use Filament\Actions\Action;
+use Filament\Actions\CreateAction;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
+use Filament\Notifications\Notification;
+use Filament\Resources\Pages\ListRecords;
+use Illuminate\Validation\ValidationException;
 
 class ListNotificationRules extends ListRecords
 {
