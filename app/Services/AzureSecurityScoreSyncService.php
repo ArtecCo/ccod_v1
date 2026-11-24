@@ -119,7 +119,9 @@ class AzureSecurityScoreSyncService
                                 ->where('enabled', true)
                                 ->where('minimum_score', '<=', $currentScore)
                                 ->where('maximum_score', '>=', $currentScore)
-                                ->orderBy('minimum_score')
+                                // For adjacent inclusive ranges, the range beginning
+                                // at the shared boundary takes precedence.
+                                ->orderByDesc('minimum_score')
                                 ->first();
 
                             if ($classification !== null) {
