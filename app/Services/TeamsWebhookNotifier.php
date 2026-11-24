@@ -125,6 +125,10 @@ class TeamsWebhookNotifier
             return $this->formatter->syncFailureCard($title, $context);
         }
 
+        if (in_array($eventKey, ['web_url.down', 'web_url.recovered'], true)) {
+            return $this->formatter->webUrlStatusCard($eventKey, $title, $context);
+        }
+
         if ($eventKey === 'server.started') {
             return $this->formatter->serverStartedCard($title, $context);
         }
