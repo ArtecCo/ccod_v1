@@ -23,7 +23,7 @@ class ViewAzureSecurityAssessment extends ViewRecord
 
         $securityUrl = AzureSubscriptionResource::getUrl('view', [
             'record' => $this->record->subscription_id,
-            'tab' => 'Security',
+            'tab' => 'security',
         ]);
 
         $securityLabel = AzureSecurityAssessmentResource::getPluralModelLabel();
