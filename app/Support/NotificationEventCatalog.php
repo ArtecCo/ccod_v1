@@ -65,7 +65,7 @@ class NotificationEventCatalog
         'azure.budget.threshold_reached' => ['label' => 'Azure budget threshold reached', 'category' => 'Azure', 'fields' => ['budget_id', 'budget_name', 'subscription_id', 'subscription_name', 'actual_cost', 'budget_amount', 'threshold_percent', 'currency', 'occurred_at']],
 
         // Web URLs (7)
-        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'ssl_reminder_threshold_days', 'severity', 'occurred_at']],
+        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'severity', 'occurred_at']],
         'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
         'web_url.deactivated' => ['label' => 'Website monitoring deactivated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
         'web_url.activated' => ['label' => 'Website monitoring activated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
@@ -332,7 +332,7 @@ class NotificationEventCatalog
         $fields = [];
         foreach ($keys as $key) {
             $type = match (true) {
-                in_array($key, ['duration_seconds', 'previous_score', 'current_score', 'score_delta', 'actual_cost', 'budget_amount', 'threshold_percent', 'days_until_expiry', 'ssl_reminder_threshold_days', 'days_since_expiry', 'http_status', 'response_time_ms'], true) => 'number',
+                in_array($key, ['duration_seconds', 'previous_score', 'current_score', 'score_delta', 'actual_cost', 'budget_amount', 'threshold_percent', 'days_until_expiry', 'days_since_expiry', 'http_status', 'response_time_ms'], true) => 'number',
                 in_array($key, ['occurred_at', 'sync_started_at', 'failed_at', 'completed_at', 'expires_at', 'invitation_expires_at', 'certificate_expires_at', 'previous_expires_at', 'checked_at', 'server_boot_time', 'iis_started_at', 'php_started_at', 'mysql_started_at', 'queue_started_at'], true) => 'datetime',
                 in_array($key, ['failed_modules', 'successful_modules'], true) => 'array',
                 $key === 'report_url' || $key === 'url' => 'url',
