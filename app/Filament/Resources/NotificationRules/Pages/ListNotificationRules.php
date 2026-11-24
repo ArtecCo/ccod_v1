@@ -24,7 +24,7 @@ class ListNotificationRules extends ListRecords
             Action::make('sslReminders')
                 ->label('SSL Reminders')
                 ->icon('heroicon-o-shield-exclamation')
-                ->color('warning')
+                ->color('primary')
                 ->modalHeading('SSL Reminder Rules')
                 ->modalDescription('Set the number of days before certificate expiry and choose where each reminder is delivered. Each threshold is sent once per certificate expiry date.')
                 ->modalSubmitActionLabel('Save SSL Reminders')
