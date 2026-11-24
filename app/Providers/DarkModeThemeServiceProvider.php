@@ -29,6 +29,38 @@ class DarkModeThemeServiceProvider extends ServiceProvider
                     $css .= self::paletteCss('html.dark', $darkPalette);
                 }
 
+
+                $css .= '
+                    html .fi-in-entry a,
+                    html .fi-in-entry .prose a,
+                    html .fi-in-text a {
+                        color: var(--primary-600, #2563eb) !important;
+                        text-decoration: underline !important;
+                        text-decoration-thickness: 1px;
+                        text-underline-offset: 2px;
+                        font-weight: 600;
+                    }
+
+                    html .fi-in-entry a:hover,
+                    html .fi-in-entry .prose a:hover,
+                    html .fi-in-text a:hover {
+                        color: var(--primary-700, #1d4ed8) !important;
+                        text-decoration-thickness: 2px;
+                    }
+
+                    html.dark .fi-in-entry a,
+                    html.dark .fi-in-entry .prose a,
+                    html.dark .fi-in-text a {
+                        color: var(--primary-400, #60a5fa) !important;
+                    }
+
+                    html.dark .fi-in-entry a:hover,
+                    html.dark .fi-in-entry .prose a:hover,
+                    html.dark .fi-in-text a:hover {
+                        color: var(--primary-300, #93c5fd) !important;
+                    }
+                ';
+
                 $css .= '\n                    html .ccod-notifications__row:has(.ccod-notifications__severity--info) {
                         border-left: 4px solid var(--info-500, #3b82f6) !important;
                     }
