@@ -212,6 +212,7 @@ class NotificationRuleResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->defaultPaginationPageOption(25)
             ->defaultSort('event_key')
             ->columns([
                 TextColumn::make('rule_title')->label('Rule')
