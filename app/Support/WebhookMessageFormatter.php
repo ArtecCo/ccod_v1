@@ -178,6 +178,93 @@ class WebhookMessageFormatter
     }
 
     /**
+     * Build score-card-style status banners for website outages and recovery.
+     */
+    public function webUrlStatusCard(string $eventKey, string $title, array $context): array
+    {
+        $recovered = $eventKey === 'web_url.recovered';
+        $bannerText = $recovered ? 'RECOVERED - WEB URL' : 'ATTENTION - URL DOWN';
+        $bannerColor = $recovered ? 'Good' : 'Attention';
+        $bannerStyle = $recovered ? 'good' : 'attention';
+
+        $facts = [];
+        foreach ([
+            'url' => 'Website URL',
+            'domain' => 'Domain',
+            'http_status' => 'HTTP status',
+            'response_time_ms' => 'Response time',
+            'checked_at' => 'Last checked',
+        ] as $key => $label) {
+            $value = $context[$key] ?? null;
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $value = (string) $value;
+            if ($key === 'response_time_ms') {
+                $value .= ' ms';
+            }
+            $facts[] = ['title' => $label, 'value' => $value];
+        }
+
+        $body = [[
+            'type' => 'Container',
+            'style' => $bannerStyle,
+            'bleed' => true,
+            'spacing' => 'None',
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => $bannerText,
+                'weight' => 'Bolder',
+                'size' => 'Large',
+                'color' => $bannerColor,
+                'horizontalAlignment' => 'Center',
+                'wrap' => true,
+                'spacing' => 'Small',
+            ]],
+        ], [
+            'type' => 'TextBlock',
+            'text' => $title,
+            'weight' => 'Bolder',
+            'size' => 'Medium',
+            'wrap' => true,
+            'spacing' => 'Medium',
+        ]];
+
+        if ($facts !== []) {
+            $body[] = [
+                'type' => 'FactSet',
+                'spacing' => 'Small',
+                'facts' => $facts,
+            ];
+        }
+
+        if (! empty($context['web_url_id'])) {
+            $body[] = [
+                'type' => 'TextBlock',
+                'text' => 'Web URL ID: '.(string) $context['web_url_id'],
+                'size' => 'Small',
+                'isSubtle' => true,
+                'wrap' => true,
+                'spacing' => 'Small',
+            ];
+        }
+
+        return [
+            'type' => 'message',
+            'attachments' => [[
+                'contentType' => 'application/vnd.microsoft.card.adaptive',
+                'contentUrl' => null,
+                'content' => [
+                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    'type' => 'AdaptiveCard',
+                    'version' => '1.2',
+                    'body' => $body,
+                ],
+            ]],
+        ];
+    }
+
+    /**
      * Build a dedicated failure card with each failed module and its error separated.
      */
     public function syncFailureCard(string $title, array $context): array
