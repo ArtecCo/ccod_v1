@@ -102,7 +102,7 @@ class SubscriptionWebUrlMonitor
 
             // Configurable SSL reminders use their own threshold rules and
             // per-certificate delivery ledger, independently of the legacy 15-day event.
-            app(\\App\\Services\\SslReminderService::class)->check(
+            app(\App\Services\SslReminderService::class)->check(
                 $webUrl,
                 $previousDays === null
                     || $previousExpiry === null
