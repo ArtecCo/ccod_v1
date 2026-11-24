@@ -28,7 +28,7 @@ class ListNotificationRules extends ListRecords
                 ->modalHeading('SSL Reminder Rules')
                 ->modalDescription('Set the number of days before certificate expiry and choose where each reminder is delivered. Each threshold is sent once per certificate expiry date.')
                 ->modalSubmitActionLabel('Save SSL Reminders')
-                ->modalWidth('screen')
+                ->modalWidth('7xl')
                 ->fillForm(fn (): array => [
                     'rules' => SslReminderRule::query()->where('enabled', true)->orderBy('threshold_days')->get()
                         ->map(fn (SslReminderRule $rule): array => [
