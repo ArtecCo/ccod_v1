@@ -111,6 +111,21 @@ class AzureSecurityScoreSyncService
                             'score_delta' => $currentScore - (float) $previousScore,
                             'occurred_at' => $capturedAt->toIso8601String(),
                         ];
+
+                        // Security score ranges classify decreases only. Improvements
+                        // retain their existing unclassified event and card behavior.
+                        if ($currentScore < (float) $previousScore) {
+                            $classification = \\App\\Models\\AzureSecurityScoreClassification::query()
+                                ->where('enabled', true)
+                                ->where('minimum_score', '<=', $currentScore)
+                                ->where('maximum_score', '>=', $currentScore)
+                                ->orderBy('minimum_score')
+                                ->first();
+
+                            if ($classification !== null) {
+                                $notificationContext['severity'] = strtoupper($classification->severity);
+                            }
+                        }
                     }
                 });
 
