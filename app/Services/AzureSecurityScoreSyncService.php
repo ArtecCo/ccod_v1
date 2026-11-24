@@ -115,7 +115,7 @@ class AzureSecurityScoreSyncService
                         // Security score ranges classify decreases only. Improvements
                         // retain their existing unclassified event and card behavior.
                         if ($currentScore < (float) $previousScore) {
-                            $classification = \\App\\Models\\AzureSecurityScoreClassification::query()
+                            $classification = \App\Models\AzureSecurityScoreClassification::query()
                                 ->where('enabled', true)
                                 ->where('minimum_score', '<=', $currentScore)
                                 ->where('maximum_score', '>=', $currentScore)
