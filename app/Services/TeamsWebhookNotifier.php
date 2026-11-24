@@ -222,7 +222,7 @@ class TeamsWebhookNotifier
             return $this->formatter->syncFailureCard($title, $context);
         }
 
-        if ($eventKey === 'web_url.ssl.expiring' && isset($context['ssl_reminder_severity'])) {
+        if ($eventKey === 'web_url.ssl.expiring') {
             return app(\App\Support\SslReminderCardFormatter::class)->format($title, $context);
         }
 
@@ -260,8 +260,9 @@ class TeamsWebhookNotifier
                 // classification range. Never infer Warning/Critical from a
                 // hard-coded score threshold or invent a fallback severity.
                 $classification = match ($severityValue) {
-                    'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'warning', 'color' => 'Warning'],
-                    'WARNING' => ['label' => 'WARNING', 'style' => 'attention', 'color' => 'Attention'],
+                    'REMINDER' => ['label' => 'REMINDER', 'style' => 'warning', 'color' => 'Warning'],
+                    'ATTENTION' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                    'WARNING' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
                     'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                     default => null,
                 };
@@ -269,8 +270,9 @@ class TeamsWebhookNotifier
                 $classification = $eventKey === 'web_url.ssl.expired'
                     ? ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention']
                     : match ($severityValue) {
-                        'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'warning', 'color' => 'Warning'],
-                        'WARNING' => ['label' => 'WARNING', 'style' => 'attention', 'color' => 'Attention'],
+                        'REMINDER' => ['label' => 'REMINDER', 'style' => 'warning', 'color' => 'Warning'],
+                        'ATTENTION' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                        'WARNING' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
                         'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                         default => null,
                     };
