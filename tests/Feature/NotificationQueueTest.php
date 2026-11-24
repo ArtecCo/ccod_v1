@@ -39,7 +39,7 @@ class NotificationQueueTest extends TestCase
 
         $this->assertSame(1, $queued);
         Queue::assertPushed(SendQueuedNotifications::class, function (SendQueuedNotifications $job) use ($user): bool {
-            return $job->notifiables->contains(fn ($notifiable): bool => (int) $notifiable->getKey() === (int) $user->id)
+            return collect($job->notifiables)->contains(fn ($notifiable): bool => (int) $notifiable->getKey() === (int) $user->id)
                 && $job->notification instanceof ClientPortalNotification;
         });
     }
