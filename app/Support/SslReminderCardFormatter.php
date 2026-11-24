@@ -8,9 +8,9 @@ class SslReminderCardFormatter
     {
         $severity = strtolower((string) ($context['ssl_reminder_severity'] ?? 'reminder'));
         $presentation = match ($severity) {
-            'critical' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
-            'warning' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
-            default => ['label' => 'REMINDER', 'style' => 'warning', 'color' => 'Warning'],
+            'critical' => ['label' => '🔴 CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+            'warning' => ['label' => '🟠 WARNING', 'style' => 'attention', 'color' => 'Warning'],
+            default => ['label' => '🟡 REMINDER', 'style' => 'warning', 'color' => 'Warning'],
         };
 
         $facts = [];
