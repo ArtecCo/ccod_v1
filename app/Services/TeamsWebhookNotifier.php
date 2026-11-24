@@ -134,9 +134,10 @@ class TeamsWebhookNotifier
 
             // First element is the status banner or card title.
             // The title/details follow with the same Medium/Small rhythm as SSL renewed.
-            $element['spacing'] = match ($index) {
-                0 => 'None',
-                1 => 'Medium',
+            $element['spacing'] = match (true) {
+                $index === 0 => 'None',
+                $index === 1 && (($payload['attachments'][0]['content']['body'][0]['type'] ?? null) === 'Container') => 'Medium',
+                $index === 1 && in_array($element['type'] ?? null, ['Container', 'FactSet'], true) => 'Medium',
                 default => 'Small',
             };
         }
