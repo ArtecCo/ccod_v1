@@ -253,38 +253,60 @@ class TeamsWebhookNotifier
 
         if ($severityCategory !== null) {
             $improvement = $eventKey === 'azure.security_score.improved';
+            $severityValue = strtoupper((string) ($context['severity'] ?? ''));
 
             if ($severityCategory === 'Security score' && ! $improvement) {
-                $critical = (float) ($context['current_score'] ?? 0) < 0.8;
-            } elseif ($severityCategory === 'SSL') {
-                $critical = $eventKey === 'web_url.ssl.expired';
+                // Security Score decrease cards must reflect the configured
+                // classification range. Never infer Warning/Critical from a
+                // hard-coded score threshold or invent a fallback severity.
+                $classification = match ($severityValue) {
+                    'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
+                    'WARNING' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                    'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+                    default => null,
+                };
+            } elseif ($severityCategory === 'SSL CERTIFICATE') {
+                $classification = $eventKey === 'web_url.ssl.expired'
+                    ? ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention']
+                    : match ($severityValue) {
+                        'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
+                        'WARNING' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                        'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+                        default => null,
+                    };
             } else {
-                $severityValue = strtoupper((string) ($context['severity'] ?? ''));
                 $critical = in_array($severityValue, ['CRITICAL', 'HIGH', 'SEV0', 'SEV1', '0', '1'], true)
                     || $eventKey === 'azure.critical_alert.detected';
+                $classification = [
+                    'label' => $critical ? 'CRITICAL' : 'WARNING',
+                    'style' => $critical ? 'attention' : 'warning',
+                    'color' => $critical ? 'Attention' : 'Warning',
+                ];
             }
 
-            $body[] = [
-                'type' => 'Container',
-                'style' => $improvement ? 'good' : ($critical ? 'attention' : 'warning'),
-                'bleed' => true,
-                'spacing' => 'None',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $improvement
-                        ? 'IMPROVEMENT - Security Score'
-                        : (($critical ? 'CRITICAL' : 'WARNING').' - '.$severityCategory),
-                    'weight' => 'Bolder',
-                    'size' => 'Large',
-                    'color' => $improvement ? 'Good' : ($critical ? 'Attention' : 'Warning'),
-                    'horizontalAlignment' => 'Center',
-                    'wrap' => false,
-                    'spacing' => 'Small',
-                ]],
-            ];
-            // Keep the severity banner before the existing title and message.
-            $banner = array_pop($body);
-            array_unshift($body, $banner);
+            if ($improvement || $classification !== null) {
+                $body[] = [
+                    'type' => 'Container',
+                    'style' => $improvement ? 'good' : $classification['style'],
+                    'bleed' => true,
+                    'spacing' => 'None',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => $improvement
+                            ? 'IMPROVEMENT - Security Score'
+                            : ($classification['label'].' - '.$severityCategory),
+                        'weight' => 'Bolder',
+                        'size' => 'Large',
+                        'color' => $improvement ? 'Good' : $classification['color'],
+                        'horizontalAlignment' => 'Center',
+                        'wrap' => false,
+                        'spacing' => 'Small',
+                    ]],
+                ];
+                // Keep the existing banner position and Adaptive Card structure.
+                $banner = array_pop($body);
+                array_unshift($body, $banner);
+            }
         }
 
         return [
