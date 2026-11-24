@@ -124,7 +124,7 @@ class NotificationRuleResource extends Resource
                             ->required(fn ($get): bool => $get('channel') === 'in_app' && in_array($get('recipient_type'), ['user_groups', 'users'], true)),
                         Select::make('webhook_ids')->label('Saved webhook destinations')->multiple()
                             ->options(fn (): array => TeamsWebhook::query()->where('enabled', true)->orderBy('name')->get()->mapWithKeys(fn (TeamsWebhook $webhook): array => [
-                                $webhook->id => $webhook->name . ($webhook->description ? ' — ' . $webhook->description : ''),
+                                $webhook->id => $webhook->name,
                             ])->all())
                             ->searchable()->columnSpanFull()
                             ->required(fn ($get): bool => $get('channel') === 'webhook')
