@@ -194,7 +194,7 @@ class SubscriptionWebUrlMonitor
                 $info = curl_getinfo($handle);
                 $httpStatus = (int) ($info['http_code'] ?? 0);
 
-                $webUrl->is_live = $httpStatus >= 100 && $httpStatus < 500;
+                $webUrl->is_live = $this->isHealthyStatus($httpStatus);
                 $webUrl->http_status = $httpStatus > 0 ? $httpStatus : null;
                 $webUrl->response_time_ms = (int) round((microtime(true) - $entry['started']) * 1000);
                 $webUrl->last_check_error = $error !== '' ? $error : null;
@@ -263,7 +263,7 @@ class SubscriptionWebUrlMonitor
             $webUrl->response_time_ms = (int) round((microtime(true) - $startedAt) * 1000);
             $status = (int) ($info['http_code'] ?? 0);
             $webUrl->http_status = $status > 0 ? $status : null;
-            $webUrl->is_live = $status >= 100 && $status < 500;
+            $webUrl->is_live = $this->isHealthyStatus($status);
             $webUrl->last_check_error = $error !== '' ? $error : null;
 
             $certificatePem = $this->extractLeafCertificate($certificates);
@@ -293,7 +293,7 @@ class SubscriptionWebUrlMonitor
                 ->get($webUrl->url);
 
             $status = $response->status();
-            $webUrl->is_live = $status >= 100 && $status < 500;
+            $webUrl->is_live = $this->isHealthyStatus($status);
             $webUrl->http_status = $status;
             $webUrl->response_time_ms = (int) round((microtime(true) - $startedAt) * 1000);
             $webUrl->last_check_error = null;
@@ -305,6 +305,16 @@ class SubscriptionWebUrlMonitor
             $webUrl->last_check_error = $exception->getMessage();
             $this->clearSslData($webUrl);
         }
+    }
+
+    /**
+     * Treat successful 2xx responses and expected authentication challenges as healthy.
+     * The supplied status must be the final response after following redirects.
+     */
+    private function isHealthyStatus(int $status): bool
+    {
+        return ($status >= 200 && $status < 300)
+            || in_array($status, [401, 403, 407, 511], true);
     }
 
     private function extractLeafCertificate(mixed $certificates): ?string
