@@ -84,6 +84,8 @@ class ListNotificationRules extends ListRecords
                             ['threshold_days' => $threshold],
                             [
                                 'severity' => $severity,
+                                // Keep the legacy non-null JSON column populated; destinations now live in Notification Rules.
+                                'webhook_ids' => [],
                                 'enabled' => true,
                             ],
                         );
