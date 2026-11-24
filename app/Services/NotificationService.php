@@ -76,9 +76,18 @@ class NotificationService
                     }
                 });
 
+            $audience = $allUsers ? 'all' : ($teamIds !== [] && $selectedUserIds !== [] ? 'teams_and_users' : ($teamIds !== [] ? 'teams' : ($selectedUserIds !== [] ? 'users' : 'none')));
+
             $this->auditLogger->log(
                 event: 'Notification Queued',
-                description: sprintf('Client portal notification "%s" queued for %d active user(s).', $title, $queued),
+                description: sprintf(
+                    'Client portal notification "%s": audience=%s; selected user IDs=%d; matched active recipients=%d; queued=%d.',
+                    $title,
+                    $audience,
+                    count($selectedUserIds),
+                    $recipientCount,
+                    $queued,
+                ),
                 success: true,
                 properties: [
                     'type' => $type,
