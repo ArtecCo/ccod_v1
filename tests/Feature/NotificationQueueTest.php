@@ -68,7 +68,18 @@ class NotificationQueueTest extends TestCase
         $this->assertArrayHasKey('CRITICAL', $fields['severity']['values']);
     }
 
-    public function test_security_score_improvement_event_has_no_severity_classification_field(): void
+    public function test_security_score_decrease_event_exposes_classified_severity_condition(): void
+    {
+        $fields = NotificationEventCatalog::event('azure.security_score.decreased')['fields'];
+
+        $this->assertArrayHasKey('severity', $fields);
+        $this->assertSame('enum', $fields['severity']['type']);
+        $this->assertArrayHasKey('ATTENTION', $fields['severity']['values']);
+        $this->assertArrayHasKey('WARNING', $fields['severity']['values']);
+        $this->assertArrayHasKey('CRITICAL', $fields['severity']['values']);
+    }
+
+    public function test_security_score_improvement_event_remains_unclassified(): void
     {
         $fields = NotificationEventCatalog::event('azure.security_score.improved')['fields'];
 
