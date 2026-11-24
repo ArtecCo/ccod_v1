@@ -31,6 +31,17 @@ class SendNotification extends Page implements HasForms
 
     public ?array $data = [];
 
+    public function mount(): void
+    {
+        $this->form->fill([
+            'audience' => 'all',
+            'team_ids' => [],
+            'user_ids' => [],
+            'type' => 'general',
+            'severity' => 'info',
+        ]);
+    }
+
     public function form(Schema $schema): Schema
     {
         return $schema
