@@ -122,26 +122,83 @@ class TeamsWebhookNotifier
      */
     private function applyStandardCardSpacing(array $payload): array
     {
+        $bodyPath = ['attachments', 0, 'content', 'body'];
         if (! isset($payload['attachments'][0]['content']['body'])
             || ! is_array($payload['attachments'][0]['content']['body'])) {
             return $payload;
         }
 
-        foreach ($payload['attachments'][0]['content']['body'] as $index => &$element) {
+        $body = $payload['attachments'][0]['content']['body'];
+
+        // Generic event cards contain their details as Markdown in one TextBlock.
+        // Convert labelled lines to FactSet rows so they use the same readable
+        // label/value spacing as the SSL-renewed reference card.
+        foreach ($body as $index => $element) {
+            if (($element['type'] ?? null) !== 'TextBlock' || $index < 2) {
+                continue;
+            }
+
+            $text = (string) ($element['text'] ?? '');
+            $lines = preg_split('/\\r?\\n/', $text) ?: [];
+            $facts = [];
+            $testNote = [];
+
+            foreach ($lines as $line) {
+                $line = trim($line);
+                if ($line === '') {
+                    continue;
+                }
+
+                if (preg_match('/^\\*\\*(.+?):\\*\\*\\s*(.*)$/u', $line, $matches) === 1) {
+                    $facts[] = [
+                        'title' => trim($matches[1]),
+                        'value' => trim($matches[2]),
+                    ];
+                } else {
+                    $testNote[] = trim($line, "*_ ");
+                }
+            }
+
+            if ($facts === []) {
+                continue;
+            }
+
+            $replacement = [[
+                'type' => 'FactSet',
+                'spacing' => 'Small',
+                'facts' => $facts,
+            ]];
+
+            if ($testNote !== []) {
+                $replacement[] = [
+                    'type' => 'TextBlock',
+                    'text' => implode("\\n", $testNote),
+                    'size' => 'Small',
+                    'isSubtle' => true,
+                    'wrap' => true,
+                    'spacing' => 'Small',
+                ];
+            }
+
+            array_splice($body, $index, 1, $replacement);
+            break;
+        }
+
+        foreach ($body as $index => &$element) {
             if (! is_array($element)) {
                 continue;
             }
 
-            // First element is the status banner or card title.
-            // The title/details follow with the same Medium/Small rhythm as SSL renewed.
-            $element['spacing'] = match (true) {
-                $index === 0 => 'None',
-                $index === 1 && (($payload['attachments'][0]['content']['body'][0]['type'] ?? null) === 'Container') => 'Medium',
-                $index === 1 && in_array($element['type'] ?? null, ['Container', 'FactSet'], true) => 'Medium',
+            // Match the SSL-renewed card: banner, event heading, then details.
+            $element['spacing'] = match ($index) {
+                0 => 'None',
+                1 => 'Medium',
                 default => 'Small',
             };
         }
         unset($element);
+
+        $payload['attachments'][0]['content']['body'] = $body;
 
         return $payload;
     }
