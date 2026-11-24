@@ -54,7 +54,6 @@ class SubscriptionWebUrl extends Model
         'url',
         'url_hash',
         'is_active',
-        'use_proxy',
         'is_live',
         'http_status',
         'response_time_ms',
@@ -71,7 +70,6 @@ class SubscriptionWebUrl extends Model
 
     protected $casts = [
         'is_active' => 'boolean',
-        'use_proxy' => 'boolean',
         'is_live' => 'boolean',
         'ssl_status' => 'boolean',
         'ssl_valid_from' => 'datetime',
