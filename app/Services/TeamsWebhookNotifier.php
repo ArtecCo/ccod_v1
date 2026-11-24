@@ -154,7 +154,7 @@ class TeamsWebhookNotifier
             in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true) => 'Security score',
             in_array($eventKey, ['azure.alert.detected', 'azure.critical_alert.detected'], true) => 'Alert',
             in_array($eventKey, ['azure.recommendation.detected', 'azure.recommendation.removed'], true) => 'Security recommendation',
-            in_array($eventKey, ['web_url.ssl.expiring', 'web_url.ssl.expired'], true) => 'SSL',
+            in_array($eventKey, ['web_url.ssl.expiring', 'web_url.ssl.expired'], true) => 'SSL CERTIFICATE',
             default => null,
         };
 
