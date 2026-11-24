@@ -57,7 +57,7 @@
         .dark .ccod-notifications__severity--success { background:rgba(22,163,74,.16); color:rgb(74 222 128); }
         .dark .ccod-notifications__severity--warning { background:rgba(217,119,6,.16); color:rgb(251 191 36); }
         .dark .ccod-notifications__severity--critical { background:rgba(220,38,38,.16); color:rgb(248 113 113); }
-        .ccod-notifications__action { color:rgb(217 119 6); font-size:.875rem; font-weight:700; }
+        .ccod-notifications__action { margin-left:auto; color:rgb(217 119 6); font-size:.875rem; font-weight:700; white-space:nowrap; }
         .dark .ccod-notifications__action { color:rgb(251 191 36); }
         .ccod-notifications__footer { display:flex; align-items:center; gap:.4rem; margin-top:.75rem; color:rgb(107 114 128); font-size:.75rem; }
         .dark .ccod-notifications__footer { color:rgb(156 163 175); }
@@ -92,7 +92,7 @@
 
             <div x-show="!loading && notifications.length > 0">
                 <template x-for="notification in notifications" :key="notification.id">
-                    <button type="button" class="ccod-notifications__row" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="openNotification(notification)">
+                    <div class="ccod-notifications__row" role="button" tabindex="0" x-bind:class="notification.read_at ? '' : 'ccod-notifications__row--unread'" x-on:click="markNotificationRead(notification)" x-on:keydown.enter="markNotificationRead(notification)">
                         <div class="ccod-notifications__icon" x-bind:class="notification.read_at ? '' : 'ccod-notifications__icon--' + (notification.data.severity || 'info')">
                             <span x-show="notification.data.type === 'general'"><x-filament::icon icon="heroicon-o-bell" class="h-5 w-5" /></span>
                             <span x-show="notification.data.type === 'announcement'"><x-filament::icon icon="heroicon-o-megaphone" class="h-5 w-5" /></span>
@@ -113,10 +113,13 @@
                             <div class="ccod-notifications__meta">
                                 <span class="ccod-notifications__type" x-text="formatType(notification.data.type)"></span>
                                 <span class="ccod-notifications__severity" x-bind:class="'ccod-notifications__severity--' + (notification.data.severity === 'danger' ? 'critical' : (notification.data.severity || 'info'))" x-text="formatSeverity(notification.data.severity)"></span>
-                                <span x-show="notification.data.action_url" class="ccod-notifications__action" x-text="(notification.data.action_label || 'Open') + ' →'"></span>
+                                <button type="button" x-show="notification.data.action_url" class="ccod-notifications__action" x-on:click.stop="openNotificationAction(notification)">
+                                    <span x-text="notification.data.action_label || 'Open'"></span>
+                                    <span aria-hidden="true">→</span>
+                                </button>
                             </div>
                         </div>
-                    </button>
+                    </div>
                 </template>
             </div>
         </div>
@@ -184,11 +187,8 @@
                 }
             },
 
-            async openNotification(notification) {
-                if (notification.read_at) {
-                    if (notification.data.action_url) window.location.href = notification.data.action_url;
-                    return;
-                }
+            async markNotificationRead(notification) {
+                if (notification.read_at) return;
                 try {
                     const response = await fetch('{{ url('/notifications') }}/' + notification.id + '/read', {
                         method: 'POST',
@@ -201,10 +201,14 @@
                     if (!response.ok) throw new Error('Notification update failed.');
                     notification.read_at = new Date().toISOString();
                     this.unreadCount = Math.max(0, this.unreadCount - 1);
-                    if (notification.data.action_url) window.location.href = notification.data.action_url;
                 } catch (error) {
                     console.error(error);
                 }
+            },
+
+            async openNotificationAction(notification) {
+                await this.markNotificationRead(notification);
+                if (notification.data.action_url) window.location.href = notification.data.action_url;
             },
 
             async markAllRead() {

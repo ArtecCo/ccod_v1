@@ -57,7 +57,9 @@ class AzureSecurityScoreSyncService
 
                 // Retain one snapshot per subscription and initiative per calendar day.
                 // A later scan on the same day replaces the earlier snapshot.
-                DB::transaction(function () use ($subscription, $attributes, $capturedAt, $dayStart, $dayEnd, &$stats): void {
+                $notificationContext = null;
+
+                DB::transaction(function () use ($subscription, $attributes, $capturedAt, $dayStart, $dayEnd, &$stats, &$notificationContext): void {
                     $dailySnapshots = AzureSecurityScore::query()
                         ->where('subscription_id', $subscription)
                         ->where('initiative_name', $attributes['initiative_name'])
@@ -66,6 +68,17 @@ class AzureSecurityScoreSyncService
                         ->lockForUpdate()
                         ->get();
                     $existing = $dailySnapshots->first();
+                    $previousScore = $existing?->percentage_score;
+
+                    if ($previousScore === null) {
+                        $previousScore = AzureSecurityScore::query()
+                            ->where('subscription_id', $subscription)
+                            ->where('initiative_name', $attributes['initiative_name'])
+                            ->where('captured_at', '<', $dayStart)
+                            ->orderByDesc('captured_at')
+                            ->value('percentage_score');
+                    }
+
                     if ($existing === null) {
                         AzureSecurityScore::query()->create([
                             ...$attributes,
@@ -87,7 +100,30 @@ class AzureSecurityScoreSyncService
                         ])->saveQuietly();
                         $stats['updated']++;
                     }
+
+                    $currentScore = (float) $attributes['percentage_score'];
+                    if ($previousScore !== null && (float) $previousScore !== $currentScore) {
+                        $notificationContext = [
+                            'subscription_id' => $subscription,
+                            'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscription)->value('display_name'),
+                            'previous_score' => (float) $previousScore,
+                            'current_score' => $currentScore,
+                            'score_delta' => $currentScore - (float) $previousScore,
+                            'occurred_at' => $capturedAt->toIso8601String(),
+                        ];
+                    }
                 });
+
+                if ($notificationContext !== null) {
+                    try {
+                        $event = $notificationContext['score_delta'] < 0
+                            ? 'azure.security_score.decreased'
+                            : 'azure.security_score.improved';
+                        app(NotificationRuleService::class)->trigger($event, $notificationContext);
+                    } catch (\Throwable $exception) {
+                        report($exception);
+                    }
+                }
             }
 
             // Keep seven calendar days of score snapshots for the subscription.

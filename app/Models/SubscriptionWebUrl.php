@@ -2,11 +2,51 @@
 
 namespace App\Models;
 
+use App\Services\NotificationRuleService;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Throwable;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class SubscriptionWebUrl extends Model
 {
+    protected static function booted(): void
+    {
+        static::created(function (self $webUrl): void {
+            if ($webUrl->is_active) {
+                $webUrl->dispatchMonitoringLifecycleEvent('web_url.activated');
+            }
+        });
+
+        static::updated(function (self $webUrl): void {
+            if ($webUrl->wasChanged('is_active')) {
+                $webUrl->dispatchMonitoringLifecycleEvent(
+                    $webUrl->is_active ? 'web_url.activated' : 'web_url.deactivated',
+                );
+            }
+        });
+    }
+
+    private function dispatchMonitoringLifecycleEvent(string $event): void
+    {
+        $context = [
+            'web_url_id' => (int) $this->getKey(),
+            'url' => (string) $this->url,
+            'domain' => (string) (parse_url($this->url, PHP_URL_HOST) ?: $this->url),
+            'subscription_id' => (string) $this->subscription_id,
+            'subscription_name' => $this->subscription?->display_name,
+            'occurred_at' => now()->toIso8601String(),
+        ];
+
+        DB::afterCommit(static function () use ($event, $context): void {
+            try {
+                app(NotificationRuleService::class)->trigger($event, $context);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+        });
+    }
+
     protected $table = 'subscription_web_urls';
 
     protected $fillable = [

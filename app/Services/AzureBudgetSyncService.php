@@ -46,24 +46,37 @@ class AzureBudgetSyncService
             $currentSpend = is_array($properties['currentSpend'] ?? null) ? $properties['currentSpend'] : [];
             $forecastSpend = is_array($properties['forecastSpend'] ?? null) ? $properties['forecastSpend'] : [];
 
-            AzureBudget::query()->updateOrCreate(
-                [
-                    'subscription_id' => $subscription->subscription_id,
-                    'budget_name' => $name,
-                ],
-                [
-                    'amount' => is_numeric($properties['amount'] ?? null) ? (float) $properties['amount'] : 0,
-                    'currency' => $this->stringOrNull($currentSpend['unit'] ?? $properties['unit'] ?? null),
-                    'current_spend' => is_numeric($currentSpend['amount'] ?? null) ? (float) $currentSpend['amount'] : 0,
-                    'forecast_spend' => is_numeric($forecastSpend['amount'] ?? null) ? (float) $forecastSpend['amount'] : null,
-                    'time_grain' => $this->stringOrNull($properties['timeGrain'] ?? null),
-                    // Microsoft.Consumption uses startDate/endDate in BudgetTimePeriod.
-                    // Keep the fallback keys for compatibility with any older response shape.
-                    'start_date' => $this->dateOrNull($timePeriod['startDate'] ?? $timePeriod['start'] ?? null),
-                    'end_date' => $this->dateOrNull($timePeriod['endDate'] ?? $timePeriod['end'] ?? null),
-                    'fetched_at' => now(),
-                ],
-            );
+            $attributes = [
+                'amount' => is_numeric($properties['amount'] ?? null) ? (float) $properties['amount'] : 0,
+                'currency' => $this->stringOrNull($currentSpend['unit'] ?? $properties['unit'] ?? null),
+                'current_spend' => is_numeric($currentSpend['amount'] ?? null) ? (float) $currentSpend['amount'] : 0,
+                'forecast_spend' => is_numeric($forecastSpend['amount'] ?? null) ? (float) $forecastSpend['amount'] : null,
+                'time_grain' => $this->stringOrNull($properties['timeGrain'] ?? null),
+                // Microsoft.Consumption uses startDate/endDate in BudgetTimePeriod.
+                // Keep the fallback keys for compatibility with any older response shape.
+                'start_date' => $this->dateOrNull($timePeriod['startDate'] ?? $timePeriod['start'] ?? null),
+                'end_date' => $this->dateOrNull($timePeriod['endDate'] ?? $timePeriod['end'] ?? null),
+                'fetched_at' => now(),
+            ];
+
+            $budget = AzureBudget::query()->firstOrNew([
+                'subscription_id' => $subscription->subscription_id,
+                'budget_name' => $name,
+            ]);
+            $previousContext = $budget->exists ? $this->thresholdContext($budget, $subscription) : null;
+
+            $budget->fill($attributes);
+            $budget->save();
+
+            $currentContext = $this->thresholdContext($budget, $subscription);
+            $rules = app(NotificationRuleService::class);
+
+            if (
+                $rules->configuredRuleMatches('azure.budget.threshold_reached', $currentContext)
+                && ($previousContext === null || ! $rules->configuredRuleMatches('azure.budget.threshold_reached', $previousContext))
+            ) {
+                $rules->trigger('azure.budget.threshold_reached', $currentContext);
+            }
 
             $seen[] = $name;
         }
@@ -76,6 +89,24 @@ class AzureBudgetSyncService
         }
 
         return count($seen);
+    }
+
+    private function thresholdContext(AzureBudget $budget, AzureSubscription $subscription): array
+    {
+        $amount = (float) $budget->amount;
+        $spend = (float) $budget->current_spend;
+
+        return [
+            'budget_id' => (int) $budget->getKey(),
+            'budget_name' => (string) $budget->budget_name,
+            'subscription_id' => (string) $budget->subscription_id,
+            'subscription_name' => (string) $subscription->display_name,
+            'actual_cost' => $spend,
+            'budget_amount' => $amount,
+            'threshold_percent' => $amount > 0 ? round(($spend / $amount) * 100, 2) : 0,
+            'currency' => (string) ($budget->currency ?? ''),
+            'occurred_at' => now()->toIso8601String(),
+        ];
     }
 
     private function dateOrNull(mixed $value): ?string

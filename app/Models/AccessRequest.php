@@ -22,6 +22,8 @@ class AccessRequest extends Model
         'reason',
         'duration',
         'requested_until',
+        'original_duration',
+        'original_requested_until',
         'status',
         'decided_by_type',
         'decided_by_id',
@@ -44,8 +46,10 @@ class AccessRequest extends Model
         return [
             'target_type' => AccessRequestTargetType::class,
             'duration' => AccessRequestDuration::class,
+            'original_duration' => AccessRequestDuration::class,
             'status' => AccessRequestStatus::class,
             'requested_until' => 'datetime',
+            'original_requested_until' => 'datetime',
             'decided_at' => 'datetime',
         ];
     }

@@ -6,13 +6,54 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use App\Services\MandatoryNotificationService;
+use App\Services\NotificationRuleService;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Project extends Model
 {
     use HasFactory;
 
     protected $fillable = ['name','description','business_unit_id'];
+
+    private array $notificationGroupIdsBeforeDelete = [];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (self $project): void {
+            $project->notificationGroupIdsBeforeDelete = $project->userGroups()
+                ->pluck('user_groups.id')
+                ->map(fn ($id): int => (int) $id)
+                ->all();
+        });
+
+        static::deleted(function (self $project): void {
+            try {
+                app(NotificationRuleService::class)->trigger('project.deleted', [
+                    'project_id' => (int) $project->getKey(),
+                    'project_name' => (string) $project->name,
+                    'business_unit_id' => $project->business_unit_id ? (int) $project->business_unit_id : null,
+                ]);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+
+            $groupIds = $project->notificationGroupIdsBeforeDelete;
+
+            if ($groupIds === []) {
+                return;
+            }
+
+            DB::afterCommit(static function () use ($groupIds, $project): void {
+                $service = app(MandatoryNotificationService::class);
+
+                foreach (UserGroup::query()->whereKey($groupIds)->get() as $group) {
+                    $service->groupProjectChanged($group, $project, false);
+                }
+            });
+        });
+    }
 
     public function businessUnit(): BelongsTo { return $this->belongsTo(BusinessUnit::class); }
     public function subscriptionAssignments(): HasMany { return $this->hasMany(ProjectSubscription::class); }

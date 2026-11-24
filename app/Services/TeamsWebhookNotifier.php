@@ -2,159 +2,67 @@
 
 namespace App\Services;
 
+use App\Models\NotificationRule;
 use App\Models\TeamsWebhook;
-use App\Support\TeamsWebhookEvents;
 use App\Support\NotificationEventCatalog;
+use App\Support\WebhookMessageFormatter;
 use Illuminate\Support\Facades\Http;
+use RuntimeException;
 use Throwable;
 
 class TeamsWebhookNotifier
 {
-    public function sendServerStart(array $context): void
-    {
-        $this->dispatch('server.started', $context);
-    }
-
-    public function sendSyncStatus(array $context): void
-    {
-        $this->dispatch('sync.completed', $context);
-    }
+    public function __construct(
+        private readonly WebhookMessageFormatter $formatter,
+    ) {}
 
     /**
-     * Dispatch a named CCOD event to every enabled destination subscribed to it.
-     * Producers do not know about categories, templates, URLs or message formats.
+     * Deliver a queued rule using the message format defined in application code.
+     *
+     * Exceptions are deliberately allowed to escape so Laravel can retry the job.
      */
-    public function dispatch(string $eventKey, array $context = []): int
+    public function deliverQueuedRule(TeamsWebhook $webhook, string $eventKey, array $context = []): void
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
             'event_key' => $eventKey,
-            'event_label' => TeamsWebhookEvents::options()[$eventKey] ?? $eventKey,
+            'event_label' => NotificationEventCatalog::event($eventKey)['label'] ?? $eventKey,
         ]);
 
-        $sent = 0;
-
-        TeamsWebhook::query()
-            ->where('enabled', true)
-            ->whereJsonContains('event_keys', $eventKey)
-            ->with('template')
-            ->orderBy('id')
-            ->chunkById(100, function ($webhooks) use ($context, &$sent): void {
-                foreach ($webhooks as $webhook) {
-                    if (! $this->matchesConditions($webhook, $context)) {
-                        continue;
-                    }
-
-                    if ($this->deliver($webhook, $context)) {
-                        $sent++;
-                    }
-                }
-            });
-
-        return $sent;
-    }
-
-    public function sendTest(TeamsWebhook $webhook): bool
-    {
-        $eventKey = NotificationEventCatalog::normalizeKeys($webhook->event_keys)[0] ?? 'server.started';
-        $context = TeamsWebhookEvents::sampleContext($eventKey);
-
-        return $this->deliver($webhook, $context);
-    }
-
-    private function matchesConditions(TeamsWebhook $webhook, array $context): bool
-    {
-        $conditions = $webhook->conditions ?? [];
-
-        if ($conditions === []) {
-            return true;
+        if (! $webhook->enabled) {
+            return;
         }
 
-        $results = [];
-        foreach ($conditions as $condition) {
-            $field = trim((string) ($condition['field'] ?? ''));
-            if ($field !== '' && ! array_key_exists($field, NotificationEventCatalog::fieldsForEvents([$context['event_key'] ?? '']))) {
-                $results[] = false;
-                continue;
-            }
-            $operator = $condition['operator'] ?? 'equals';
-            $expected = $condition['value'] ?? $condition['value_text'] ?? null;
-            $actual = $field !== '' ? data_get($context, $field) : null;
-            $actualString = is_bool($actual) ? ($actual ? 'true' : 'false') : (is_scalar($actual) ? mb_strtolower((string) $actual) : '');
-            $expectedString = is_scalar($expected) ? mb_strtolower((string) $expected) : '';
-
-            $results[] = match ($operator) {
-                'equals' => $actual !== null && $actualString === $expectedString,
-                'not_equals' => $actual !== null && $actualString !== $expectedString,
-                'contains' => is_array($actual)
-                    ? in_array($expected, $actual, true)
-                    : ($actual !== null && str_contains($actualString, $expectedString)),
-                'not_contains' => is_array($actual)
-                    ? ! in_array($expected, $actual, true)
-                    : ($actual !== null && ! str_contains($actualString, $expectedString)),
-                'greater_than' => $this->compareValues($actual, $expected, 'greater_than'),
-                'greater_or_equal' => $this->compareValues($actual, $expected, 'greater_or_equal'),
-                'less_than' => $this->compareValues($actual, $expected, 'less_than'),
-                'less_or_equal' => $this->compareValues($actual, $expected, 'less_or_equal'),
-                'in' => $actual !== null && (function () use ($actual, $actualString, $expected): bool {
-                    $expectedValues = is_array($expected)
-                        ? $expected
-                        : explode(',', (string) $expected);
-                    $expectedValues = array_map(
-                        static fn ($value): string => mb_strtolower(trim((string) $value)),
-                        $expectedValues,
-                    );
-
-                    if (is_array($actual)) {
-                        $actualValues = array_map(
-                            static fn ($value): string => mb_strtolower(trim((string) $value)),
-                            $actual,
-                        );
-
-                        return count(array_intersect($actualValues, $expectedValues)) > 0;
-                    }
-
-                    return in_array($actualString, $expectedValues, true);
-                })(),
-                'exists' => $actual !== null,
-                'not_exists' => $actual === null,
-                default => false,
-            };
-        }
-
-        return ($webhook->condition_mode ?? 'all') === 'any'
-            ? in_array(true, $results, true)
-            : ! in_array(false, $results, true);
+        $this->deliver($webhook, $eventKey, $context);
     }
 
-    private function compareValues(mixed $actual, mixed $expected, string $operator): bool
+    /**
+     * Queue a test delivery; the Filament action reports that it was queued,
+     * not that Teams has already accepted it.
+     */
+    public function queueRuleTest(NotificationRule $rule): bool
     {
-        if ($actual === null || $expected === null) {
+        $rule->loadMissing('webhook');
+        $webhook = $rule->webhook;
+
+        if (! $webhook || ! $webhook->enabled) {
             return false;
         }
 
-        if (is_numeric($actual) && is_numeric($expected)) {
-            $left = (float) $actual;
-            $right = (float) $expected;
-        } else {
-            $left = strtotime((string) $actual);
-            $right = strtotime((string) $expected);
+        $eventKey = (string) ($rule->getRawOriginal('event_key') ?: $rule->event_key);
+        $context = NotificationEventCatalog::sampleContext($eventKey);
+        $context['is_test'] = true;
 
-            if ($left === false || $right === false) {
-                return false;
-            }
-        }
+        \App\Jobs\DeliverTeamsWebhookNotification::dispatch(
+            (int) $webhook->getKey(),
+            $eventKey,
+            $context,
+        )->afterCommit();
 
-        return match ($operator) {
-            'greater_than' => $left > $right,
-            'greater_or_equal' => $left >= $right,
-            'less_than' => $left < $right,
-            'less_or_equal' => $left <= $right,
-            default => false,
-        };
+        return true;
     }
 
-    private function deliver(TeamsWebhook $webhook, array $context): bool
+    private function deliver(TeamsWebhook $webhook, string $eventKey, array $context): bool
     {
         try {
             $url = $webhook->webhook_url;
@@ -164,18 +72,8 @@ class TeamsWebhookNotifier
                 throw new \RuntimeException('Webhook URL must use HTTPS and a valid hostname.');
             }
 
-            $template = $webhook->template;
-            $titleTemplate = $template?->title_template ?: $webhook->title_template ?: $this->defaultTitle($webhook->category);
-            $messageTemplate = $template?->message_template ?: $webhook->message_template;
-            if (($context['event_key'] ?? null) === 'sync.completed') {
-                $messageTemplate = implode("\n", array_filter(
-                    explode("\n", $messageTemplate),
-                    static fn (string $line): bool => ! str_contains($line, '{overall_status}'),
-                ));
-            }
-            $title = $this->render($titleTemplate, $context);
-            $message = $this->render($messageTemplate, $context);
-            $payload = $this->payload($webhook, $title, $message, $context);
+            $message = $this->formatter->format($eventKey, $context);
+            $payload = $this->payload($webhook, $message['title'], $message['message'], $eventKey, $context);
 
             $response = Http::acceptJson()
                 ->asJson()
@@ -184,7 +82,7 @@ class TeamsWebhookNotifier
                 ->post($url, $payload);
 
             if (! $response->successful()) {
-                throw new \RuntimeException('Teams returned HTTP '.$response->status().'.');
+                throw new RuntimeException('Webhook endpoint returned HTTP '.$response->status().'.');
             }
 
             $webhook->forceFill([
@@ -197,197 +95,91 @@ class TeamsWebhookNotifier
         } catch (Throwable $exception) {
             report($exception);
 
+            // Keep the latest failure visible while Laravel schedules a retry.
             $webhook->forceFill([
-                'last_delivery_status' => 'failed',
+                'last_delivery_status' => 'retrying',
                 'last_sent_at' => now(),
                 'last_error' => mb_substr($exception->getMessage(), 0, 2000),
             ])->save();
 
-            return false;
+            throw $exception;
         }
     }
 
-    private function payload(TeamsWebhook $webhook, string $title, string $message, array $context): array
+    private function payload(TeamsWebhook $webhook, string $title, string $message, string $eventKey, array $context): array
     {
-        if ($webhook->destination_type === 'channel' && $webhook->message_format === 'message_card') {
+        if ($webhook->destination_type === 'generic') {
             return [
-                '@type' => 'MessageCard',
-                '@context' => 'https://schema.org/extensions',
-                'summary' => $title,
-                'themeColor' => '2563EB',
+                'event_key' => $eventKey,
                 'title' => $title,
-                'text' => $message,
+                'message' => $message,
+                'context' => $context,
             ];
         }
 
-        $isSyncCompletion = ($context['event_key'] ?? null) === 'sync.completed';
-        if ($isSyncCompletion) {
-            return $this->syncCompletionPayload($title, $context);
+        if ($eventKey === 'sync.completed') {
+            return $this->formatter->syncCompletionCard($title, $context);
         }
 
-        $status = strtoupper((string) ($context['overall_status'] ?? ''));
+        if ($eventKey === 'azure.sync.failed') {
+            return $this->formatter->syncFailureCard($title, $context);
+        }
+
+        if (in_array($eventKey, ['web_url.down', 'web_url.recovered'], true)) {
+            return $this->formatter->webUrlStatusCard($eventKey, $title, $context);
+        }
+
+        if ($eventKey === 'server.started') {
+            return $this->formatter->serverStartedCard($title, $context);
+        }
+
         $body = array_values(array_filter([
             $title !== '' ? ['type' => 'TextBlock', 'text' => $title, 'weight' => 'Bolder', 'size' => 'Large', 'wrap' => true] : null,
-            $isSyncCompletion && in_array($status, ['SUCCESS', 'FAILED'], true) ? [
-                'type' => 'Container',
-                'style' => $status === 'SUCCESS' ? 'good' : 'attention',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $status === 'SUCCESS' ? 'Success' : 'Failed',
-                    'weight' => 'Bolder',
-                    'wrap' => true,
-                    'spacing' => 'None',
-                ]],
-                'spacing' => 'Small',
-            ] : null,
             $message !== '' ? ['type' => 'TextBlock', 'text' => $message, 'wrap' => true] : null,
         ]));
 
-        $card = [
-            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-            'type' => 'AdaptiveCard',
-            'version' => '1.2',
-            'body' => $body,
-        ];
-
-        if ($isSyncCompletion) {
-            $dashboardUrl = rtrim((string) config('app.url'), '/') . '/developer';
-            $card['actions'] = [[
-                'type' => 'Action.OpenUrl',
-                'title' => 'Open CCOD Dashboard',
-                'style' => 'positive',
-                'url' => $dashboardUrl,
-            ]];
-        }
-
-        return [
-            'type' => 'message',
-            'attachments' => [[
-                'contentType' => 'application/vnd.microsoft.card.adaptive',
-                'contentUrl' => null,
-                'content' => $card,
-            ]],
-        ];
-    }
-
-    private function syncCompletionPayload(string $title, array $context): array
-    {
-        $statusDefinitions = [
-            'subscriptions_status' => 'Subscriptions',
-            'resources_status' => 'Resources',
-            'costs_status' => 'Costs',
-            'security_status' => 'Security',
-            'alerts_status' => 'Alerts',
-            'web_urls_status' => 'Web URLs',
-        ];
-
-        $overallStatus = strtoupper((string) ($context['overall_status'] ?? 'FAILED'));
-        $overallLabel = $overallStatus === 'SUCCESS' ? 'Success' : 'Failed';
-        $moduleTile = static function (string $label, string $value): array {
-            $success = strtoupper($value) === 'SUCCESS';
-
-            return [
-                'type' => 'Container',
-                'style' => $success ? 'good' : 'attention',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $label . ': ' . ($success ? 'Success' : 'Failed'),
-                    'color' => $success ? 'Good' : 'Attention',
-                    'weight' => 'Bolder',
-                    'wrap' => true,
-                ]],
-            ];
+        $severityCategory = match (true) {
+            in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true) => 'Security score',
+            in_array($eventKey, ['azure.alert.detected', 'azure.critical_alert.detected'], true) => 'Alert',
+            in_array($eventKey, ['azure.recommendation.detected', 'azure.recommendation.removed'], true) => 'Security recommendation',
+            in_array($eventKey, ['web_url.ssl.expiring', 'web_url.ssl.expired'], true) => 'SSL',
+            default => null,
         };
 
-        $body = [];
+        if ($severityCategory !== null) {
+            $improvement = $eventKey === 'azure.security_score.improved';
 
-        if ($title !== '') {
-            $body[] = [
-                'type' => 'TextBlock',
-                'text' => $title,
-                'weight' => 'Bolder',
-                'size' => 'Large',
-                'wrap' => true,
-            ];
-        }
-
-        $body[] = [
-            'type' => 'Container',
-            'style' => $overallStatus === 'SUCCESS' ? 'good' : 'attention',
-            'spacing' => 'Medium',
-            'items' => [[
-                'type' => 'TextBlock',
-                'text' => 'Overall: ' . $overallLabel,
-                'color' => $overallStatus === 'SUCCESS' ? 'Good' : 'Attention',
-                'weight' => 'Bolder',
-                'wrap' => true,
-            ]],
-        ];
-
-        $body[] = [
-            'type' => 'FactSet',
-            'spacing' => 'Medium',
-            'facts' => [
-                ['title' => 'Started', 'value' => (string) ($context['sync_started_at'] ?? 'Not available')],
-                ['title' => 'Completed', 'value' => (string) ($context['completed_at'] ?? 'Not available')],
-                ['title' => 'Duration', 'value' => (string) ($context['duration'] ?? 'Not available')],
-            ],
-        ];
-
-        $body[] = [
-            'type' => 'TextBlock',
-            'text' => 'Module status',
-            'weight' => 'Bolder',
-            'spacing' => 'Medium',
-            'wrap' => true,
-        ];
-
-        $moduleTiles = [];
-        foreach ($statusDefinitions as $key => $label) {
-            $value = strtoupper((string) ($context[$key] ?? 'FAILED'));
-            $moduleTiles[] = $moduleTile($label, $value);
-        }
-
-        foreach (array_chunk($moduleTiles, 2) as $pair) {
-            $columns = [];
-            foreach ($pair as $tile) {
-                $columns[] = [
-                    'type' => 'Column',
-                    'width' => 'stretch',
-                    'items' => [$tile],
-                ];
+            if ($severityCategory === 'Security score' && ! $improvement) {
+                $critical = (float) ($context['current_score'] ?? 0) < 0.8;
+            } elseif ($severityCategory === 'SSL') {
+                $critical = $eventKey === 'web_url.ssl.expired';
+            } else {
+                $severityValue = strtoupper((string) ($context['severity'] ?? ''));
+                $critical = in_array($severityValue, ['CRITICAL', 'HIGH', 'SEV0', 'SEV1', '0', '1'], true)
+                    || $eventKey === 'azure.critical_alert.detected';
             }
 
             $body[] = [
-                'type' => 'ColumnSet',
-                'spacing' => 'Small',
-                'columns' => $columns,
+                'type' => 'Container',
+                'style' => $improvement ? 'good' : ($critical ? 'attention' : 'warning'),
+                'bleed' => true,
+                'spacing' => 'None',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => $improvement
+                        ? 'IMPROVEMENT - Security Score'
+                        : (($critical ? 'CRITICAL' : 'WARNING').' - '.$severityCategory),
+                    'weight' => 'Bolder',
+                    'size' => 'Large',
+                    'color' => $improvement ? 'Good' : ($critical ? 'Attention' : 'Warning'),
+                    'horizontalAlignment' => 'Center',
+                    'wrap' => false,
+                    'spacing' => 'Small',
+                ]],
             ];
-        }
-
-        $body[] = [
-            'type' => 'TextBlock',
-            'text' => 'Run ID: ' . (string) ($context['run_id'] ?? 'Not available'),
-            'size' => 'Small',
-            'isSubtle' => true,
-            'wrap' => true,
-            'spacing' => 'Medium',
-        ];
-
-        $card = [
-            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-            'type' => 'AdaptiveCard',
-            'version' => '1.2',
-            'body' => $body,
-            'actions' => [],
-        ];
-
-        if (filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)) {
-            $card['actions'][] = [
-                'type' => 'Action.OpenUrl',
-                'title' => 'View Sync Report',
-                'url' => $context['report_url'],
-            ];
+            // Keep the severity banner before the existing title and message.
+            $banner = array_pop($body);
+            array_unshift($body, $banner);
         }
 
         return [
@@ -395,38 +187,13 @@ class TeamsWebhookNotifier
             'attachments' => [[
                 'contentType' => 'application/vnd.microsoft.card.adaptive',
                 'contentUrl' => null,
-                'content' => $card,
+                'content' => [
+                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    'type' => 'AdaptiveCard',
+                    'version' => '1.2',
+                    'body' => $body,
+                ],
             ]],
         ];
-    }
-
-    private function render(string $template, array $context): string
-    {
-        $normalizedContext = [];
-        foreach ($context as $key => $value) {
-            $normalizedKey = strtolower((string) $key);
-            $normalizedContext[$normalizedKey] = $value;
-            $normalizedContext[str_replace(['_', '-', '.'], '', $normalizedKey)] = $value;
-        }
-
-        return preg_replace_callback('/\{\s*([a-zA-Z0-9_.-]+)\s*\}/i', function (array $matches) use ($context, $normalizedContext): string {
-            $key = strtolower(trim($matches[1]));
-            $value = data_get($context, $matches[1]);
-
-            if ($value === null) {
-                $value = $normalizedContext[$key] ?? $normalizedContext[str_replace(['_', '-', '.'], '', $key)] ?? null;
-            }
-
-            if (is_array($value) || is_object($value)) {
-                $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
-            }
-
-            return $value === null ? 'Not available' : (string) $value;
-        }, $template) ?? $template;
-    }
-
-    private function defaultTitle(string $category): string
-    {
-        return $category === 'server_start' ? 'CCOD server startup' : 'CCOD Azure notification';
     }
 }

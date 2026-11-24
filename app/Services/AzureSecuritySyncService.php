@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\AzureSecurityAssessment;
 use App\Models\AzureSubscription;
+use App\Services\NotificationRuleService;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Client\Response;
 use RuntimeException;
@@ -139,9 +140,30 @@ KQL,
         } while ($skipToken !== null);
 
         $query = AzureSecurityAssessment::query()->where('subscription_id', $subscriptionId);
-        $stats['deleted'] = $seen === []
-            ? $query->count()
-            : (clone $query)->whereNotIn('assessment_id', $seen)->count();
+        $removed = ($seen === []
+            ? (clone $query)
+            : (clone $query)->whereNotIn('assessment_id', $seen))
+            ->get();
+
+        $stats['deleted'] = $removed->count();
+
+        foreach ($removed as $assessment) {
+            try {
+                app(NotificationRuleService::class)->trigger('azure.recommendation.removed', [
+                    'recommendation_id' => $assessment->recommendation_id,
+                    'recommendation_name' => $assessment->recommendation_name,
+                    'category' => is_array($assessment->categories) ? implode(', ', $assessment->categories) : null,
+                    'severity' => $assessment->severity,
+                    'resource_id' => $assessment->resource_id,
+                    'resource_name' => null,
+                    'subscription_id' => $subscriptionId,
+                    'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
+                    'occurred_at' => now()->toIso8601String(),
+                ]);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+        }
 
         if ($seen === []) {
             $query->delete();
@@ -233,6 +255,23 @@ KQL,
         $existing = AzureSecurityAssessment::query()->where('assessment_id', $attributes['assessment_id'])->first();
         if ($existing === null) {
             AzureSecurityAssessment::query()->create($attributes);
+
+            try {
+                app(NotificationRuleService::class)->trigger('azure.recommendation.detected', [
+                    'recommendation_id' => $attributes['recommendation_id'],
+                    'recommendation_name' => $attributes['recommendation_name'],
+                    'category' => is_array($attributes['categories']) ? implode(', ', $attributes['categories']) : null,
+                    'severity' => $attributes['severity'],
+                    'resource_id' => $attributes['resource_id'],
+                    'resource_name' => null,
+                    'subscription_id' => $subscriptionId,
+                    'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
+                    'occurred_at' => now()->toIso8601String(),
+                ]);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+
             return 'created';
         }
 

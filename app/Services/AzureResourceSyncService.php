@@ -34,6 +34,7 @@ class AzureResourceSyncService
                 'created' => 0,
                 'updated' => 0,
                 'unchanged' => 0,
+                'deleted' => 0,
             ];
         }
 
@@ -43,10 +44,12 @@ class AzureResourceSyncService
             'created' => 0,
             'updated' => 0,
             'unchanged' => 0,
+            'deleted' => 0,
         ];
 
         foreach (array_chunk($subscriptions, 100) as $subscriptionBatch) {
             $skipToken = null;
+            $seenResourceIds = [];
 
             do {
                 $payload = [
@@ -86,11 +89,47 @@ KQL,
                     $stats['discovered']++;
                     $result = $this->syncOne($resource, $subscriptionBatch);
                     $stats[$result]++;
+                    $seenResourceIds[] = (string) $resource['id'];
                 }
 
                 $next = $page['$skipToken'] ?? null;
                 $skipToken = is_string($next) && $next !== '' ? $next : null;
             } while ($skipToken !== null);
+
+            // Reconcile only after every page for this subscription batch was
+            // fetched and processed successfully. A failed/partial query never
+            // causes local resources to be marked as deleted.
+            $staleResources = BillingResource::query()
+                ->whereIn('subscription_id', $subscriptionBatch)
+                ->when(
+                    $seenResourceIds !== [],
+                    fn ($query) => $query->whereNotIn('resource_id', $seenResourceIds),
+                )
+                ->get();
+
+            foreach ($staleResources as $staleResource) {
+                try {
+                    $subscriptionName = AzureSubscription::query()
+                        ->where('subscription_id', $staleResource->subscription_id)
+                        ->value('display_name');
+
+                    app(NotificationRuleService::class)->trigger('azure.resource.deleted', [
+                        'resource_id' => (string) $staleResource->resource_id,
+                        'resource_name' => $staleResource->name,
+                        'resource_type' => $staleResource->resource_type,
+                        'resource_group' => $this->resourceGroupFromResourceId((string) $staleResource->resource_id),
+                        'subscription_id' => (string) $staleResource->subscription_id,
+                        'subscription_name' => $subscriptionName,
+                        'location' => $staleResource->region,
+                        'occurred_at' => now()->toIso8601String(),
+                    ]);
+                } catch (\Throwable $exception) {
+                    report($exception);
+                }
+
+                $staleResource->delete();
+                $stats['deleted']++;
+            }
         }
 
         return $stats;
@@ -122,6 +161,26 @@ KQL,
 
         if ($existing === null) {
             BillingResource::query()->create($attributes);
+
+            try {
+                $subscriptionName = AzureSubscription::query()
+                    ->where('subscription_id', $subscriptionId)
+                    ->value('display_name');
+
+                app(NotificationRuleService::class)->trigger('azure.resource.discovered', [
+                    'resource_id' => $resourceId,
+                    'resource_name' => $attributes['name'],
+                    'resource_type' => $attributes['resource_type'],
+                    'resource_group' => $this->resourceGroupFromResourceId($resourceId),
+                    'subscription_id' => $subscriptionId,
+                    'subscription_name' => $subscriptionName,
+                    'location' => $attributes['region'],
+                    'occurred_at' => now()->toIso8601String(),
+                ]);
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
+
             return 'created';
         }
 
@@ -139,6 +198,13 @@ KQL,
         }
 
         return 'unchanged';
+    }
+
+    private function resourceGroupFromResourceId(string $resourceId): ?string
+    {
+        return preg_match('#/resourceGroups/([^/]+)#i', $resourceId, $matches) === 1
+            ? $matches[1]
+            : null;
     }
 
     private function subscriptionIdFromResourceId(mixed $resourceId): ?string
