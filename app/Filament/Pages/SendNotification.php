@@ -91,7 +91,7 @@ class SendNotification extends Page implements HasForms
                         Select::make('audience')
                             ->options([
                                 'all' => 'All active users',
-                                'teams' => 'User groups',
+                                'user_groups' => 'User groups',
                                 'users' => 'Selected users',
                             ])
                             ->default('all')
@@ -103,8 +103,8 @@ class SendNotification extends Page implements HasForms
                             ->searchable()
                             ->dehydrated(true)
                             ->options(fn (): array => UserGroup::query()->orderBy('name')->pluck('name', 'id')->all())
-                            ->visible(fn (Get $get): bool => $get('audience') === 'teams')
-                            ->minItems(fn (Get $get): int => $get('audience') === 'teams' ? 1 : 0),
+                            ->visible(fn (Get $get): bool => $get('audience') === 'user_groups')
+                            ->minItems(fn (Get $get): int => $get('audience') === 'user_groups' ? 1 : 0),
                         Select::make('user_ids')
                             ->label('Users')
                             ->multiple()
@@ -143,7 +143,7 @@ class SendNotification extends Page implements HasForms
             actionUrl: $data['action_url'] ?? null,
             actionLabel: $data['action_label'] ?? null,
             allUsers: $audience === 'all',
-            userGroupIds: $audience === 'teams' ? ($data['user_group_ids'] ?? []) : [],
+            userGroupIds: $audience === 'user_groups' ? ($data['user_group_ids'] ?? []) : [],
             userIds: $selectedUserIds,
         );
 
