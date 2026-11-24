@@ -116,7 +116,7 @@ class NotificationEventCatalog
         'actual_cost' => 'Actual cost', 'budget_amount' => 'Budget amount',
         'threshold_percent' => 'Threshold percentage', 'currency' => 'Currency',
         'web_url_id' => 'Web URL ID', 'url' => 'Website URL', 'domain' => 'Domain',
-        'certificate_expires_at' => 'Certificate expiry', 'days_until_expiry' => 'Days until expiry',
+        'certificate_expires_at' => 'Certificate expiry', 'days_until_expiry' => 'Days until expiry', 'ssl_reminder_threshold_days' => 'Reminder threshold (days)',
         'http_status' => 'HTTP status', 'response_time_ms' => 'Response time (ms)',
         'checked_at' => 'Last checked at', 'days_since_expiry' => 'Days since expiry',
         'previous_expires_at' => 'Previous certificate expiry', 'occurred_at' => 'Occurred at',
@@ -332,7 +332,7 @@ class NotificationEventCatalog
         $fields = [];
         foreach ($keys as $key) {
             $type = match (true) {
-                in_array($key, ['duration_seconds', 'previous_score', 'current_score', 'score_delta', 'actual_cost', 'budget_amount', 'threshold_percent', 'days_until_expiry', 'days_since_expiry', 'http_status', 'response_time_ms'], true) => 'number',
+                in_array($key, ['duration_seconds', 'previous_score', 'current_score', 'score_delta', 'actual_cost', 'budget_amount', 'threshold_percent', 'days_until_expiry', 'ssl_reminder_threshold_days', 'days_since_expiry', 'http_status', 'response_time_ms'], true) => 'number',
                 in_array($key, ['occurred_at', 'sync_started_at', 'failed_at', 'completed_at', 'expires_at', 'invitation_expires_at', 'certificate_expires_at', 'previous_expires_at', 'checked_at', 'server_boot_time', 'iis_started_at', 'php_started_at', 'mysql_started_at', 'queue_started_at'], true) => 'datetime',
                 in_array($key, ['failed_modules', 'successful_modules'], true) => 'array',
                 $key === 'report_url' || $key === 'url' => 'url',
