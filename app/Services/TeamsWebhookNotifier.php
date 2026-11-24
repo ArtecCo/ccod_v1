@@ -260,8 +260,8 @@ class TeamsWebhookNotifier
                 // classification range. Never infer Warning/Critical from a
                 // hard-coded score threshold or invent a fallback severity.
                 $classification = match ($severityValue) {
-                    'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'warning', 'color' => 'Attention'],
-                    'WARNING' => ['label' => 'WARNING', 'style' => 'attention', 'color' => 'Warning'],
+                    'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'warning', 'color' => 'Warning'],
+                    'WARNING' => ['label' => 'WARNING', 'style' => 'attention', 'color' => 'Attention'],
                     'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                     default => null,
                 };
