@@ -118,7 +118,7 @@ class ListNotificationRules extends ListRecords
                         $keepIds[] = $rule->id;
                     }
 
-                    SslReminderRule::query()->whereNotIn('id', $keepIds)->delete();
+                    SslReminderRule::query()->whereNotIn('id', $keepIds)->update(['enabled' => false]);
 
                     Notification::make()
                         ->title('SSL reminder rules saved')
