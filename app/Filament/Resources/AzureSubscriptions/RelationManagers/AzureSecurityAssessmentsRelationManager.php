@@ -9,6 +9,7 @@ use App\Filament\Resources\AzureSecurityAssessments\AzureSecurityAssessmentResou
 use App\Models\AzureSecurityAssessment;
 use App\Services\AccessAuthorizationService;
 use Asignua\FilamentXlsxExport\Actions\XlsxExportAction;
+use Filament\Actions\Action;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
@@ -121,7 +122,15 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
                 'record' => $record,
             ]))
             ->striped(false)
-            ->recordActions([])
+            ->recordActions([
+                Action::make('view')
+                    ->label('View')
+                    ->icon('heroicon-o-eye')
+                    ->url(fn (AzureSecurityAssessment $record): string => AzureSecurityAssessmentResource::getUrl('view', [
+                        'subscription' => $record->subscription_id,
+                        'record' => $record,
+                    ])),
+            ])
             ->toolbarActions([
                 XlsxExportAction::make()
                     ->visible(fn (): bool => $this->canExport()),
