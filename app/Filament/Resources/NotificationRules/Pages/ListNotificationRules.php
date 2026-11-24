@@ -14,6 +14,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Support\Facades\DB;
 
 class ListNotificationRules extends ListRecords
 {
@@ -109,70 +110,102 @@ class ListNotificationRules extends ListRecords
                         ->columnSpanFull(),
                 ])
                 ->action(function (array $data): void {
-                    $sslRows = $data['ssl_rules'] ?? [];
-                    $sslThresholds = array_map(
-                        static fn (array $row): int => (int) ($row['threshold_days'] ?? -1),
-                        $sslRows,
-                    );
+                    // Validate and persist both classification groups as one unit.
+                    // If either group fails, neither group's changes are committed.
+                    $counts = DB::transaction(function () use ($data): array {
+                        $sslRows = array_values($data['ssl_rules'] ?? []);
+                        $scoreRows = array_values($data['score_ranges'] ?? []);
 
-                    if (count($sslThresholds) !== count(array_unique($sslThresholds))) {
-                        throw ValidationException::withMessages([
-                            'ssl_rules' => 'Each days-remaining classification threshold must be unique.',
-                        ]);
-                    }
-
-                    $sslKeepIds = [];
-                    foreach ($sslRows as $row) {
-                        $rule = SslReminderRule::query()->updateOrCreate(
-                            ['threshold_days' => (int) $row['threshold_days']],
-                            [
-                                'severity' => (string) $row['severity'],
-                                'webhook_ids' => [],
-                                'enabled' => true,
-                            ],
+                        $sslThresholds = array_map(
+                            static fn (array $row): int => (int) ($row['threshold_days'] ?? -1),
+                            $sslRows,
                         );
-                        $sslKeepIds[] = $rule->id;
-                    }
 
-                    SslReminderRule::query()->whereNotIn('id', $sslKeepIds)->update(['enabled' => false]);
-
-                    $scoreRows = $data['score_ranges'] ?? [];
-                    usort($scoreRows, static fn (array $a, array $b): int => (float) $a['minimum_score'] <=> (float) $b['minimum_score']);
-
-                    $previousMaximum = null;
-                    foreach ($scoreRows as $row) {
-                        $minimum = (float) $row['minimum_score'];
-                        $maximum = (float) $row['maximum_score'];
-
-                        if ($minimum > $maximum || ($previousMaximum !== null && $minimum <= $previousMaximum)) {
+                        if (count($sslThresholds) !== count(array_unique($sslThresholds))) {
                             throw ValidationException::withMessages([
-                                'score_ranges' => 'Score ranges must be valid, non-overlapping, and must not share boundary values.',
+                                'ssl_rules' => 'Each days-remaining classification threshold must be unique.',
                             ]);
                         }
 
-                        $previousMaximum = $maximum;
-                    }
+                        foreach ($sslRows as $row) {
+                            $threshold = filter_var($row['threshold_days'] ?? null, FILTER_VALIDATE_INT);
+                            if ($threshold === false || $threshold < 0 || $threshold > 3650
+                                || ! in_array($row['severity'] ?? null, ['reminder', 'warning', 'critical'], true)) {
+                                throw ValidationException::withMessages([
+                                    'ssl_rules' => 'SSL classifications must have a valid days-remaining threshold and one of the three configured severities.',
+                                ]);
+                            }
+                        }
 
-                    $scoreKeepIds = [];
-                    foreach ($scoreRows as $row) {
-                        $range = AzureSecurityScoreClassification::query()->updateOrCreate(
-                            [
-                                'minimum_score' => $row['minimum_score'],
-                                'maximum_score' => $row['maximum_score'],
-                            ],
-                            [
-                                'severity' => $row['severity'],
-                                'enabled' => true,
-                            ],
+                        usort(
+                            $scoreRows,
+                            static fn (array $a, array $b): int => (float) ($a['minimum_score'] ?? 0) <=> (float) ($b['minimum_score'] ?? 0),
                         );
-                        $scoreKeepIds[] = $range->id;
-                    }
 
-                    AzureSecurityScoreClassification::query()->whereNotIn('id', $scoreKeepIds)->update(['enabled' => false]);
+                        $previousMaximum = null;
+                        foreach ($scoreRows as $row) {
+                            $minimumValue = $row['minimum_score'] ?? null;
+                            $maximumValue = $row['maximum_score'] ?? null;
+                            if (! is_numeric($minimumValue) || ! is_numeric($maximumValue)) {
+                                throw ValidationException::withMessages([
+                                    'score_ranges' => 'Enter numeric minimum and maximum values for every score range.',
+                                ]);
+                            }
+
+                            $minimum = (float) $minimumValue;
+                            $maximum = (float) $maximumValue;
+                            if ($minimum < 0 || $maximum > 100 || $minimum >= $maximum
+                                || ($previousMaximum !== null && $minimum < $previousMaximum)
+                                || ! in_array($row['severity'] ?? null, ['attention', 'warning', 'critical'], true)) {
+                                throw ValidationException::withMessages([
+                                    'score_ranges' => 'Score ranges must be between 0 and 100, have a minimum below the maximum, not overlap, and use Attention, Warning, or Critical.',
+                                ]);
+                            }
+
+                            // Adjacent ranges are valid: e.g. 70–80 and 80–85.
+                            // At the shared boundary, the range with the higher minimum wins.
+                            $previousMaximum = $maximum;
+                        }
+
+                        $sslKeepIds = [];
+                        foreach ($sslRows as $row) {
+                            $rule = SslReminderRule::query()->updateOrCreate(
+                                ['threshold_days' => (int) $row['threshold_days']],
+                                [
+                                    'severity' => (string) $row['severity'],
+                                    'webhook_ids' => [],
+                                    'enabled' => true,
+                                ],
+                            );
+                            $sslKeepIds[] = $rule->id;
+                        }
+                        SslReminderRule::query()->whereNotIn('id', $sslKeepIds)->update(['enabled' => false]);
+
+                        $scoreKeepIds = [];
+                        foreach ($scoreRows as $row) {
+                            $range = AzureSecurityScoreClassification::query()->updateOrCreate(
+                                [
+                                    'minimum_score' => (float) $row['minimum_score'],
+                                    'maximum_score' => (float) $row['maximum_score'],
+                                ],
+                                [
+                                    'severity' => (string) $row['severity'],
+                                    'enabled' => true,
+                                ],
+                            );
+                            $scoreKeepIds[] = $range->id;
+                        }
+                        AzureSecurityScoreClassification::query()->whereNotIn('id', $scoreKeepIds)->update(['enabled' => false]);
+
+                        return [
+                            'ssl' => count($sslKeepIds),
+                            'scores' => count($scoreKeepIds),
+                        ];
+                    });
 
                     Notification::make()
                         ->title('Event classification saved')
-                        ->body(count($sslKeepIds).' SSL classification(s) and '.count($scoreKeepIds).' score range(s) configured.')
+                        ->body($counts['ssl'].' SSL classification(s) and '.$counts['scores'].' score range(s) configured.')
                         ->success()
                         ->send();
                 }),
