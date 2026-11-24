@@ -65,7 +65,7 @@ class NotificationEventCatalog
         'azure.budget.threshold_reached' => ['label' => 'Azure budget threshold reached', 'category' => 'Azure', 'fields' => ['budget_id', 'budget_name', 'subscription_id', 'subscription_name', 'actual_cost', 'budget_amount', 'threshold_percent', 'currency', 'occurred_at']],
 
         // Web URLs (7)
-        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'occurred_at']],
+        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'severity', 'occurred_at']],
         'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
         'web_url.deactivated' => ['label' => 'Website monitoring deactivated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
         'web_url.activated' => ['label' => 'Website monitoring activated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
@@ -134,7 +134,7 @@ class NotificationEventCatalog
         'security_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
         'alerts_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
         'web_urls_status' => ['SUCCESS' => 'Success', 'FAILED' => 'Failed'],
-        'severity' => ['CRITICAL' => 'Critical', 'HIGH' => 'High', 'MEDIUM' => 'Medium', 'LOW' => 'Low', 'INFO' => 'Informational'],
+        'severity' => ['CRITICAL' => 'Critical', 'HIGH' => 'High', 'MEDIUM' => 'Medium', 'LOW' => 'Low', 'INFO' => 'Informational', 'WARNING' => 'Warning', 'ATTENTION' => 'Attention'],
         'status' => ['ACTIVE' => 'Active', 'RESOLVED' => 'Resolved', 'DISMISSED' => 'Dismissed'],
     ];
 
