@@ -215,7 +215,7 @@ class NotificationRuleResource extends Resource
             ->defaultSort('event_key')
             ->columns([
                 TextColumn::make('rule_title')->label('Rule')
-                    ->formatStateUsing(fn (?string $state, NotificationRule $record): string => filled($state) ? $state : (\\App\\Support\\NotificationEventCatalog::event((string) $record->event_key)['label'] ?? (string) $record->event_key))
+                    ->formatStateUsing(fn (?string $state, NotificationRule $record): string => filled($state) ? $state : (\App\Support\NotificationEventCatalog::event((string) $record->event_key)['label'] ?? (string) $record->event_key))
                     ->description(fn (NotificationRule $record): ?string => $record->rule_description ?: null)
                     ->searchable()->toggleable(),
                 TextColumn::make('event_key')

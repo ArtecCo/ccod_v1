@@ -42,11 +42,10 @@ class TeamsWebhookNotifier
      */
     public function queueRuleTest(NotificationRule $rule): bool
     {
-        $rule->loadMissing(['webhook', 'webhooks']);
-        $destinations = $rule->webhooks->isNotEmpty() ? $rule->webhooks : collect([$rule->webhook])->filter();
-        $destinations = $destinations->where('enabled', true);
+        $rule->loadMissing('webhook');
+        $webhook = $rule->webhook;
 
-        if ($destinations->isEmpty()) {
+        if (! $webhook || ! $webhook->enabled) {
             return false;
         }
 
@@ -54,13 +53,11 @@ class TeamsWebhookNotifier
         $context = NotificationEventCatalog::sampleContext($eventKey);
         $context['is_test'] = true;
 
-        foreach ($destinations as $webhook) {
-            \\App\\Jobs\\DeliverTeamsWebhookNotification::dispatch(
-                (int) $webhook->getKey(),
-                $eventKey,
-                $context,
-            )->afterCommit();
-        }
+        \App\Jobs\DeliverTeamsWebhookNotification::dispatch(
+            (int) $webhook->getKey(),
+            $eventKey,
+            $context,
+        )->afterCommit();
 
         return true;
     }
