@@ -52,7 +52,7 @@ class ListNotificationRules extends ListRecords
                             Select::make('severity')
                                 ->label('Severity')
                                 ->options([
-                                    'reminder' => 'Reminder (Yellow)',
+                                    'reminder' => 'Attention (Yellow)',
                                     'warning' => 'Warning (Orange)',
                                     'critical' => 'Critical (Red)',
                                 ])
