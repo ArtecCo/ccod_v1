@@ -90,13 +90,6 @@ class SslReminderService
                     )->afterCommit();
                     $dispatched++;
                 } catch (Throwable $exception) {
-                    // Release the deduplication key when queueing itself fails so
-                    // the next URL check can safely retry this threshold.
-                    DB::table('ssl_reminder_deliveries')
-                        ->where('ssl_reminder_rule_id', $rule->id)
-                        ->where('subscription_web_url_id', $webUrl->id)
-                        ->where('certificate_expires_at', $webUrl->ssl_expires_at->toDateTimeString())
-                        ->delete();
                     report($exception);
                 }
             }
