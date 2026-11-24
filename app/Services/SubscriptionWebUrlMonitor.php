@@ -286,7 +286,7 @@ class SubscriptionWebUrlMonitor
         try {
             $response = Http::timeout(10)
                 ->connectTimeout(5)
-                ->withOptions(array_filter([
+                ->withOptions([
                     'allow_redirects' => ['max' => 5, 'strict' => true, 'referer' => true],
                 ], static fn ($value): bool => $value !== null))
                 ->withHeaders(['User-Agent' => 'CCOD Web URL Monitor/1.0'])
