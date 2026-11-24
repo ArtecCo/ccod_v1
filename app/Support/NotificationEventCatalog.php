@@ -344,7 +344,20 @@ class NotificationEventCatalog
                 'type' => $type,
             ];
             if ($type === 'enum') {
-                $fields[$key]['values'] = self::ENUM_VALUES[$key];
+                // Classification events use the application's three classification
+                // levels, not Azure's native alert severity values.
+                if ($key === 'severity' && in_array($eventKey, [
+                    'azure.security_score.decreased',
+                    'web_url.ssl.expiring',
+                ], true)) {
+                    $fields[$key]['values'] = [
+                        'ATTENTION' => 'Attention',
+                        'WARNING' => 'Warning',
+                        'CRITICAL' => 'Critical',
+                    ];
+                } else {
+                    $fields[$key]['values'] = self::ENUM_VALUES[$key];
+                }
             }
         }
 
