@@ -61,6 +61,7 @@ class AzureSecurityAssessmentInfolist
                 ->schema([
                     TextEntry::make('description')
                         ->hiddenLabel()
+                        ->html()
                         ->placeholder('No description was provided by Azure.')
                         ->columnSpanFull(),
                 ])
