@@ -115,8 +115,13 @@ class SendNotification extends Page implements HasForms
     {
         $data = $this->form->getState();
         $audience = $data['audience'] ?? data_get($this->data, 'audience', 'all');
+        $rawSelectedUserIds = data_get($this->data, 'user_ids');
         $selectedUserIds = $audience === 'users'
-            ? ($data['user_ids'] ?? data_get($this->data, 'user_ids', []))
+            ? (
+                is_array($rawSelectedUserIds) && $rawSelectedUserIds !== []
+                    ? $rawSelectedUserIds
+                    : ($data['user_ids'] ?? [])
+            )
             : [];
 
         $count = $notifications->send(
