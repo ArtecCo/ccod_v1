@@ -679,6 +679,18 @@ if ($anyFailure) {
             'failed_at' => $completedAt,
             'error_summary' => $notificationContext['error_summary'] ?: 'One or more Azure synchronization modules failed or partially completed.',
             'failed_modules' => $notificationContext['failed_modules'],
+            'failed_module_errors' => array_reduce(
+                array_filter($rows, static fn (array $row): bool => $row['status'] !== 'SUCCESS'),
+                static function (array $errors, array $row): array {
+                    $message = trim((string) ($row['stderr'] ?? ''));
+                    $errors[(string) $row['name']] = $message !== ''
+                        ? $message
+                        : 'Module exited with code '.(int) ($row['exit_code'] ?? 1).'.';
+
+                    return $errors;
+                },
+                [],
+            ),
             'occurred_at' => $completedAt,
         ]);
     } catch (\Throwable $exception) {
