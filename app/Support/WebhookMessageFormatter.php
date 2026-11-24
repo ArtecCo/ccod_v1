@@ -265,6 +265,85 @@ class WebhookMessageFormatter
     }
 
     /**
+     * Build a green success card when a website SSL certificate is renewed.
+     * The layout intentionally mirrors the website down/recovered cards.
+     */
+    public function webUrlSslRenewedCard(string $title, array $context): array
+    {
+        $facts = [];
+        foreach ([
+            'url' => 'Website URL',
+            'domain' => 'Domain',
+            'previous_expires_at' => 'Previous certificate expiry',
+            'certificate_expires_at' => 'New certificate expiry',
+            'occurred_at' => 'Renewal detected',
+        ] as $key => $label) {
+            $value = $context[$key] ?? null;
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $facts[] = ['title' => $label, 'value' => (string) $value];
+        }
+
+        $body = [[
+            'type' => 'Container',
+            'style' => 'good',
+            'bleed' => true,
+            'spacing' => 'None',
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => 'RENEWED - SSL CERTIFICATE',
+                'weight' => 'Bolder',
+                'size' => 'Large',
+                'color' => 'Good',
+                'horizontalAlignment' => 'Center',
+                'wrap' => true,
+                'spacing' => 'Small',
+            ]],
+        ], [
+            'type' => 'TextBlock',
+            'text' => $title,
+            'weight' => 'Bolder',
+            'size' => 'Medium',
+            'wrap' => true,
+            'spacing' => 'Medium',
+        ]];
+
+        if ($facts !== []) {
+            $body[] = [
+                'type' => 'FactSet',
+                'spacing' => 'Small',
+                'facts' => $facts,
+            ];
+        }
+
+        if (! empty($context['web_url_id'])) {
+            $body[] = [
+                'type' => 'TextBlock',
+                'text' => 'Web URL ID: '.(string) $context['web_url_id'],
+                'size' => 'Small',
+                'isSubtle' => true,
+                'wrap' => true,
+                'spacing' => 'Small',
+            ];
+        }
+
+        return [
+            'type' => 'message',
+            'attachments' => [[
+                'contentType' => 'application/vnd.microsoft.card.adaptive',
+                'contentUrl' => null,
+                'content' => [
+                    '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+                    'type' => 'AdaptiveCard',
+                    'version' => '1.2',
+                    'body' => $body,
+                ],
+            ]],
+        ];
+    }
+
+    /**
      * Build a dedicated failure card with each failed module and its error separated.
      */
     public function syncFailureCard(string $title, array $context): array
