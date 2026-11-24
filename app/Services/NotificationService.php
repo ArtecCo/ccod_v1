@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Team;
+use App\Models\UserGroup;
 use App\Models\User;
 use App\Notifications\ClientPortalNotification;
 use Illuminate\Support\Collection;
@@ -24,7 +24,7 @@ class NotificationService
         ?string $actionUrl = null,
         ?string $actionLabel = null,
         bool $allUsers = false,
-        array $teamIds = [],
+        array $userGroupIds = [],
         array $userIds = [],
         ?int $userId = null,
     ): int {
@@ -56,13 +56,13 @@ class NotificationService
 
         $recipientQuery = User::query()->where('is_active', true);
 
-        if (! $allUsers && $teamIds !== [] && $selectedUserIds !== []) {
-            $recipientQuery->where(function ($query) use ($teamIds, $selectedUserIds): void {
-                $query->whereHas('teams', fn ($teamQuery) => $teamQuery->whereIn('teams.id', $teamIds))
+        if (! $allUsers && $userGroupIds !== [] && $selectedUserIds !== []) {
+            $recipientQuery->where(function ($query) use ($userGroupIds, $selectedUserIds): void {
+                $query->whereHas('userGroups', fn ($groupQuery) => $groupQuery->whereIn('user_groups.id', $userGroupIds))
                     ->orWhereIn('id', $selectedUserIds);
             });
-        } elseif (! $allUsers && $teamIds !== []) {
-            $recipientQuery->whereHas('teams', fn ($query) => $query->whereIn('teams.id', $teamIds));
+        } elseif (! $allUsers && $userGroupIds !== []) {
+            $recipientQuery->whereHas('userGroups', fn ($query) => $query->whereIn('user_groups.id', $userGroupIds));
         } elseif (! $allUsers && $selectedUserIds !== []) {
             $recipientQuery->whereIn('id', $selectedUserIds);
         } elseif (! $allUsers) {
@@ -94,7 +94,7 @@ class NotificationService
                     }
                 });
 
-            $audience = $allUsers ? 'all' : ($teamIds !== [] && $selectedUserIds !== [] ? 'teams_and_users' : ($teamIds !== [] ? 'teams' : ($selectedUserIds !== [] ? 'users' : 'none')));
+            $audience = $allUsers ? 'all' : ($userGroupIds !== [] && $selectedUserIds !== [] ? 'teams_and_users' : ($userGroupIds !== [] ? 'teams' : ($selectedUserIds !== [] ? 'users' : 'none')));
 
             $this->auditLogger->log(
                 event: 'Notification Queued',
@@ -116,7 +116,7 @@ class NotificationService
                     'recipient_count' => $queued,
                     'resolved_recipient_count' => $recipientCount,
                     'all_users' => $allUsers,
-                    'team_count' => count($teamIds),
+                    'user_group_count' => count($userGroupIds),
                     'selected_user_count' => count($selectedUserIds),
                     'selected_user_ids' => $selectedUserIds,
                     'found_selected_user_count' => $selectedUsers->count(),
@@ -139,7 +139,7 @@ class NotificationService
                     'recipient_count' => $recipientCount,
                     'queued_count' => $queued,
                     'all_users' => $allUsers,
-                    'team_count' => count($teamIds),
+                    'user_group_count' => count($userGroupIds),
                     'selected_user_count' => count($selectedUserIds),
                 ],
                 logName: 'Notifications',
@@ -160,9 +160,9 @@ class NotificationService
         }
     }
 
-    public function sendToTeam(Team $team, ClientPortalNotification $notification): int
+    public function sendToUserGroup(UserGroup $userGroup, ClientPortalNotification $notification): int
     {
-        $users = $team->users()->where('is_active', true)->get();
+        $users = $userGroup->users()->where('is_active', true)->get();
         $users->each(fn (User $user): mixed => $user->notify($notification));
 
         return $users->count();
