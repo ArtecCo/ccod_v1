@@ -6,10 +6,11 @@ class SslReminderCardFormatter
 {
     public function format(string $title, array $context): array
     {
-        $severity = strtolower((string) ($context['ssl_reminder_severity'] ?? 'reminder'));
+        $severity = strtolower((string) ($context['severity'] ?? $context['ssl_reminder_severity'] ?? 'reminder'));
         $presentation = match ($severity) {
+            'attention' => ['label' => '🟡 WARNING', 'style' => 'warning', 'color' => 'Warning'],
+            'warning' => ['label' => '🔴 ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
             'critical' => ['label' => '🔴 CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
-            'warning' => ['label' => '🟠 WARNING', 'style' => 'attention', 'color' => 'Attention'],
             default => ['label' => '🟡 REMINDER', 'style' => 'warning', 'color' => 'Warning'],
         };
 
