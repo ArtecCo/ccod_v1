@@ -62,7 +62,9 @@ class ListNotificationRules extends ListRecords
                                     Select::make('severity')
                                         ->label('Classify event as')
                                         ->options([
-                                            'reminder' => 'Attention',
+                                            'reminder' => 'Reminder',
+                                            'reminder' => 'Reminder',
+                                            'attention' => 'Attention',
                                             'warning' => 'Warning',
                                             'critical' => 'Critical',
                                         ])
@@ -130,9 +132,9 @@ class ListNotificationRules extends ListRecords
                         foreach ($sslRows as $row) {
                             $threshold = filter_var($row['threshold_days'] ?? null, FILTER_VALIDATE_INT);
                             if ($threshold === false || $threshold < 0 || $threshold > 3650
-                                || ! in_array($row['severity'] ?? null, ['reminder', 'warning', 'critical'], true)) {
+                                || ! in_array($row['severity'] ?? null, ['reminder', 'attention', 'warning', 'critical'], true)) {
                                 throw ValidationException::withMessages([
-                                    'ssl_rules' => 'SSL classifications must have a valid days-remaining threshold and one of the three configured severities.',
+                                    'ssl_rules' => 'SSL classifications must have a valid days-remaining threshold and one of the four configured severities.',
                                 ]);
                             }
                         }
@@ -156,9 +158,9 @@ class ListNotificationRules extends ListRecords
                             $maximum = (float) $maximumValue;
                             if ($minimum < 0 || $maximum > 100 || $minimum >= $maximum
                                 || ($previousMaximum !== null && $minimum < $previousMaximum)
-                                || ! in_array($row['severity'] ?? null, ['attention', 'warning', 'critical'], true)) {
+                                || ! in_array($row['severity'] ?? null, ['reminder', 'attention', 'warning', 'critical'], true)) {
                                 throw ValidationException::withMessages([
-                                    'score_ranges' => 'Score ranges must be between 0 and 100, have a minimum below the maximum, not overlap, and use Attention, Warning, or Critical.',
+                                    'score_ranges' => 'Score ranges must be between 0 and 100, have a minimum below the maximum, not overlap, and use Reminder, Attention, Warning, or Critical.',
                                 ]);
                             }
 
