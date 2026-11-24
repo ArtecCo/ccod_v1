@@ -4,7 +4,6 @@ namespace App\Filament\Resources\NotificationRules\Pages;
 
 use App\Filament\Resources\NotificationRules\NotificationRuleResource;
 use App\Models\SslReminderRule;
-use App\Models\TeamsWebhook;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Repeater;
@@ -26,7 +25,7 @@ class ListNotificationRules extends ListRecords
                 ->icon('heroicon-o-shield-exclamation')
                 ->color('primary')
                 ->modalHeading('SSL Reminder Rules')
-                ->modalDescription('Set the number of days before certificate expiry and choose where each reminder is delivered. Each threshold is sent once per certificate expiry date.')
+                ->modalDescription('Classify SSL expiry events by days remaining. Notification Rules control whether and where each event is delivered. Each threshold is evaluated once per certificate expiry date.')
                 ->modalSubmitActionLabel('Save SSL Reminders')
                 ->modalWidth('7xl')
                 ->fillForm(fn (): array => [
@@ -35,7 +34,6 @@ class ListNotificationRules extends ListRecords
                             'id' => $rule->id,
                             'threshold_days' => $rule->threshold_days,
                             'severity' => $rule->severity,
-                            'webhook_ids' => $rule->webhook_ids ?? [],
                         ])->all(),
                 ])
                 ->schema([
@@ -58,13 +56,6 @@ class ListNotificationRules extends ListRecords
                                 ])
                                 ->default('reminder')
                                 ->required(),
-                            Select::make('webhook_ids')
-                                ->label('Teams webhook destinations')
-                                ->multiple()
-                                ->searchable()
-                                ->options(fn (): array => TeamsWebhook::query()->where('enabled', true)->orderBy('name')->pluck('name', 'id')->all())
-                                ->required()
-                                ->helperText('Select at least one enabled Teams webhook destination.'),
                         ])
                         ->columns(3)
                         ->defaultItems(0)
@@ -89,25 +80,10 @@ class ListNotificationRules extends ListRecords
                     foreach ($rows as $row) {
                         $threshold = (int) $row['threshold_days'];
                         $severity = (string) $row['severity'];
-                        $webhookIds = array_values(array_unique(array_map('intval', $row['webhook_ids'] ?? [])));
-                        $validWebhookIds = TeamsWebhook::query()
-                            ->where('enabled', true)
-                            ->whereKey($webhookIds)
-                            ->pluck('id')
-                            ->map(fn ($id): int => (int) $id)
-                            ->all();
-
-                        if ($validWebhookIds === [] || count($validWebhookIds) !== count($webhookIds)) {
-                            throw ValidationException::withMessages([
-                                'rules' => 'Every reminder must have at least one enabled Teams webhook destination.',
-                            ]);
-                        }
-
                         $rule = SslReminderRule::query()->updateOrCreate(
                             ['threshold_days' => $threshold],
                             [
                                 'severity' => $severity,
-                                'webhook_ids' => $validWebhookIds,
                                 'enabled' => true,
                             ],
                         );
