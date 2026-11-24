@@ -94,7 +94,7 @@ class NotificationService
                     }
                 });
 
-            $audience = $allUsers ? 'all' : ($userGroupIds !== [] && $selectedUserIds !== [] ? 'teams_and_users' : ($userGroupIds !== [] ? 'teams' : ($selectedUserIds !== [] ? 'users' : 'none')));
+            $audience = $allUsers ? 'all' : ($userGroupIds !== [] && $selectedUserIds !== [] ? 'user_groups_and_users' : ($userGroupIds !== [] ? 'user_groups' : ($selectedUserIds !== [] ? 'users' : 'none')));
 
             $this->auditLogger->log(
                 event: 'Notification Queued',
