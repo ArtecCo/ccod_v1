@@ -50,7 +50,7 @@ class SslReminderCardFormatter
             'type' => 'TextBlock',
             'text' => $title,
             'weight' => 'Bolder',
-            'size' => 'Medium',
+            'size' => 'Large',
             'wrap' => true,
             'spacing' => 'Medium',
         ], [
