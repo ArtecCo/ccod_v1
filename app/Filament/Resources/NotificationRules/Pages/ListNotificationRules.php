@@ -1,17 +1,17 @@
 <?php
 
-namespace App\Filament\Resources\NotificationRules\Pages;
+namespace App\\Filament\\Resources\\NotificationRules\\Pages;
 
-use App\Filament\Resources\NotificationRules\NotificationRuleResource;
-use App\Models\SslReminderRule;
-use Filament\Actions\Action;
-use Filament\Actions\CreateAction;
-use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Resources\Pages\ListRecords;
-use Illuminate\Validation\ValidationException;
+use App\\Filament\\Resources\\NotificationRules\\NotificationRuleResource;
+use App\\Models\\SslReminderRule;
+use Filament\\Actions\\Action;
+use Filament\\Actions\\CreateAction;
+use Filament\\Forms\\Components\\Repeater;
+use Filament\\Forms\\Components\\Select;
+use Filament\\Forms\\Components\\TextInput;
+use Filament\\Notifications\\Notification;
+use Filament\\Resources\\Pages\\ListRecords;
+use Illuminate\\Validation\\ValidationException;
 
 class ListNotificationRules extends ListRecords
 {
@@ -20,13 +20,13 @@ class ListNotificationRules extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Action::make('sslReminders')
-                ->label('SSL Reminders')
+            Action::make('eventClassification')
+                ->label('Event Classification')
                 ->icon('heroicon-o-shield-exclamation')
                 ->color('primary')
-                ->modalHeading('SSL Reminder Rules')
-                ->modalDescription('Classify SSL expiry events by days remaining. Notification Rules control whether and where each event is delivered. Each threshold is evaluated once per certificate expiry date.')
-                ->modalSubmitActionLabel('Save SSL Reminders')
+                ->modalHeading('Event Classification')
+                ->modalDescription('Classification is independent of notification delivery. Configure how many days remain before an SSL certificate expires to classify the event as Attention, Warning, or Critical. Notification Rules use the resulting severity to decide whether and where to deliver it.')
+                ->modalSubmitActionLabel('Save Classification')
                 ->modalWidth('7xl')
                 ->fillForm(fn (): array => [
                     'rules' => SslReminderRule::query()->where('enabled', true)->orderBy('threshold_days')->get()
@@ -39,27 +39,27 @@ class ListNotificationRules extends ListRecords
                 ->schema([
                     Repeater::make('rules')
                         ->hiddenLabel()
-                                ->schema([
+                        ->schema([
                             TextInput::make('threshold_days')
-                                ->label('Expiring in (days)')
+                                ->label('Days remaining')
                                 ->numeric()
                                 ->integer()
                                 ->minValue(0)
                                 ->maxValue(3650)
                                 ->required(),
                             Select::make('severity')
-                                ->label('Severity')
+                                ->label('Classify event as')
                                 ->options([
-                                    'reminder' => 'Attention (Yellow)',
-                                    'warning' => 'Warning (Orange)',
-                                    'critical' => 'Critical (Red)',
+                                    'reminder' => 'Attention',
+                                    'warning' => 'Warning',
+                                    'critical' => 'Critical',
                                 ])
                                 ->default('reminder')
                                 ->required(),
                         ])
                         ->columns(3)
                         ->defaultItems(0)
-                        ->addActionLabel('Add threshold')
+                        ->addActionLabel('Add classification')
                         ->reorderable(false)
                         ->columnSpanFull()
                         ->compact(),
@@ -72,7 +72,7 @@ class ListNotificationRules extends ListRecords
                     );
                     if (count($thresholds) !== count(array_unique($thresholds))) {
                         throw ValidationException::withMessages([
-                            'rules' => 'Each SSL reminder threshold must be unique.',
+                            'rules' => 'Each days-remaining classification threshold must be unique.',
                         ]);
                     }
 
@@ -84,7 +84,6 @@ class ListNotificationRules extends ListRecords
                             ['threshold_days' => $threshold],
                             [
                                 'severity' => $severity,
-                                // Keep the legacy non-null JSON column populated; destinations now live in Notification Rules.
                                 'webhook_ids' => [],
                                 'enabled' => true,
                             ],
@@ -95,8 +94,8 @@ class ListNotificationRules extends ListRecords
                     SslReminderRule::query()->whereNotIn('id', $keepIds)->update(['enabled' => false]);
 
                     Notification::make()
-                        ->title('SSL reminder rules saved')
-                        ->body(count($keepIds).' threshold(s) configured.')
+                        ->title('Event classification saved')
+                        ->body(count($keepIds).' classification threshold(s) configured.')
                         ->success()
                         ->send();
                 }),
