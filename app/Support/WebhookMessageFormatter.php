@@ -178,6 +178,139 @@ class WebhookMessageFormatter
     }
 
     /**
+     * Build a dedicated failure card with each failed module and its error separated.
+     */
+    public function syncFailureCard(string $title, array $context): array
+    {
+        $body = [[
+            'type' => 'TextBlock',
+            'text' => $title,
+            'weight' => 'Bolder',
+            'size' => 'Large',
+            'wrap' => true,
+        ], [
+            'type' => 'Container',
+            'style' => 'attention',
+            'spacing' => 'Medium',
+            'items' => [[
+                'type' => 'TextBlock',
+                'text' => 'SYNCHRONIZATION FAILED',
+                'weight' => 'Bolder',
+                'color' => 'Attention',
+                'wrap' => true,
+            ]],
+        ], [
+            'type' => 'FactSet',
+            'spacing' => 'Medium',
+            'facts' => [
+                ['title' => 'Sync run ID', 'value' => (string) ($context['run_id'] ?? 'Not available')],
+                ['title' => 'Failure time', 'value' => (string) ($context['failed_at'] ?? 'Not available')],
+            ],
+        ]];
+
+        $failedModules = $context['failed_modules'] ?? [];
+        $moduleErrors = $context['failed_module_errors'] ?? [];
+        if (! is_array($failedModules)) {
+            $failedModules = [];
+        }
+        if (! is_array($moduleErrors)) {
+            $moduleErrors = [];
+        }
+
+        $body[] = [
+            'type' => 'TextBlock',
+            'text' => 'FAILED MODULES',
+            'weight' => 'Bolder',
+            'spacing' => 'Medium',
+            'wrap' => true,
+        ];
+
+        foreach ($failedModules as $index => $module) {
+            $module = (string) $module;
+            $error = trim((string) ($moduleErrors[$module] ?? ''));
+
+            if ($error === '' && $index === 0) {
+                $error = trim((string) ($context['error_summary'] ?? ''));
+            }
+            if ($error === '') {
+                $error = 'No detailed error was supplied for this module.';
+            }
+
+            $body[] = [
+                'type' => 'Container',
+                'style' => 'attention',
+                'spacing' => 'Small',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => mb_strtoupper($module),
+                    'weight' => 'Bolder',
+                    'color' => 'Attention',
+                    'spacing' => 'None',
+                    'wrap' => true,
+                ], [
+                    'type' => 'TextBlock',
+                    'text' => $error,
+                    'fontType' => 'Monospace',
+                    'size' => 'Small',
+                    'wrap' => true,
+                    'spacing' => 'Small',
+                ]],
+            ];
+        }
+
+        if ($failedModules === [] && ! empty($context['error_summary'])) {
+            $body[] = [
+                'type' => 'Container',
+                'style' => 'attention',
+                'spacing' => 'Small',
+                'items' => [[
+                    'type' => 'TextBlock',
+                    'text' => (string) $context['error_summary'],
+                    'fontType' => 'Monospace',
+                    'size' => 'Small',
+                    'wrap' => true,
+                ]],
+            ];
+        }
+
+        if (! empty($context['occurred_at'])) {
+            $body[] = [
+                'type' => 'TextBlock',
+                'text' => 'Occurred at: '.(string) $context['occurred_at'],
+                'size' => 'Small',
+                'isSubtle' => true,
+                'wrap' => true,
+                'spacing' => 'Medium',
+            ];
+        }
+
+        $card = [
+            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
+            'type' => 'AdaptiveCard',
+            'version' => '1.2',
+            'body' => $body,
+            'actions' => [],
+        ];
+
+        if (filter_var($context['report_url'] ?? null, FILTER_VALIDATE_URL)) {
+            $card['actions'][] = [
+                'type' => 'Action.OpenUrl',
+                'title' => 'View Sync Report',
+                'url' => $context['report_url'],
+            ];
+        }
+
+        return [
+            'type' => 'message',
+            'attachments' => [[
+                'contentType' => 'application/vnd.microsoft.card.adaptive',
+                'contentUrl' => null,
+                'content' => $card,
+            ]],
+        ];
+    }
+
+    /**
      * Recreates the original Azure sync completion Adaptive Card layout.
      */
     public function syncCompletionCard(string $title, array $context): array
