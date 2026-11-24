@@ -79,6 +79,12 @@ class TeamsWebhookNotifier
             $message = $this->formatter->format($eventKey, $context);
             $payload = $this->payload($webhook, $message['title'], $message['message'], $eventKey, $context);
 
+            // Keep every designed notification card on the SSL-renewed spacing standard.
+            // Azure sync completion and failure retain their deliberately distinct layouts.
+            if (! in_array($eventKey, ['sync.completed', 'azure.sync.failed'], true)) {
+                $payload = $this->applyStandardCardSpacing($payload);
+            }
+
             $response = Http::acceptJson()
                 ->asJson()
                 ->timeout(15)
@@ -108,6 +114,35 @@ class TeamsWebhookNotifier
 
             throw $exception;
         }
+    }
+
+    /**
+     * Apply the spacing hierarchy used by the SSL certificate renewed card
+     * to the top-level content of every other Adaptive Card notification.
+     */
+    private function applyStandardCardSpacing(array $payload): array
+    {
+        if (! isset($payload['attachments'][0]['content']['body'])
+            || ! is_array($payload['attachments'][0]['content']['body'])) {
+            return $payload;
+        }
+
+        foreach ($payload['attachments'][0]['content']['body'] as $index => &$element) {
+            if (! is_array($element)) {
+                continue;
+            }
+
+            // First element is the status banner or card title.
+            // The title/details follow with the same Medium/Small rhythm as SSL renewed.
+            $element['spacing'] = match ($index) {
+                0 => 'None',
+                1 => 'Medium',
+                default => 'Small',
+            };
+        }
+        unset($element);
+
+        return $payload;
     }
 
     private function payload(TeamsWebhook $webhook, string $title, string $message, string $eventKey, array $context): array
