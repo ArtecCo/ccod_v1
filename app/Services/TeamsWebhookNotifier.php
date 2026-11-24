@@ -260,8 +260,8 @@ class TeamsWebhookNotifier
                 // classification range. Never infer Warning/Critical from a
                 // hard-coded score threshold or invent a fallback severity.
                 $classification = match ($severityValue) {
-                    'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
-                    'WARNING' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                    'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'warning', 'color' => 'Attention'],
+                    'WARNING' => ['label' => 'WARNING', 'style' => 'attention', 'color' => 'Warning'],
                     'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                     default => null,
                 };
@@ -269,8 +269,8 @@ class TeamsWebhookNotifier
                 $classification = $eventKey === 'web_url.ssl.expired'
                     ? ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention']
                     : match ($severityValue) {
-                        'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
-                        'WARNING' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                        'ATTENTION' => ['label' => 'ATTENTION', 'style' => 'warning', 'color' => 'Attention'],
+                        'WARNING' => ['label' => 'WARNING', 'style' => 'attention', 'color' => 'Warning'],
                         'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                         default => null,
                     };
@@ -279,7 +279,7 @@ class TeamsWebhookNotifier
                     || $eventKey === 'azure.critical_alert.detected';
                 $classification = [
                     'label' => $critical ? 'CRITICAL' : 'WARNING',
-                    'style' => $critical ? 'attention' : 'warning',
+                    'style' => 'attention',
                     'color' => $critical ? 'Attention' : 'Warning',
                 ];
             }
