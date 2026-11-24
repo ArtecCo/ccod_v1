@@ -48,7 +48,7 @@ class NotificationEventCatalog
 
         // Azure (12)
         'sync.started' => ['label' => 'Azure synchronization started', 'category' => 'Azure', 'fields' => ['run_id', 'sync_started_at']],
-        'azure.sync.failed' => ['label' => 'Azure synchronization failed', 'category' => 'Azure', 'fields' => ['run_id', 'failed_at', 'error_summary', 'failed_modules', 'occurred_at']],
+        'azure.sync.failed' => ['label' => 'Azure synchronization failed', 'category' => 'Azure', 'fields' => ['run_id', 'failed_at', 'error_summary', 'failed_modules', 'failed_module_errors', 'occurred_at']],
         'sync.completed' => ['label' => 'Azure synchronization completed', 'category' => 'Azure', 'fields' => [
             'run_id', 'overall_status', 'sync_started_at', 'completed_at', 'duration', 'duration_seconds',
             'subscriptions_status', 'resources_status', 'costs_status', 'security_status', 'alerts_status',
