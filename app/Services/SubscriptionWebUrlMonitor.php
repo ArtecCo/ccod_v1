@@ -104,7 +104,12 @@ class SubscriptionWebUrlMonitor
             // per-certificate delivery ledger, independently of the legacy 15-day event.
             app(\\App\\Services\\SslReminderService::class)->check(
                 $webUrl,
-                $previousDays === null ? null : (int) $previousDays,
+                $previousDays === null
+                    || $previousExpiry === null
+                    || $currentExpiry === null
+                    || ! $currentExpiry->equalTo($previousExpiry)
+                    ? null
+                    : (int) $previousDays,
             );
         } catch (Throwable $exception) {
             report($exception);
