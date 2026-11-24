@@ -10,6 +10,7 @@ use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -27,7 +28,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
 {
     protected static string $relationship = 'webUrls';
     protected static ?string $title = 'Web URLs';
-    protected static string|\BackedEnum|null $icon = Heroicon::OutlinedGlobeAlt;
+    protected static string|\\BackedEnum|null $icon = Heroicon::OutlinedGlobeAlt;
     protected static bool $isLazy = true;
 
     protected function getCreateAuthorizationResponse(): Response
@@ -86,7 +87,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
                     ->falseLabel('Invalid'),
                 Filter::make('ssl_expiring')
                     ->label('SSL Expiring in 15 Days')
-                    ->query(fn (\Illuminate\Database\Eloquent\Builder $query): \Illuminate\Database\Eloquent\Builder => $query
+                    ->query(fn (\\Illuminate\\Database\\Eloquent\\Builder $query): \\Illuminate\\Database\\Eloquent\\Builder => $query
                         ->whereNotNull('ssl_expires_at')
                         ->whereBetween('ssl_expires_at', [now(), now()->addDays(15)])),
             ])
