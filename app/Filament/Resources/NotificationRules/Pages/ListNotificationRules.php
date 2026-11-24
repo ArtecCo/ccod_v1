@@ -8,6 +8,7 @@ use App\Models\TeamsWebhook;
 use Filament\Actions\Action;
 use Filament\Actions\CreateAction;
 use Filament\Forms\Components\Repeater;
+use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Notifications\Notification;
@@ -39,9 +40,11 @@ class ListNotificationRules extends ListRecords
                         ])->all(),
                 ])
                 ->schema([
-                    Repeater::make('rules')
-                        ->label('Reminder thresholds')
+                    Section::make('Reminder thresholds')
                         ->schema([
+                            Repeater::make('rules')
+                                ->label('')
+                                ->schema([
                             TextInput::make('threshold_days')
                                 ->label('Expiring in (days)')
                                 ->numeric()
@@ -71,10 +74,13 @@ class ListNotificationRules extends ListRecords
                         ->addActionLabel('Add threshold')
                         ->reorderable(false)
                         ->collapsible()
-                        ->itemLabel(fn (array $state): ?string => isset($state['threshold_days'])
-                            ? 'Within '.(int) $state['threshold_days'].' days — '.ucfirst((string) ($state['severity'] ?? 'reminder'))
-                            : 'New threshold')
-                        ->columnSpanFull(),
+                                ->itemLabel(fn (array $state): ?string => isset($state['threshold_days'])
+                                    ? 'Within '.(int) $state['threshold_days'].' days — '.ucfirst((string) ($state['severity'] ?? 'reminder'))
+                                    : 'New threshold')
+                                ->columnSpanFull(),
+                        ])
+                        ->columnSpanFull()
+                        ->compact(),
                 ])
                 ->action(function (array $data): void {
                     $rows = $data['rules'] ?? [];
