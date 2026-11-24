@@ -36,6 +36,24 @@ class NotificationService
             ->values()
             ->all();
 
+        $selectedUsers = $selectedUserIds !== []
+            ? User::query()->whereKey($selectedUserIds)->get(['id', 'is_active'])
+            : collect();
+
+        $matchedSelectedUserIds = $selectedUsers
+            ->filter(fn (User $user): bool => (bool) $user->is_active)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+
+        $inactiveSelectedUserIds = $selectedUsers
+            ->reject(fn (User $user): bool => (bool) $user->is_active)
+            ->pluck('id')
+            ->map(fn ($id): int => (int) $id)
+            ->values()
+            ->all();
+
         $recipientQuery = User::query()->where('is_active', true);
 
         if (! $allUsers && $teamIds !== [] && $selectedUserIds !== []) {
@@ -81,10 +99,13 @@ class NotificationService
             $this->auditLogger->log(
                 event: 'Notification Queued',
                 description: sprintf(
-                    'Client portal notification "%s": audience=%s; selected user IDs=%d; matched active recipients=%d; queued=%d.',
+                    'Client portal notification "%s": audience=%s; selected IDs=%s; found selected users=%d; active selected IDs=%s; inactive selected IDs=%s; matched active recipients=%d; queued=%d.',
                     $title,
                     $audience,
-                    count($selectedUserIds),
+                    json_encode($selectedUserIds),
+                    $selectedUsers->count(),
+                    json_encode($matchedSelectedUserIds),
+                    json_encode($inactiveSelectedUserIds),
                     $recipientCount,
                     $queued,
                 ),
@@ -97,6 +118,10 @@ class NotificationService
                     'all_users' => $allUsers,
                     'team_count' => count($teamIds),
                     'selected_user_count' => count($selectedUserIds),
+                    'selected_user_ids' => $selectedUserIds,
+                    'found_selected_user_count' => $selectedUsers->count(),
+                    'active_selected_user_ids' => $matchedSelectedUserIds,
+                    'inactive_selected_user_ids' => $inactiveSelectedUserIds,
                 ],
                 logName: 'Notifications',
                 tags: ['notification', 'client_portal', 'queued'],
