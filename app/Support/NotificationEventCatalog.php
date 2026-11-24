@@ -275,7 +275,24 @@ class NotificationEventCatalog
 
     public static function valuesForField(array|string|null $eventKeys, ?string $fieldKey): array
     {
-        return self::field($eventKeys, $fieldKey)['values'] ?? [];
+        $normalizedEventKeys = self::normalizeKeys($eventKeys);
+
+        // Resolve classification severity options directly at the condition-value
+        // boundary. This avoids falling back to Azure's native severity enum when
+        // Filament evaluates a repeater field's options.
+        if ($fieldKey === 'severity' && count($normalizedEventKeys) === 1
+            && in_array($normalizedEventKeys[0], [
+                'azure.security_score.decreased',
+                'web_url.ssl.expiring',
+            ], true)) {
+            return [
+                'ATTENTION' => 'Attention',
+                'WARNING' => 'Warning',
+                'CRITICAL' => 'Critical',
+            ];
+        }
+
+        return self::field($normalizedEventKeys, $fieldKey)['values'] ?? [];
     }
 
     public static function placeholderOptions(array|string|null $eventKeys): array
