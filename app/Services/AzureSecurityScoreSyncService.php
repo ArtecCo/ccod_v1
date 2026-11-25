@@ -17,6 +17,7 @@ class AzureSecurityScoreSyncService
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
+        private readonly SubscriptionModuleSyncTracker $syncTracker,
     ) {
     }
 
@@ -32,7 +33,10 @@ class AzureSecurityScoreSyncService
         $stats = ['subscriptions' => count($subscriptions), 'discovered' => 0, 'created' => 0, 'updated' => 0, 'deduplicated' => 0, 'pruned' => 0];
 
         foreach ($subscriptions as $subscription) {
-            $url = sprintf(
+            $this->syncTracker->begin('security_scores', [$subscription]);
+
+            try {
+                $url = sprintf(
                 'https://management.azure.com/subscriptions/%s/providers/Microsoft.Security/secureScores?api-version=%s',
                 rawurlencode($subscription),
                 self::API_VERSION,
@@ -155,6 +159,12 @@ class AzureSecurityScoreSyncService
                 ->where('subscription_id', $subscription)
                 ->where('captured_at', '<', $retentionStart)
                 ->delete();
+
+                $this->syncTracker->succeed('security_scores', [$subscription]);
+            } catch (\\Throwable $exception) {
+                $this->syncTracker->fail('security_scores', [$subscription], $exception->getMessage());
+                throw $exception;
+            }
         }
 
         return $stats;
