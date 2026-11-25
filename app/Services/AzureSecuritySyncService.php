@@ -49,7 +49,7 @@ class AzureSecuritySyncService
             try {
                 $result = $this->syncSubscription($id, $syncTimestamp);
                 $this->syncTracker->succeed('security', [$id]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->syncTracker->fail('security', [$id], $exception->getMessage());
                 throw $exception;
             }
