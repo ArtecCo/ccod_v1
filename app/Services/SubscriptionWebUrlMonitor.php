@@ -403,6 +403,23 @@ class SubscriptionWebUrlMonitor
                 ->get($webUrl->url);
 
             $status = $response->status();
+            if ($status === 429 || $status >= 500) {
+                [$status, $error, $responseTime] = $this->retryAvailabilityRequest(
+                    $webUrl->url,
+                    (int) round((microtime(true) - $startedAt) * 1000),
+                );
+                if ($status > 0) {
+                    $webUrl->is_live = $this->isHealthyStatus($status);
+                }
+                $webUrl->http_status = $status > 0 ? $status : null;
+                $webUrl->last_check_error = $error;
+                $webUrl->response_time_ms = $responseTime;
+                $webUrl->last_checked_at = now();
+                $webUrl->save();
+                $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
+                return;
+            }
+
             $webUrl->is_live = $this->isHealthyStatus($status);
             $webUrl->http_status = $status;
             $webUrl->last_check_error = null;
