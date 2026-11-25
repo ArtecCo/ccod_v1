@@ -19,7 +19,7 @@ class SubscriptionStatsOverview extends BaseWidget
 
     protected static bool $isLazy = true;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '10s';
 
     protected int | array | null $columns = 3;
 
