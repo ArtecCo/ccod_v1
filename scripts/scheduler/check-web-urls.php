@@ -33,7 +33,12 @@ $startedAt = microtime(true);
 try {
     /** @var SubscriptionWebUrlMonitor $monitor */
     $monitor = $app->make(SubscriptionWebUrlMonitor::class);
+    $syncTracker = $app->make(\App\Services\SubscriptionModuleSyncTracker::class);
     $query = SubscriptionWebUrl::query()->where('is_active', true);
+    $trackedSubscriptionIds = (clone $query)->whereNotNull('subscription_id')->distinct()->pluck('subscription_id')->all();
+    if ($trackedSubscriptionIds !== []) {
+        $syncTracker->begin('web_urls', $trackedSubscriptionIds);
+    }
     $total = (clone $query)->count();
 
     if ($total === 0) {
@@ -98,10 +103,20 @@ try {
     fwrite(STDOUT, sprintf("CHECK_SUCCESS: %d\n", $processed));
     fwrite(STDOUT, sprintf("CHECK_ERRORS: %d\n", $checkErrors));
     fwrite(STDOUT, sprintf("PING_DURATION_SECONDS: %.2f\n", microtime(true) - $startedAt));
+    if ($trackedSubscriptionIds !== []) {
+        if ($checkErrors > 0) {
+            $syncTracker->partial('web_urls', $trackedSubscriptionIds, "{$checkErrors} URL availability checks reported errors.");
+        } else {
+            $syncTracker->succeed('web_urls', $trackedSubscriptionIds);
+        }
+    }
     if ($checkErrors > 0) {
         exit($processed > 0 ? 2 : 1);
     }
 } catch (Throwable $exception) {
+    if (isset($syncTracker, $trackedSubscriptionIds) && $trackedSubscriptionIds !== []) {
+        $syncTracker->fail('web_urls', $trackedSubscriptionIds, $exception->getMessage());
+    }
     fwrite(STDERR, 'Web URL ping failed: ' . $exception->getMessage() . PHP_EOL);
     exit(1);
 }
