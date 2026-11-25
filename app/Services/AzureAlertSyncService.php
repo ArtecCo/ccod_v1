@@ -9,6 +9,7 @@ use App\Models\AzureAlertDetail;
 use App\Models\AzureSubscription;
 use App\Services\NotificationRuleService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 
@@ -201,23 +202,18 @@ KQL,
             $existing = AzureAlert::query()->where('azure_alert_id', $legacyId)->first();
         }
 
+        if (strcasecmp((string) $attributes['alert_condition'], 'Resolved') === 0) {
+            // Azure can return the same resolved alert on every sync. Persist an
+            // event marker before deleting the local alert so resolution is emitted once.
+            $this->triggerAlertEventOnce('azure.alert.resolved', $alertId, $attributes, $subscriptionId);
+            $existing?->delete();
+
+            return 'resolved';
+        }
+
         if ($existing === null) {
             $existing = AzureAlert::query()->create($attributes);
-
-            if (strcasecmp((string) $attributes['alert_condition'], 'Resolved') === 0) {
-                $this->triggerResolvedEvent($alertId, $attributes, $subscriptionId);
-                $existing->delete();
-
-                return 'resolved';
-            }
-
-            $context = $this->notificationContext($alertId, $attributes, $subscriptionId);
-
-            try {
-                app(NotificationRuleService::class)->trigger('azure.alert.detected', $context);
-            } catch (Throwable $exception) {
-                report($exception);
-            }
+            $this->triggerAlertEventOnce('azure.alert.detected', $alertId, $attributes, $subscriptionId);
 
             return 'created';
         }
@@ -232,24 +228,35 @@ KQL,
 
         $existing->forceFill($attributes)->saveQuietly();
 
-        if (strcasecmp((string) $attributes['alert_condition'], 'Resolved') === 0) {
-            // If queuing fails, the row remains Resolved and the next sync retries it.
-            $this->triggerResolvedEvent($alertId, $attributes, $subscriptionId);
-            $existing->delete();
-
-            return 'resolved';
-        }
-
         return $changed ? 'updated' : 'unchanged';
     }
 
-    private function triggerResolvedEvent(string $alertId, array $attributes, string $subscriptionId): void
+    /**
+     * Record each alert lifecycle event once. The unique database key also
+     * protects against overlapping scheduler executions.
+     */
+    private function triggerAlertEventOnce(string $eventKey, string $alertId, array $attributes, string $subscriptionId): void
     {
-        app(NotificationRuleService::class)->trigger(
-            'azure.alert.resolved',
-            $this->notificationContext($alertId, $attributes, $subscriptionId),
-            true,
-        );
+        DB::transaction(function () use ($eventKey, $alertId, $attributes, $subscriptionId): void {
+            $inserted = DB::table('azure_alert_notification_events')->insertOrIgnore([
+                'alert_id_hash' => hash('sha256', $alertId),
+                'alert_id' => $alertId,
+                'event_key' => $eventKey,
+                'processed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            if ($inserted === 0) {
+                return;
+            }
+
+            app(NotificationRuleService::class)->trigger(
+                $eventKey,
+                $this->notificationContext($alertId, $attributes, $subscriptionId),
+                true,
+            );
+        });
     }
 
     private function notificationContext(string $alertId, array $attributes, string $subscriptionId): array
