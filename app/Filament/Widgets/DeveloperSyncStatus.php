@@ -13,7 +13,7 @@ class DeveloperSyncStatus extends TableWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?int $sort = 1;
+    protected static ?int $sort = 1;\n\n    protected static ?string $pollingInterval = '10s';
 
     public function table(Table $table): Table
     {
@@ -30,7 +30,7 @@ class DeveloperSyncStatus extends TableWidget
                         'subscriptions' => 'Subscriptions',
                         'resources' => 'Resources',
                         'costs' => 'Costs',
-                        'security' => 'Security',
+                        'security' => 'Security Recommendations',\n                        'security_scores' => 'Security Scores',
                         'alerts' => 'Alerts',
                         'web_urls' => 'Web URLs',
                         default => str($state)->replace('_', ' ')->title()->toString(),
@@ -42,13 +42,13 @@ class DeveloperSyncStatus extends TableWidget
                     ->color(fn (?string $state): string => match ($state) {
                         'success' => 'success',
                         'running' => 'warning',
-                        'failed' => 'danger',
+                        'failed' => 'danger',\n                        'partial' => 'warning',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'success' => 'Successful',
                         'running' => 'Running',
-                        'failed' => 'Failed',
+                        'failed' => 'Failed',\n                        'partial' => 'Partially successful',
                         default => 'Not recorded',
                     }),
                 TextColumn::make('last_successful_at')
