@@ -322,7 +322,11 @@ class SubscriptionWebUrlMonitor
                     );
                 }
 
-                $webUrl->is_live = $this->isHealthyStatus($httpStatus);
+                // No HTTP response after retries is inconclusive, not proof
+                // that the website is down. Keep the last known availability.
+                if ($httpStatus > 0) {
+                    $webUrl->is_live = $this->isHealthyStatus($httpStatus);
+                }
                 $webUrl->http_status = $httpStatus > 0 ? $httpStatus : null;
                 $webUrl->response_time_ms = $responseTime;
                 $webUrl->last_check_error = $error !== '' ? $error : null;
@@ -349,6 +353,7 @@ class SubscriptionWebUrlMonitor
     {
         $startedAt = microtime(true);
         $lastError = '';
+        $lastHttpStatus = 0;
 
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             try {
@@ -359,6 +364,7 @@ class SubscriptionWebUrlMonitor
                     ->get($url);
 
                 $status = $response->status();
+                $lastHttpStatus = $status;
 
                 if ($status !== 429 && $status < 500) {
                     return [$status, '', (int) round((microtime(true) - $startedAt) * 1000)];
@@ -374,7 +380,7 @@ class SubscriptionWebUrlMonitor
             }
         }
 
-        return [0, $lastError !== '' ? $lastError : 'Availability check failed after retries.', max(
+        return [$lastHttpStatus, $lastError !== '' ? $lastError : 'Availability check failed after retries.', max(
             $initialResponseTime,
             (int) round((microtime(true) - $startedAt) * 1000),
         )];
@@ -397,9 +403,20 @@ class SubscriptionWebUrlMonitor
             $webUrl->http_status = $status;
             $webUrl->last_check_error = null;
         } catch (Throwable $exception) {
-            $webUrl->is_live = false;
-            $webUrl->http_status = null;
-            $webUrl->last_check_error = $exception->getMessage();
+            [$status, $error, $responseTime] = $this->retryAvailabilityRequest(
+                $webUrl->url,
+                (int) round((microtime(true) - $startedAt) * 1000),
+            );
+            if ($status > 0) {
+                $webUrl->is_live = $this->isHealthyStatus($status);
+            }
+            $webUrl->http_status = $status > 0 ? $status : null;
+            $webUrl->last_check_error = $error !== '' ? $error : $exception->getMessage();
+            $webUrl->response_time_ms = $responseTime;
+            $webUrl->last_checked_at = now();
+            $webUrl->save();
+            $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
+            return;
         }
 
         $webUrl->response_time_ms = (int) round((microtime(true) - $startedAt) * 1000);
