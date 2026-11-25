@@ -192,6 +192,7 @@ class WebhookMessageFormatter
             'url' => 'Website URL',
             'domain' => 'Domain',
             'http_status' => 'HTTP status',
+            'last_check_error' => 'Last check error',
             'response_time_ms' => 'Response time',
             'checked_at' => 'Last checked',
         ] as $key => $label) {
