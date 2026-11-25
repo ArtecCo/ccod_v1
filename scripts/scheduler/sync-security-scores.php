@@ -9,6 +9,7 @@ use Illuminate\Foundation\Bootstrap\LoadConfiguration;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Foundation\Bootstrap\RegisterFacades;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
+use App\Services\AzureSecurityScoreSyncService;
 
 $basePath = dirname(__DIR__, 2);
 define('LARAVEL_START', microtime(true));
@@ -25,7 +26,6 @@ $app->bootstrapWith([
     BootProviders::class,
 ]);
 
-use App\Services\AzureSecurityScoreSyncService;
 
 $startedAt = microtime(true);
 fwrite(STDOUT, "Synchronizing Azure security scores...\n");
