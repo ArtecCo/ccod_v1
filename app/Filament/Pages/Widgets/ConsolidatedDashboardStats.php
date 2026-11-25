@@ -185,12 +185,12 @@ class ConsolidatedDashboardStats extends BaseWidget
             $high = AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')->count();
             $low = $latestScores->filter(fn ($score): bool => (float) $score->percentage_score * 100 < 80)->count();
-            $scoreSyncedAt = IlluminateSupportFacadesDB::table('subscription_module_syncs')
+            $scoreSyncedAt = DB::table('subscription_module_syncs')
                 ->where('module', 'security_scores')->whereIn('subscription_id', $ids)->max('last_successful_at');
-            $recommendationsSyncedAt = IlluminateSupportFacadesDB::table('subscription_module_syncs')
+            $recommendationsSyncedAt = DB::table('subscription_module_syncs')
                 ->where('module', 'security')->whereIn('subscription_id', $ids)->max('last_successful_at');
             $formatSyncTime = fn ($value): string => $value !== null
-                ? IlluminateSupportCarbon::parse($value)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
+                ? Carbon::parse($value)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
                 : '—';
 
             return [
@@ -210,10 +210,10 @@ class ConsolidatedDashboardStats extends BaseWidget
                 ->whereIn('severity', ['Sev0', 'Sev1'])
                 ->selectRaw('SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev0, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev1',
                     ['Sev0', 'Sev1'])->first();
-            $alertsSyncedAt = IlluminateSupportFacadesDB::table('subscription_module_syncs')
+            $alertsSyncedAt = DB::table('subscription_module_syncs')
                 ->where('module', 'alerts')->whereIn('subscription_id', $ids)->max('last_successful_at');
             $lastAlertsSync = $alertsSyncedAt !== null
-                ? IlluminateSupportCarbon::parse($alertsSyncedAt)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
+                ? Carbon::parse($alertsSyncedAt)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
                 : '—';
 
             return [
