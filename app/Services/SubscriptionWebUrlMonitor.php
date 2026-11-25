@@ -264,10 +264,13 @@ class SubscriptionWebUrlMonitor
                 $handle = curl_init($webUrl->url);
 
                 if ($handle === false) {
-                    $webUrl->is_live = false;
-                    $webUrl->http_status = null;
-                    $webUrl->response_time_ms = 0;
-                    $webUrl->last_check_error = 'Unable to initialize cURL.';
+                    [$status, $error, $responseTime] = $this->retryAvailabilityRequest($webUrl->url, 0);
+                    if ($status > 0) {
+                        $webUrl->is_live = $this->isHealthyStatus($status);
+                    }
+                    $webUrl->http_status = $status > 0 ? $status : null;
+                    $webUrl->response_time_ms = $responseTime;
+                    $webUrl->last_check_error = $error !== '' ? $error : 'Unable to initialize cURL.';
                     $webUrl->last_checked_at = now();
                     $webUrl->save();
                     $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
@@ -381,8 +384,7 @@ class SubscriptionWebUrlMonitor
         }
 
         return [$lastHttpStatus, $lastError !== '' ? $lastError : 'Availability check failed after retries.', max(
-            $initialResponseTime,
-            (int) round((microtime(true) - $startedAt) * 1000),
+            $initialResponseTime + (int) round((microtime(true) - $startedAt) * 1000),
         )];
     }
 
