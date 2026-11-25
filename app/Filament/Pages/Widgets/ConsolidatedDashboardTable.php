@@ -31,7 +31,7 @@ class ConsolidatedDashboardTable extends BaseWidget
     #[Reactive]
     public string $activeTab = 'overview';
 
-    protected static bool $isLazy = true;
+    protected static bool $isLazy = true;\n\n    protected static ?string $pollingInterval = '10s';
 
     protected int | string | array $columnSpan = 'full';
 
