@@ -35,8 +35,8 @@ class ConsolidatedDashboardStats extends BaseWidget
     {
         return match ($this->activeTab) {
             'cost' => 5,
-            'security' => 4,
-            'alerts' => 2,
+            'security' => 6,
+            'alerts' => 3,
             'resources' => 1,
             default => 3,
         };
