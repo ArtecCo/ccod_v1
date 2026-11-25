@@ -9,6 +9,8 @@ use Illuminate\Foundation\Bootstrap\LoadConfiguration;
 use Illuminate\Foundation\Bootstrap\LoadEnvironmentVariables;
 use Illuminate\Foundation\Bootstrap\RegisterFacades;
 use Illuminate\Foundation\Bootstrap\RegisterProviders;
+use App\Models\SubscriptionWebUrl;
+use App\Services\SubscriptionWebUrlMonitor;
 
 $basePath = dirname(__DIR__, 2);
 define('LARAVEL_START', microtime(true));
@@ -25,8 +27,6 @@ $app->bootstrapWith([
     BootProviders::class,
 ]);
 
-use App\Models\SubscriptionWebUrl;
-use App\Services\SubscriptionWebUrlMonitor;
 
 $startedAt = microtime(true);
 
@@ -46,6 +46,7 @@ try {
     $processed = 0;
     $live = 0;
     $down = 0;
+    $checkErrors = 0;
     $concurrency = max(1, min(25, (int) (getenv('CCOD_URL_CHECK_CONCURRENCY') ?: 10)));
 
     fwrite(STDOUT, sprintf("Pinging %d active web URLs (concurrency: %d)...\n", $total, $concurrency));
@@ -66,6 +67,9 @@ try {
             }
 
             $url->is_live ? $live++ : $down++;
+            if ($url->last_check_error !== null && $url->last_check_error !== '') {
+                $checkErrors++;
+            }
             $processed++;
         }
 
