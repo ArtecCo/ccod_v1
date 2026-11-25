@@ -277,9 +277,23 @@ class NotificationEventCatalog
     {
         $normalizedEventKeys = self::normalizeKeys($eventKeys);
 
+        // Azure alert events use Azure Monitor's native Sev0-Sev4 values.
+        if ($fieldKey === 'severity' && count($normalizedEventKeys) === 1
+            && in_array($normalizedEventKeys[0], [
+                'azure.alert.detected',
+                'azure.critical_alert.detected',
+            ], true)) {
+            return [
+                'Sev0' => 'Sev0',
+                'Sev1' => 'Sev1',
+                'Sev2' => 'Sev2',
+                'Sev3' => 'Sev3',
+                'Sev4' => 'Sev4',
+            ];
+        }
+
         // Resolve classification severity options directly at the condition-value
-        // boundary. This avoids falling back to Azure's native severity enum when
-        // Filament evaluates a repeater field's options.
+        // boundary for security-score and SSL reminder events.
         if ($fieldKey === 'severity' && count($normalizedEventKeys) === 1
             && in_array($normalizedEventKeys[0], [
                 'azure.security_score.decreased',
@@ -362,12 +376,22 @@ class NotificationEventCatalog
                 'type' => $type,
             ];
             if ($type === 'enum') {
-                // Classification events use the application's three classification
-                // levels, not Azure's native alert severity values.
                 if ($key === 'severity' && in_array($eventKey, [
+                    'azure.alert.detected',
+                    'azure.critical_alert.detected',
+                ], true)) {
+                    $fields[$key]['values'] = [
+                        'Sev0' => 'Sev0',
+                        'Sev1' => 'Sev1',
+                        'Sev2' => 'Sev2',
+                        'Sev3' => 'Sev3',
+                        'Sev4' => 'Sev4',
+                    ];
+                } elseif ($key === 'severity' && in_array($eventKey, [
                     'azure.security_score.decreased',
                     'web_url.ssl.expiring',
                 ], true)) {
+                    // These events use the application's classification levels.
                     $fields[$key]['values'] = [
                         'REMINDER' => 'REMINDER',
                         'ATTENTION' => 'ATTENTION',
