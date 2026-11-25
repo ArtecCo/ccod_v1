@@ -59,7 +59,7 @@ class NotificationEventCatalog
         'azure.alert.detected' => ['label' => 'Azure alert detected', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
         'azure.recommendation.detected' => ['label' => 'Defender recommendation detected', 'category' => 'Azure', 'fields' => ['recommendation_id', 'recommendation_name', 'category', 'severity', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
         'azure.recommendation.removed' => ['label' => 'Defender recommendation resolved or removed', 'category' => 'Azure', 'fields' => ['recommendation_id', 'recommendation_name', 'category', 'severity', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
-        'azure.critical_alert.detected' => ['label' => 'Critical Azure alert detected', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'azure.alert.resolved' => ['label' => 'Azure alert resolved', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
         'azure.security_score.decreased' => ['label' => 'Azure security score decreased', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'severity', 'occurred_at']],
         'azure.security_score.improved' => ['label' => 'Azure security score improved', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'occurred_at']],
         'azure.budget.threshold_reached' => ['label' => 'Azure budget threshold reached', 'category' => 'Azure', 'fields' => ['budget_id', 'budget_name', 'subscription_id', 'subscription_name', 'actual_cost', 'budget_amount', 'threshold_percent', 'currency', 'occurred_at']],
@@ -281,7 +281,7 @@ class NotificationEventCatalog
         if ($fieldKey === 'severity' && count($normalizedEventKeys) === 1
             && in_array($normalizedEventKeys[0], [
                 'azure.alert.detected',
-                'azure.critical_alert.detected',
+                'azure.alert.resolved',
             ], true)) {
             return [
                 'Sev0' => 'Sev0',
@@ -378,7 +378,7 @@ class NotificationEventCatalog
             if ($type === 'enum') {
                 if ($key === 'severity' && in_array($eventKey, [
                     'azure.alert.detected',
-                    'azure.critical_alert.detected',
+                    'azure.alert.resolved',
                 ], true)) {
                     $fields[$key]['values'] = [
                         'Sev0' => 'Sev0',
