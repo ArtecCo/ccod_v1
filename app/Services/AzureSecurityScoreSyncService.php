@@ -161,7 +161,7 @@ class AzureSecurityScoreSyncService
                 ->delete();
 
                 $this->syncTracker->succeed('security_scores', [$subscription]);
-            } catch (\\Throwable $exception) {
+            } catch (\Throwable $exception) {
                 $this->syncTracker->fail('security_scores', [$subscription], $exception->getMessage());
                 throw $exception;
             }
