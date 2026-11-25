@@ -383,9 +383,11 @@ class SubscriptionWebUrlMonitor
             }
         }
 
-        return [$lastHttpStatus, $lastError !== '' ? $lastError : 'Availability check failed after retries.', max(
+        return [
+            $lastHttpStatus,
+            $lastError !== '' ? $lastError : 'Availability check failed after retries.',
             $initialResponseTime + (int) round((microtime(true) - $startedAt) * 1000),
-        )];
+        ];
     }
 
     private function checkAvailability(SubscriptionWebUrl $webUrl): void
