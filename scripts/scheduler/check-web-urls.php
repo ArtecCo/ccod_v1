@@ -93,7 +93,14 @@ try {
 
     fwrite(STDOUT, PHP_EOL . sprintf("Total active URLs pinged: %d\n", $processed));
     fwrite(STDOUT, sprintf("PING_SUCCESS: %d\n", $processed));
+    fwrite(STDOUT, sprintf("PING_ERRORS: %d\n", $checkErrors));
+    // Retain markers consumed by the full sync report for compatibility.
+    fwrite(STDOUT, sprintf("CHECK_SUCCESS: %d\n", $processed));
+    fwrite(STDOUT, sprintf("CHECK_ERRORS: %d\n", $checkErrors));
     fwrite(STDOUT, sprintf("PING_DURATION_SECONDS: %.2f\n", microtime(true) - $startedAt));
+    if ($checkErrors > 0) {
+        exit($processed > 0 ? 2 : 1);
+    }
 } catch (Throwable $exception) {
     fwrite(STDERR, 'Web URL ping failed: ' . $exception->getMessage() . PHP_EOL);
     exit(1);
