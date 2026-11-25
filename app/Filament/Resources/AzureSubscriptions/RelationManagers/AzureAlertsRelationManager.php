@@ -38,6 +38,7 @@ class AzureAlertsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->poll('10s')
             ->modifyQueryUsing(fn (Builder $query): Builder => $query->select(['id', 'azure_alert_id', 'name', 'severity', 'affected_resource', 'target_resource_type', 'alert_condition', 'user_response', 'monitor_service', 'signal_type', 'fire_time', 'last_modified_time', 'subscription_id', 'target_resource_group', 'suppression_status'])->with(['details', 'subscription']))
             ->columns([
                 TextColumn::make('name')->label('Alert Name')->searchable()->sortable()->weight('medium')
