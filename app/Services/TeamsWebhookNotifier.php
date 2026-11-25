@@ -245,7 +245,7 @@ class TeamsWebhookNotifier
 
         $severityCategory = match (true) {
             in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true) => 'Security score',
-            in_array($eventKey, ['azure.alert.detected', 'azure.critical_alert.detected'], true) => 'Alert',
+            in_array($eventKey, ['azure.alert.detected', 'azure.alert.resolved'], true) => 'Alert',
             in_array($eventKey, ['azure.recommendation.detected', 'azure.recommendation.removed'], true) => 'Security recommendation',
             in_array($eventKey, ['web_url.ssl.expiring', 'web_url.ssl.expired'], true) => 'SSL CERTIFICATE',
             default => null,
@@ -276,14 +276,21 @@ class TeamsWebhookNotifier
                         'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                         default => null,
                     };
-            } else {
-                $critical = in_array($severityValue, ['CRITICAL', 'HIGH', 'SEV0', 'SEV1', '0', '1'], true)
-                    || $eventKey === 'azure.critical_alert.detected';
+            } elseif ($eventKey === 'azure.alert.resolved') {
                 $classification = [
-                    'label' => $critical ? 'CRITICAL' : 'WARNING',
-                    'style' => 'attention',
-                    'color' => $critical ? 'Attention' : 'Warning',
+                    'label' => 'RESOLVED',
+                    'style' => 'good',
+                    'color' => 'Good',
                 ];
+            } else {
+                $classification = match ($severityValue) {
+                    'SEV0', '0' => ['label' => 'CRITICAL - Sev 0 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    'SEV1', '1' => ['label' => 'WARNING - Sev 1 Alert', 'style' => 'warning', 'color' => 'Warning'],
+                    'SEV2', '2' => ['label' => 'WARNING - Sev 2 Alert', 'style' => 'warning', 'color' => 'Warning'],
+                    'SEV3', '3' => ['label' => 'ATTENTION - Sev 3 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    'SEV4', '4' => ['label' => 'ATTENTION - Sev 4 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    default => null,
+                };
             }
 
             if ($improvement || $classification !== null) {
@@ -296,7 +303,7 @@ class TeamsWebhookNotifier
                         'type' => 'TextBlock',
                         'text' => $improvement
                             ? 'IMPROVEMENT - Security Score'
-                            : ($classification['label'].' - '.$severityCategory),
+                            : ($severityCategory === 'Alert' ? $classification['label'] : ($classification['label'].' - '.$severityCategory)),
                         'weight' => 'Bolder',
                         'size' => 'Large',
                         'color' => $improvement ? 'Good' : $classification['color'],
