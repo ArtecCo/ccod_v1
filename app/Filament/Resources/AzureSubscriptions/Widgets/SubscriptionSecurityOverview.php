@@ -115,7 +115,11 @@ class SubscriptionSecurityOverview extends BaseWidget
             Stat::make('High Recommendations', (string) $high)
                 ->icon('heroicon-o-shield-exclamation')
                 ->color($high > 0 ? 'danger' : 'success'),
-            Stat::make('Last Score Sync', $lastScoreSync)\n                ->icon('heroicon-o-arrow-path')\n                ->color('gray')\n                ->description($scoreModuleSync?->status === 'running' ? 'Sync in progress' : ($scoreModuleSync?->status === 'failed' ? 'Last attempt failed' : 'Security score data')),\n            Stat::make('Last Recommendations Sync', $lastSyncedLabel)
+            Stat::make('Last Score Sync', $lastScoreSync)
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->description($scoreModuleSync?->status === 'running' ? 'Sync in progress' : ($scoreModuleSync?->status === 'failed' ? 'Last attempt failed' : 'Security score data')),
+            Stat::make('Last Recommendations Sync', $lastSyncedLabel)
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->description($syncAgeDescription)
