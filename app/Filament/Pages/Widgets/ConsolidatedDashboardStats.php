@@ -185,6 +185,13 @@ class ConsolidatedDashboardStats extends BaseWidget
             $high = AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')->count();
             $low = $latestScores->filter(fn ($score): bool => (float) $score->percentage_score * 100 < 80)->count();
+            $scoreSyncedAt = IlluminateSupportFacadesDB::table('subscription_module_syncs')
+                ->where('module', 'security_scores')->whereIn('subscription_id', $ids)->max('last_successful_at');
+            $recommendationsSyncedAt = IlluminateSupportFacadesDB::table('subscription_module_syncs')
+                ->where('module', 'security')->whereIn('subscription_id', $ids)->max('last_successful_at');
+            $formatSyncTime = fn ($value): string => $value !== null
+                ? IlluminateSupportCarbon::parse($value)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
+                : '—';
 
             return [
                 Stat::make('Average Security Score', $average === null ? '—' : number_format($average, 2) . '%')
@@ -192,6 +199,8 @@ class ConsolidatedDashboardStats extends BaseWidget
                 Stat::make('Subscriptions Below 80%', (string) $low)->icon('heroicon-o-exclamation-triangle')->color($low > 0 ? 'danger' : 'success'),
                 Stat::make('High Severity Recommendations', (string) $high)->icon('heroicon-o-shield-exclamation')->color($high > 0 ? 'danger' : 'success'),
                 Stat::make('Subscriptions with Score', (string) $latestScores->count())->icon('heroicon-o-cloud')->color('gray'),
+                Stat::make('Last Security Score Sync', $formatSyncTime($scoreSyncedAt))->icon('heroicon-o-clock')->color('gray'),
+                Stat::make('Last Recommendations Sync', $formatSyncTime($recommendationsSyncedAt))->icon('heroicon-o-clock')->color('gray'),
             ];
         }
 
@@ -201,12 +210,18 @@ class ConsolidatedDashboardStats extends BaseWidget
                 ->whereIn('severity', ['Sev0', 'Sev1'])
                 ->selectRaw('SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev0, SUM(CASE WHEN severity = ? THEN 1 ELSE 0 END) AS sev1',
                     ['Sev0', 'Sev1'])->first();
+            $alertsSyncedAt = IlluminateSupportFacadesDB::table('subscription_module_syncs')
+                ->where('module', 'alerts')->whereIn('subscription_id', $ids)->max('last_successful_at');
+            $lastAlertsSync = $alertsSyncedAt !== null
+                ? IlluminateSupportCarbon::parse($alertsSyncedAt)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
+                : '—';
 
             return [
                 Stat::make('Sev 0 Alerts', number_format((int) ($counts?->sev0 ?? 0)))
                     ->icon('heroicon-o-exclamation-triangle')->color('danger'),
                 Stat::make('Sev 1 Alerts', number_format((int) ($counts?->sev1 ?? 0)))
                     ->icon('heroicon-o-exclamation-triangle')->color('warning'),
+                Stat::make('Last Alerts Sync', $lastAlertsSync)->icon('heroicon-o-clock')->color('gray'),
             ];
         }
 
