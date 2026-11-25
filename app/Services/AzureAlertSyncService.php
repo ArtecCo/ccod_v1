@@ -124,7 +124,7 @@ KQL,
 
             $next = $page['$skipToken'] ?? null;
             $nextToken = is_string($next) && $next !== '' ? $next : null;
-            if (($page['resultTruncated'] ?? false) === true && $nextToken === null) {
+            if (filter_var($page['resultTruncated'] ?? false, FILTER_VALIDATE_BOOLEAN) && $nextToken === null) {
                 throw new RuntimeException('Azure alert Resource Graph returned a truncated result without a continuation token.');
             }
 
@@ -156,15 +156,13 @@ KQL,
         // Any previously stored Fired alert absent from this complete Fired
         // snapshot is treated as resolved. During the first sync, remove stale
         // local rows silently because there is no trustworthy prior baseline.
+        $activeAlertLookup = array_fill_keys($activeAlertIds, true);
         $missingAlerts = AzureAlert::query()
             ->where('subscription_id', $subscriptionId)
             ->whereNotNull('fire_time')
             ->where('fire_time', '>=', now()->subDays(self::RETENTION_DAYS))
-            ->when(
-                $activeAlertIds !== [],
-                fn ($query) => $query->whereNotIn('azure_alert_id', $activeAlertIds),
-            )
-            ->get();
+            ->get()
+            ->reject(fn (AzureAlert $record): bool => isset($activeAlertLookup[(string) $record->azure_alert_id]));
 
         foreach ($missingAlerts as $missing) {
             if (! $isBaseline) {
