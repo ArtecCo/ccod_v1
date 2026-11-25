@@ -32,7 +32,8 @@ class DeveloperSyncStatus extends TableWidget
                         'subscriptions' => 'Subscriptions',
                         'resources' => 'Resources',
                         'costs' => 'Costs',
-                        'security' => 'Security Recommendations',\n                        'security_scores' => 'Security Scores',
+                        'security' => 'Security Recommendations',
+                        'security_scores' => 'Security Scores',
                         'alerts' => 'Alerts',
                         'web_urls' => 'Web URLs',
                         default => str($state)->replace('_', ' ')->title()->toString(),
@@ -44,13 +45,15 @@ class DeveloperSyncStatus extends TableWidget
                     ->color(fn (?string $state): string => match ($state) {
                         'success' => 'success',
                         'running' => 'warning',
-                        'failed' => 'danger',\n                        'partial' => 'warning',
+                        'failed' => 'danger',
+                        'partial' => 'warning',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'success' => 'Successful',
                         'running' => 'Running',
-                        'failed' => 'Failed',\n                        'partial' => 'Partially successful',
+                        'failed' => 'Failed',
+                        'partial' => 'Partially successful',
                         default => 'Not recorded',
                     }),
                 TextColumn::make('last_successful_at')
