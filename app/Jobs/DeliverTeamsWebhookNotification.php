@@ -47,7 +47,7 @@ class DeliverTeamsWebhookNotification implements ShouldQueue
         $webhook = TeamsWebhook::query()->find($this->webhookId);
 
         // Jobs queued before a rule was deleted/disabled must not deliver.
-        if (! $webhook || ! $webhook->enabled || $this->ruleId === null) {
+        if (! $webhook || ! $webhook->enabled || ! isset($this->ruleId)) {
             return;
         }
 
