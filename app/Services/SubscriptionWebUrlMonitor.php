@@ -360,8 +360,8 @@ class SubscriptionWebUrlMonitor
 
         for ($attempt = 1; $attempt <= 3; $attempt++) {
             try {
-                $response = Http::timeout(20)
-                    ->connectTimeout(8)
+                $response = Http::timeout(10)
+                    ->connectTimeout(5)
                     ->withOptions(['allow_redirects' => ['max' => 5, 'strict' => true, 'referer' => true]])
                     ->withHeaders(['User-Agent' => 'CCOD Web URL Monitor/1.0'])
                     ->get($url);
