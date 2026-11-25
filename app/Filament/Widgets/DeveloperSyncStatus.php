@@ -13,7 +13,9 @@ class DeveloperSyncStatus extends TableWidget
 
     protected int|string|array $columnSpan = 'full';
 
-    protected static ?int $sort = 1;\n\n    protected static ?string $pollingInterval = '10s';
+    protected static ?int $sort = 1;
+
+    protected static ?string $pollingInterval = '10s';
 
     public function table(Table $table): Table
     {
