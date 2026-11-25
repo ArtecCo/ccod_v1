@@ -60,6 +60,7 @@ class TeamsWebhookNotifier
                 (int) $webhook->getKey(),
                 $eventKey,
                 $context,
+                (int) $rule->getKey(),
             )->afterCommit();
         }
 
