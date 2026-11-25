@@ -16,7 +16,7 @@ class AzureAlertSyncService
 {
     private const API_VERSION = '2024-04-01';
     private const PAGE_SIZE = 1000;
-    private const LOOKBACK_HOURS = 24;
+    private const RETENTION_DAYS = 30;
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
@@ -39,6 +39,7 @@ class AzureAlertSyncService
             'created' => 0,
             'updated' => 0,
             'unchanged' => 0,
+            'resolved' => 0,
             'deleted' => 0,
         ];
 
@@ -63,8 +64,7 @@ class AzureAlertSyncService
 
     private function syncSubscription(string $subscriptionId): array
     {
-        $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'deleted' => 0];
-        $seen = [];
+        $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'resolved' => 0, 'deleted' => 0];
         $skipToken = null;
 
         do {
@@ -73,8 +73,8 @@ class AzureAlertSyncService
                 'query' => <<<'KQL'
 alertsmanagementresources
 | where type =~ "microsoft.alertsmanagement/alerts"
-| where tostring(properties.essentials.monitorCondition) =~ "Fired"
-| where todatetime(properties.essentials.startDateTime) > ago(24h)
+| where tostring(properties.essentials.monitorCondition) in~ ("Fired", "Resolved")
+| where todatetime(properties.essentials.startDateTime) > ago(30d)
 | project
     alertId = id,
     alertProperties = properties,
@@ -119,25 +119,28 @@ KQL,
                 }
 
                 $stats['discovered']++;
-                $seen[] = $alert['alertId'];
-                $stats[$this->syncOne($alert, $subscriptionId)]++;
-                $this->syncDetails($alert);
+                $result = $this->syncOne($alert, $subscriptionId);
+                $stats[$result]++;
+                if ($result !== 'resolved') {
+                    $this->syncDetails($alert);
+                } else {
+                    $stats['deleted']++;
+                }
             }
 
             $next = $page['$skipToken'] ?? null;
             $skipToken = is_string($next) && $next !== '' ? $next : null;
         } while ($skipToken !== null);
 
-        $query = AzureAlert::query()->where('subscription_id', $subscriptionId);
-        $stats['deleted'] = $seen === []
-            ? $query->count()
-            : (clone $query)->whereNotIn('azure_alert_id', $seen)->count();
+        // Keep Fired alerts for Azure's full 30-day alert retention window.
+        // Resolved alerts are removed only after their resolution event is queued.
+        $expired = AzureAlert::query()
+            ->where('subscription_id', $subscriptionId)
+            ->whereNotNull('fire_time')
+            ->where('fire_time', '<', now()->subDays(self::RETENTION_DAYS));
 
-        if ($seen === []) {
-            $query->delete();
-        } else {
-            $query->whereNotIn('azure_alert_id', $seen)->delete();
-        }
+        $stats['deleted'] += (clone $expired)->count();
+        $expired->delete();
 
         return $stats;
     }
@@ -199,27 +202,19 @@ KQL,
         }
 
         if ($existing === null) {
-            AzureAlert::query()->create($attributes);
+            $existing = AzureAlert::query()->create($attributes);
 
-            $context = [
-                'alert_id' => $alertId,
-                'alert_name' => $attributes['name'],
-                'severity' => $attributes['severity'],
-                'status' => $attributes['alert_condition'],
-                'resource_id' => null,
-                'resource_name' => $attributes['affected_resource'],
-                'subscription_id' => $subscriptionId,
-                'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
-                'occurred_at' => now()->toIso8601String(),
-            ];
+            if (strcasecmp((string) $attributes['alert_condition'], 'Resolved') === 0) {
+                $this->triggerResolvedEvent($alertId, $attributes, $subscriptionId);
+                $existing->delete();
+
+                return 'resolved';
+            }
+
+            $context = $this->notificationContext($alertId, $attributes, $subscriptionId);
 
             try {
-                $rules = app(NotificationRuleService::class);
-                $rules->trigger('azure.alert.detected', $context);
-
-                if (in_array(strtolower((string) $attributes['severity']), ['critical', 'sev0'], true)) {
-                    $rules->trigger('azure.critical_alert.detected', $context);
-                }
+                app(NotificationRuleService::class)->trigger('azure.alert.detected', $context);
             } catch (Throwable $exception) {
                 report($exception);
             }
@@ -237,7 +232,39 @@ KQL,
 
         $existing->forceFill($attributes)->saveQuietly();
 
+        if (strcasecmp((string) $attributes['alert_condition'], 'Resolved') === 0) {
+            // If queuing fails, the row remains Resolved and the next sync retries it.
+            $this->triggerResolvedEvent($alertId, $attributes, $subscriptionId);
+            $existing->delete();
+
+            return 'resolved';
+        }
+
         return $changed ? 'updated' : 'unchanged';
+    }
+
+    private function triggerResolvedEvent(string $alertId, array $attributes, string $subscriptionId): void
+    {
+        app(NotificationRuleService::class)->trigger(
+            'azure.alert.resolved',
+            $this->notificationContext($alertId, $attributes, $subscriptionId),
+            true,
+        );
+    }
+
+    private function notificationContext(string $alertId, array $attributes, string $subscriptionId): array
+    {
+        return [
+            'alert_id' => $alertId,
+            'alert_name' => $attributes['name'],
+            'severity' => $attributes['severity'],
+            'status' => $attributes['alert_condition'],
+            'resource_id' => null,
+            'resource_name' => $attributes['affected_resource'],
+            'subscription_id' => $subscriptionId,
+            'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
+            'occurred_at' => $attributes['last_modified_time']?->toIso8601String() ?? now()->toIso8601String(),
+        ];
     }
 
     private function stringOrNull(mixed $value): ?string
