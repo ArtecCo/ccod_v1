@@ -16,7 +16,7 @@ class NotificationRuleService
         private readonly NotificationService $notifications,
     ) {}
 
-    public function trigger(NotificationEvent|string $event, array $context = []): int
+    public function trigger(NotificationEvent|string $event, array $context = [], bool $throwOnDispatchFailure = false): int
     {
         $eventKey = NotificationEventCatalog::normalizeKey(
             $event instanceof NotificationEvent ? $event->value : $event,
@@ -54,6 +54,9 @@ class NotificationRuleService
                         $sent++;
                     } catch (Throwable $exception) {
                         report($exception);
+                        if ($throwOnDispatchFailure) {
+                            throw $exception;
+                        }
                     }
                 }
                 continue;
