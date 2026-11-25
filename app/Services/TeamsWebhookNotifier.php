@@ -279,16 +279,16 @@ class TeamsWebhookNotifier
             } elseif ($eventKey === 'azure.alert.resolved') {
                 $classification = [
                     'label' => 'RESOLVED - Alert',
-                    'style' => 'attention',
-                    'color' => 'Attention',
+                    'style' => 'good',
+                    'color' => 'Good',
                 ];
             } else {
                 $classification = match ($severityValue) {
                     'SEV0', '0' => ['label' => 'CRITICAL - Sev 0 Alert', 'style' => 'attention', 'color' => 'Attention'],
                     'SEV1', '1' => ['label' => 'WARNING - Sev 1 Alert', 'style' => 'warning', 'color' => 'Warning'],
                     'SEV2', '2' => ['label' => 'WARNING - Sev 2 Alert', 'style' => 'warning', 'color' => 'Warning'],
-                    'SEV3', '3' => ['label' => 'ATTENTION - Sev 3 Alert', 'style' => 'attention', 'color' => 'Attention'],
-                    'SEV4', '4' => ['label' => 'ATTENTION - Sev 4 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    'SEV3', '3' => ['label' => 'ATTENTION - Sev 3 Alert', 'style' => 'warning', 'color' => 'Warning'],
+                    'SEV4', '4' => ['label' => 'ATTENTION - Sev 4 Alert', 'style' => 'warning', 'color' => 'Warning'],
                     default => null,
                 };
             }
