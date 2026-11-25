@@ -8,6 +8,7 @@ use App\Filament\Pages\Widgets\ConsolidatedCostHistoryChart;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryTable;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlStats;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlsTable;
+use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Models\AzureSubscription;
 use App\Models\Developer;
