@@ -278,9 +278,9 @@ class TeamsWebhookNotifier
                     };
             } elseif ($eventKey === 'azure.alert.resolved') {
                 $classification = [
-                    'label' => 'RESOLVED',
-                    'style' => 'good',
-                    'color' => 'Good',
+                    'label' => 'RESOLVED - Alert',
+                    'style' => 'attention',
+                    'color' => 'Attention',
                 ];
             } else {
                 $classification = match ($severityValue) {
