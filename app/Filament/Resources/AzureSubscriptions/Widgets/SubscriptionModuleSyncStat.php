@@ -19,7 +19,7 @@ class SubscriptionModuleSyncStat extends BaseWidget
 
     public string $label = 'Last Sync';
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '10s';
 
     protected function getStats(): array
     {
