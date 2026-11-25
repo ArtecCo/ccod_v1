@@ -28,7 +28,7 @@ class ConsolidatedDashboardStats extends BaseWidget
     public string $activeTab = 'overview';
 
     protected static bool $isLazy = true;
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '10s';
     protected int | array | null $columns = 7;
 
     protected function getColumns(): int | array | null
