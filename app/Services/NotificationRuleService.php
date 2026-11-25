@@ -50,7 +50,7 @@ class NotificationRuleService
                         continue;
                     }
                     try {
-                        DeliverTeamsWebhookNotification::dispatch((int) $webhook->getKey(), $eventKey, $context)->afterCommit();
+                        DeliverTeamsWebhookNotification::dispatch((int) $webhook->getKey(), $eventKey, $context, (int) $rule->getKey())->afterCommit();
                         $sent++;
                     } catch (Throwable $exception) {
                         report($exception);
