@@ -17,9 +17,9 @@ class SubscriptionSecurityOverview extends BaseWidget
 {
     public AzureSubscription $record;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '10s';
 
-    protected int | array | null $columns = 4;
+    protected int | array | null $columns = 5;
 
     protected function getStats(): array
     {
@@ -110,7 +110,7 @@ class SubscriptionSecurityOverview extends BaseWidget
             Stat::make('High Recommendations', (string) $high)
                 ->icon('heroicon-o-shield-exclamation')
                 ->color($high > 0 ? 'danger' : 'success'),
-            Stat::make('Last Sync', $lastSyncedLabel)
+            Stat::make('Last Score Sync', $lastScoreSync)\n                ->icon('heroicon-o-arrow-path')\n                ->color('gray')\n                ->description($scoreModuleSync?->status === 'running' ? 'Sync in progress' : ($scoreModuleSync?->status === 'failed' ? 'Last attempt failed' : 'Security score data')),\n            Stat::make('Last Recommendations Sync', $lastSyncedLabel)
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->description($syncAgeDescription)
