@@ -279,8 +279,8 @@ class SubscriptionWebUrlMonitor
                     CURLOPT_WRITEFUNCTION => static fn ($curl, string $data): int => strlen($data),
                     CURLOPT_FOLLOWLOCATION => true,
                     CURLOPT_MAXREDIRS => 5,
-                    CURLOPT_CONNECTTIMEOUT => 5,
-                    CURLOPT_TIMEOUT => 10,
+                    CURLOPT_CONNECTTIMEOUT => 8,
+                    CURLOPT_TIMEOUT => 20,
                     CURLOPT_USERAGENT => 'CCOD Web URL Monitor/1.0',
                     CURLOPT_SSL_VERIFYPEER => true,
                     CURLOPT_SSL_VERIFYHOST => 2,
@@ -310,10 +310,21 @@ class SubscriptionWebUrlMonitor
                 $webUrl = $entry['model'];
                 $error = curl_error($handle);
                 $httpStatus = (int) (curl_getinfo($handle)['http_code'] ?? 0);
+                $responseTime = (int) round((microtime(true) - $entry['started']) * 1000);
+
+                // A cURL multi error can leave a handle unfinished. Never treat
+                // an empty status as a confirmed outage: retry it (and transient
+                // throttling/server errors) through the regular HTTP client.
+                if ($httpStatus === 0 || $httpStatus === 429 || $httpStatus >= 500) {
+                    [$httpStatus, $error, $responseTime] = $this->retryAvailabilityRequest(
+                        $webUrl->url,
+                        $responseTime,
+                    );
+                }
 
                 $webUrl->is_live = $this->isHealthyStatus($httpStatus);
                 $webUrl->http_status = $httpStatus > 0 ? $httpStatus : null;
-                $webUrl->response_time_ms = (int) round((microtime(true) - $entry['started']) * 1000);
+                $webUrl->response_time_ms = $responseTime;
                 $webUrl->last_check_error = $error !== '' ? $error : null;
                 $webUrl->last_checked_at = now();
                 $webUrl->save();
@@ -325,6 +336,48 @@ class SubscriptionWebUrlMonitor
 
             curl_multi_close($multi);
         }
+    }
+
+    /**
+     * Retry ambiguous network failures, throttling and server-side errors.
+     * A response with an HTTP status is retained as the final result; only a
+     * request that still cannot obtain a response is recorded with status 0.
+     *
+     * @return array{0:int,1:string,2:int}
+     */
+    private function retryAvailabilityRequest(string $url, int $initialResponseTime): array
+    {
+        $startedAt = microtime(true);
+        $lastError = '';
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $response = Http::timeout(20)
+                    ->connectTimeout(8)
+                    ->withOptions(['allow_redirects' => ['max' => 5, 'strict' => true, 'referer' => true]])
+                    ->withHeaders(['User-Agent' => 'CCOD Web URL Monitor/1.0'])
+                    ->get($url);
+
+                $status = $response->status();
+
+                if ($status !== 429 && $status < 500) {
+                    return [$status, '', (int) round((microtime(true) - $startedAt) * 1000)];
+                }
+
+                $lastError = "HTTP {$status}";
+            } catch (Throwable $exception) {
+                $lastError = $exception->getMessage();
+            }
+
+            if ($attempt < 3) {
+                usleep($attempt * 300000);
+            }
+        }
+
+        return [0, $lastError !== '' ? $lastError : 'Availability check failed after retries.', max(
+            $initialResponseTime,
+            (int) round((microtime(true) - $startedAt) * 1000),
+        )];
     }
 
     private function checkAvailability(SubscriptionWebUrl $webUrl): void
