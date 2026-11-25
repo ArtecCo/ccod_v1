@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\TeamsWebhook;
+use App\Models\NotificationRule;
 use App\Services\TeamsWebhookNotifier;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,6 +29,7 @@ class DeliverTeamsWebhookNotification implements ShouldQueue
         public readonly int $webhookId,
         public readonly string $eventKey,
         public readonly array $context = [],
+        public readonly ?int $ruleId = null,
     ) {
         $this->afterCommit();
     }
@@ -44,8 +46,23 @@ class DeliverTeamsWebhookNotification implements ShouldQueue
     {
         $webhook = TeamsWebhook::query()->find($this->webhookId);
 
-        // A destination may have been deleted or disabled while this job waited.
-        if (! $webhook || ! $webhook->enabled) {
+        // Jobs queued before a rule was deleted/disabled must not deliver.
+        if (! $webhook || ! $webhook->enabled || $this->ruleId === null) {
+            return;
+        }
+
+        $ruleIsActive = NotificationRule::query()
+            ->whereKey($this->ruleId)
+            ->where('event_key', $this->eventKey)
+            ->where('channel', 'webhook')
+            ->where('enabled', true)
+            ->where(function ($query): void {
+                $query->where('webhook_id', $this->webhookId)
+                    ->orWhereHas('webhooks', fn ($webhooks) => $webhooks->whereKey($this->webhookId));
+            })
+            ->exists();
+
+        if (! $ruleIsActive) {
             return;
         }
 
