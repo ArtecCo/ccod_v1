@@ -46,7 +46,7 @@
                     const visible = ownMatch || childMatch;
                     item.style.display = visible ? '' : 'none';
 
-                    if (ownMatch && groupMatches && childList) {
+                    if (ownMatch && term !== '' && childList) {
                         childList.querySelectorAll('.fi-sidebar-item').forEach((child) => {
                             child.style.display = '';
                         });
