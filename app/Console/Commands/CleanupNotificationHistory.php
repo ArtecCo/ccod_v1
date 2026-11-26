@@ -27,12 +27,16 @@ class CleanupNotificationHistory extends Command
             ->whereNull('reserved_at')
             ->where('payload', 'like', '%DeliverTeamsWebhookNotification%');
 
+        $teamsHistory = DB::table('teams_webhook_notification_logs')
+            ->where('created_at', '<', $cutoff);
+
         $failedJobs = DB::table('failed_jobs')
             ->where('failed_at', '<', $cutoff);
 
         $counts = [
             'in_app_notifications' => (clone $notifications)->count(),
             'queued_teams_notifications' => (clone $teamsJobs)->count(),
+            'teams_webhook_history' => (clone $teamsHistory)->count(),
             'failed_jobs' => (clone $failedJobs)->count(),
         ];
 
@@ -42,6 +46,7 @@ class CleanupNotificationHistory extends Command
             [
                 ['In-app notifications', $counts['in_app_notifications']],
                 ['Queued Teams notifications', $counts['queued_teams_notifications']],
+                ['Teams delivery history', $counts['teams_webhook_history']],
                 ['Failed jobs', $counts['failed_jobs']],
             ],
         );
@@ -52,9 +57,10 @@ class CleanupNotificationHistory extends Command
             return self::SUCCESS;
         }
 
-        DB::transaction(function () use ($notifications, $teamsJobs, $failedJobs): void {
+        DB::transaction(function () use ($notifications, $teamsJobs, $teamsHistory, $failedJobs): void {
             $notifications->delete();
             $teamsJobs->delete();
+            $teamsHistory->delete();
             $failedJobs->delete();
         });
 
