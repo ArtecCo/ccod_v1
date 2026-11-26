@@ -87,6 +87,9 @@ class TeamsWebhookNotifier
                 'azure.alert.resolved',
                 'azure.security_score.decreased',
                 'azure.security_score.improved',
+                'web_url.ssl.expiring',
+                'web_url.ssl.expired',
+                'web_url.ssl.renewed',
             ], true)) {
                 $payload = $this->insertAlertSubscriptionDetails($payload, $context);
             }
@@ -129,7 +132,7 @@ class TeamsWebhookNotifier
     }
 
     /**
-     * Add subscription identity below the existing severity banner on Azure alert and security score cards.
+     * Add subscription identity below the existing severity banner on Azure alert, security score, and SSL certificate cards.
      */
     private function insertAlertSubscriptionDetails(array $payload, array $context): array
     {
