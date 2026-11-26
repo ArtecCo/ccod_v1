@@ -82,7 +82,12 @@ class TeamsWebhookNotifier
 
             // Keep the subscription identity panel consistent across Azure alert cards.
             // The existing severity banner remains in its original position.
-            if (in_array($eventKey, ['azure.alert.detected', 'azure.alert.resolved'], true)) {
+            if (in_array($eventKey, [
+                'azure.alert.detected',
+                'azure.alert.resolved',
+                'azure.security_score.decreased',
+                'azure.security_score.improved',
+            ], true)) {
                 $payload = $this->insertAlertSubscriptionDetails($payload, $context);
             }
 
@@ -124,7 +129,7 @@ class TeamsWebhookNotifier
     }
 
     /**
-     * Add subscription identity below the existing severity banner on Azure alert cards.
+     * Add subscription identity below the existing severity banner on Azure alert and security score cards.
      */
     private function insertAlertSubscriptionDetails(array $payload, array $context): array
     {
