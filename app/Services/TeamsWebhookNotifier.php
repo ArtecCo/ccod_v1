@@ -87,6 +87,8 @@ class TeamsWebhookNotifier
                 'azure.alert.resolved',
                 'azure.security_score.decreased',
                 'azure.security_score.improved',
+                'azure.recommendation.detected',
+                'azure.recommendation.removed',
                 'web_url.ssl.expiring',
                 'web_url.ssl.expired',
                 'web_url.ssl.renewed',
@@ -349,6 +351,22 @@ class TeamsWebhookNotifier
                         'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
                         default => null,
                     };
+            } elseif ($eventKey === 'azure.recommendation.removed') {
+                $classification = [
+                    'label' => 'RESOLVED',
+                    'style' => 'good',
+                    'color' => 'Good',
+                ];
+            } elseif ($eventKey === 'azure.recommendation.detected') {
+                // Recommendation severity is independent of Azure Monitor Sev levels.
+                // Unknown values deliberately produce no banner rather than a guessed classification.
+                $classification = match ($severityValue) {
+                    'LOW' => ['label' => 'LOW', 'style' => 'accent', 'color' => 'Accent'],
+                    'MEDIUM' => ['label' => 'MEDIUM', 'style' => 'warning', 'color' => 'Warning'],
+                    'HIGH' => ['label' => 'HIGH', 'style' => 'attention', 'color' => 'Attention'],
+                    'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+                    default => null,
+                };
             } elseif ($eventKey === 'azure.alert.resolved') {
                 $classification = [
                     'label' => 'RESOLVED - Alert',
