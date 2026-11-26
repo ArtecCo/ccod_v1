@@ -63,6 +63,8 @@ class RolePermissionService
             'business_units.delete' => ['category' => 'Business Units', 'name' => 'Delete business units'],
             'users.access_requests.view' => ['category' => 'Access Requests', 'name' => 'View access requests'],
             'users.access_requests.decide' => ['category' => 'Access Requests', 'name' => 'Take decision'],
+            'notifications.rules.manage' => ['category' => 'Administration', 'name' => 'Manage notifications rules'],
+            'notifications.webhooks.manage' => ['category' => 'Administration', 'name' => 'Manage webhooks'],
         ];
     }
 
