@@ -113,10 +113,10 @@
                             <div class="ccod-notifications__meta">
                                 <span class="ccod-notifications__type" x-text="formatType(notification.data.type)"></span>
                                 <span class="ccod-notifications__severity" x-bind:class="'ccod-notifications__severity--' + (notification.data.severity === 'danger' ? 'critical' : (notification.data.severity || 'info'))" x-text="formatSeverity(notification.data.severity)"></span>
-                                <button type="button" x-show="notification.data.action_url" class="ccod-notifications__action" x-on:click.stop="openNotificationAction(notification)">
+                                <a x-show="notification.data.action_url" x-bind:href="notification.data.action_url" target="_blank" rel="noopener noreferrer" class="ccod-notifications__action" x-on:click.stop="markNotificationRead(notification)">
                                     <span x-text="notification.data.action_label || 'Open'"></span>
                                     <span aria-hidden="true">→</span>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>
