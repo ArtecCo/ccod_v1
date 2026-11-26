@@ -29,6 +29,7 @@ class AzureSubscriptionsTable
             ->filters([])
             ->recordActions([
                 ViewAction::make(),
+                EditAction::make()->visible(fn ($record): bool => AzureSubscriptionResource::canEdit($record)),
             ])
             ->striped(false)
             ->toolbarActions([XlsxExportAction::make()]);
