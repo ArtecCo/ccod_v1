@@ -66,12 +66,12 @@ class NotificationEventCatalog
 
         // Web URLs (7)
         'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'severity', 'occurred_at']],
-        'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
+        'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['subscription_id', 'subscription_name', 'web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
         'web_url.deactivated' => ['label' => 'Website monitoring deactivated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
         'web_url.activated' => ['label' => 'Website monitoring activated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
         'web_url.ssl.expired' => ['label' => 'Website SSL certificate expired', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'certificate_expires_at', 'days_since_expiry', 'occurred_at']],
         'web_url.ssl.renewed' => ['label' => 'Website SSL certificate renewed', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'previous_expires_at', 'certificate_expires_at', 'occurred_at']],
-        'web_url.recovered' => ['label' => 'Website recovered', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
+        'web_url.recovered' => ['label' => 'Website recovered', 'category' => 'Web URLs', 'fields' => ['subscription_id', 'subscription_name', 'web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
     ];
 
     /**
