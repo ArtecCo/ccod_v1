@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Pages\ClientNotifications;
+use App\Filament\GlobalSearch\NavigationOnlyGlobalSearchProvider;
 use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Documentations\DocumentationResource;
