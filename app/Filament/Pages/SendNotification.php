@@ -29,6 +29,12 @@ class SendNotification extends Page implements HasForms
 
     protected string $view = 'filament.pages.send-notification';
 
+    public static function canAccess(): bool
+    {
+        return Filament::getCurrentPanel()?->getId() === 'developer'
+            && auth()->guard('developers')->user()?->is_active === true;
+    }
+
     public ?array $data = [];
 
     public function mount(): void
