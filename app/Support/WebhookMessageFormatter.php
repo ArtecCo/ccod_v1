@@ -30,6 +30,8 @@ class WebhookMessageFormatter
                 'azure.alert.resolved',
                 'azure.security_score.decreased',
                 'azure.security_score.improved',
+                'azure.recommendation.detected',
+                'azure.recommendation.removed',
             ], true) && in_array($key, ['subscription_id', 'subscription_name'], true)) {
                 continue;
             }
