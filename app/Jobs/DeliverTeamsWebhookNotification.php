@@ -66,7 +66,7 @@ class DeliverTeamsWebhookNotification implements ShouldQueue
             return;
         }
 
-        $notifier->deliverQueuedRule($webhook, $this->eventKey, $this->context);
+        $notifier->deliverQueuedRule($webhook, $this->eventKey, $this->context, max(1, $this->attempts()), $this->tries);
     }
 
     /**
