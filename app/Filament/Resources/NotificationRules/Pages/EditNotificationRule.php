@@ -35,6 +35,25 @@ class EditNotificationRule extends EditRecord
         $this->record->webhooks()->sync($this->webhookIds);
     }
 
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('test_webhook')
+                ->label('Test delivery')
+                ->icon('heroicon-o-paper-airplane')
+                ->visible(fn (): bool => $this->record->channel === 'webhook')
+                ->action(function (TeamsWebhookNotifier $notifier): void {
+                    $queued = $notifier->queueRuleTest($this->record);
+                    $notification = Notification::make()
+                        ->title($queued ? 'Rule test queued' : 'Rule test not queued')
+                        ->body($queued ? 'The test message has been added to the Laravel queue. Delivery will be handled by the queue worker.' : 'Check that the destination exists and is enabled.');
+
+                    ($queued ? $notification->success() : $notification->danger())->send();
+                }),
+            DeleteAction::make()->requiresConfirmation(),
+        ];
+    }
+
     protected function getRedirectUrl(): string
     {
         return NotificationRuleResource::getUrl('index');
