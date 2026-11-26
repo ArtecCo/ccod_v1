@@ -80,9 +80,9 @@ class TeamsWebhookNotifier
             $message = $this->formatter->format($eventKey, $context);
             $payload = $this->payload($webhook, $message['title'], $message['message'], $eventKey, $context);
 
-            // Pilot the subscription identity panel on Azure alert-detected cards only.
+            // Keep the subscription identity panel consistent across Azure alert cards.
             // The existing severity banner remains in its original position.
-            if ($eventKey === 'azure.alert.detected') {
+            if (in_array($eventKey, ['azure.alert.detected', 'azure.alert.resolved'], true)) {
                 $payload = $this->insertAlertSubscriptionDetails($payload, $context);
             }
 
@@ -124,8 +124,7 @@ class TeamsWebhookNotifier
     }
 
     /**
-     * Add subscription identity below the existing severity banner on the
-     * Azure alert-detected pilot card only.
+     * Add subscription identity below the existing severity banner on Azure alert cards.
      */
     private function insertAlertSubscriptionDetails(array $payload, array $context): array
     {
@@ -173,7 +172,7 @@ class TeamsWebhookNotifier
 
         $hasSeverityBanner = isset($body[0])
             && ($body[0]['type'] ?? null) === 'Container'
-            && in_array($body[0]['style'] ?? null, ['attention', 'warning'], true);
+            && ($body[0]['bleed'] ?? false) === true;
         $insertAt = $hasSeverityBanner ? 1 : 0;
         array_splice($body, $insertAt, 0, [$panel]);
 
