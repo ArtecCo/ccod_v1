@@ -29,6 +29,7 @@ class AzureSecurityAssessmentsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->poll('10s')
             ->modifyQueryUsing(fn (Builder $query): Builder => $query
                 ->where('state', 'Unhealthy')
                 ->select([

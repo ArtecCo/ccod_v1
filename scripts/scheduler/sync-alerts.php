@@ -36,10 +36,11 @@ try {
 }
 
 fwrite(STDOUT, 'Subscriptions: ' . ($stats['subscriptions'] ?? 0) . PHP_EOL);
-fwrite(STDOUT, 'Active alerts discovered: ' . ($stats['discovered'] ?? 0) . PHP_EOL);
+fwrite(STDOUT, 'Azure alerts discovered (Fired + Resolved): ' . ($stats['discovered'] ?? 0) . PHP_EOL);
 fwrite(STDOUT, 'Created: ' . ($stats['created'] ?? 0) . PHP_EOL);
 fwrite(STDOUT, 'Updated: ' . ($stats['updated'] ?? 0) . PHP_EOL);
-fwrite(STDOUT, 'Unchanged: ' . ($stats['unchanged'] ?? 0) . PHP_EOL);
-fwrite(STDOUT, 'Removed from active set: ' . ($stats['deleted'] ?? 0) . PHP_EOL);
+fwrite(STDOUT, 'Unchanged Fired alerts: ' . ($stats['unchanged'] ?? 0) . PHP_EOL);
+fwrite(STDOUT, 'Resolved alerts processed: ' . ($stats['resolved'] ?? 0) . PHP_EOL);
+fwrite(STDOUT, 'Deleted local alert records: ' . ($stats['deleted'] ?? 0) . PHP_EOL);
 
 exit(0);

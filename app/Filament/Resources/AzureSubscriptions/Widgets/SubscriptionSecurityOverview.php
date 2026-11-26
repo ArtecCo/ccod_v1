@@ -17,9 +17,9 @@ class SubscriptionSecurityOverview extends BaseWidget
 {
     public AzureSubscription $record;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '10s';
 
-    protected int | array | null $columns = 4;
+    protected int | array | null $columns = 5;
 
     protected function getStats(): array
     {
@@ -34,7 +34,12 @@ class SubscriptionSecurityOverview extends BaseWidget
 
         $unhealthy = (int) ($assessmentStats?->unhealthy_count ?? 0);
         $high = (int) ($assessmentStats?->high_count ?? 0);
-        $moduleSync = app(\App\Services\SubscriptionModuleSyncTracker::class)->latest($this->record->subscription_id, 'security');
+        $syncTracker = app(\App\Services\SubscriptionModuleSyncTracker::class);
+        $moduleSync = $syncTracker->latest($this->record->subscription_id, 'security');
+        $scoreModuleSync = $syncTracker->latest($this->record->subscription_id, 'security_scores');
+        $lastScoreSync = $scoreModuleSync?->last_successful_at !== null
+            ? Carbon::parse($scoreModuleSync->last_successful_at)->setTimezone(config('app.timezone'))->format('d M Y, H:i')
+            : '—';
         $lastSynced = $moduleSync?->last_successful_at ?? $assessmentStats?->last_synced;
         $partialAt = $moduleSync?->last_partial_at !== null ? Carbon::parse($moduleSync->last_partial_at) : null;
 
@@ -110,7 +115,11 @@ class SubscriptionSecurityOverview extends BaseWidget
             Stat::make('High Recommendations', (string) $high)
                 ->icon('heroicon-o-shield-exclamation')
                 ->color($high > 0 ? 'danger' : 'success'),
-            Stat::make('Last Sync', $lastSyncedLabel)
+            Stat::make('Last Score Sync', $lastScoreSync)
+                ->icon('heroicon-o-arrow-path')
+                ->color('gray')
+                ->description($scoreModuleSync?->status === 'running' ? 'Sync in progress' : ($scoreModuleSync?->status === 'failed' ? 'Last attempt failed' : 'Security score data')),
+            Stat::make('Last Recommendations Sync', $lastSyncedLabel)
                 ->icon('heroicon-o-arrow-path')
                 ->color('gray')
                 ->description($syncAgeDescription)

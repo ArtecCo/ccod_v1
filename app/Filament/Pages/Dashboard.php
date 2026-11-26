@@ -8,24 +8,20 @@ use App\Filament\Pages\Widgets\ConsolidatedCostHistoryChart;
 use App\Filament\Pages\Widgets\ConsolidatedCostHistoryTable;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlStats;
 use App\Filament\Pages\Widgets\ConsolidatedWebUrlsTable;
-use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
-use App\Filament\Resources\AzureSubscriptions\RelationManagers\AzureSecurityAssessmentsRelationManager;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityOverview;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryChart;
-use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionSecurityScoreHistoryTable;
 use App\Filament\Resources\AzureSubscriptions\Widgets\SubscriptionStatsOverview;
+use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Models\AzureSubscription;
 use App\Models\Developer;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
-use Filament\Actions\EditAction;
 use Filament\Pages\Dashboard as BaseDashboard;
-use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
+use Filament\Actions\EditAction;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
-use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
@@ -136,11 +132,9 @@ class Dashboard extends BaseDashboard
                     Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'alerts'])->lazy()->columnSpanFull(),
                 ])->columns(1),
                 $this->makeTab('Security', 'security.view')->schema(fn (): array => [
-                    Livewire::make(SubscriptionSecurityOverview::class, ['record' => $this->record])->lazy()->columnSpanFull(),
-                    Livewire::make(SubscriptionSecurityScoreHistoryChart::class, ['record' => $this->record])->lazy()->columnSpan(1),
-                    Livewire::make(SubscriptionSecurityScoreHistoryTable::class, ['record' => $this->record])->lazy()->columnSpan(1),
-                    Livewire::make(AzureSecurityAssessmentsRelationManager::class, ['ownerRecord' => $this->record, 'pageClass' => static::class])->lazy()->columnSpanFull(),
-                ])->columns(2),
+                    Livewire::make(ConsolidatedDashboardStats::class, ['activeTab' => 'security'])->lazy()->columnSpanFull(),
+                    Livewire::make(ConsolidatedDashboardTable::class, ['activeTab' => 'security'])->lazy()->columnSpanFull(),
+                ])->columns(1),
                 // TEMPORARILY HIDDEN: Tickets tab. Restore by uncommenting this line.
                 // $this->makeTab('Tickets', 'tickets.view')->schema(fn (): array => [])->columns(1),
                 $this->makeTab('Web URLs', 'urls.view')->schema(fn (): array => [
@@ -176,7 +170,7 @@ class Dashboard extends BaseDashboard
 
         // Consolidated cost access is granted when the user can view costs
         // for at least one subscription in their authorized subscription scope.
-        if (in_array($permission, ['cost.view', 'cost.breakdown.view', 'urls.view'], true)) {
+        if (in_array($permission, ['cost.view', 'cost.breakdown.view', 'alerts.view', 'security.view', 'urls.view'], true)) {
             return $authorization->accessibleSubscriptionQuery($user)->get()
                 ->contains(fn (AzureSubscription $subscription): bool =>
                     $authorization->hasPermission($user, $permission, $subscription)

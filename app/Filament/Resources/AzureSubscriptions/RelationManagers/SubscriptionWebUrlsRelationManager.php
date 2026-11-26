@@ -60,6 +60,7 @@ class SubscriptionWebUrlsRelationManager extends RelationManager
     public function table(Table $table): Table
     {
         return $table
+            ->poll('10s')
             ->modifyQueryUsing(function ($query) {
                 if ($this->urlFilter === 'live') {
                     $query->where('is_active', true)->where('is_live', true);

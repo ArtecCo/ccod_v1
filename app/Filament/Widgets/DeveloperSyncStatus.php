@@ -15,6 +15,8 @@ class DeveloperSyncStatus extends TableWidget
 
     protected static ?int $sort = 1;
 
+    protected static ?string $pollingInterval = '10s';
+
     public function table(Table $table): Table
     {
         $latestIds = SubscriptionModuleSync::query()
@@ -30,7 +32,8 @@ class DeveloperSyncStatus extends TableWidget
                         'subscriptions' => 'Subscriptions',
                         'resources' => 'Resources',
                         'costs' => 'Costs',
-                        'security' => 'Security',
+                        'security' => 'Security Recommendations',
+                        'security_scores' => 'Security Scores',
                         'alerts' => 'Alerts',
                         'web_urls' => 'Web URLs',
                         default => str($state)->replace('_', ' ')->title()->toString(),
@@ -43,12 +46,14 @@ class DeveloperSyncStatus extends TableWidget
                         'success' => 'success',
                         'running' => 'warning',
                         'failed' => 'danger',
+                        'partial' => 'warning',
                         default => 'gray',
                     })
                     ->formatStateUsing(fn (?string $state): string => match ($state) {
                         'success' => 'Successful',
                         'running' => 'Running',
                         'failed' => 'Failed',
+                        'partial' => 'Partially successful',
                         default => 'Not recorded',
                     }),
                 TextColumn::make('last_successful_at')

@@ -14,10 +14,9 @@ class NotificationRuleService
 {
     public function __construct(
         private readonly NotificationService $notifications,
-        private readonly TeamsWebhookNotifier $teamsWebhooks,
     ) {}
 
-    public function trigger(NotificationEvent|string $event, array $context = []): int
+    public function trigger(NotificationEvent|string $event, array $context = [], bool $throwOnDispatchFailure = false): int
     {
         $eventKey = NotificationEventCatalog::normalizeKey(
             $event instanceof NotificationEvent ? $event->value : $event,
@@ -51,10 +50,13 @@ class NotificationRuleService
                         continue;
                     }
                     try {
-                        DeliverTeamsWebhookNotification::dispatch((int) $webhook->getKey(), $eventKey, $context)->afterCommit();
+                        DeliverTeamsWebhookNotification::dispatch((int) $webhook->getKey(), $eventKey, $context, (int) $rule->getKey())->afterCommit();
                         $sent++;
                     } catch (Throwable $exception) {
                         report($exception);
+                        if ($throwOnDispatchFailure) {
+                            throw $exception;
+                        }
                     }
                 }
                 continue;

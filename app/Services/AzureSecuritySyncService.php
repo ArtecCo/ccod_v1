@@ -18,6 +18,7 @@ class AzureSecuritySyncService
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
+        private readonly SubscriptionModuleSyncTracker $syncTracker,
     ) {
     }
 
@@ -43,7 +44,16 @@ class AzureSecuritySyncService
         ];
 
         foreach ($subscriptions as $id) {
-            $result = $this->syncSubscription($id, $syncTimestamp);
+            $this->syncTracker->begin('security', [$id]);
+
+            try {
+                $result = $this->syncSubscription($id, $syncTimestamp);
+                $this->syncTracker->succeed('security', [$id]);
+            } catch (\Throwable $exception) {
+                $this->syncTracker->fail('security', [$id], $exception->getMessage());
+                throw $exception;
+            }
+
             foreach ($result as $key => $value) {
                 $stats[$key] += $value;
             }

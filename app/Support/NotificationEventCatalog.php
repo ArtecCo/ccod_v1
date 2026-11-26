@@ -59,19 +59,19 @@ class NotificationEventCatalog
         'azure.alert.detected' => ['label' => 'Azure alert detected', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
         'azure.recommendation.detected' => ['label' => 'Defender recommendation detected', 'category' => 'Azure', 'fields' => ['recommendation_id', 'recommendation_name', 'category', 'severity', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
         'azure.recommendation.removed' => ['label' => 'Defender recommendation resolved or removed', 'category' => 'Azure', 'fields' => ['recommendation_id', 'recommendation_name', 'category', 'severity', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
-        'azure.critical_alert.detected' => ['label' => 'Critical Azure alert detected', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
-        'azure.security_score.decreased' => ['label' => 'Azure security score decreased', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'occurred_at']],
+        'azure.alert.resolved' => ['label' => 'Azure alert resolved', 'category' => 'Azure', 'fields' => ['alert_id', 'alert_name', 'severity', 'status', 'resource_id', 'resource_name', 'subscription_id', 'subscription_name', 'occurred_at']],
+        'azure.security_score.decreased' => ['label' => 'Azure security score decreased', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'severity', 'occurred_at']],
         'azure.security_score.improved' => ['label' => 'Azure security score improved', 'category' => 'Azure', 'fields' => ['subscription_id', 'subscription_name', 'previous_score', 'current_score', 'score_delta', 'occurred_at']],
         'azure.budget.threshold_reached' => ['label' => 'Azure budget threshold reached', 'category' => 'Azure', 'fields' => ['budget_id', 'budget_name', 'subscription_id', 'subscription_name', 'actual_cost', 'budget_amount', 'threshold_percent', 'currency', 'occurred_at']],
 
         // Web URLs (7)
-        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'occurred_at']],
-        'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
+        'web_url.ssl.expiring' => ['label' => 'Website SSL certificate expiring', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'certificate_expires_at', 'days_until_expiry', 'severity', 'occurred_at']],
+        'web_url.down' => ['label' => 'Website unavailable', 'category' => 'Web URLs', 'fields' => ['subscription_id', 'subscription_name', 'web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
         'web_url.deactivated' => ['label' => 'Website monitoring deactivated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
         'web_url.activated' => ['label' => 'Website monitoring activated', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'subscription_id', 'subscription_name', 'occurred_at']],
         'web_url.ssl.expired' => ['label' => 'Website SSL certificate expired', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'certificate_expires_at', 'days_since_expiry', 'occurred_at']],
         'web_url.ssl.renewed' => ['label' => 'Website SSL certificate renewed', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'previous_expires_at', 'certificate_expires_at', 'occurred_at']],
-        'web_url.recovered' => ['label' => 'Website recovered', 'category' => 'Web URLs', 'fields' => ['web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
+        'web_url.recovered' => ['label' => 'Website recovered', 'category' => 'Web URLs', 'fields' => ['subscription_id', 'subscription_name', 'web_url_id', 'url', 'domain', 'http_status', 'response_time_ms', 'checked_at', 'occurred_at']],
     ];
 
     /**
@@ -162,7 +162,7 @@ class NotificationEventCatalog
         foreach ($events as $key => &$event) {
             $event['description'] ??= $event['label'];
             $event['scope'] ??= ['global'];
-            $event['fields'] = self::buildFields($event['fields'] ?? []);
+            $event['fields'] = self::buildFields($event['fields'] ?? [], $key);
             $event['sample'] ??= self::buildSample($event['fields']);
             $event['mandatory_in_app'] = isset($mandatoryInApp[$key]) || ($event['mandatory_in_app'] ?? false);
             $event['mandatory_audience'] ??= $mandatoryInApp[$key] ?? null;
@@ -275,7 +275,39 @@ class NotificationEventCatalog
 
     public static function valuesForField(array|string|null $eventKeys, ?string $fieldKey): array
     {
-        return self::field($eventKeys, $fieldKey)['values'] ?? [];
+        $normalizedEventKeys = self::normalizeKeys($eventKeys);
+
+        // Azure alert events use Azure Monitor's native Sev0-Sev4 values.
+        if ($fieldKey === 'severity' && count($normalizedEventKeys) === 1
+            && in_array($normalizedEventKeys[0], [
+                'azure.alert.detected',
+                'azure.alert.resolved',
+            ], true)) {
+            return [
+                'Sev0' => 'Sev0',
+                'Sev1' => 'Sev1',
+                'Sev2' => 'Sev2',
+                'Sev3' => 'Sev3',
+                'Sev4' => 'Sev4',
+            ];
+        }
+
+        // Resolve classification severity options directly at the condition-value
+        // boundary for security-score and SSL reminder events.
+        if ($fieldKey === 'severity' && count($normalizedEventKeys) === 1
+            && in_array($normalizedEventKeys[0], [
+                'azure.security_score.decreased',
+                'web_url.ssl.expiring',
+            ], true)) {
+            return [
+                'REMINDER' => 'REMINDER',
+                'ATTENTION' => 'ATTENTION',
+                'WARNING' => 'WARNING',
+                'CRITICAL' => 'CRITICAL',
+            ];
+        }
+
+        return self::field($normalizedEventKeys, $fieldKey)['values'] ?? [];
     }
 
     public static function placeholderOptions(array|string|null $eventKeys): array
@@ -327,7 +359,7 @@ class NotificationEventCatalog
         return $context;
     }
 
-    private static function buildFields(array $keys): array
+    private static function buildFields(array $keys, ?string $eventKey = null): array
     {
         $fields = [];
         foreach ($keys as $key) {
@@ -344,7 +376,31 @@ class NotificationEventCatalog
                 'type' => $type,
             ];
             if ($type === 'enum') {
-                $fields[$key]['values'] = self::ENUM_VALUES[$key];
+                if ($key === 'severity' && in_array($eventKey, [
+                    'azure.alert.detected',
+                    'azure.alert.resolved',
+                ], true)) {
+                    $fields[$key]['values'] = [
+                        'Sev0' => 'Sev0',
+                        'Sev1' => 'Sev1',
+                        'Sev2' => 'Sev2',
+                        'Sev3' => 'Sev3',
+                        'Sev4' => 'Sev4',
+                    ];
+                } elseif ($key === 'severity' && in_array($eventKey, [
+                    'azure.security_score.decreased',
+                    'web_url.ssl.expiring',
+                ], true)) {
+                    // These events use the application's classification levels.
+                    $fields[$key]['values'] = [
+                        'REMINDER' => 'REMINDER',
+                        'ATTENTION' => 'ATTENTION',
+                        'WARNING' => 'WARNING',
+                        'CRITICAL' => 'CRITICAL',
+                    ];
+                } else {
+                    $fields[$key]['values'] = self::ENUM_VALUES[$key];
+                }
             }
         }
 

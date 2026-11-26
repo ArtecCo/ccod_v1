@@ -22,6 +22,8 @@ class ConsolidatedWebUrlsTable extends TableWidget
 {
     protected static bool $isLazy = true;
 
+    protected static ?string $pollingInterval = '10s';
+
     protected int | string | array $columnSpan = 'full';
 
     public string $urlFilter = 'all';

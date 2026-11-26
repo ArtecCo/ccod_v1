@@ -55,6 +55,7 @@ class SubscriptionWebUrlMonitor
             'subscription_id' => (string) $webUrl->subscription_id,
             'subscription_name' => $subscriptionName,
             'http_status' => $webUrl->http_status,
+            'last_check_error' => $webUrl->last_check_error,
             'response_time_ms' => $webUrl->response_time_ms,
             'checked_at' => $webUrl->last_checked_at?->toIso8601String(),
             'occurred_at' => now()->toIso8601String(),
@@ -232,6 +233,244 @@ class SubscriptionWebUrlMonitor
             }
 
             curl_multi_close($multi);
+        }
+    }
+
+
+    /**
+     * Check URL availability without inspecting or changing SSL certificate data.
+     *
+     * @param iterable<SubscriptionWebUrl> $webUrls
+     */
+    public function checkAvailabilityMany(iterable $webUrls, int $concurrency = 10): void
+    {
+        $items = is_array($webUrls) ? array_values($webUrls) : collect($webUrls)->values()->all();
+        $concurrency = max(1, min(25, $concurrency));
+
+        if (! function_exists('curl_multi_init') || ! function_exists('curl_init')) {
+            foreach ($items as $item) {
+                $this->checkAvailability($item);
+            }
+            return;
+        }
+
+        foreach (array_chunk($items, $concurrency) as $batch) {
+            $multi = curl_multi_init();
+            $handles = [];
+
+            foreach ($batch as $webUrl) {
+                $previousIsLive = $webUrl->is_live;
+                $startedAt = microtime(true);
+                $handle = curl_init($webUrl->url);
+
+                if ($handle === false) {
+                    [$status, $error, $responseTime] = $this->retryAvailabilityRequest($webUrl->url, 0);
+                    if ($status > 0) {
+                        $webUrl->is_live = $this->isHealthyStatus($status);
+                    }
+                    $webUrl->http_status = $status > 0 ? $status : null;
+                    $webUrl->response_time_ms = $responseTime;
+                    $webUrl->last_check_error = $error !== '' ? $error : 'Unable to initialize cURL.';
+                    $webUrl->last_checked_at = now();
+                    $webUrl->save();
+                    $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
+                    continue;
+                }
+
+                curl_setopt_array($handle, [
+                    CURLOPT_RETURNTRANSFER => false,
+                    CURLOPT_WRITEFUNCTION => static fn ($curl, string $data): int => strlen($data),
+                    CURLOPT_FOLLOWLOCATION => true,
+                    CURLOPT_MAXREDIRS => 5,
+                    CURLOPT_CONNECTTIMEOUT => 8,
+                    CURLOPT_TIMEOUT => 20,
+                    CURLOPT_USERAGENT => 'CCOD Web URL Monitor/1.0',
+                    CURLOPT_SSL_VERIFYPEER => true,
+                    CURLOPT_SSL_VERIFYHOST => 2,
+                ]);
+                curl_multi_add_handle($multi, $handle);
+                $handles[spl_object_id($handle)] = [
+                    'handle' => $handle,
+                    'model' => $webUrl,
+                    'started' => $startedAt,
+                    'previous' => $previousIsLive,
+                ];
+            }
+
+            do {
+                do {
+                    $status = curl_multi_exec($multi, $running);
+                } while ($status === CURLM_CALL_MULTI_PERFORM);
+
+                if ($running > 0 && curl_multi_select($multi, 1.0) === -1) {
+                    usleep(100000);
+                }
+            } while ($running > 0 && $status === CURLM_OK);
+
+            foreach ($handles as $entry) {
+                $handle = $entry['handle'];
+                /** @var SubscriptionWebUrl $webUrl */
+                $webUrl = $entry['model'];
+                $error = curl_error($handle);
+                $httpStatus = (int) (curl_getinfo($handle)['http_code'] ?? 0);
+                $responseTime = (int) round((microtime(true) - $entry['started']) * 1000);
+
+                // A cURL multi error can leave a handle unfinished. Never treat
+                // an empty status as a confirmed outage: retry it (and transient
+                // throttling/server errors) through the regular HTTP client.
+                if ($httpStatus === 0 || $httpStatus === 429 || $httpStatus >= 500) {
+                    [$httpStatus, $error, $responseTime] = $this->retryAvailabilityRequest(
+                        $webUrl->url,
+                        $responseTime,
+                    );
+                }
+
+                // No HTTP response after retries is inconclusive, not proof
+                // that the website is down. Keep the last known availability.
+                if ($httpStatus > 0) {
+                    $webUrl->is_live = $this->isHealthyStatus($httpStatus);
+                }
+                $webUrl->http_status = $httpStatus > 0 ? $httpStatus : null;
+                $webUrl->response_time_ms = $responseTime;
+                $webUrl->last_check_error = $error !== '' ? $error : null;
+                $webUrl->last_checked_at = now();
+                $webUrl->save();
+                $this->dispatchAvailabilityEvents($webUrl->refresh(), $entry['previous']);
+
+                curl_multi_remove_handle($multi, $handle);
+                curl_close($handle);
+            }
+
+            curl_multi_close($multi);
+        }
+    }
+
+    /**
+     * Retry ambiguous network failures, throttling and server-side errors.
+     * A response with an HTTP status is retained as the final result; only a
+     * request that still cannot obtain a response is recorded with status 0.
+     *
+     * @return array{0:int,1:string,2:int}
+     */
+    private function retryAvailabilityRequest(string $url, int $initialResponseTime): array
+    {
+        $startedAt = microtime(true);
+        $lastError = '';
+        $lastHttpStatus = 0;
+
+        for ($attempt = 1; $attempt <= 3; $attempt++) {
+            try {
+                $response = Http::timeout(10)
+                    ->connectTimeout(5)
+                    ->withOptions(['allow_redirects' => ['max' => 5, 'strict' => true, 'referer' => true]])
+                    ->withHeaders(['User-Agent' => 'CCOD Web URL Monitor/1.0'])
+                    ->get($url);
+
+                $status = $response->status();
+                $lastHttpStatus = $status;
+
+                if ($status !== 429 && $status < 500) {
+                    return [$status, '', (int) round((microtime(true) - $startedAt) * 1000)];
+                }
+
+                $lastError = "HTTP {$status}";
+            } catch (Throwable $exception) {
+                $lastError = $exception->getMessage();
+            }
+
+            if ($attempt < 3) {
+                usleep($attempt * 300000);
+            }
+        }
+
+        return [
+            $lastHttpStatus,
+            $lastError !== '' ? $lastError : 'Availability check failed after retries.',
+            $initialResponseTime + (int) round((microtime(true) - $startedAt) * 1000),
+        ];
+    }
+
+    private function checkAvailability(SubscriptionWebUrl $webUrl): void
+    {
+        $previousIsLive = $webUrl->is_live;
+        $startedAt = microtime(true);
+
+        try {
+            $response = Http::timeout(10)
+                ->connectTimeout(5)
+                ->withOptions(['allow_redirects' => ['max' => 5, 'strict' => true, 'referer' => true]])
+                ->withHeaders(['User-Agent' => 'CCOD Web URL Monitor/1.0'])
+                ->get($webUrl->url);
+
+            $status = $response->status();
+            if ($status === 429 || $status >= 500) {
+                [$status, $error, $responseTime] = $this->retryAvailabilityRequest(
+                    $webUrl->url,
+                    (int) round((microtime(true) - $startedAt) * 1000),
+                );
+                if ($status > 0) {
+                    $webUrl->is_live = $this->isHealthyStatus($status);
+                }
+                $webUrl->http_status = $status > 0 ? $status : null;
+                $webUrl->last_check_error = $error;
+                $webUrl->response_time_ms = $responseTime;
+                $webUrl->last_checked_at = now();
+                $webUrl->save();
+                $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
+                return;
+            }
+
+            $webUrl->is_live = $this->isHealthyStatus($status);
+            $webUrl->http_status = $status;
+            $webUrl->last_check_error = null;
+        } catch (Throwable $exception) {
+            [$status, $error, $responseTime] = $this->retryAvailabilityRequest(
+                $webUrl->url,
+                (int) round((microtime(true) - $startedAt) * 1000),
+            );
+            if ($status > 0) {
+                $webUrl->is_live = $this->isHealthyStatus($status);
+            }
+            $webUrl->http_status = $status > 0 ? $status : null;
+            $webUrl->last_check_error = $error !== '' ? $error : $exception->getMessage();
+            $webUrl->response_time_ms = $responseTime;
+            $webUrl->last_checked_at = now();
+            $webUrl->save();
+            $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
+            return;
+        }
+
+        $webUrl->response_time_ms = (int) round((microtime(true) - $startedAt) * 1000);
+        $webUrl->last_checked_at = now();
+        $webUrl->save();
+        $this->dispatchAvailabilityEvents($webUrl->refresh(), $previousIsLive);
+    }
+
+    private function dispatchAvailabilityEvents(SubscriptionWebUrl $webUrl, ?bool $previousIsLive): void
+    {
+        if ($previousIsLive === null || $previousIsLive === $webUrl->is_live) {
+            return;
+        }
+
+        $domain = parse_url($webUrl->url, PHP_URL_HOST) ?: $webUrl->url;
+        $rules = app(NotificationRuleService::class);
+        $payload = [
+            'web_url_id' => (int) $webUrl->getKey(),
+            'url' => (string) $webUrl->url,
+            'domain' => (string) $domain,
+            'subscription_id' => (string) $webUrl->subscription_id,
+            'subscription_name' => $webUrl->subscription?->display_name,
+            'http_status' => $webUrl->http_status,
+            'last_check_error' => $webUrl->last_check_error,
+            'response_time_ms' => $webUrl->response_time_ms,
+            'checked_at' => $webUrl->last_checked_at?->toIso8601String(),
+            'occurred_at' => now()->toIso8601String(),
+        ];
+
+        try {
+            $rules->trigger($webUrl->is_live ? 'web_url.recovered' : 'web_url.down', $payload);
+        } catch (Throwable $exception) {
+            report($exception);
         }
     }
 

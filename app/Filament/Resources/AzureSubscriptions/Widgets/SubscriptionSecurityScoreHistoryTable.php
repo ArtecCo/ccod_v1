@@ -18,6 +18,8 @@ class SubscriptionSecurityScoreHistoryTable extends BaseWidget
 
     protected static bool $isLazy = true;
 
+    protected static ?string $pollingInterval = '10s';
+
     protected static ?string $heading = 'Security Score History Data';
 
     protected function getTableQuery(): Builder

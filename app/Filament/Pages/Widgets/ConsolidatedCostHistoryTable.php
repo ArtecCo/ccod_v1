@@ -21,6 +21,8 @@ class ConsolidatedCostHistoryTable extends TableWidget
 
     protected static bool $isLazy = true;
 
+    protected static ?string $pollingInterval = '10s';
+
     protected int | string | array $columnSpan = 1;
 
     protected function getTableHeading(): ?string

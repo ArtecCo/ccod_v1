@@ -9,6 +9,7 @@ use App\Models\AzureAlertDetail;
 use App\Models\AzureSubscription;
 use App\Services\NotificationRuleService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use RuntimeException;
 use Throwable;
 
@@ -16,7 +17,7 @@ class AzureAlertSyncService
 {
     private const API_VERSION = '2024-04-01';
     private const PAGE_SIZE = 1000;
-    private const LOOKBACK_HOURS = 24;
+    private const RETENTION_DAYS = 30;
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
@@ -39,14 +40,20 @@ class AzureAlertSyncService
             'created' => 0,
             'updated' => 0,
             'unchanged' => 0,
+            'resolved' => 0,
             'deleted' => 0,
         ];
 
         foreach ($subscriptions as $id) {
+            // A subscription's first successful alert sync establishes its baseline.
+            // Read this before begin() changes the tracker status to running.
+            $previousSync = $this->syncTracker->latest($id, 'alerts');
+            $isBaseline = $previousSync?->last_successful_at === null;
+
             $this->syncTracker->begin('alerts', [$id]);
 
             try {
-                $result = $this->syncSubscription($id);
+                $result = $this->syncSubscription($id, $isBaseline);
                 $this->syncTracker->succeed('alerts', [$id]);
             } catch (Throwable $exception) {
                 $this->syncTracker->fail('alerts', [$id], $exception->getMessage());
@@ -61,12 +68,14 @@ class AzureAlertSyncService
         return $stats;
     }
 
-    private function syncSubscription(string $subscriptionId): array
+    private function syncSubscription(string $subscriptionId, bool $isBaseline): array
     {
-        $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'deleted' => 0];
-        $seen = [];
+        $stats = ['discovered' => 0, 'created' => 0, 'updated' => 0, 'unchanged' => 0, 'resolved' => 0, 'deleted' => 0];
         $skipToken = null;
+        $alerts = [];
 
+        // Fetch every page before changing local state. A failed or incomplete
+        // query must never cause existing alerts to be mistaken for resolved.
         do {
             $payload = [
                 'subscriptions' => [$subscriptionId],
@@ -74,7 +83,7 @@ class AzureAlertSyncService
 alertsmanagementresources
 | where type =~ "microsoft.alertsmanagement/alerts"
 | where tostring(properties.essentials.monitorCondition) =~ "Fired"
-| where todatetime(properties.essentials.startDateTime) > ago(24h)
+| where todatetime(properties.essentials.startDateTime) > ago(30d)
 | project
     alertId = id,
     alertProperties = properties,
@@ -113,31 +122,81 @@ KQL,
                 throw new RuntimeException('Invalid Azure alert Resource Graph response.');
             }
 
-            foreach ($page['data'] as $alert) {
-                if (! is_array($alert) || ! is_string($alert['alertId'] ?? null) || $alert['alertId'] === '') {
-                    continue;
-                }
-
-                $stats['discovered']++;
-                $seen[] = $alert['alertId'];
-                $stats[$this->syncOne($alert, $subscriptionId)]++;
-                $this->syncDetails($alert);
+            $next = $page['$skipToken'] ?? null;
+            $nextToken = is_string($next) && $next !== '' ? $next : null;
+            if (filter_var($page['resultTruncated'] ?? false, FILTER_VALIDATE_BOOLEAN) && $nextToken === null) {
+                throw new RuntimeException('Azure alert Resource Graph returned a truncated result without a continuation token.');
             }
 
-            $next = $page['$skipToken'] ?? null;
-            $skipToken = is_string($next) && $next !== '' ? $next : null;
+            foreach ($page['data'] as $alert) {
+                if (! is_array($alert) || ! is_string($alert['alertId'] ?? null) || $alert['alertId'] === '') {
+                    throw new RuntimeException('Azure alert Resource Graph returned an invalid alert record.');
+                }
+
+                $alerts[] = $alert;
+            }
+
+            $skipToken = $nextToken;
         } while ($skipToken !== null);
 
-        $query = AzureAlert::query()->where('subscription_id', $subscriptionId);
-        $stats['deleted'] = $seen === []
-            ? $query->count()
-            : (clone $query)->whereNotIn('azure_alert_id', $seen)->count();
-
-        if ($seen === []) {
-            $query->delete();
-        } else {
-            $query->whereNotIn('azure_alert_id', $seen)->delete();
+        $activeAlertIds = [];
+        foreach ($alerts as $alert) {
+            $activeAlertIds[] = (string) $alert['alertId'];
         }
+        $activeAlertIds = array_values(array_unique($activeAlertIds));
+
+        // Apply the complete snapshot only after Azure pagination has succeeded.
+        foreach ($alerts as $alert) {
+            $stats['discovered']++;
+            $result = $this->syncOne($alert, $subscriptionId, $isBaseline);
+            $stats[$result]++;
+            $this->syncDetails($alert);
+        }
+
+        // Any previously stored Fired alert absent from this complete Fired
+        // snapshot is treated as resolved. During the first sync, remove stale
+        // local rows silently because there is no trustworthy prior baseline.
+        $activeAlertLookup = array_fill_keys($activeAlertIds, true);
+        $missingAlerts = AzureAlert::query()
+            ->where('subscription_id', $subscriptionId)
+            ->whereNotNull('fire_time')
+            ->where('fire_time', '>=', now()->subDays(self::RETENTION_DAYS))
+            ->get()
+            ->reject(fn (AzureAlert $record): bool => isset($activeAlertLookup[(string) $record->azure_alert_id]));
+
+        foreach ($missingAlerts as $missing) {
+            if (! $isBaseline) {
+                $attributes = [
+                    'name' => $missing->name,
+                    'severity' => $missing->severity,
+                    'affected_resource' => $missing->affected_resource,
+                    'target_resource_type' => $missing->target_resource_type,
+                    'alert_condition' => 'Resolved',
+                    'last_modified_time' => $missing->last_modified_time,
+                ];
+
+                $this->triggerAlertEventOnce(
+                    'azure.alert.resolved',
+                    (string) $missing->azure_alert_id,
+                    $attributes,
+                    $subscriptionId,
+                );
+                $stats['resolved']++;
+            }
+
+            $missing->delete();
+            $stats['deleted']++;
+        }
+
+        // Azure's alert history is retained for 30 days. Expire older local
+        // records silently; age alone must never generate a resolution event.
+        $expired = AzureAlert::query()
+            ->where('subscription_id', $subscriptionId)
+            ->whereNotNull('fire_time')
+            ->where('fire_time', '<', now()->subDays(self::RETENTION_DAYS));
+
+        $stats['deleted'] += (clone $expired)->count();
+        $expired->delete();
 
         return $stats;
     }
@@ -164,7 +223,7 @@ KQL,
         );
     }
 
-    private function syncOne(array $alert, string $subscriptionId): string
+    private function syncOne(array $alert, string $subscriptionId, bool $isBaseline): string
     {
         $alertId = (string) $alert['alertId'];
         $attributes = [
@@ -199,30 +258,9 @@ KQL,
         }
 
         if ($existing === null) {
-            AzureAlert::query()->create($attributes);
-
-            $context = [
-                'alert_id' => $alertId,
-                'alert_name' => $attributes['name'],
-                'severity' => $attributes['severity'],
-                'status' => $attributes['alert_condition'],
-                'resource_id' => null,
-                'resource_name' => $attributes['affected_resource'],
-                'subscription_id' => $subscriptionId,
-                'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
-                'occurred_at' => now()->toIso8601String(),
-            ];
-
-            try {
-                $rules = app(NotificationRuleService::class);
-                $rules->trigger('azure.alert.detected', $context);
-
-                if (in_array(strtolower((string) $attributes['severity']), ['critical', 'sev0'], true)) {
-                    $rules->trigger('azure.critical_alert.detected', $context);
-                }
-            } catch (Throwable $exception) {
-                report($exception);
-            }
+            $existing = AzureAlert::query()->create($attributes);
+            // Initial historical alerts seed the baseline without notifications.
+            $this->triggerAlertEventOnce('azure.alert.detected', $alertId, $attributes, $subscriptionId, ! $isBaseline);
 
             return 'created';
         }
@@ -238,6 +276,54 @@ KQL,
         $existing->forceFill($attributes)->saveQuietly();
 
         return $changed ? 'updated' : 'unchanged';
+    }
+
+    /**
+     * Record each alert lifecycle event once. The unique database key also
+     * protects against overlapping scheduler executions.
+     */
+    private function triggerAlertEventOnce(
+        string $eventKey,
+        string $alertId,
+        array $attributes,
+        string $subscriptionId,
+        bool $dispatchNotification = true,
+    ): void {
+        DB::transaction(function () use ($eventKey, $alertId, $attributes, $subscriptionId, $dispatchNotification): void {
+            $inserted = DB::table('azure_alert_notification_events')->insertOrIgnore([
+                'alert_id_hash' => hash('sha256', $alertId),
+                'alert_id' => $alertId,
+                'event_key' => $eventKey,
+                'processed_at' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            if ($inserted === 0 || ! $dispatchNotification) {
+                return;
+            }
+
+            app(NotificationRuleService::class)->trigger(
+                $eventKey,
+                $this->notificationContext($alertId, $attributes, $subscriptionId),
+                true,
+            );
+        });
+    }
+
+    private function notificationContext(string $alertId, array $attributes, string $subscriptionId): array
+    {
+        return [
+            'alert_id' => $alertId,
+            'alert_name' => $attributes['name'],
+            'severity' => $attributes['severity'],
+            'status' => $attributes['alert_condition'],
+            'resource_id' => null,
+            'resource_name' => $attributes['affected_resource'],
+            'subscription_id' => $subscriptionId,
+            'subscription_name' => AzureSubscription::query()->where('subscription_id', $subscriptionId)->value('display_name'),
+            'occurred_at' => $attributes['last_modified_time']?->toIso8601String() ?? now()->toIso8601String(),
+        ];
     }
 
     private function stringOrNull(mixed $value): ?string

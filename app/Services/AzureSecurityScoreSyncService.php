@@ -17,6 +17,7 @@ class AzureSecurityScoreSyncService
 
     public function __construct(
         private readonly AzureSubscriptionSyncService $azure,
+        private readonly SubscriptionModuleSyncTracker $syncTracker,
     ) {
     }
 
@@ -32,7 +33,10 @@ class AzureSecurityScoreSyncService
         $stats = ['subscriptions' => count($subscriptions), 'discovered' => 0, 'created' => 0, 'updated' => 0, 'deduplicated' => 0, 'pruned' => 0];
 
         foreach ($subscriptions as $subscription) {
-            $url = sprintf(
+            $this->syncTracker->begin('security_scores', [$subscription]);
+
+            try {
+                $url = sprintf(
                 'https://management.azure.com/subscriptions/%s/providers/Microsoft.Security/secureScores?api-version=%s',
                 rawurlencode($subscription),
                 self::API_VERSION,
@@ -111,6 +115,28 @@ class AzureSecurityScoreSyncService
                             'score_delta' => $currentScore - (float) $previousScore,
                             'occurred_at' => $capturedAt->toIso8601String(),
                         ];
+
+                        // Security score ranges classify decreases only. Improvements
+                        // retain their existing unclassified event and card behavior.
+                        if ($currentScore < (float) $previousScore) {
+                            // Azure's percentage field is stored as a fraction
+                            // (e.g. 0.8522 for 85.22%), while configured ranges
+                            // are entered as whole percentages (e.g. 85.00).
+                            $currentScorePercent = $currentScore * 100;
+
+                            $classification = \App\Models\AzureSecurityScoreClassification::query()
+                                ->where('enabled', true)
+                                ->where('minimum_score', '<=', $currentScorePercent)
+                                ->where('maximum_score', '>=', $currentScorePercent)
+                                // For adjacent inclusive ranges, the range beginning
+                                // at the shared boundary takes precedence.
+                                ->orderByDesc('minimum_score')
+                                ->first();
+
+                            if ($classification !== null) {
+                                $notificationContext['severity'] = strtoupper($classification->severity);
+                            }
+                        }
                     }
                 });
 
@@ -133,6 +159,12 @@ class AzureSecurityScoreSyncService
                 ->where('subscription_id', $subscription)
                 ->where('captured_at', '<', $retentionStart)
                 ->delete();
+
+                $this->syncTracker->succeed('security_scores', [$subscription]);
+            } catch (\Throwable $exception) {
+                $this->syncTracker->fail('security_scores', [$subscription], $exception->getMessage());
+                throw $exception;
+            }
         }
 
         return $stats;

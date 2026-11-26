@@ -15,7 +15,7 @@ class SubscriptionWebUrlStats extends BaseWidget
 {
     public AzureSubscription $record;
 
-    protected ?string $pollingInterval = null;
+    protected ?string $pollingInterval = '10s';
 
     protected int | array | null $columns = 5;
 

@@ -2,12 +2,9 @@
 
 namespace App\Services;
 
-use App\Jobs\DeliverTeamsWebhookNotification;
 use App\Models\SslReminderRule;
 use App\Models\SubscriptionWebUrl;
-use App\Models\TeamsWebhook;
 use Illuminate\Support\Facades\DB;
-use Throwable;
 
 class SslReminderService
 {
@@ -61,38 +58,25 @@ class SslReminderService
                 continue;
             }
 
-            $webhookIds = array_values(array_unique(array_filter(
-                $rule->webhook_ids ?? [],
-                static fn ($id): bool => is_numeric($id),
-            )));
-            $webhooks = TeamsWebhook::query()
-                ->where('enabled', true)
-                ->whereKey($webhookIds)
-                ->get();
-
             $context = [
                 'web_url_id' => (int) $webUrl->id,
                 'url' => (string) $webUrl->url,
                 'domain' => (string) (parse_url($webUrl->url, PHP_URL_HOST) ?: $webUrl->url),
                 'certificate_expires_at' => $webUrl->ssl_expires_at->toIso8601String(),
                 'days_until_expiry' => $daysRemaining,
-                'ssl_reminder_threshold_days' => (int) $rule->threshold_days,
-                'ssl_reminder_severity' => (string) $rule->severity,
+                'severity' => match (strtolower((string) $rule->severity)) {
+                    'reminder' => 'REMINDER',
+                    'attention' => 'ATTENTION',
+                    'warning' => 'WARNING',
+                    'critical' => 'CRITICAL',
+                    default => 'ATTENTION',
+                },
                 'occurred_at' => now()->toIso8601String(),
             ];
 
-            foreach ($webhooks as $webhook) {
-                try {
-                    DeliverTeamsWebhookNotification::dispatch(
-                        (int) $webhook->id,
-                        'web_url.ssl.expiring',
-                        $context,
-                    )->afterCommit();
-                    $dispatched++;
-                } catch (Throwable $exception) {
-                    report($exception);
-                }
-            }
+            // Notification Rules own all destinations and delivery decisions.
+            // Their webhook and in-app delivery paths both dispatch queue jobs.
+            $dispatched += app(NotificationRuleService::class)->trigger('web_url.ssl.expiring', $context);
         }
 
         return $dispatched;

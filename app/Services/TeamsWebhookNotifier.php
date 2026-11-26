@@ -22,7 +22,7 @@ class TeamsWebhookNotifier
      *
      * Exceptions are deliberately allowed to escape so Laravel can retry the job.
      */
-    public function deliverQueuedRule(TeamsWebhook $webhook, string $eventKey, array $context = []): void
+    public function deliverQueuedRule(TeamsWebhook $webhook, string $eventKey, array $context = [], int $attemptNumber = 1, int $maxAttempts = 3): void
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
@@ -34,7 +34,7 @@ class TeamsWebhookNotifier
             return;
         }
 
-        $this->deliver($webhook, $eventKey, $context);
+        $this->deliver($webhook, $eventKey, $context, $attemptNumber, $maxAttempts);
     }
 
     /**
@@ -60,14 +60,17 @@ class TeamsWebhookNotifier
                 (int) $webhook->getKey(),
                 $eventKey,
                 $context,
+                (int) $rule->getKey(),
             )->afterCommit();
         }
 
         return true;
     }
 
-    private function deliver(TeamsWebhook $webhook, string $eventKey, array $context): bool
+    private function deliver(TeamsWebhook $webhook, string $eventKey, array $context, int $attemptNumber, int $maxAttempts): bool
     {
+        $httpStatus = null;
+
         try {
             $url = $webhook->webhook_url;
             $host = strtolower((string) parse_url($url, PHP_URL_HOST));
@@ -78,6 +81,24 @@ class TeamsWebhookNotifier
 
             $message = $this->formatter->format($eventKey, $context);
             $payload = $this->payload($webhook, $message['title'], $message['message'], $eventKey, $context);
+
+            // Keep the subscription identity panel consistent across Azure alert cards.
+            // The existing severity banner remains in its original position.
+            if (in_array($eventKey, [
+                'azure.alert.detected',
+                'azure.alert.resolved',
+                'azure.security_score.decreased',
+                'azure.security_score.improved',
+                'azure.recommendation.detected',
+                'azure.recommendation.removed',
+                'web_url.down',
+                'web_url.recovered',
+                'web_url.ssl.expiring',
+                'web_url.ssl.expired',
+                'web_url.ssl.renewed',
+            ], true)) {
+                $payload = $this->insertAlertSubscriptionDetails($payload, $context);
+            }
 
             // Keep every designed notification card on the SSL-renewed spacing standard.
             // Azure sync completion and failure retain their deliberately distinct layouts.
@@ -91,9 +112,13 @@ class TeamsWebhookNotifier
                 ->withOptions(['allow_redirects' => false])
                 ->post($url, $payload);
 
+            $httpStatus = $response->status();
+
             if (! $response->successful()) {
                 throw new RuntimeException('Webhook endpoint returned HTTP '.$response->status().'.');
             }
+
+            $this->recordDelivery($webhook, $eventKey, 'success', $attemptNumber, $httpStatus, null, (bool) ($context['is_test'] ?? false));
 
             $webhook->forceFill([
                 'last_delivery_status' => 'success',
@@ -105,15 +130,107 @@ class TeamsWebhookNotifier
         } catch (Throwable $exception) {
             report($exception);
 
+            $status = $attemptNumber >= $maxAttempts ? 'failed' : 'retrying';
+            $error = mb_substr($exception->getMessage(), 0, 2000);
+            $this->recordDelivery($webhook, $eventKey, $status, $attemptNumber, $httpStatus, $error, (bool) ($context['is_test'] ?? false));
+
             // Keep the latest failure visible while Laravel schedules a retry.
             $webhook->forceFill([
-                'last_delivery_status' => 'retrying',
+                'last_delivery_status' => $status,
                 'last_sent_at' => now(),
-                'last_error' => mb_substr($exception->getMessage(), 0, 2000),
+                'last_error' => $error,
             ])->save();
 
             throw $exception;
         }
+    }
+
+    private function recordDelivery(
+        TeamsWebhook $webhook,
+        string $eventKey,
+        string $status,
+        int $attemptNumber,
+        ?int $httpStatus,
+        ?string $error,
+        bool $isTest,
+    ): void {
+        try {
+            \Illuminate\Support\Facades\DB::table('teams_webhook_notification_logs')->insert([
+                'webhook_id' => $webhook->getKey(),
+                'webhook_name' => $webhook->name,
+                'event_key' => $eventKey,
+                'status' => $status,
+                'attempt_number' => $attemptNumber,
+                'http_status' => $httpStatus,
+                'error_message' => $error,
+                'is_test' => $isTest,
+                'delivered_at' => $status === 'success' ? now() : null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (Throwable $exception) {
+            // A history-write problem must not cause an otherwise successful
+            // Teams delivery to be retried and potentially sent twice.
+            report($exception);
+        }
+    }
+
+    /**
+     * Add subscription identity below the existing severity banner on Azure alert, security score, and SSL certificate cards.
+     */
+    private function insertAlertSubscriptionDetails(array $payload, array $context): array
+    {
+        $body = $payload['attachments'][0]['content']['body'] ?? null;
+        if (! is_array($body)) {
+            return $payload;
+        }
+
+        $subscriptionName = trim((string) ($context['subscription_name'] ?? ''));
+        $subscriptionId = trim((string) ($context['subscription_id'] ?? ''));
+        if ($subscriptionName === '' && $subscriptionId === '') {
+            return $payload;
+        }
+
+        $items = [];
+
+        if ($subscriptionName !== '') {
+            $items[] = [
+                'type' => 'TextBlock',
+                'text' => $subscriptionName,
+                'weight' => 'Bolder',
+                'size' => 'Medium',
+                'spacing' => 'None',
+                'wrap' => true,
+            ];
+        }
+
+        if ($subscriptionId !== '') {
+            $items[] = [
+                'type' => 'TextBlock',
+                'text' => 'ID: '.$subscriptionId,
+                'size' => 'Small',
+                'isSubtle' => true,
+                'spacing' => 'Small',
+                'wrap' => true,
+            ];
+        }
+
+        $panel = [
+            'type' => 'Container',
+            'style' => 'emphasis',
+            'spacing' => 'Medium',
+            'items' => $items,
+        ];
+
+        $hasSeverityBanner = isset($body[0])
+            && ($body[0]['type'] ?? null) === 'Container'
+            && ($body[0]['bleed'] ?? false) === true;
+        $insertAt = $hasSeverityBanner ? 1 : 0;
+        array_splice($body, $insertAt, 0, [$panel]);
+
+        $payload['attachments'][0]['content']['body'] = $body;
+
+        return $payload;
     }
 
     /**
@@ -222,7 +339,7 @@ class TeamsWebhookNotifier
             return $this->formatter->syncFailureCard($title, $context);
         }
 
-        if ($eventKey === 'web_url.ssl.expiring' && isset($context['ssl_reminder_severity'])) {
+        if ($eventKey === 'web_url.ssl.expiring') {
             return app(\App\Support\SslReminderCardFormatter::class)->format($title, $context);
         }
 
@@ -245,7 +362,7 @@ class TeamsWebhookNotifier
 
         $severityCategory = match (true) {
             in_array($eventKey, ['azure.security_score.decreased', 'azure.security_score.improved'], true) => 'Security score',
-            in_array($eventKey, ['azure.alert.detected', 'azure.critical_alert.detected'], true) => 'Alert',
+            in_array($eventKey, ['azure.alert.detected', 'azure.alert.resolved'], true) => 'Alert',
             in_array($eventKey, ['azure.recommendation.detected', 'azure.recommendation.removed'], true) => 'Security recommendation',
             in_array($eventKey, ['web_url.ssl.expiring', 'web_url.ssl.expired'], true) => 'SSL CERTIFICATE',
             default => null,
@@ -253,38 +370,85 @@ class TeamsWebhookNotifier
 
         if ($severityCategory !== null) {
             $improvement = $eventKey === 'azure.security_score.improved';
+            $severityValue = strtoupper((string) ($context['severity'] ?? ''));
 
             if ($severityCategory === 'Security score' && ! $improvement) {
-                $critical = (float) ($context['current_score'] ?? 0) < 0.8;
-            } elseif ($severityCategory === 'SSL') {
-                $critical = $eventKey === 'web_url.ssl.expired';
+                // Security Score decrease cards must reflect the configured
+                // classification range. Never infer Warning/Critical from a
+                // hard-coded score threshold or invent a fallback severity.
+                $classification = match ($severityValue) {
+                    'REMINDER' => ['label' => 'REMINDER', 'style' => 'warning', 'color' => 'Warning'],
+                    'ATTENTION' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                    'WARNING' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
+                    'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+                    default => null,
+                };
+            } elseif ($severityCategory === 'SSL CERTIFICATE') {
+                $classification = $eventKey === 'web_url.ssl.expired'
+                    ? ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention']
+                    : match ($severityValue) {
+                        'REMINDER' => ['label' => 'REMINDER', 'style' => 'warning', 'color' => 'Warning'],
+                        'ATTENTION' => ['label' => 'WARNING', 'style' => 'warning', 'color' => 'Warning'],
+                        'WARNING' => ['label' => 'ATTENTION', 'style' => 'attention', 'color' => 'Attention'],
+                        'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+                        default => null,
+                    };
+            } elseif ($eventKey === 'azure.recommendation.removed') {
+                $classification = [
+                    'label' => 'RESOLVED',
+                    'style' => 'good',
+                    'color' => 'Good',
+                ];
+            } elseif ($eventKey === 'azure.recommendation.detected') {
+                // Recommendation severity is independent of Azure Monitor Sev levels.
+                // Unknown values deliberately produce no banner rather than a guessed classification.
+                $classification = match ($severityValue) {
+                    'LOW' => ['label' => 'LOW', 'style' => 'accent', 'color' => 'Accent'],
+                    'MEDIUM' => ['label' => 'MEDIUM', 'style' => 'warning', 'color' => 'Warning'],
+                    'HIGH' => ['label' => 'HIGH', 'style' => 'attention', 'color' => 'Attention'],
+                    'CRITICAL' => ['label' => 'CRITICAL', 'style' => 'attention', 'color' => 'Attention'],
+                    default => null,
+                };
+            } elseif ($eventKey === 'azure.alert.resolved') {
+                $classification = [
+                    'label' => 'RESOLVED - Alert',
+                    'style' => 'good',
+                    'color' => 'Good',
+                ];
             } else {
-                $severityValue = strtoupper((string) ($context['severity'] ?? ''));
-                $critical = in_array($severityValue, ['CRITICAL', 'HIGH', 'SEV0', 'SEV1', '0', '1'], true)
-                    || $eventKey === 'azure.critical_alert.detected';
+                $classification = match ($severityValue) {
+                    'SEV0', '0' => ['label' => 'CRITICAL - Sev 0 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    'SEV1', '1' => ['label' => 'WARNING - Sev 1 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    'SEV2', '2' => ['label' => 'WARNING - Sev 2 Alert', 'style' => 'attention', 'color' => 'Attention'],
+                    'SEV3', '3' => ['label' => 'ATTENTION - Sev 3 Alert', 'style' => 'warning', 'color' => 'Warning'],
+                    'SEV4', '4' => ['label' => 'ATTENTION - Sev 4 Alert', 'style' => 'warning', 'color' => 'Warning'],
+                    default => null,
+                };
             }
 
-            $body[] = [
-                'type' => 'Container',
-                'style' => $improvement ? 'good' : ($critical ? 'attention' : 'warning'),
-                'bleed' => true,
-                'spacing' => 'None',
-                'items' => [[
-                    'type' => 'TextBlock',
-                    'text' => $improvement
-                        ? 'IMPROVEMENT - Security Score'
-                        : (($critical ? 'CRITICAL' : 'WARNING').' - '.$severityCategory),
-                    'weight' => 'Bolder',
-                    'size' => 'Large',
-                    'color' => $improvement ? 'Good' : ($critical ? 'Attention' : 'Warning'),
-                    'horizontalAlignment' => 'Center',
-                    'wrap' => false,
-                    'spacing' => 'Small',
-                ]],
-            ];
-            // Keep the severity banner before the existing title and message.
-            $banner = array_pop($body);
-            array_unshift($body, $banner);
+            if ($improvement || $classification !== null) {
+                $body[] = [
+                    'type' => 'Container',
+                    'style' => $improvement ? 'good' : $classification['style'],
+                    'bleed' => true,
+                    'spacing' => 'None',
+                    'items' => [[
+                        'type' => 'TextBlock',
+                        'text' => $improvement
+                            ? 'IMPROVEMENT - Security Score'
+                            : ($severityCategory === 'Alert' ? $classification['label'] : ($classification['label'].' - '.$severityCategory)),
+                        'weight' => 'Bolder',
+                        'size' => 'Large',
+                        'color' => $improvement ? 'Good' : $classification['color'],
+                        'horizontalAlignment' => 'Center',
+                        'wrap' => false,
+                        'spacing' => 'Small',
+                    ]],
+                ];
+                // Keep the existing banner position and Adaptive Card structure.
+                $banner = array_pop($body);
+                array_unshift($body, $banner);
+            }
         }
 
         return [

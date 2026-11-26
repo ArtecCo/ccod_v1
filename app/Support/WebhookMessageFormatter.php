@@ -24,6 +24,20 @@ class WebhookMessageFormatter
 
         $lines = [];
         foreach (($event['fields'] ?? []) as $key => $definition) {
+            // Azure alert cards show subscription identity in the dedicated panel.
+            if (in_array($eventKey, [
+                'azure.alert.detected',
+                'azure.alert.resolved',
+                'azure.security_score.decreased',
+                'azure.security_score.improved',
+                'azure.recommendation.detected',
+                'azure.recommendation.removed',
+                'web_url.down',
+                'web_url.recovered',
+            ], true) && in_array($key, ['subscription_id', 'subscription_name'], true)) {
+                continue;
+            }
+
             if (! array_key_exists($key, $context) || $context[$key] === null || $context[$key] === '') {
                 continue;
             }
@@ -192,6 +206,7 @@ class WebhookMessageFormatter
             'url' => 'Website URL',
             'domain' => 'Domain',
             'http_status' => 'HTTP status',
+            'last_check_error' => 'Last check error',
             'response_time_ms' => 'Response time',
             'checked_at' => 'Last checked',
         ] as $key => $label) {
