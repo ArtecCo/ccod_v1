@@ -20,11 +20,12 @@ class CleanupNotificationHistory extends Command
         $notifications = DB::table('notifications')
             ->where('created_at', '<', $cutoff);
 
-        // Only remove stale Teams webhook delivery jobs. Other queued jobs
-        // must remain available to Laravel's queue workers.
+        // Only remove unreserved Teams webhook delivery jobs. Other queued
+        // jobs and jobs currently reserved by a queue worker remain untouched.
         $teamsJobs = DB::table('jobs')
             ->where('created_at', '<', $cutoff->timestamp)
-            ->where('payload', 'like', '%App\\\\Jobs\\\\DeliverTeamsWebhookNotification%');
+            ->whereNull('reserved_at')
+            ->where('payload', 'like', '%DeliverTeamsWebhookNotification%');
 
         $failedJobs = DB::table('failed_jobs')
             ->where('failed_at', '<', $cutoff);
