@@ -25,7 +25,8 @@ class WebhookMessageFormatter
         $lines = [];
         foreach (($event['fields'] ?? []) as $key => $definition) {
             // Azure alert cards show subscription identity in the dedicated panel.
-            if ($eventKey === 'azure.alert.detected' && in_array($key, ['subscription_id', 'subscription_name'], true)) {
+            if (in_array($eventKey, ['azure.alert.detected', 'azure.alert.resolved'], true)
+                && in_array($key, ['subscription_id', 'subscription_name'], true)) {
                 continue;
             }
 
