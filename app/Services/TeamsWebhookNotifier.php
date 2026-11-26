@@ -140,15 +140,7 @@ class TeamsWebhookNotifier
             return $payload;
         }
 
-        $items = [[
-            'type' => 'TextBlock',
-            'text' => 'AZURE SUBSCRIPTION',
-            'weight' => 'Bolder',
-            'size' => 'Small',
-            'isSubtle' => true,
-            'spacing' => 'None',
-            'wrap' => true,
-        ]];
+        $items = [];
 
         if ($subscriptionName !== '') {
             $items[] = [
@@ -156,7 +148,7 @@ class TeamsWebhookNotifier
                 'text' => $subscriptionName,
                 'weight' => 'Bolder',
                 'size' => 'Medium',
-                'spacing' => 'Small',
+                'spacing' => 'None',
                 'wrap' => true,
             ];
         }
@@ -164,7 +156,7 @@ class TeamsWebhookNotifier
         if ($subscriptionId !== '') {
             $items[] = [
                 'type' => 'TextBlock',
-                'text' => $subscriptionId,
+                'text' => 'ID: '.$subscriptionId,
                 'size' => 'Small',
                 'isSubtle' => true,
                 'spacing' => 'Small',
