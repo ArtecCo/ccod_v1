@@ -1,17 +1,16 @@
 <?php
 
-namespace App\\Filament\\GlobalSearch;
+namespace App\Filament\GlobalSearch;
 
-use Filament\\GlobalSearch\\GlobalSearchResults;
-use Filament\\GlobalSearch\\Providers\\Contracts\\GlobalSearchProvider;
+use Filament\GlobalSearch\GlobalSearchResults;
+use Filament\GlobalSearch\Providers\Contracts\GlobalSearchProvider;
 
 class NavigationOnlyGlobalSearchProvider implements GlobalSearchProvider
 {
     public function getResults(string $query): ?GlobalSearchResults
     {
-        // Keep Filament's native search field, but do not run record searches
-        // or display the "No results found" dropdown. The existing field is
-        // used by the admin panel's client-side navigation filter instead.
+        // The native field is retained for its existing appearance and placement.
+        // Navigation filtering is performed client-side; do not query records.
         return null;
     }
 }
