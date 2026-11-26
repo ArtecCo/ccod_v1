@@ -27,7 +27,44 @@ class TeamsWebhookResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->guard('developers')->check() && auth()->guard('developers')->user()?->is_active === true;
+        return static::canManage();
+    }
+
+    public static function canView($record): bool
+    {
+        return static::canManage();
+    }
+
+    public static function canCreate(): bool
+    {
+        return static::canManage();
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canManage();
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canManage();
+    }
+
+    public static function canDeleteAny(): bool
+    {
+        return static::canManage();
+    }
+
+    protected static function canManage(): bool
+    {
+        if (Filament::getCurrentPanel()?->getId() === 'developer') {
+            return auth()->guard('developers')->user()?->is_active === true;
+        }
+
+        $user = auth()->guard('web')->user();
+
+        return $user instanceof User
+            && app(AccessAuthorizationService::class)->hasPermission($user, 'notifications.webhooks.manage');
     }
 
     public static function form(Schema $schema): Schema
