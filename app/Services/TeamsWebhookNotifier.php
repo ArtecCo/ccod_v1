@@ -89,6 +89,8 @@ class TeamsWebhookNotifier
                 'azure.security_score.improved',
                 'azure.recommendation.detected',
                 'azure.recommendation.removed',
+                'web_url.down',
+                'web_url.recovered',
                 'web_url.ssl.expiring',
                 'web_url.ssl.expired',
                 'web_url.ssl.renewed',
