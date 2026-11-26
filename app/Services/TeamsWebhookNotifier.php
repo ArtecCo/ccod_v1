@@ -22,7 +22,7 @@ class TeamsWebhookNotifier
      *
      * Exceptions are deliberately allowed to escape so Laravel can retry the job.
      */
-    public function deliverQueuedRule(TeamsWebhook $webhook, string $eventKey, array $context = []): void
+    public function deliverQueuedRule(TeamsWebhook $webhook, string $eventKey, array $context = [], int $attemptNumber = 1, int $maxAttempts = 3): void
     {
         $eventKey = NotificationEventCatalog::normalizeKey($eventKey);
         $context = array_merge($context, [
@@ -34,7 +34,7 @@ class TeamsWebhookNotifier
             return;
         }
 
-        $this->deliver($webhook, $eventKey, $context);
+        $this->deliver($webhook, $eventKey, $context, $attemptNumber, $maxAttempts);
     }
 
     /**
@@ -67,8 +67,10 @@ class TeamsWebhookNotifier
         return true;
     }
 
-    private function deliver(TeamsWebhook $webhook, string $eventKey, array $context): bool
+    private function deliver(TeamsWebhook $webhook, string $eventKey, array $context, int $attemptNumber, int $maxAttempts): bool
     {
+        $httpStatus = null;
+
         try {
             $url = $webhook->webhook_url;
             $host = strtolower((string) parse_url($url, PHP_URL_HOST));
@@ -110,9 +112,13 @@ class TeamsWebhookNotifier
                 ->withOptions(['allow_redirects' => false])
                 ->post($url, $payload);
 
+            $httpStatus = $response->status();
+
             if (! $response->successful()) {
                 throw new RuntimeException('Webhook endpoint returned HTTP '.$response->status().'.');
             }
+
+            $this->recordDelivery($webhook, $eventKey, 'success', $attemptNumber, $httpStatus, null, (bool) ($context['is_test'] ?? false));
 
             $webhook->forceFill([
                 'last_delivery_status' => 'success',
@@ -124,14 +130,48 @@ class TeamsWebhookNotifier
         } catch (Throwable $exception) {
             report($exception);
 
+            $status = $attemptNumber >= $maxAttempts ? 'failed' : 'retrying';
+            $error = mb_substr($exception->getMessage(), 0, 2000);
+            $this->recordDelivery($webhook, $eventKey, $status, $attemptNumber, $httpStatus, $error, (bool) ($context['is_test'] ?? false));
+
             // Keep the latest failure visible while Laravel schedules a retry.
             $webhook->forceFill([
-                'last_delivery_status' => 'retrying',
+                'last_delivery_status' => $status,
                 'last_sent_at' => now(),
-                'last_error' => mb_substr($exception->getMessage(), 0, 2000),
+                'last_error' => $error,
             ])->save();
 
             throw $exception;
+        }
+    }
+
+    private function recordDelivery(
+        TeamsWebhook $webhook,
+        string $eventKey,
+        string $status,
+        int $attemptNumber,
+        ?int $httpStatus,
+        ?string $error,
+        bool $isTest,
+    ): void {
+        try {
+            \Illuminate\Support\Facades\DB::table('teams_webhook_notification_logs')->insert([
+                'webhook_id' => $webhook->getKey(),
+                'webhook_name' => $webhook->name,
+                'event_key' => $eventKey,
+                'status' => $status,
+                'attempt_number' => $attemptNumber,
+                'http_status' => $httpStatus,
+                'error_message' => $error,
+                'is_test' => $isTest,
+                'delivered_at' => $status === 'success' ? now() : null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } catch (Throwable $exception) {
+            // A history-write problem must not cause an otherwise successful
+            // Teams delivery to be retried and potentially sent twice.
+            report($exception);
         }
     }
 
