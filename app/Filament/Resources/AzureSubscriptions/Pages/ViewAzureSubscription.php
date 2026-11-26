@@ -9,7 +9,6 @@ use App\Filament\Resources\AzureSubscriptions\RelationManagers\SubscriptionWebUr
 use App\Models\Developer;
 use App\Models\User;
 use App\Services\AccessAuthorizationService;
-use Filament\Actions\EditAction;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
@@ -107,10 +106,4 @@ class ViewAzureSubscription extends ViewRecord
         return $user instanceof User && app(AccessAuthorizationService::class)->hasPermission($user, $permission, $this->record);
     }
 
-    protected function getHeaderActions(): array
-    {
-        return [
-            EditAction::make()->visible(fn (): bool => AzureSubscriptionResource::canEdit($this->record)),
-        ];
-    }
 }
