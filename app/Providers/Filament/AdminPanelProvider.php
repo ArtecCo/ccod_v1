@@ -89,6 +89,8 @@ class AdminPanelProvider extends PanelProvider
                     if ($authz->hasPermission($user, 'subscriptions.view')) $management[] = NavigationItem::make('Subscriptions')->icon(Heroicon::OutlinedCloud)->url(AzureSubscriptionResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.azure-subscriptions.*'));
                     if ($authz->hasPermission($user, 'roles.view')) $management[] = NavigationItem::make('Roles & Permissions')->icon(Heroicon::OutlinedShieldCheck)->url(RoleResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.roles.*'));
                     if ($authz->hasPermission($user, 'users.access_requests.view')) $management[] = NavigationItem::make('Access Requests')->icon(Heroicon::OutlinedKey)->url(AccessRequestResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.access-requests.*'));
+                    if ($authz->hasPermission($user, 'notifications.rules.manage')) $management[] = NavigationItem::make('Notification Rules')->icon(Heroicon::OutlinedAdjustmentsHorizontal)->url(NotificationRuleResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.notification-rules.*'));
+                    if ($authz->hasPermission($user, 'notifications.webhooks.manage')) $management[] = NavigationItem::make('Webhook Destinations')->icon(Heroicon::OutlinedChatBubbleLeftRight)->url(TeamsWebhookResource::getUrl())->isActiveWhen(fn (): bool => request()->routeIs('filament.admin.resources.teams-webhooks.*'));
                 }
 
                 if ($developer instanceof Developer && $developer->is_active) {
