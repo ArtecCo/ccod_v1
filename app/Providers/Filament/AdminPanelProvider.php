@@ -8,6 +8,8 @@ use App\Filament\Resources\AccessRequests\AccessRequestResource;
 use App\Filament\Resources\AzureSubscriptions\AzureSubscriptionResource;
 use App\Filament\Resources\Documentations\DocumentationResource;
 use App\Filament\Resources\Projects\ProjectResource;
+use App\Filament\Resources\NotificationRules\NotificationRuleResource;
+use App\Filament\Resources\TeamsWebhooks\TeamsWebhookResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Teams\TeamResource;
 use App\Filament\Resources\UserGroups\UserGroupResource;
