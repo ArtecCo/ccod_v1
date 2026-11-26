@@ -80,6 +80,12 @@ class TeamsWebhookNotifier
             $message = $this->formatter->format($eventKey, $context);
             $payload = $this->payload($webhook, $message['title'], $message['message'], $eventKey, $context);
 
+            // Pilot the subscription identity panel on Azure alert-detected cards only.
+            // The existing severity banner remains in its original position.
+            if ($eventKey === 'azure.alert.detected') {
+                $payload = $this->insertAlertSubscriptionDetails($payload, $context);
+            }
+
             // Keep every designed notification card on the SSL-renewed spacing standard.
             // Azure sync completion and failure retain their deliberately distinct layouts.
             if (! in_array($eventKey, ['sync.completed', 'azure.sync.failed'], true)) {
@@ -115,6 +121,73 @@ class TeamsWebhookNotifier
 
             throw $exception;
         }
+    }
+
+    /**
+     * Add subscription identity below the existing severity banner on the
+     * Azure alert-detected pilot card only.
+     */
+    private function insertAlertSubscriptionDetails(array $payload, array $context): array
+    {
+        $body = $payload['attachments'][0]['content']['body'] ?? null;
+        if (! is_array($body)) {
+            return $payload;
+        }
+
+        $subscriptionName = trim((string) ($context['subscription_name'] ?? ''));
+        $subscriptionId = trim((string) ($context['subscription_id'] ?? ''));
+        if ($subscriptionName === '' && $subscriptionId === '') {
+            return $payload;
+        }
+
+        $items = [[
+            'type' => 'TextBlock',
+            'text' => 'AZURE SUBSCRIPTION',
+            'weight' => 'Bolder',
+            'size' => 'Small',
+            'isSubtle' => true,
+            'spacing' => 'None',
+            'wrap' => true,
+        ]];
+
+        if ($subscriptionName !== '') {
+            $items[] = [
+                'type' => 'TextBlock',
+                'text' => $subscriptionName,
+                'weight' => 'Bolder',
+                'size' => 'Medium',
+                'spacing' => 'Small',
+                'wrap' => true,
+            ];
+        }
+
+        if ($subscriptionId !== '') {
+            $items[] = [
+                'type' => 'TextBlock',
+                'text' => $subscriptionId,
+                'size' => 'Small',
+                'isSubtle' => true,
+                'spacing' => 'Small',
+                'wrap' => true,
+            ];
+        }
+
+        $panel = [
+            'type' => 'Container',
+            'style' => 'emphasis',
+            'spacing' => 'Medium',
+            'items' => $items,
+        ];
+
+        $hasSeverityBanner = isset($body[0])
+            && ($body[0]['type'] ?? null) === 'Container'
+            && in_array($body[0]['style'] ?? null, ['attention', 'warning'], true);
+        $insertAt = $hasSeverityBanner ? 1 : 0;
+        array_splice($body, $insertAt, 0, [$panel]);
+
+        $payload['attachments'][0]['content']['body'] = $body;
+
+        return $payload;
     }
 
     /**
