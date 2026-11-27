@@ -46,7 +46,7 @@ class Reports extends Page implements HasForms
             'scope_type' => 'subscription',
             'timeline' => 'mtd',
             'month' => now()->startOfMonth()->toDateString(),
-            'report_types' => ['overview', 'costs', 'security', 'alerts', 'web_urls', 'resources'],
+            'report_types' => [],
         ]);
     }
 
@@ -123,10 +123,8 @@ class Reports extends Page implements HasForms
     {
         $state = $this->form->getState();
         $types = array_values(array_unique($state['report_types'] ?? []));
-        $individualTypes = array_values(array_diff($types, ['consolidated']));
-
-        if ($individualTypes === []) {
-            Notification::make()->title('Select at least one individual report')->body('A consolidated PDF combines the individual reports selected here.')->warning()->send();
+        if ($types === []) {
+            Notification::make()->title('Choose at least one report type')->body('Select one or more individual reports, or choose Consolidated PDF to include all report sections.')->warning()->send();
             return;
         }
 

@@ -44,8 +44,15 @@ class ReportPdfService
 
         $individualFiles = [];
         $modulePaths = [];
+        $selectedTypes = array_values(array_diff($report->report_types ?? [], ['consolidated']));
+        $isConsolidated = in_array('consolidated', $report->report_types ?? [], true);
 
-        foreach (($report->report_types ?? []) as $type) {
+        // Selecting Consolidated by itself means include every available report section.
+        if ($isConsolidated && $selectedTypes === []) {
+            $selectedTypes = array_keys(self::REPORT_LABELS);
+        }
+
+        foreach ($selectedTypes as $type) {
             if ($type === 'consolidated' || ! isset(self::REPORT_LABELS[$type])) {
                 continue;
             }
@@ -69,17 +76,19 @@ class ReportPdfService
             ])->save($absolutePath);
 
             $modulePaths[$type] = $absolutePath;
-            $individualFiles[] = [
-                'key' => 'individual-'.$type,
-                'label' => self::REPORT_LABELS[$type],
-                'name' => Str::slug($report->scope_name.'-'.$type.'-report').'.pdf',
-                'path' => $path,
-            ];
+            if (! $isConsolidated) {
+                $individualFiles[] = [
+                    'key' => 'individual-'.$type,
+                    'label' => self::REPORT_LABELS[$type],
+                    'name' => Str::slug($report->scope_name.'-'.$type.'-report').'.pdf',
+                    'path' => $path,
+                ];
+            }
         }
 
         $files = $individualFiles;
 
-        if (in_array('consolidated', $report->report_types ?? [], true)) {
+        if ($isConsolidated) {
             $consolidatedPath = $directory.'/consolidated.pdf';
             $consolidatedAbsolute = Storage::disk('local')->path($consolidatedPath);
             $index = [];
