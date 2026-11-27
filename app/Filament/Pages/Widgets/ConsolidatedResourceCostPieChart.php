@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace App\\Filament\\Pages\\Widgets;
+namespace App\Filament\Pages\Widgets;
 
-use App\\Filament\\Pages\\Widgets\\Concerns\\HasConsolidatedCostScope;
-use App\\Models\\BillingResource;
-use Filament\\Support\\Facades\\FilamentColor;
-use Filament\\Support\\RawJs;
-use Filament\\Widgets\\ChartWidget;
-use Illuminate\\Support\\Str;
-use Livewire\\Attributes\\On;
-use Livewire\\Attributes\\Url;
+use App\Filament\Pages\Widgets\Concerns\HasConsolidatedCostScope;
+use App\Models\BillingResource;
+use Filament\Support\Facades\FilamentColor;
+use Filament\Support\RawJs;
+use Filament\Widgets\ChartWidget;
+use Illuminate\Support\Str;
+use Livewire\Attributes\On;
+use Livewire\Attributes\Url;
 
 class ConsolidatedResourceCostPieChart extends ChartWidget
 {
