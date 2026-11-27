@@ -20,7 +20,7 @@ td { padding:11px 8px; border-bottom:1px solid #e0e4e8; font-size:9pt; }
 </style>
 </head>
 <body>
-<div class="cover"><div class="cover-inner">
+<div class="header">@if($logoPath)<img class="logo" src="{{ $logoPath }}" alt="{{ $brandName }}">@endif <span style="float:right">{{ $brandName }}</span></div>\n<div class="footer">System generated report <span style="float:right">Page <span class="page-number"></span></span></div>\n<div class="cover"><div class="cover-inner">
     @if($logoPath)<img class="logo" src="{{ $logoPath }}" alt="{{ $brandName }}">@endif
     <div class="brand">{{ $brandName }}</div><div class="rule"></div>
     <h1>Consolidated report</h1>
