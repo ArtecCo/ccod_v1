@@ -64,8 +64,8 @@ class ConsolidatedCostHistoryTable extends TableWidget
                 TextColumn::make('mom_percentage')->label('MoM Change')->formatStateUsing(fn ($state): string => $state === null ? '—' : (($state > 0 ? '+' : '') . number_format((float) $state, 2) . '%'))->sortable(),
             ])
             ->defaultSort('period_start', 'desc')
-            ->paginated([12, 24, 48])
-            ->defaultPaginationPageOption(12)
+            ->paginated([5, 10, 15, 20, 25])
+            ->defaultPaginationPageOption(5)
             ->striped(false)
             ->recordActions([]);
     }
