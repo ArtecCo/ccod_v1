@@ -43,7 +43,7 @@ class SubscriptionStatsOverview extends BaseWidget
 
         $latestScore = $scoreSnapshots->first();
         $score = $latestScore !== null
-            ? round((float) $latestScore->percentage_score * 100, 2)
+            ? round((float) $latestScore->percentage_score, 2)
             : null;
         $scoreHistory = $latestScore !== null && $latestScore->initiative_name !== null
             ? $scoreSnapshots->sortBy('captured_at')->values()
@@ -55,7 +55,7 @@ class SubscriptionStatsOverview extends BaseWidget
             ? (((float) $latestScore->percentage_score - (float) $previousScore->percentage_score) / abs((float) $previousScore->percentage_score)) * 100
             : null;
         $scoreChart = $scoreHistory
-            ->map(fn (AzureSecurityScore $snapshot): float => round((float) $snapshot->percentage_score * 100, 2))
+            ->map(fn (AzureSecurityScore $snapshot): float => round((float) $snapshot->percentage_score, 2))
             ->all();
 
         $scoreTrendColor = $scoreDifference === null
