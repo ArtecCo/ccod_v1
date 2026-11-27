@@ -85,4 +85,20 @@ class NotificationQueueTest extends TestCase
 
         $this->assertArrayNotHasKey('severity', $fields);
     }
+    public function test_security_score_webhook_values_use_percentage_points(): void
+    {
+        $formatted = app(\\App\\Support\\WebhookMessageFormatter::class)->format(
+            'azure.security_score.improved',
+            [
+                'previous_score' => 70.0,
+                'current_score' => 79.0,
+                'score_delta' => 9.0,
+            ],
+        );
+
+        $this->assertStringContainsString('70.00 %', $formatted['message']);
+        $this->assertStringContainsString('79.00 %', $formatted['message']);
+        $this->assertStringContainsString('9.00 percentage points', $formatted['message']);
+    }
+
 }
