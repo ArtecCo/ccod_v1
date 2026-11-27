@@ -21,7 +21,7 @@ class ConsolidatedResourceCostBreakdown extends TableWidget
     #[Url(as: 'scope', history: true)]
     public string $scopeFilter = 'all';
 
-    public array $selectedResourceIds = [];
+    public array $selectedResourceTypes = [];
 
     public ?string $selectedSubscriptionId = null;
 
@@ -42,8 +42,8 @@ class ConsolidatedResourceCostBreakdown extends TableWidget
             ->whereIn('subscription_id', $subscriptions->pluck('subscription_id')->all())
             ->whereNotNull('cost_eur');
 
-        if ($this->selectedResourceIds !== []) {
-            $query->whereIn('resource_id', $this->selectedResourceIds);
+        if ($this->selectedResourceTypes !== []) {
+            $query->whereIn('resource_type', $this->selectedResourceTypes);
         }
 
         if ($this->selectedSubscriptionId !== null) {
@@ -53,16 +53,16 @@ class ConsolidatedResourceCostBreakdown extends TableWidget
         return $query;
     }
 
-    #[On('consolidated-cost-resource-filter')]
-    public function applyResourceFilter(array $resourceIds): void
+    #[On('consolidated-cost-resource-type-filter')]
+    public function applyResourceTypeFilter(array $resourceTypes): void
     {
-        $resourceIds = collect($resourceIds)
-            ->filter(fn ($id): bool => is_string($id) && $id !== '' && strlen($id) <= 512)
+        $resourceTypes = collect($resourceTypes)
+            ->filter(fn ($type): bool => is_string($type) && $type !== '' && strlen($type) <= 255)
             ->unique()
             ->values()
             ->all();
 
-        $this->selectedResourceIds = $this->selectedResourceIds === $resourceIds ? [] : $resourceIds;
+        $this->selectedResourceTypes = $this->selectedResourceTypes === $resourceTypes ? [] : $resourceTypes;
         $this->resetTable();
     }
 
@@ -105,9 +105,9 @@ class ConsolidatedResourceCostBreakdown extends TableWidget
                     ->label('Clear chart filters')
                     ->icon('heroicon-o-x-mark')
                     ->color('gray')
-                    ->visible(fn (): bool => $this->selectedResourceIds !== [] || $this->selectedSubscriptionId !== null)
+                    ->visible(fn (): bool => $this->selectedResourceTypes !== [] || $this->selectedSubscriptionId !== null)
                     ->action(function (): void {
-                        $this->selectedResourceIds = [];
+                        $this->selectedResourceTypes = [];
                         $this->selectedSubscriptionId = null;
                         $this->resetTable();
                     }),
