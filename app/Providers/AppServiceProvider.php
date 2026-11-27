@@ -204,6 +204,16 @@ class AppServiceProvider extends ServiceProvider
                 return;
             }
 
+            // Routine URL-check telemetry is not a meaningful model audit event.
+            // Availability and SSL state changes remain auditable.
+            if (
+                $model instanceof SubscriptionWebUrl
+                && str_contains($eventName, '.updated:')
+                && array_diff(array_keys($model->getChanges()), ['last_checked_at', 'response_time_ms']) === []
+            ) {
+                return;
+            }
+
             $event = match (true) {
                 str_contains($eventName, '.created:') => 'Created',
                 str_contains($eventName, '.updated:') => 'Updated',
