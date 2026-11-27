@@ -119,15 +119,10 @@ class AzureSecurityScoreSyncService
                         // Security score ranges classify decreases only. Improvements
                         // retain their existing unclassified event and card behavior.
                         if ($currentScore < (float) $previousScore) {
-                            // Azure's percentage field is stored as a fraction
-                            // (e.g. 0.8522 for 85.22%), while configured ranges
-                            // are entered as whole percentages (e.g. 85.00).
-                            $currentScorePercent = $currentScore * 100;
-
                             $classification = \App\Models\AzureSecurityScoreClassification::query()
                                 ->where('enabled', true)
-                                ->where('minimum_score', '<=', $currentScorePercent)
-                                ->where('maximum_score', '>=', $currentScorePercent)
+                                ->where('minimum_score', '<=', $currentScore)
+                                ->where('maximum_score', '>=', $currentScore)
                                 // For adjacent inclusive ranges, the range beginning
                                 // at the shared boundary takes precedence.
                                 ->orderByDesc('minimum_score')
@@ -204,7 +199,7 @@ class AzureSecurityScoreSyncService
                 : (is_string($score['name'] ?? null) ? $score['name'] : null),
             'current_score' => (float) ($details['current'] ?? 0),
             'max_score' => (float) ($details['max'] ?? 0),
-            'percentage_score' => (float) ($details['percentage'] ?? 0),
+            'percentage_score' => (float) ($details['percentage'] ?? 0) * 100,
         ];
     }
 }
