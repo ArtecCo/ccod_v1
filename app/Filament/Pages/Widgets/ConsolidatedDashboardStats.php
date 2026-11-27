@@ -182,7 +182,7 @@ class ConsolidatedDashboardStats extends BaseWidget
                         ->whereIn('subscription_id', $ids)->groupBy('subscription_id');
                 })->get(['subscription_id', 'percentage_score']);
             $average = $latestScores->isNotEmpty()
-                ? $latestScores->avg(fn ($score): float => (float) $score->percentage_score * 100)
+                ? $latestScores->avg(fn ($score): float => (float) $score->percentage_score)
                 : null;
             $high = AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')->count();
