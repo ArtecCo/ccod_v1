@@ -152,6 +152,21 @@ class ConsolidatedDashboardStats extends BaseWidget
                 $mtdStat = $mtdStat->description('Previous month unavailable');
             }
 
+            // A subscription is counted once when at least one budget active
+            // today has exceeded its current spend limit.
+            $overBudgetSubscriptionIds = AzureBudget::query()
+                ->whereIn('subscription_id', $ids)
+                ->where(function ($query): void {
+                    $query->whereNull('start_date')->orWhereDate('start_date', '<=', today());
+                })
+                ->where(function ($query): void {
+                    $query->whereNull('end_date')->orWhereDate('end_date', '>=', today());
+                })
+                ->where('amount', '>', 0)
+                ->whereColumn('current_spend', '>', 'amount')
+                ->distinct()
+                ->pluck('subscription_id');
+
             return [
                 $mtdStat,
                 Stat::make('Budget', $budget === null || $budgetCurrency === null
@@ -170,7 +185,10 @@ class ConsolidatedDashboardStats extends BaseWidget
                         ? 'Previous month unavailable'
                         : (($differencePercent > 0 ? '+' : '') . number_format($differencePercent, 1) . '% vs previous month total'))
                     ->descriptionColor($trendColor)->color($trendColor)->icon('heroicon-o-arrow-trending-up'),
-                Stat::make('Subscriptions', (string) count($ids))->icon('heroicon-o-cloud')->color('gray'),
+                Stat::make('Subscriptions over budget', (string) $overBudgetSubscriptionIds->count())
+                    ->description('Of ' . count($ids) . ' subscriptions')
+                    ->icon('heroicon-o-exclamation-triangle')
+                    ->color($overBudgetSubscriptionIds->isNotEmpty() ? 'danger' : 'success'),
             ];
         }
 
