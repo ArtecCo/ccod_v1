@@ -186,7 +186,7 @@ class ConsolidatedDashboardStats extends BaseWidget
                 : null;
             $high = AzureSecurityAssessment::query()->whereIn('subscription_id', $ids)
                 ->where('state', 'Unhealthy')->where('severity', 'High')->count();
-            $low = $latestScores->filter(fn ($score): bool => (float) $score->percentage_score * 100 < 80)->count();
+            $low = $latestScores->filter(fn ($score): bool => (float) $score->percentage_score < 80)->count();
             $scoreSyncedAt = DB::table('subscription_module_syncs')
                 ->where('module', 'security_scores')->whereIn('subscription_id', $ids)->max('last_successful_at');
             $recommendationsSyncedAt = DB::table('subscription_module_syncs')
