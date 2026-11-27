@@ -21,8 +21,6 @@ class ConsolidatedCostHistoryChart extends ChartWidget
 
     protected string $color = 'primary';
 
-    protected ?string $pollingInterval = '10s';
-
     protected ?string $maxHeight = '300px';
 
     protected static bool $isLazy = true;
