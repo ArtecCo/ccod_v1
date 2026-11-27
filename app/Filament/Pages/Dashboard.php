@@ -188,13 +188,7 @@ class Dashboard extends BaseDashboard
 
     protected function getHeaderActions(): array
     {
-        if ($this->record === null) {
-            return [];
-        }
-
-        return [
-            EditAction::make()->visible(fn (): bool => AzureSubscriptionResource::canEdit($this->record)),
-        ];
+        return [];
     }
 
     public function getWidgets(): array
