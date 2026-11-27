@@ -58,7 +58,7 @@ class SubscriptionSecurityScoreHistoryTable extends BaseWidget
                     ->dateTime('d M Y'),
                 TextColumn::make('percentage_score')
                     ->label('Security Score')
-                    ->formatStateUsing(fn (mixed $state): string => number_format((float) $state * 100, 2) . '%')
+                    ->formatStateUsing(fn (mixed $state): string => number_format((float) $state, 2) . '%')
                     ->sortable(),
             ])
             ->defaultSort('captured_at', 'desc')
