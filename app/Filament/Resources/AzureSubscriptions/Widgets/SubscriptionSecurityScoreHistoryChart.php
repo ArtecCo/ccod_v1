@@ -58,7 +58,7 @@ class SubscriptionSecurityScoreHistoryChart extends ChartWidget
                 [
                     'label' => 'Security Score',
                     'data' => $scores
-                        ->map(fn (AzureSecurityScore $score): float => round((float) $score->percentage_score * 100, 2))
+                        ->map(fn (AzureSecurityScore $score): float => round((float) $score->percentage_score, 2))
                         ->values()
                         ->all(),
                 ],
