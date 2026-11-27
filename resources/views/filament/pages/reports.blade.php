@@ -9,7 +9,7 @@
             </div>
         </form>
 
-        <x-filament::section heading="Your generated reports" description="PDFs remain available for seven days. Only you can access your generated files.">
+        <div wire:poll.5s>\n        <x-filament::section heading="Your generated reports" description="PDFs remain available for seven days. Only you can access your generated files.">
             @if ($reports->isEmpty())
                 <p class="text-sm text-gray-500">No reports have been generated yet.</p>
             @else

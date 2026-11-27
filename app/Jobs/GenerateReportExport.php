@@ -20,11 +20,11 @@ class GenerateReportExport implements ShouldQueue
 
     public int $tries = 1;
 
-    public int $timeout = 1800;
+    public int $timeout = 80;
 
     public function __construct(public readonly int $reportExportId)
     {
-        $this->onQueue('reports');
+        // Use the application's default database queue so existing workers process report jobs.
     }
 
     public function handle(ReportPdfService $pdf): void

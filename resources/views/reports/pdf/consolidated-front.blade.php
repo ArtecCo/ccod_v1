@@ -16,7 +16,7 @@ h2 { font-size:17pt; font-weight:normal; margin:0 0 20px; }
 table { width:100%; border-collapse:collapse; }
 th { text-align:left; background:#f1f3f5; padding:10px 8px; color:#52606d; font-size:8pt; }
 td { padding:11px 8px; border-bottom:1px solid #e0e4e8; font-size:9pt; }
-.footer { position:fixed; bottom:-14mm; left:0; right:0; border-top:1px solid #d8dde2; padding-top:5px; color:#77818a; font-size:7pt; }
+.footer { position:fixed; bottom:-14mm; left:0; right:0; border-top:1px solid #d8dde2; padding-top:5px; color:#77818a; font-size:7pt; }\n.page-number:before { content: counter(page) " / " counter(pages); }
 </style>
 </head>
 <body>
@@ -26,7 +26,7 @@ td { padding:11px 8px; border-bottom:1px solid #e0e4e8; font-size:9pt; }
     <h1>Consolidated report</h1>
     <div class="meta">{{ $report->scope_name }}<br>{{ $report->period_start->format('d M Y') }} – {{ $report->period_end->format('d M Y') }}<br>Generated {{ $generatedAt->format('d M Y H:i') }}</div>
 </div></div>
-<div class="footer">System generated report · {{ $brandName }}</div>
+<div class="footer">System generated report <span style="float:right">Page <span class="page-number"></span></span></div>
 <h2>Report index</h2>
 <table><thead><tr><th>Report section</th><th>Starting page</th><th>Pages</th></tr></thead><tbody>
 @foreach($index as $item)

@@ -13,7 +13,7 @@ h1 { font-size:25pt; font-weight:normal; margin:14px 0 10px; color:#17212b; }
 .cover-meta { color:#687582; font-size:10pt; line-height:2; }
 .cover-rule { width:70px; border-top:2px solid #b18a43; margin:24px auto; }
 .page-break { page-break-after:always; }
-.header { position:fixed; top:-17mm; left:0; right:0; height:10mm; border-bottom:1px solid #d8dde2; font-size:8pt; color:#66727e; }
+.header { position:fixed; top:-17mm; left:0; right:0; height:10mm; border-bottom:1px solid #d8dde2; font-size:8pt; color:#66727e; }\n.header-logo { max-width:90px; max-height:22px; vertical-align:middle; }\n.page-number:before { content: counter(page) " / " counter(pages); }
 .footer { position:fixed; bottom:-14mm; left:0; right:0; border-top:1px solid #d8dde2; padding-top:5px; color:#77818a; font-size:7pt; }
 .footer .right { float:right; }
 h2 { font-size:15pt; font-weight:normal; margin:0 0 10px; color:#1e2933; }
@@ -44,8 +44,8 @@ td { padding:6px; border-bottom:1px solid #e3e7ea; vertical-align:top; font-size
     </div>
 </div>
 <div class="page-break"></div>
-<div class="header">{{ $brandName }} <span style="float:right">{{ $label }}</span></div>
-<div class="footer">System generated report <span class="right">CCOD · Confidential</span></div>
+<div class="header">@if($logoPath)<img class="header-logo" src="{{ $logoPath }}" alt="{{ $brandName }}">@endif <span style="float:right">{{ $brandName }}</span></div>
+<div class="footer">System generated report <span class="right">Page <span class="page-number"></span></span></div>
 <h2>{{ $label }}</h2>
 <p class="muted">{{ $report->scope_name }} · {{ $report->period_start->format('d M Y') }} – {{ $report->period_end->format('d M Y') }}</p>
 

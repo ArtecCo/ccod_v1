@@ -154,7 +154,7 @@ class ReportPdfService
                     'subscriptions' => $subscriptions->count(),
                     'healthy' => $subscriptions->where('health_status', 'Healthy')->count(),
                     'resources' => BillingResource::query()->whereIn('subscription_id', $subscriptionIds)->count(),
-                    'alerts' => AzureAlert::query()->whereIn('subscription_id', $subscriptionIds)->whereBetween('fire_time', [$report->period_start, $report->period_end])->count(),
+                    'alerts' => AzureAlert::query()->whereIn('subscription_id', $subscriptionIds)->whereBetween('fire_time', [$report->period_start->copy()->startOfDay(), $report->period_end->copy()->endOfDay()])->count(),
                 ],
             ],
             'costs' => $this->costData($report, $subscriptionIds),
@@ -210,7 +210,7 @@ class ReportPdfService
             'scores' => AzureSecurityScore::query()
                 ->with('subscription:subscription_id,display_name')
                 ->whereIn('subscription_id', $subscriptionIds)
-                ->whereBetween('captured_at', [$report->period_start->startOfDay(), $report->period_end->endOfDay()])
+                ->whereBetween('captured_at', [$report->period_start->copy()->startOfDay(), $report->period_end->copy()->endOfDay()])
                 ->orderByDesc('captured_at')->get(),
             'assessments' => AzureSecurityAssessment::query()
                 ->with('subscription:subscription_id,display_name')
