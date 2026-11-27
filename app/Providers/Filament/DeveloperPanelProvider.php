@@ -6,6 +6,7 @@ use App\Filament\Pages\DatabaseTablePage;
 use App\Filament\Pages\LogsControl;
 use App\Filament\Pages\MaintenanceMode;
 use App\Filament\Pages\PillColors;
+use App\Filament\Pages\Reports;
 use App\Filament\Pages\SendNotification;
 use App\Filament\Pages\Styling;
 use App\Filament\Pages\TabAccess;
@@ -90,6 +91,7 @@ class DeveloperPanelProvider extends PanelProvider
             ->pages([
                 Dashboard::class,
                 Styling::class,
+                Reports::class,
                 TabAccess::class,
                 SendNotification::class,
                 PillColors::class,

@@ -1,0 +1,262 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\AzureAlert;
+use App\Models\AzureBudget;
+use App\Models\AzureCostForecast;
+use App\Models\AzureCostForecastSnapshot;
+use App\Models\AzureSecurityAssessment;
+use App\Models\AzureSecurityScore;
+use App\Models\AzureSubscription;
+use App\Models\AzureSubscriptionCost;
+use App\Models\BillingResource;
+use App\Models\BusinessUnit;
+use App\Models\Project;
+use App\Models\ReportExport;
+use App\Models\SubscriptionWebUrl;
+use App\Support\FilamentStyling;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use setasign\Fpdi\Fpdi;
+use Throwable;
+
+class ReportPdfService
+{
+    private const REPORT_LABELS = [
+        'overview' => 'Scope overview',
+        'costs' => 'Costs, budgets and forecasts',
+        'security' => 'Security posture and recommendations',
+        'alerts' => 'Azure alerts',
+        'web_urls' => 'Web URLs and SSL',
+        'resources' => 'Azure resources',
+    ];
+
+    public function generate(ReportExport $report): array
+    {
+        $subscriptionIds = $this->resolveSubscriptionIds($report);
+        abort_if($subscriptionIds === [], 422, 'The selected scope contains no Azure subscriptions.');
+
+        $directory = 'reports/'.$report->developer_id.'/'.$report->getKey();
+        Storage::disk('local')->makeDirectory($directory);
+
+        $individualFiles = [];
+        $modulePaths = [];
+
+        foreach (($report->report_types ?? []) as $type) {
+            if ($type === 'consolidated' || ! isset(self::REPORT_LABELS[$type])) {
+                continue;
+            }
+
+            $path = $directory.'/'.$type.'.pdf';
+            $absolutePath = Storage::disk('local')->path($path);
+            $payload = $this->buildModuleData($report, $type, $subscriptionIds);
+
+            Pdf::loadView('reports.pdf.module', [
+                'brandName' => FilamentStyling::brandName(),
+                'logoPath' => $this->logoPath(),
+                'report' => $report,
+                'label' => self::REPORT_LABELS[$type],
+                'type' => $type,
+                'payload' => $payload,
+                'generatedAt' => now(),
+            ])->setPaper('a4', 'portrait')->setOptions([
+                'isRemoteEnabled' => false,
+                'isHtml5ParserEnabled' => true,
+                'defaultFont' => 'DejaVu Sans',
+            ])->save($absolutePath);
+
+            $modulePaths[$type] = $absolutePath;
+            $individualFiles[] = [
+                'key' => 'individual-'.$type,
+                'label' => self::REPORT_LABELS[$type],
+                'name' => Str::slug($report->scope_name.'-'.$type.'-report').'.pdf',
+                'path' => $path,
+            ];
+        }
+
+        $files = $individualFiles;
+
+        if (in_array('consolidated', $report->report_types ?? [], true)) {
+            $consolidatedPath = $directory.'/consolidated.pdf';
+            $consolidatedAbsolute = Storage::disk('local')->path($consolidatedPath);
+            $index = [];
+            $page = 3;
+
+            foreach ($modulePaths as $type => $path) {
+                $count = $this->pageCount($path);
+                $index[] = [
+                    'title' => self::REPORT_LABELS[$type],
+                    'page' => $page,
+                    'pages' => $count,
+                ];
+                $page += $count;
+            }
+
+            $frontMatter = Pdf::loadView('reports.pdf.consolidated-front', [
+                'brandName' => FilamentStyling::brandName(),
+                'logoPath' => $this->logoPath(),
+                'report' => $report,
+                'index' => $index,
+                'generatedAt' => now(),
+            ])->setPaper('a4', 'portrait')->setOptions([
+                'isRemoteEnabled' => false,
+                'defaultFont' => 'DejaVu Sans',
+            ])->output();
+
+            $frontMatterPath = Storage::disk('local')->path($directory.'/front-matter.pdf');
+            file_put_contents($frontMatterPath, $frontMatter);
+
+            $this->mergePdfs(array_merge([$frontMatterPath], array_values($modulePaths)), $consolidatedAbsolute);
+
+            @unlink($frontMatterPath);
+
+            $files[] = [
+                'key' => 'consolidated',
+                'label' => 'Consolidated PDF',
+                'name' => Str::slug($report->scope_name.'-consolidated-report').'.pdf',
+                'path' => $consolidatedPath,
+            ];
+        }
+
+        if ($files === []) {
+            throw new \RuntimeException('No valid report types were selected.');
+        }
+
+        return $files;
+    }
+
+    private function resolveSubscriptionIds(ReportExport $report): array
+    {
+        $ids = match ($report->scope_type) {
+            'subscription' => AzureSubscription::query()->where('subscription_id', $report->scope_id)->pluck('subscription_id'),
+            'project' => Project::query()->find($report->scope_id)?->subscriptions()->pluck('azure_subscriptions.subscription_id') ?? collect(),
+            'business_unit' => BusinessUnit::query()->find($report->scope_id)?->subscriptions()->pluck('azure_subscriptions.subscription_id') ?? collect(),
+            default => collect(),
+        };
+
+        return $ids->filter()->unique()->values()->all();
+    }
+
+    private function buildModuleData(ReportExport $report, string $type, array $subscriptionIds): array
+    {
+        $subscriptions = AzureSubscription::query()
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->orderBy('display_name')
+            ->get(['subscription_id', 'display_name', 'state', 'health_status', 'security_score', 'mtd_spend_eur']);
+
+        return match ($type) {
+            'overview' => [
+                'subscriptions' => $subscriptions,
+                'summary' => [
+                    'subscriptions' => $subscriptions->count(),
+                    'healthy' => $subscriptions->where('health_status', 'Healthy')->count(),
+                    'resources' => BillingResource::query()->whereIn('subscription_id', $subscriptionIds)->count(),
+                    'alerts' => AzureAlert::query()->whereIn('subscription_id', $subscriptionIds)->whereBetween('fire_time', [$report->period_start->copy()->startOfDay(), $report->period_end->copy()->endOfDay()])->count(),
+                ],
+            ],
+            'costs' => $this->costData($report, $subscriptionIds),
+            'security' => $this->securityData($report, $subscriptionIds),
+            'alerts' => [
+                'rows' => AzureAlert::query()->with('subscription:subscription_id,display_name')
+                    ->whereIn('subscription_id', $subscriptionIds)
+                    ->whereBetween('fire_time', [$report->period_start->startOfDay(), $report->period_end->endOfDay()])
+                    ->orderByDesc('fire_time')->get(),
+            ],
+            'web_urls' => [
+                'rows' => SubscriptionWebUrl::query()->with('subscription:subscription_id,display_name')
+                    ->whereIn('subscription_id', $subscriptionIds)
+                    ->where('is_active', true)
+                    ->orderBy('url')->get(),
+            ],
+            'resources' => [
+                'rows' => BillingResource::query()->with('subscription:subscription_id,display_name')
+                    ->whereIn('subscription_id', $subscriptionIds)
+                    ->orderBy('subscription_id')->orderBy('name')->get(),
+            ],
+            default => [],
+        };
+    }
+
+    private function costData(ReportExport $report, array $subscriptionIds): array
+    {
+        return [
+            'costs' => AzureSubscriptionCost::query()
+                ->with('subscription:subscription_id,display_name')
+                ->whereIn('subscription_id', $subscriptionIds)
+                ->whereDate('period_start', '<=', $report->period_end)
+                ->whereDate('period_end', '>=', $report->period_start)
+                ->orderBy('period_start')->get(),
+            'budgets' => AzureBudget::query()
+                ->with('subscription:subscription_id,display_name')
+                ->whereIn('subscription_id', $subscriptionIds)
+                ->orderBy('subscription_id')->get(),
+            'forecasts' => AzureCostForecastSnapshot::query()
+                ->with('subscription:subscription_id,display_name')
+                ->whereIn('subscription_id', $subscriptionIds)
+                ->whereBetween('captured_on', [$report->period_start, $report->period_end])
+                ->orderBy('captured_on')->get(),
+            'current_forecasts' => AzureCostForecast::query()
+                ->with('subscription:subscription_id,display_name')
+                ->whereIn('subscription_id', $subscriptionIds)->get(),
+        ];
+    }
+
+    private function securityData(ReportExport $report, array $subscriptionIds): array
+    {
+        return [
+            'scores' => AzureSecurityScore::query()
+                ->with('subscription:subscription_id,display_name')
+                ->whereIn('subscription_id', $subscriptionIds)
+                ->whereBetween('captured_at', [$report->period_start->copy()->startOfDay(), $report->period_end->copy()->endOfDay()])
+                ->orderByDesc('captured_at')->get(),
+            'assessments' => AzureSecurityAssessment::query()
+                ->with('subscription:subscription_id,display_name')
+                ->whereIn('subscription_id', $subscriptionIds)
+                ->orderBy('severity')->orderBy('recommendation_name')->get(),
+        ];
+    }
+
+    private function logoPath(): ?string
+    {
+        $settings = FilamentStyling::settings();
+        $path = $settings?->logo_light;
+
+        if (! $path || filter_var($path, FILTER_VALIDATE_URL)) {
+            return null;
+        }
+
+        $disk = Storage::disk('public');
+        return $disk->exists($path) ? $disk->path($path) : null;
+    }
+
+    private function pageCount(string $path): int
+    {
+        $pdf = new Fpdi();
+        return $pdf->setSourceFile($path);
+    }
+
+    private function mergePdfs(array $paths, string $destination): void
+    {
+        $pdf = new Fpdi();
+
+        foreach ($paths as $path) {
+            if (! is_file($path)) {
+                throw new \RuntimeException('A source PDF is missing during consolidation.');
+            }
+
+            $pageCount = $pdf->setSourceFile($path);
+
+            for ($pageNumber = 1; $pageNumber <= $pageCount; $pageNumber++) {
+                $template = $pdf->importPage($pageNumber);
+                $size = $pdf->getTemplateSize($template);
+                $pdf->AddPage($size['orientation'], [$size['width'], $size['height']]);
+                $pdf->useTemplate($template);
+            }
+        }
+
+        $pdf->Output('F', $destination);
+    }
+}

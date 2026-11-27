@@ -2,7 +2,10 @@
 
 use App\Http\Controllers\ClientPortalNotificationController;
 use App\Http\Controllers\SubscriptionMetricsController;
+use App\Http\Controllers\ReportExportDownloadController;
 use Illuminate\Support\Facades\Route;
+
+Route::middleware('auth:developers')->get('/developer/reports/{report}/download/{file}', [ReportExportDownloadController::class, 'download'])->name('developer.reports.download');
 
 Route::middleware('auth')->prefix('notifications')->name('notifications.')->group(function (): void {
     Route::get('/data', [ClientPortalNotificationController::class, 'index'])->name('index');
