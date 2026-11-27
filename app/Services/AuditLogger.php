@@ -88,7 +88,7 @@ class AuditLogger
         int $durationMs,
         ?Throwable $exception = null,
     ): void {
-        if ($this->shouldSkipRequest($request)) {
+        if ($this->shouldSkipRequest($request) || $this->isAutomaticLivewirePoll($request)) {
             return;
         }
 
@@ -178,6 +178,34 @@ class AuditLogger
             'components' => array_values(array_unique($components)),
             'actions' => array_values(array_unique($actions)),
         ];
+    }
+
+    /**
+     * Automatic Livewire polling refreshes are read-only background requests.
+     * Keep logging Livewire requests that invoke component actions.
+     */
+    private function isAutomaticLivewirePoll(Request $request): bool
+    {
+        if (! $request->hasHeader('X-Livewire')) {
+            return false;
+        }
+
+        $components = $request->input('components');
+        if (! is_array($components) || $components === []) {
+            return false;
+        }
+
+        foreach ($components as $component) {
+            if (! is_array($component)) {
+                continue;
+            }
+
+            if (($component['calls'] ?? []) !== []) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private function shouldSkipRequest(Request $request): bool
