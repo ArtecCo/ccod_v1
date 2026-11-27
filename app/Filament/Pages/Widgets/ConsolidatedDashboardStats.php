@@ -119,6 +119,16 @@ class ConsolidatedDashboardStats extends BaseWidget
                 ? (float) $budgetRows->sum(fn (AzureBudget $row): float => (float) $row->amount)
                 : null;
 
+            // Utilization is based on the current month's actual cost and only
+            // shown when the budget and actual cost share one known currency.
+            $budgetUtilization = $budget !== null
+                && $budget > 0
+                && $current !== null
+                && $currency !== null
+                && $currency === $budgetCurrency
+                    ? ($current / $budget) * 100
+                    : null;
+
             $forecastRows = AzureCostForecast::query()
                 ->whereIn('subscription_id', $ids)
                 ->get(['forecast_amount', 'currency']);
@@ -172,6 +182,9 @@ class ConsolidatedDashboardStats extends BaseWidget
                 Stat::make('Budget', $budget === null || $budgetCurrency === null
                         ? '—'
                         : $budgetCurrency . ' ' . number_format($budget, 2))
+                    ->description($budgetUtilization === null
+                        ? 'Utilization unavailable'
+                        : number_format($budgetUtilization, 1) . '% utilized')
                     ->icon('heroicon-o-wallet')->color('primary'),
                 Stat::make('Forecast', $forecast === null || $forecastCurrency === null
                         ? '—'
