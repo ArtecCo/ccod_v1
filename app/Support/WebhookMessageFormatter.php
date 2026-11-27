@@ -43,8 +43,10 @@ class WebhookMessageFormatter
             }
 
             $value = $context[$key];
-            if (in_array($key, ['previous_score', 'current_score', 'score_delta'], true) && is_numeric($value)) {
-                $value = number_format((float) $value * 100, 2).' %';
+            if (in_array($key, ['previous_score', 'current_score'], true) && is_numeric($value)) {
+                $value = number_format((float) $value, 2).' %';
+            } elseif ($key === 'score_delta' && is_numeric($value)) {
+                $value = number_format((float) $value, 2).' percentage points';
             }
             if (is_array($value) || is_object($value)) {
                 $value = json_encode($value, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
