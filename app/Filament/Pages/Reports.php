@@ -17,6 +17,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 
 class Reports extends Page implements HasForms
@@ -64,6 +65,7 @@ class Reports extends Page implements HasForms
                                 'business_unit' => 'Business unit',
                             ])
                             ->live()
+                            ->afterStateUpdated(fn (Set $set) => $set('scope_id', null))
                             ->required(),
                         Select::make('scope_id')
                             ->label('Select scope')
