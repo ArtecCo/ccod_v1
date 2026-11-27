@@ -62,7 +62,11 @@ class ConsolidatedCostHistoryService
                     'currency' => $periodCurrency,
                     'subscription_count' => count($ids),
                     'captured_at' => now(),
-                ])->save();
+                ]);
+
+                if ($history->isDirty()) {
+                    $history->save();
+                }
             }
 
             $budgetRows = AzureBudget::query()->whereIn('subscription_id', $ids)->get(['amount', 'currency']);
@@ -104,7 +108,11 @@ class ConsolidatedCostHistoryService
                 'currency' => $currentCurrencies->count() === 1 ? $currentCurrencies->first() : $forecastCurrency,
                 'subscription_count' => count($ids),
                 'captured_at' => now(),
-            ])->save();
+            ]);
+
+            if ($current->isDirty()) {
+                $current->save();
+            }
 
             $periods = ConsolidatedCostHistory::query()
                 ->where('scope_hash', $scopeHash)
@@ -120,10 +128,14 @@ class ConsolidatedCostHistoryService
                     ? ($difference / abs((float) $previous->actual_cost)) * 100
                     : null;
 
-                $period->forceFill([
+                $period->fill([
                     'mom_difference' => $difference,
                     'mom_percentage' => $percentage,
-                ])->save();
+                ]);
+
+                if ($period->isDirty()) {
+                    $period->save();
+                }
 
                 $previous = $period;
             }
