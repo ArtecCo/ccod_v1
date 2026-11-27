@@ -61,10 +61,10 @@ class ConsolidatedCostHistoryService
                     'actual_cost' => $actual,
                     'currency' => $periodCurrency,
                     'subscription_count' => count($ids),
-                    'captured_at' => now(),
                 ]);
 
                 if ($history->isDirty()) {
+                    $history->captured_at = now();
                     $history->save();
                 }
             }
@@ -107,10 +107,10 @@ class ConsolidatedCostHistoryService
                 'forecast_total' => $forecastTotal,
                 'currency' => $currentCurrencies->count() === 1 ? $currentCurrencies->first() : $forecastCurrency,
                 'subscription_count' => count($ids),
-                'captured_at' => now(),
             ]);
 
             if ($current->isDirty()) {
+                $current->captured_at = now();
                 $current->save();
             }
 
