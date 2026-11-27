@@ -73,6 +73,38 @@ class ConsolidatedResourceCostBreakdown extends TableWidget
         $this->resetTable();
     }
 
+    /**
+     * The export contains the current table query, so only expose it when the
+     * user has export permission for every subscription represented by scope.
+     * This prevents exporting rows that are viewable but not exportable.
+     */
+    protected function canExportCost(): bool
+    {
+        $user = auth()->guard('web')->user();
+
+        if (! $user instanceof User) {
+            return false;
+        }
+
+        $subscriptions = $this->authorizedCostSubscriptions($this->scopeFilter);
+
+        if ($this->selectedSubscriptionId !== null) {
+            $subscriptions = $subscriptions->filter(
+                fn ($subscription): bool => (string) $subscription->subscription_id === $this->selectedSubscriptionId
+            );
+        }
+
+        if ($subscriptions->isEmpty()) {
+            return false;
+        }
+
+        $authorization = app(AccessAuthorizationService::class);
+
+        return $subscriptions->every(
+            fn ($subscription): bool => $authorization->hasPermission($user, 'cost.export', $subscription)
+        );
+    }
+
     public function table(Table $table): Table
     {
         return $table
@@ -100,7 +132,9 @@ class ConsolidatedResourceCostBreakdown extends TableWidget
                     ->sortable(),
             ])
             ->defaultSort('cost_eur', 'desc')
-            ->headerActions([
+            ->toolbarActions([
+                XlsxExportAction::make()
+                    ->visible(fn (): bool => $this->canExportCost()),
                 Action::make('clearChartFilters')
                     ->label('Clear chart filters')
                     ->icon('heroicon-o-x-mark')
