@@ -16,11 +16,14 @@ h2 { font-size:17pt; font-weight:normal; margin:0 0 20px; }
 table { width:100%; border-collapse:collapse; }
 th { text-align:left; background:#f1f3f5; padding:10px 8px; color:#52606d; font-size:8pt; }
 td { padding:11px 8px; border-bottom:1px solid #e0e4e8; font-size:9pt; }
-.footer { position:fixed; bottom:-14mm; left:0; right:0; border-top:1px solid #d8dde2; padding-top:5px; color:#77818a; font-size:7pt; }\n.page-number:before { content: counter(page) " / " counter(pages); }
+.footer { position:fixed; bottom:-14mm; left:0; right:0; border-top:1px solid #d8dde2; padding-top:5px; color:#77818a; font-size:7pt; }
+.page-number:before { content: counter(page) " / " counter(pages); }
 </style>
 </head>
 <body>
-<div class="header">@if($logoPath)<img class="logo" src="{{ $logoPath }}" alt="{{ $brandName }}">@endif <span style="float:right">{{ $brandName }}</span></div>\n<div class="footer">System generated report <span style="float:right">Page <span class="page-number"></span></span></div>\n<div class="cover"><div class="cover-inner">
+<div class="header">@if($logoPath)<img class="logo" src="{{ $logoPath }}" alt="{{ $brandName }}">@endif <span style="float:right">{{ $brandName }}</span></div>
+<div class="footer">System generated report <span style="float:right">Page <span class="page-number"></span></span></div>
+<div class="cover"><div class="cover-inner">
     @if($logoPath)<img class="logo" src="{{ $logoPath }}" alt="{{ $brandName }}">@endif
     <div class="brand">{{ $brandName }}</div><div class="rule"></div>
     <h1>Consolidated report</h1>
