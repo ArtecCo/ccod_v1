@@ -7,7 +7,9 @@ namespace App\Filament\Pages\Widgets;
 use App\Filament\Pages\Widgets\Concerns\HasConsolidatedCostScope;
 use App\Models\BillingResource;
 use Filament\Support\RawJs;
+use Filament\Support\Facades\FilamentColor;
 use Filament\Widgets\ChartWidget;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Url;
 
 class ConsolidatedResourceCostPieChart extends ChartWidget
