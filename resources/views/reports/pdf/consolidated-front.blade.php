@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+@php($primaryColor = $primaryColor ?? '#64748b')
 <style>
 @page { margin:25mm 20mm; }
 body { font-family:DejaVu Sans,sans-serif; color:#20252b; font-size:10pt; line-height:1.55; }
@@ -10,11 +11,11 @@ body { font-family:DejaVu Sans,sans-serif; color:#20252b; font-size:10pt; line-h
 .logo { max-width:150px; max-height:48px; margin-bottom:24px; }
 .brand { font-size:10pt; font-weight:bold; letter-spacing:2px; color:#526171; text-transform:uppercase; }
 h1 { font-size:27pt; font-weight:normal; margin:15px 0; }
-.rule { width:70px; border-top:2px solid #b18a43; margin:25px auto; }
+.rule { width:70px; border-top:2px solid {{ $primaryColor }}; margin:25px auto; }
 .meta { color:#687582; line-height:2; }
-h2 { font-size:17pt; font-weight:normal; margin:0 0 20px; }
+h2 { font-size:17pt; font-weight:normal; margin:0 0 20px; border-left:3px solid {{ $primaryColor }}; padding-left:9px; }
 table { width:100%; border-collapse:collapse; }
-th { text-align:left; background:#f1f3f5; padding:10px 8px; color:#52606d; font-size:8pt; }
+th { text-align:left; background:{{ $primaryColor }}; padding:10px 8px; color:#ffffff; font-size:8pt; }
 td { padding:11px 8px; border-bottom:1px solid #e0e4e8; font-size:9pt; }
 .footer { position:fixed; bottom:-14mm; left:0; right:0; border-top:1px solid #d8dde2; padding-top:5px; color:#77818a; font-size:7pt; }
 .page-number:before { content: counter(page) " / " counter(pages); }

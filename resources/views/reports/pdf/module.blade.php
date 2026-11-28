@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+@php($primaryColor = $primaryColor ?? '#64748b')
 <style>
 @page { margin: 25mm 18mm 22mm 18mm; }
 body { font-family: DejaVu Sans, sans-serif; color:#20252b; font-size:9pt; line-height:1.55; }
