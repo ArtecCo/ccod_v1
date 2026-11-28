@@ -168,14 +168,43 @@ class Reports extends Page implements HasForms, HasTable
                     ->sortable(),
             ])
             ->recordActions([
-                ActionGroup::make(fn (ReportExport $record): array => collect($record->files ?? [])
-                    ->values()
-                    ->map(fn (array $file, int $index): Action => Action::make('download_'.$index)
-                        ->label('Download '.$file['label'])
+                ActionGroup::make([
+                    Action::make('download_individual_overview')
+                        ->label('Download Scope overview')
                         ->icon('heroicon-o-arrow-down-tray')
-                        ->url(route('developer.reports.download', ['report' => $record, 'file' => $file['key']]))
-                        ->openUrlInNewTab(false))
-                    ->all())
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'individual-overview']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'individual-overview')),
+                    Action::make('download_individual_costs')
+                        ->label('Download Costs, budgets and forecasts')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'individual-costs']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'individual-costs')),
+                    Action::make('download_individual_security')
+                        ->label('Download Security posture and recommendations')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'individual-security']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'individual-security')),
+                    Action::make('download_individual_alerts')
+                        ->label('Download Azure alerts')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'individual-alerts']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'individual-alerts')),
+                    Action::make('download_individual_web_urls')
+                        ->label('Download Web URLs and SSL')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'individual-web_urls']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'individual-web_urls')),
+                    Action::make('download_individual_resources')
+                        ->label('Download Azure resources')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'individual-resources']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'individual-resources')),
+                    Action::make('download_consolidated')
+                        ->label('Download Consolidated PDF')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(fn (ReportExport $record): string => route('developer.reports.download', ['report' => $record, 'file' => 'consolidated']))
+                        ->visible(fn (ReportExport $record): bool => collect($record->files ?? [])->contains('key', 'consolidated')),
+                ])
                     ->label('Downloads')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->button()
