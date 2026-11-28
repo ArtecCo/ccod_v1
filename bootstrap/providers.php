@@ -1,6 +1,7 @@
 <?php
 
 return [
+    Barryvdh\DomPDF\ServiceProvider::class,
     App\Providers\AppServiceProvider::class,
     App\Providers\ProfileMenuServiceProvider::class,
     App\Providers\DarkModeThemeServiceProvider::class,

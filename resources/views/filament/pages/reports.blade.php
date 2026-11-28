@@ -1,113 +1,65 @@
 <x-filament-panels::page>
-    <div class="mx-auto w-full max-w-7xl space-y-7">
-        <div class="flex flex-col gap-2 border-b border-gray-200 pb-5 dark:border-gray-800 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <h1 class="text-2xl font-semibold tracking-tight text-gray-950 dark:text-white">Reports</h1>
-                <p class="mt-1 max-w-2xl text-sm leading-6 text-gray-500 dark:text-gray-400">
-                    Build downloadable PDF reports for a subscription, project, or business unit.
-                </p>
-            </div>
-            <div class="text-xs text-gray-500 dark:text-gray-400">Private downloads · Available for 7 days</div>
-        </div>
-
-        <div class="grid gap-6 xl:grid-cols-[minmax(0,1.5fr)_minmax(280px,0.8fr)]">
-            <section class="rounded-xl border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-900 sm:p-6">
-                <div class="mb-5">
-                    <h2 class="text-base font-semibold text-gray-950 dark:text-white">Configure a report</h2>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Choose the scope, reporting period, and PDF content.</p>
-                </div>
-
-                <form wire:submit="generate" class="space-y-5">
-                    {{ $this->form }}
-                    <div class="flex flex-col-reverse gap-3 border-t border-gray-100 pt-5 dark:border-gray-800 sm:flex-row sm:items-center sm:justify-between">
-                        <p class="text-xs leading-5 text-gray-500 dark:text-gray-400">
-                            Generation runs in the background. You can safely leave this page.
-                        </p>
-                        <x-filament::button type="submit" icon="heroicon-o-document-arrow-down">
-                            Generate PDF
-                        </x-filament::button>
-                    </div>
-                </form>
-            </section>
-
-            <aside class="rounded-xl border border-gray-200 bg-gray-50 p-5 dark:border-gray-800 dark:bg-gray-900/60 sm:p-6">
-                <h2 class="text-sm font-semibold text-gray-900 dark:text-white">How report output works</h2>
-                <div class="mt-4 space-y-4 text-sm leading-6 text-gray-600 dark:text-gray-300">
-                    <div>
-                        <p class="font-medium text-gray-900 dark:text-white">Individual reports</p>
-                        <p class="mt-1">Select one or more report sections. Each selected section is delivered as its own PDF.</p>
-                    </div>
-                    <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <p class="font-medium text-gray-900 dark:text-white">Consolidated PDF</p>
-                        <p class="mt-1">Select Consolidated PDF on its own to include every available section, or select it with individual sections to consolidate only those sections.</p>
-                    </div>
-                    <div class="border-t border-gray-200 pt-4 dark:border-gray-700">
-                        <p class="font-medium text-gray-900 dark:text-white">Access and retention</p>
-                        <p class="mt-1">Only your developer account can download these files. Generated PDFs are automatically removed after seven days.</p>
-                    </div>
-                </div>
-            </aside>
-        </div>
-
-        <div wire:poll.5s>
-            <section class="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-800 dark:bg-gray-900">
-                <div class="border-b border-gray-200 px-5 py-4 dark:border-gray-800 sm:px-6">
-                    <h2 class="text-base font-semibold text-gray-950 dark:text-white">Your generated reports</h2>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">The list updates automatically as background jobs finish.</p>
-                </div>
-
-                @if ($reports->isEmpty())
-                    <div class="px-6 py-12 text-center">
-                        <div class="mx-auto flex size-11 items-center justify-center rounded-full bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-                            <x-filament::icon icon="heroicon-o-document-text" class="size-5" />
-                        </div>
-                        <p class="mt-3 text-sm font-medium text-gray-900 dark:text-white">No reports generated yet</p>
-                        <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">Your completed PDF exports will appear here.</p>
-                    </div>
-                @else
-                    <div class="divide-y divide-gray-100 dark:divide-gray-800">
-                        @foreach ($reports as $report)
-                            <div class="flex flex-col gap-4 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                                <div class="min-w-0">
-                                    <div class="flex flex-wrap items-center gap-2">
-                                        <p class="truncate text-sm font-semibold text-gray-900 dark:text-white">{{ $report->scope_name }}</p>
-                                        <x-filament::badge :color="match($report->status) { 'completed' => 'success', 'failed' => 'danger', 'processing' => 'info', default => 'gray' }">
-                                            {{ ucfirst($report->status) }}
-                                        </x-filament::badge>
-                                    </div>
-                                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                        {{ ucfirst(str_replace('_', ' ', $report->scope_type)) }}
-                                        <span class="mx-1">·</span>
-                                        {{ $report->period_start->format('d M Y') }} – {{ $report->period_end->format('d M Y') }}
-                                        <span class="mx-1">·</span>
-                                        Requested {{ $report->created_at->format('d M Y, H:i') }}
-                                    </p>
-                                    @if ($report->failure_reason)
-                                        <p class="mt-2 text-sm text-danger-600 dark:text-danger-400">{{ $report->failure_reason }}</p>
-                                    @endif
-                                </div>
-                                @if (!empty($report->files))
-                                    <div class="flex shrink-0 flex-wrap gap-2">
-                                        @foreach ($report->files as $file)
-                                            <x-filament::button
-                                                size="sm"
-                                                color="gray"
-                                                outlined
-                                                tag="a"
-                                                :href="route('developer.reports.download', ['report' => $report, 'file' => $file['key']])"
-                                            >
-                                                {{ $file['label'] }}
-                                            </x-filament::button>
-                                        @endforeach
-                                    </div>
-                                @elseif ($report->status === 'queued' || $report->status === 'processing')
-                                    <span class="text-xs text-gray-500 dark:text-gray-400">Preparing PDF files…</span>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
-                @endif
-            </section>
-        </div>
-    </div>
+<style>
+.reports-workspace{width:100%;max-width:1500px;margin:0 auto;color:var(--fi-color-text)}
+.reports-intro{display:flex;justify-content:space-between;align-items:flex-end;gap:1rem;padding:0 0 1.25rem;margin-bottom:1.25rem;border-bottom:1px solid var(--fi-color-gray-200)}
+.dark .reports-intro{border-color:var(--fi-color-gray-800)}
+.reports-intro p{margin:.35rem 0 0;color:var(--fi-color-gray-500);font-size:.875rem;line-height:1.55}
+.reports-retention{white-space:nowrap;color:var(--fi-color-gray-500);font-size:.75rem}
+.reports-layout{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(260px,.8fr);gap:1.1rem;align-items:start}
+.reports-card{min-width:0;border:1px solid var(--fi-color-gray-200);border-radius:.75rem;background:var(--fi-color-bg);box-shadow:0 1px 2px rgb(0 0 0 / .04);overflow:hidden}
+.dark .reports-card{border-color:var(--fi-color-gray-800)}
+.reports-card-head{padding:1.1rem 1.25rem;border-bottom:1px solid var(--fi-color-gray-200)}
+.dark .reports-card-head{border-color:var(--fi-color-gray-800)}
+.reports-card-head h2{margin:0;font-size:.95rem;font-weight:650}
+.reports-card-head p{margin:.3rem 0 0;color:var(--fi-color-gray-500);font-size:.8rem;line-height:1.5}
+.reports-card-body{padding:1.25rem}
+.reports-help-list{display:grid;gap:1.15rem;padding:1.2rem 1.25rem}
+.reports-help-item+.reports-help-item{padding-top:1rem;border-top:1px solid var(--fi-color-gray-200)}
+.dark .reports-help-item+.reports-help-item{border-color:var(--fi-color-gray-800)}
+.reports-help-item h3{margin:0;font-size:.82rem;font-weight:650}
+.reports-help-item p{margin:.35rem 0 0;color:var(--fi-color-gray-500);font-size:.8rem;line-height:1.6}
+.reports-form-actions{display:flex;justify-content:space-between;align-items:center;gap:1rem;margin-top:1.2rem;padding-top:1.1rem;border-top:1px solid var(--fi-color-gray-200)}
+.dark .reports-form-actions{border-color:var(--fi-color-gray-800)}
+.reports-form-actions p{margin:0;color:var(--fi-color-gray-500);font-size:.75rem;line-height:1.5}
+.reports-history{margin-top:1.35rem}
+.reports-history-row{display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:1rem 1.25rem}
+.reports-history-row+.reports-history-row{border-top:1px solid var(--fi-color-gray-100)}
+.dark .reports-history-row+.reports-history-row{border-color:var(--fi-color-gray-800)}
+.reports-history-title{display:flex;align-items:center;flex-wrap:wrap;gap:.55rem;font-size:.875rem;font-weight:600}
+.reports-history-meta{margin-top:.3rem;color:var(--fi-color-gray-500);font-size:.75rem;line-height:1.55}
+.reports-history-error{margin-top:.45rem;color:var(--fi-color-danger-600);font-size:.8rem}
+.reports-empty{padding:2.5rem 1rem;text-align:center;color:var(--fi-color-gray-500);font-size:.85rem}
+.reports-downloads{display:flex;flex-wrap:wrap;gap:.5rem}
+@media(max-width:900px){.reports-layout{grid-template-columns:1fr}}
+@media(max-width:640px){.reports-intro{align-items:flex-start;flex-direction:column}.reports-retention{white-space:normal}.reports-card-body{padding:1rem}.reports-form-actions,.reports-history-row{align-items:flex-start;flex-direction:column}}
+</style>
+<div class="reports-workspace">
+<header class="reports-intro"><div><p>Build downloadable PDF reports for a subscription, project, or business unit.</p></div><div class="reports-retention">Private downloads · Available for 7 days</div></header>
+<div class="reports-layout">
+<section class="reports-card">
+<div class="reports-card-head"><h2>Configure a report</h2><p>Choose the scope, reporting period, and the information to include.</p></div>
+<div class="reports-card-body"><form wire:submit="generate">{{ $this->form }}<div class="reports-form-actions"><p>Generation runs in the background. You can safely leave this page.</p><x-filament::button type="submit" icon="heroicon-o-document-arrow-down">Generate PDF</x-filament::button></div></form></div>
+</section>
+<aside class="reports-card"><div class="reports-card-head"><h2>Report output</h2><p>Understand how your selections are delivered.</p></div><div class="reports-help-list">
+<div class="reports-help-item"><h3>Individual reports</h3><p>Select one or more report sections. Each selected section is delivered as a separate PDF.</p></div>
+<div class="reports-help-item"><h3>Consolidated PDF</h3><p>Select Consolidated on its own to include all available sections, or combine it with selected sections only.</p></div>
+<div class="reports-help-item"><h3>Access and retention</h3><p>Only your developer account can download these files. PDFs are automatically removed after seven days.</p></div>
+</div></aside></div>
+<div class="reports-history" wire:poll.5s><section class="reports-card">
+<div class="reports-card-head"><h2>Your generated reports</h2><p>Processing status and completed downloads appear here.</p></div>
+@if($reports->isEmpty())<div class="reports-empty">No reports generated yet. Your exports will appear here.</div>
+@else
+@foreach($reports as $report)
+<div class="reports-history-row"><div style="min-width:0">
+<div class="reports-history-title"><span>{{ $report->scope_name }}</span><x-filament::badge :color="match($report->status) { 'completed' => 'success', 'failed' => 'danger', 'processing' => 'info', default => 'gray' }">{{ ucfirst($report->status) }}</x-filament::badge></div>
+<div class="reports-history-meta">{{ ucfirst(str_replace('_',' ',$report->scope_type)) }} · {{ $report->period_start->format('d M Y') }} – {{ $report->period_end->format('d M Y') }} · Requested {{ $report->created_at->format('d M Y, H:i') }}</div>
+@if($report->failure_reason)<div class="reports-history-error">{{ $report->failure_reason }}</div>@endif
+</div>
+@if(!empty($report->files))<div class="reports-downloads">@foreach($report->files as $file)<x-filament::button size="sm" color="gray" outlined tag="a" :href="route('developer.reports.download',['report'=>$report,'file'=>$file['key']])">{{ $file['label'] }}</x-filament::button>@endforeach</div>
+@elseif(in_array($report->status,['queued','processing'],true))<span class="reports-history-meta">Preparing PDF files…</span>@endif
+</div>
+@endforeach
+@endif
+</section></div>
+</div>
 </x-filament-panels::page>

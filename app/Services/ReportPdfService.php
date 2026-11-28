@@ -16,7 +16,6 @@ use App\Models\Project;
 use App\Models\ReportExport;
 use App\Models\SubscriptionWebUrl;
 use App\Support\FilamentStyling;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -61,7 +60,7 @@ class ReportPdfService
             $absolutePath = Storage::disk('local')->path($path);
             $payload = $this->buildModuleData($report, $type, $subscriptionIds);
 
-            Pdf::loadView('reports.pdf.module', [
+            app('dompdf.wrapper')->loadView('reports.pdf.module', [
                 'brandName' => FilamentStyling::brandName(),
                 'logoPath' => $this->logoPath(),
                 'report' => $report,
@@ -104,7 +103,7 @@ class ReportPdfService
                 $page += $count;
             }
 
-            $frontMatter = Pdf::loadView('reports.pdf.consolidated-front', [
+            $frontMatter = app('dompdf.wrapper')->loadView('reports.pdf.consolidated-front', [
                 'brandName' => FilamentStyling::brandName(),
                 'logoPath' => $this->logoPath(),
                 'report' => $report,
