@@ -59,8 +59,11 @@ class ReportPdfService
             $path = $directory.'/'.$type.'.pdf';
             $absolutePath = Storage::disk('local')->path($path);
             $payload = $this->buildModuleData($report, $type, $subscriptionIds);
+            $primaryPalette = FilamentStyling::colors()['primary'] ?? [];
+            $primaryColor = (string) ($primaryPalette[600] ?? $primaryPalette[500] ?? '#64748b');
 
             app('dompdf.wrapper')->loadView('reports.pdf.module', [
+                'primaryColor' => $primaryColor,
                 'brandName' => FilamentStyling::brandName(),
                 'logoPath' => $this->logoPath(),
                 'report' => $report,
@@ -103,7 +106,10 @@ class ReportPdfService
                 $page += $count;
             }
 
+            $primaryPalette = FilamentStyling::colors()['primary'] ?? [];
+            $primaryColor = (string) ($primaryPalette[600] ?? $primaryPalette[500] ?? '#64748b');
             $frontMatter = app('dompdf.wrapper')->loadView('reports.pdf.consolidated-front', [
+                'primaryColor' => $primaryColor,
                 'brandName' => FilamentStyling::brandName(),
                 'logoPath' => $this->logoPath(),
                 'report' => $report,
@@ -190,25 +196,76 @@ class ReportPdfService
 
     private function costData(ReportExport $report, array $subscriptionIds): array
     {
+        $subscriptions = AzureSubscription::query()
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->orderBy('subscription_id')
+            ->get(['subscription_id']);
+
+        $scopeFilter = match ($report->scope_type) {
+            'project' => 'project:'.$report->scope_id,
+            'business_unit' => 'business_unit:'.$report->scope_id,
+            default => 'all',
+        };
+
+        // Use the same persisted 12-month history capture and resource-cost
+        // source used by the consolidated dashboard.
+        $scopeHash = app(ConsolidatedCostHistoryService::class)->capture($subscriptions, $scopeFilter);
+        $history = \App\Models\ConsolidatedCostHistory::query()
+            ->where('scope_hash', $scopeHash)
+            ->whereBetween('period_start', [
+                now()->startOfMonth()->subMonths(11)->toDateString(),
+                now()->startOfMonth()->toDateString(),
+            ])
+            ->orderBy('period_start')
+            ->get();
+
+        $resourceQuery = BillingResource::query()
+            ->with('subscription:subscription_id,display_name')
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->whereNotNull('cost_eur');
+
+        $resourceTypeRows = (clone $resourceQuery)
+            ->selectRaw("COALESCE(NULLIF(resource_type, ''), 'Unknown') AS resource_type")
+            ->selectRaw('SUM(cost_eur) AS total_cost')
+            ->groupBy('resource_type')
+            ->orderByDesc('total_cost')
+            ->get();
+
+        $topResources = (clone $resourceQuery)
+            ->orderByDesc('cost_eur')
+            ->limit(10)
+            ->get();
+
+        $budgets = AzureBudget::query()
+            ->with('subscription:subscription_id,display_name')
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->where(fn ($query) => $query->whereNull('start_date')->orWhereDate('start_date', '<=', today()))
+            ->where(fn ($query) => $query->whereNull('end_date')->orWhereDate('end_date', '>=', today()))
+            ->orderBy('subscription_id')
+            ->get();
+
+        $forecasts = AzureCostForecast::query()
+            ->with('subscription:subscription_id,display_name')
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->get();
+
         return [
+            'history' => $history,
+            'resource_type_breakdown' => $resourceTypeRows,
+            'top_resources' => $topResources,
+            'budgets' => $budgets,
+            'current_forecasts' => $forecasts,
             'costs' => AzureSubscriptionCost::query()
                 ->with('subscription:subscription_id,display_name')
                 ->whereIn('subscription_id', $subscriptionIds)
                 ->whereDate('period_start', '<=', $report->period_end)
                 ->whereDate('period_end', '>=', $report->period_start)
                 ->orderBy('period_start')->get(),
-            'budgets' => AzureBudget::query()
-                ->with('subscription:subscription_id,display_name')
-                ->whereIn('subscription_id', $subscriptionIds)
-                ->orderBy('subscription_id')->get(),
             'forecasts' => AzureCostForecastSnapshot::query()
                 ->with('subscription:subscription_id,display_name')
                 ->whereIn('subscription_id', $subscriptionIds)
                 ->whereBetween('captured_on', [$report->period_start, $report->period_end])
                 ->orderBy('captured_on')->get(),
-            'current_forecasts' => AzureCostForecast::query()
-                ->with('subscription:subscription_id,display_name')
-                ->whereIn('subscription_id', $subscriptionIds)->get(),
         ];
     }
 
