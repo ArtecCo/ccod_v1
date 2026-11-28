@@ -68,35 +68,141 @@ td { padding:6px; border-bottom:1px solid #e3e7ea; vertical-align:top; font-size
     </tbody></table>
     @endif
 @elseif($type === 'costs')
-    <h3>Recorded costs</h3>
-    @if($payload['costs']->isEmpty())<div class="empty">No cost records are available for the selected period.</div>
+    @php
+        $history = $payload['history'];
+        $historyValues = $history->pluck('actual_cost')->map(fn ($value) => $value === null ? null : (float) $value)->all();
+        $validHistory = array_values(array_filter($historyValues, fn ($value) => $value !== null));
+        $maxHistory = count($validHistory) ? max($validHistory) : 0;
+        $historyPoints = [];
+        $historyCount = count($historyValues);
+        foreach ($historyValues as $index => $value) {
+            if ($value === null || $maxHistory <= 0) { $historyPoints[] = null; continue; }
+            $x = $historyCount > 1 ? 40 + ($index * 620 / ($historyCount - 1)) : 350;
+            $y = 150 - (($value / $maxHistory) * 115);
+            $historyPoints[] = number_format($x, 2, '.', '').','.number_format($y, 2, '.', '');
+        }
+        $currencyValues = $history->pluck('currency')->filter()->unique();
+        $currency = $currencyValues->count() === 1 ? $currencyValues->first() : null;
+        $currentHistory = $history->first(fn ($row) => $row->period_start->format('Y-m') === now()->format('Y-m'));
+        $actualMtd = $currentHistory?->actual_cost;
+        $budgetTotal = $payload['budgets']->sum(fn ($row) => (float) $row->amount);
+        $budgetCurrencies = $payload['budgets']->pluck('currency')->filter()->unique();
+        $budgetCurrency = $budgetCurrencies->count() === 1 ? $budgetCurrencies->first() : null;
+        $forecastRows = $payload['current_forecasts'];
+        $forecastCurrencies = $forecastRows->pluck('currency')->filter()->unique();
+        $forecastCurrency = $forecastCurrencies->count() === 1 ? $forecastCurrencies->first() : null;
+        $forecastTotal = $forecastCurrency && $currency === $forecastCurrency && $actualMtd !== null
+            ? (float) $actualMtd + $forecastRows->sum(fn ($row) => (float) $row->forecast_amount)
+            : null;
+        $distributionTotal = $payload['resource_type_breakdown']->sum(fn ($row) => (float) $row->total_cost);
+        $pieColors = [$primaryColor, '#64748b', '#0f766e', '#a16207', '#7c3aed', '#94a3b8'];
+        $pieSegments = [];
+        $pieAngle = -90;
+        foreach ($payload['resource_type_breakdown']->take(6) as $index => $row) {
+            $value = (float) $row->total_cost;
+            if ($distributionTotal <= 0 || $value <= 0) { continue; }
+            $angle = ($value / $distributionTotal) * 360;
+            $startAngle = deg2rad($pieAngle);
+            $endAngle = deg2rad($pieAngle + $angle);
+            $x1 = 100 + 82 * cos($startAngle); $y1 = 100 + 82 * sin($startAngle);
+            $x2 = 100 + 82 * cos($endAngle); $y2 = 100 + 82 * sin($endAngle);
+            $largeArc = $angle > 180 ? 1 : 0;
+            $pieSegments[] = ['path' => "M 100 100 L {$x1} {$y1} A 82 82 0 {$largeArc} 1 {$x2} {$y2} Z", 'color' => $pieColors[$index % count($pieColors)]];
+            $pieAngle += $angle;
+        }
+    @endphp
+
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-label">Accumulated cost · selected period</div>
+            <div class="summary-value">{{ $currency ? $currency.' '.number_format((float) $payload['costs']->sum(fn ($row) => (float) $row->amount), 2) : 'Unavailable' }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Current month budget</div>
+            <div class="summary-value">{{ $budgetCurrency ? $budgetCurrency.' '.number_format($budgetTotal, 2) : 'Unavailable' }}</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-label">Current month forecast</div>
+            <div class="summary-value">{{ $forecastTotal !== null ? $forecastCurrency.' '.number_format($forecastTotal, 2) : 'Unavailable' }}</div>
+        </div>
+    </div>
+
+    <h3>12-month accumulated cost history</h3>
+    @if(count($validHistory) > 0)
+        <div class="chart-panel">
+            <svg width="100%" height="190" viewBox="0 0 700 190" xmlns="http://www.w3.org/2000/svg">
+                <line x1="40" y1="150" x2="660" y2="150" stroke="#cbd5e1" stroke-width="1"/>
+                <line x1="40" y1="35" x2="40" y2="150" stroke="#cbd5e1" stroke-width="1"/>
+                @foreach($historyPoints as $point)
+                    @if($point !== null)
+                        @php [$px,$py] = explode(',', $point); @endphp
+                        <circle cx="{{ $px }}" cy="{{ $py }}" r="3.5" fill="{{ $primaryColor }}"/>
+                    @endif
+                @endforeach
+                @php $segments = []; $previousPoint = null; foreach($historyPoints as $point) { if($point === null) { $previousPoint = null; continue; } if($previousPoint !== null) $segments[] = $previousPoint.' '.$point; $previousPoint = $point; } @endphp
+                @foreach($segments as $segment)
+                    <polyline points="{{ $segment }}" fill="none" stroke="{{ $primaryColor }}" stroke-width="2.5" stroke-linecap="round"/>
+                @endforeach
+                @foreach($history as $index => $row)
+                    @php $x = $historyCount > 1 ? 40 + ($index * 620 / ($historyCount - 1)) : 350; @endphp
+                    <text x="{{ $x }}" y="174" text-anchor="middle" font-size="9" fill="#64748b">{{ $row->period_start->format('M y') }}</text>
+                @endforeach
+            </svg>
+            <div class="small muted">Actual cost by recorded month. Gaps represent months without recorded values.</div>
+        </div>
+        <table><thead><tr><th>Month</th><th>Actual cost</th><th>Budget</th><th>Forecast</th></tr></thead><tbody>
+        @foreach($history as $row)
+            <tr><td>{{ $row->period_start->format('M Y') }}</td><td>{{ $row->actual_cost !== null && $row->currency ? $row->currency.' '.number_format((float)$row->actual_cost, 2) : '—' }}</td><td>{{ $row->budget_total !== null ? number_format((float)$row->budget_total, 2) : '—' }}</td><td>{{ $row->forecast_total !== null ? number_format((float)$row->forecast_total, 2) : '—' }}</td></tr>
+        @endforeach
+        </tbody></table>
     @else
-    <table><thead><tr><th>Subscription</th><th>Period</th><th>Amount</th><th>Currency</th><th>Granularity</th></tr></thead><tbody>
-    @foreach($payload['costs'] as $row)
-        <tr><td>{{ $row->subscription?->display_name ?? $row->subscription_id }}</td><td>{{ $row->period_start?->format('d M Y') }} – {{ $row->period_end?->format('d M Y') }}</td><td>{{ number_format((float)$row->amount, 2) }}</td><td>{{ $row->currency ?: '—' }}</td><td>{{ $row->granularity }}</td></tr>
-    @endforeach
-    </tbody></table>
+        <div class="empty">No accumulated cost history is recorded for this scope.</div>
     @endif
-    <h3>Budgets</h3>
-    @if($payload['budgets']->isEmpty())<div class="empty">No budget records are available.</div>
-    @else
-    <table><thead><tr><th>Subscription</th><th>Budget</th><th>Amount</th><th>Current spend</th><th>Forecast spend</th><th>Currency</th></tr></thead><tbody>
-    @foreach($payload['budgets'] as $row)
-        <tr><td>{{ $row->subscription?->display_name ?? $row->subscription_id }}</td><td>{{ $row->budget_name }}</td><td>{{ $row->amount }}</td><td>{{ $row->current_spend }}</td><td>{{ $row->forecast_spend }}</td><td>{{ $row->currency ?: '—' }}</td></tr>
-    @endforeach
+
+    <h3>Current month budget and forecast</h3>
+    <table><thead><tr><th>Subscription</th><th>Budget</th><th>Actual spend</th><th>Forecast</th><th>Currency</th></tr></thead><tbody>
+    @forelse($payload['budgets'] as $row)
+        <tr><td>{{ $row->subscription?->display_name ?? $row->subscription_id }}</td><td>{{ number_format((float)$row->amount, 2) }}</td><td>{{ number_format((float)$row->current_spend, 2) }}</td><td>{{ number_format((float)$row->forecast_spend, 2) }}</td><td>{{ $row->currency ?: '—' }}</td></tr>
+    @empty
+        <tr><td colspan="5" class="muted">No active budget records are available.</td></tr>
+    @endforelse
     </tbody></table>
+
+    <h3>Cost distribution by resource type</h3>
+    @if($payload['resource_type_breakdown']->isNotEmpty() && $distributionTotal > 0)
+        <div class="distribution">
+            <div class="pie-chart">
+                <svg width="190" height="190" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+                    @foreach($pieSegments as $segment)
+                        <path d="{{ $segment['path'] }}" fill="{{ $segment['color'] }}"/>
+                    @endforeach
+                    <circle cx="100" cy="100" r="48" fill="#ffffff"/>
+                    <text x="100" y="96" text-anchor="middle" font-size="10" fill="#64748b">Total</text>
+                    <text x="100" y="112" text-anchor="middle" font-size="10" font-weight="bold" fill="#1e293b">{{ number_format($distributionTotal, 0) }}</text>
+                </svg>
+            </div>
+            <div class="distribution-table">
+                <table><thead><tr><th>Resource type</th><th>Cost (EUR)</th><th>Share</th></tr></thead><tbody>
+                @foreach($payload['resource_type_breakdown'] as $row)
+                    <tr><td>{{ $row->resource_type }}</td><td>{{ number_format((float)$row->total_cost, 2) }}</td><td>{{ number_format(((float)$row->total_cost / $distributionTotal) * 100, 1) }}%</td></tr>
+                @endforeach
+                </tbody></table>
+            </div>
+        </div>
+        <p class="small muted">Resource-type totals use the same BillingResource cost_eur aggregation as the consolidated dashboard.</p>
+    @else
+        <div class="empty">No resource-level cost breakdown is available.</div>
     @endif
-    <h3>Forecast snapshots</h3>
-    @if($payload['forecasts']->isEmpty() && $payload['current_forecasts']->isEmpty())<div class="empty">No forecast records are available.</div>
+
+    <h3>Top 10 cost-consuming resources · Azure month-to-date snapshot</h3>
+    @if($payload['top_resources']->isNotEmpty())
+        <table><thead><tr><th>#</th><th>Resource</th><th>Type</th><th>Subscription</th><th>Cost (EUR)</th></tr></thead><tbody>
+        @foreach($payload['top_resources'] as $index => $row)
+            <tr><td>{{ $index + 1 }}</td><td>{{ $row->name ?: $row->resource_id }}</td><td>{{ $row->resource_type ?: 'Unknown' }}</td><td>{{ $row->subscription?->display_name ?? $row->subscription_id }}</td><td>{{ number_format((float)$row->cost_eur, 2) }}</td></tr>
+        @endforeach
+        </tbody></table>
     @else
-    <table><thead><tr><th>Subscription</th><th>Forecast period</th><th>Forecast amount</th><th>Currency</th><th>Captured</th></tr></thead><tbody>
-    @foreach($payload['forecasts'] as $row)
-        <tr><td>{{ $row->subscription?->display_name ?? $row->subscription_id }}</td><td>{{ $row->forecast_period?->format('M Y') }}</td><td>{{ $row->forecast_amount }}</td><td>{{ $row->currency ?: '—' }}</td><td>{{ $row->captured_at?->format('d M Y H:i') }}</td></tr>
-    @endforeach
-    @foreach($payload['current_forecasts'] as $row)
-        <tr><td>{{ $row->subscription?->display_name ?? $row->subscription_id }}</td><td>Current</td><td>{{ $row->forecast_amount }}</td><td>{{ $row->currency ?: '—' }}</td><td>{{ $row->fetched_at?->format('d M Y H:i') }}</td></tr>
-    @endforeach
-    </tbody></table>
+        <div class="empty">No resource-level month-to-date costs are available.</div>
     @endif
 @elseif($type === 'security')
     <h3>Security score snapshots</h3>
