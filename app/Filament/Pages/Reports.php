@@ -8,6 +8,8 @@ use App\Models\BusinessUnit;
 use App\Models\Developer;
 use App\Models\Project;
 use App\Models\ReportExport;
+use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Select;
@@ -19,16 +21,23 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Str;
 
-class Reports extends Page implements HasForms
+class Reports extends Page implements HasForms, HasTable
 {
     use InteractsWithForms;
+    use InteractsWithTable;
 
     protected static ?string $navigationLabel = 'Reports';
     protected static ?string $title = 'Reports';
     protected static ?string $slug = 'reports';
-    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
-    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
+    protected static string|\\BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
+    protected static string|\\UnitEnum|null $navigationGroup = 'Administration';
     protected static ?int $navigationSort = 40;
     protected string $view = 'filament.pages.reports';
 
@@ -109,6 +118,73 @@ class Reports extends Page implements HasForms
             ->statePath('data');
     }
 
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(
+                ReportExport::query()
+                    ->where('developer_id', auth()->guard('developers')->id())
+            )
+            ->columns([
+                TextColumn::make('scope_name')
+                    ->label('Scope')
+                    ->description(fn (ReportExport $record): string => Str::headline($record->scope_type)),
+                TextColumn::make('period_start')
+                    ->label('Reporting period')
+                    ->formatStateUsing(fn ($state, ReportExport $record): string => $record->period_start->format('d M Y').' – '.$record->period_end->format('d M Y'))
+                    ->sortable(false),
+                TextColumn::make('report_types')
+                    ->label('Report type(s)')
+                    ->formatStateUsing(fn ($state): string => collect($state ?? [])->map(fn ($type): string => match ($type) {
+                        'overview' => 'Scope overview',
+                        'costs' => 'Costs, budgets and forecasts',
+                        'security' => 'Security posture',
+                        'alerts' => 'Azure alerts',
+                        'web_urls' => 'Web URLs and SSL',
+                        'resources' => 'Azure resources',
+                        'consolidated' => 'Consolidated PDF',
+                        default => Str::headline((string) $type),
+                    })->implode(', '))
+                    ->wrap(),
+                TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'completed' => 'success',
+                        'failed' => 'danger',
+                        'processing' => 'info',
+                        'queued' => 'gray',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => Str::headline($state)),
+                TextColumn::make('failure_reason')
+                    ->label('Error')
+                    ->limit(70)
+                    ->tooltip(fn (ReportExport $record): ?string => $record->failure_reason)
+                    ->placeholder('—')
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('created_at')
+                    ->label('Requested')
+                    ->dateTime('d M Y, H:i')
+                    ->sortable(),
+            ])
+            ->recordActions([
+                ActionGroup::make(fn (ReportExport $record): array => collect($record->files ?? [])
+                    ->values()
+                    ->map(fn (array $file, int $index): Action => Action::make('download_'.$index)
+                        ->label('Download '.$file['label'])
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->url(route('developer.reports.download', ['report' => $record, 'file' => $file['key']]))
+                        ->openUrlInNewTab(false))
+                    ->all())
+                    ->label('Downloads')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->button()
+                    ->visible(fn (ReportExport $record): bool => ! empty($record->files)),
+            ])
+            ->defaultSort('created_at', 'desc')
+            ->paginated([10, 25, 50]);
+    }
+
     private function scopeOptions(string $type): array
     {
         return match ($type) {
@@ -164,16 +240,5 @@ class Reports extends Page implements HasForms
             ->body('You can leave this page. Your PDFs will be available here when processing is complete.')
             ->success()
             ->send();
-    }
-
-    protected function getViewData(): array
-    {
-        return [
-            'reports' => ReportExport::query()
-                ->where('developer_id', auth()->guard('developers')->id())
-                ->latest()
-                ->limit(30)
-                ->get(),
-        ];
     }
 }
