@@ -249,18 +249,48 @@ class ReportPdfService
             ->whereIn('subscription_id', $subscriptionIds)
             ->get();
 
+        $periodCosts = AzureSubscriptionCost::query()
+            ->with('subscription:subscription_id,display_name')
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->where('granularity', 'monthly')
+            ->whereDate('period_start', '<=', $report->period_end)
+            ->whereDate('period_end', '>=', $report->period_start)
+            ->orderBy('period_start')->get();
+
+        $periodCurrencies = $periodCosts->pluck('currency')->filter()->unique();
+        $periodCurrency = $periodCurrencies->count() === 1 ? (string) $periodCurrencies->first() : null;
+        $periodTotal = $periodCurrency !== null
+            ? (float) $periodCosts->sum(fn ($row): float => (float) $row->amount)
+            : null;
+
+        $currentMonthRows = AzureSubscriptionCost::query()
+            ->whereIn('subscription_id', $subscriptionIds)
+            ->where('granularity', 'monthly')
+            ->whereDate('period_start', now()->startOfMonth()->toDateString())
+            ->get(['amount', 'currency']);
+        $currentCurrencies = $currentMonthRows->pluck('currency')->filter()->unique();
+        $currentCurrency = $currentCurrencies->count() === 1 ? (string) $currentCurrencies->first() : null;
+        $currentActual = $currentCurrency !== null
+            ? (float) $currentMonthRows->sum(fn ($row): float => (float) $row->amount)
+            : null;
+        $forecastCurrencies = $forecasts->pluck('currency')->filter()->unique();
+        $forecastCurrency = $forecastCurrencies->count() === 1 ? (string) $forecastCurrencies->first() : null;
+        $currentForecast = $currentActual !== null && $forecastCurrency === $currentCurrency
+            ? $currentActual + (float) $forecasts->sum(fn ($row): float => (float) $row->forecast_amount)
+            : null;
+
         return [
             'history' => $history,
             'resource_type_breakdown' => $resourceTypeRows,
             'top_resources' => $topResources,
             'budgets' => $budgets,
             'current_forecasts' => $forecasts,
-            'costs' => AzureSubscriptionCost::query()
-                ->with('subscription:subscription_id,display_name')
-                ->whereIn('subscription_id', $subscriptionIds)
-                ->whereDate('period_start', '<=', $report->period_end)
-                ->whereDate('period_end', '>=', $report->period_start)
-                ->orderBy('period_start')->get(),
+            'period_total' => $periodTotal,
+            'period_currency' => $periodCurrency,
+            'current_actual' => $currentActual,
+            'current_forecast' => $currentForecast,
+            'current_currency' => $currentCurrency,
+            'costs' => $periodCosts,
             'forecasts' => AzureCostForecastSnapshot::query()
                 ->with('subscription:subscription_id,display_name')
                 ->whereIn('subscription_id', $subscriptionIds)
@@ -289,8 +319,17 @@ class ReportPdfService
         $settings = FilamentStyling::settings();
         $path = $settings?->logo_light;
 
-        if (! $path || filter_var($path, FILTER_VALIDATE_URL)) {
+        if (! $path) {
             return null;
+        }
+
+        // Resolve both relative public-disk paths and absolute /storage/... URLs
+        // to a local filesystem path; DomPDF remote loading stays disabled.
+        if (filter_var($path, FILTER_VALIDATE_URL)) {
+            $assetPath = (string) parse_url($path, PHP_URL_PATH);
+            $path = preg_replace('#^/storage/#', '', $assetPath) ?? $assetPath;
+        } else {
+            $path = ltrim(preg_replace('#^/?storage/#', '', $path) ?? $path, '/');
         }
 
         $disk = Storage::disk('public');
