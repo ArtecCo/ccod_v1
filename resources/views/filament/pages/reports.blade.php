@@ -79,7 +79,7 @@
                                 icon="heroicon-o-arrow-down-tray"
                                 :href="route('developer.reports.download', ['report' => $report, 'file' => $file['key']])"
                             >
-                                {{ $file['label'] }}
+                                Download {{ $file['label'] }}
                             </x-filament::button>
                         @endforeach
                     </div>
@@ -91,7 +91,7 @@
                 @endif
             </div>
             @unless ($loop->last)
-                <x-filament::hr />
+                <hr class="border-gray-200 dark:border-gray-700">
             @endunless
         @empty
             <div class="py-4 text-sm text-gray-500 dark:text-gray-400">
