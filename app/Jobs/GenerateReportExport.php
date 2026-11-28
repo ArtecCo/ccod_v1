@@ -65,7 +65,7 @@ class GenerateReportExport implements ShouldQueue
         } catch (Throwable $exception) {
             $report->update([
                 'status' => 'failed',
-                'failure_reason' => 'PDF generation failed. Please try again or contact an administrator.',
+                'failure_reason' => class_basename($exception).': '.mb_substr($exception->getMessage(), 0, 700),
             ]);
 
             report($exception);
@@ -81,7 +81,7 @@ class GenerateReportExport implements ShouldQueue
             ->whereNotIn('status', ['completed'])
             ->update([
                 'status' => 'failed',
-                'failure_reason' => 'The report job failed. Please try again or contact an administrator.',
+                'failure_reason' => class_basename($exception).': '.mb_substr($exception->getMessage(), 0, 700),
             ]);
     }
 }
