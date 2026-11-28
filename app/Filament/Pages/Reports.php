@@ -36,8 +36,8 @@ class Reports extends Page implements HasForms, HasTable
     protected static ?string $navigationLabel = 'Reports';
     protected static ?string $title = 'Reports';
     protected static ?string $slug = 'reports';
-    protected static string|\\BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
-    protected static string|\\UnitEnum|null $navigationGroup = 'Administration';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-document-chart-bar';
+    protected static string|\UnitEnum|null $navigationGroup = 'Administration';
     protected static ?int $navigationSort = 40;
     protected string $view = 'filament.pages.reports';
 
